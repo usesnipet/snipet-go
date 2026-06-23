@@ -1,4 +1,4 @@
-package bot
+package client
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ type Handler struct {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/bot", func(r chi.Router) {
+	r.Route("/client", func(r chi.Router) {
 		r.Get("/", serve(h.findBy))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
@@ -38,7 +38,7 @@ func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
-	var dto CreateBotDTO
+	var dto CreateClientDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
-	var dto UpdateBotDTO
+	var dto UpdateClientDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}

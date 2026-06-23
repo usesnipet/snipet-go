@@ -10,6 +10,7 @@ import (
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/module/bot"
+	"github.com/usesnipet/snipet/internal/module/client"
 )
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
@@ -22,17 +23,21 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	// repository
 	botRepo := bot.NewRepository(db)
+	clientRepo := client.NewRepository(db)
 
 	// service
 	botService := bot.NewService(botRepo)
+	clientService := client.NewService(clientRepo)
 
 	// handler
 	botHandler := bot.NewHandler(botService)
+	clientHandler := client.NewHandler(clientService)
 
 	// register handlers
 	api := api.New()
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
 		botHandler.RegisterRoutes(r, api.Serve)
+		clientHandler.RegisterRoutes(r, api.Serve)
 	})
 
 	logger.Infof("server started on port %d", cfg.Server.Port)
