@@ -2,8 +2,8 @@ package database
 
 import (
 	"context"
-	"errors"
 
+	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"gorm.io/gorm"
 )
@@ -43,7 +43,7 @@ func (r *Repository[T]) UpdateByID(ctx context.Context, id string, model *T) err
 		return err
 	}
 	if affected == 0 {
-		return errors.New("model not found")
+		return apperr.NotFound("entity not found")
 	}
 	return nil
 }
@@ -54,7 +54,7 @@ func (r *Repository[T]) DeleteByID(ctx context.Context, id string) error {
 		return err
 	}
 	if affected == 0 {
-		return errors.New("model not found")
+		return apperr.NotFound("entity not found")
 	}
 	return nil
 }

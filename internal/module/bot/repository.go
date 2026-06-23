@@ -1,4 +1,4 @@
-package organization
+package bot
 
 import (
 	"github.com/usesnipet/snipet/internal/infra/database"
@@ -7,15 +7,15 @@ import (
 )
 
 type IRepository interface {
-	database.IRepository[model.Organization]
+	database.IRepository[model.Bot]
 }
 
 type Repository struct {
-	*database.Repository[model.Organization]
+	*database.Repository[model.Bot]
 }
 
 func NewRepository(db *gorm.DB) IRepository {
 	return &Repository{
-		Repository: database.NewRepository[model.Organization](db),
+		Repository: database.NewRepository[model.Bot](db),
 	}
 }

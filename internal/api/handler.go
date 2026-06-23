@@ -16,6 +16,6 @@ type Handler interface {
 
 func (a *Api) RegisterHandlers(handlers ...Handler) {
 	for _, handler := range handlers {
-		handler.RegisterRoutes(a.Router, Serve)
+		handler.RegisterRoutes(a.Router, a.Serve)
 	}
 }

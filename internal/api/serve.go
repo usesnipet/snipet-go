@@ -8,7 +8,7 @@ import (
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 )
 
-func Serve(handler HandlerFunc) http.HandlerFunc {
+func (a *Api) Serve(handler HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := handler(w, r); err != nil {
 			var appErr *apperr.Error

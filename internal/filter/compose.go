@@ -33,6 +33,13 @@ func New[T any](opts ...Option) *Options[T] {
 	return toOptions[T](s)
 }
 
+func Default[T any]() *Options[T] {
+	return New[T](
+		Take(2000),
+		Skip(0),
+	)
+}
+
 func Take(n int) Option {
 	return func(s *state) {
 		s.take = n

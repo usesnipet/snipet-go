@@ -10,3 +10,8 @@ func WriteJSON(w http.ResponseWriter, status int, data any) error {
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(data)
 }
+
+func WriteNoContent(w http.ResponseWriter) error {
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}

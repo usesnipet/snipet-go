@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/config"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/logger"
-	"github.com/usesnipet/snipet/internal/module/organization"
+	"github.com/usesnipet/snipet/internal/module/bot"
 )
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
@@ -20,19 +21,19 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	}
 
 	// repository
-	orgRepo := organization.NewRepository(db)
+	botRepo := bot.NewRepository(db)
 
 	// service
-	orgService := organization.NewService(orgRepo)
+	botService := bot.NewService(botRepo)
 
 	// handler
-	orgHandler := organization.NewHandler(orgService)
+	botHandler := bot.NewHandler(botService)
 
 	// register handlers
 	api := api.New()
-	api.RegisterHandlers(
-		orgHandler,
-	)
+	api.Router.Route(config.APIPrefix, func(r chi.Router) {
+		botHandler.RegisterRoutes(r, api.Serve)
+	})
 
 	logger.Infof("server started on port %d", cfg.Server.Port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Server.Port), api.Router)
