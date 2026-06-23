@@ -18,6 +18,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Get("/{id}", serve(h.findByID))
 		r.Put("/{id}", serve(h.update))
 		r.Delete("/{id}", serve(h.deleteByID))
+		r.Post("/link-client", serve(h.linkClient))
 	})
 }
 
@@ -66,6 +67,14 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteNoContent(w)
+}
+
+func (h *Handler) linkClient(w http.ResponseWriter, r *http.Request) error {
+	var dto LinkClientToBotDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+	return h.service.LinkClientToBot(r.Context(), dto)
 }
 
 func NewHandler(service *Service) api.Handler {

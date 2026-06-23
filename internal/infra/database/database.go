@@ -19,7 +19,7 @@ func NewDatabase(cfg *config.Config, logger *logger.Logger) (*gorm.DB, error) {
 
 	gormDB, err := gorm.Open(
 		postgres.Open(cfg.Database.URL),
-		&gorm.Config{},
+		&gorm.Config{TranslateError: true},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)

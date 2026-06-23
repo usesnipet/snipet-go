@@ -13,3 +13,8 @@ type UpdateBotDTO struct {
 	Description   *string                 `json:"description" validate:"omitempty,max=1000"`
 	Configuration *model.BotConfiguration `json:"configuration"`
 }
+
+type LinkClientToBotDTO struct {
+	ClientID string `json:"client_id" validate:"required,uuid"`
+	BotID    string `json:"bot_id" validate:"required,uuid"`
+}

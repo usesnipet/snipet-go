@@ -3,14 +3,17 @@ package bot
 import (
 	"context"
 
+	"github.com/google/uuid"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/module/client"
 )
 
 type Service struct {
-	repository IRepository
+	repository       IRepository
+	clientRepository client.IRepository
 }
 
 func (s *Service) FindBy(ctx context.Context) (*database.Paginated[model.Bot], error) {
@@ -61,6 +64,36 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	return s.repository.DeleteByID(ctx, id)
 }
 
-func NewService(repository IRepository) *Service {
-	return &Service{repository: repository}
+func (s *Service) LinkClientToBot(ctx context.Context, dto LinkClientToBotDTO) error {
+	// region Check if ids are valid
+	clientUUID, err := uuid.Parse(dto.ClientID)
+	if err != nil {
+		return apperr.BadRequest("invalid client id")
+	}
+	botUUID, err := uuid.Parse(dto.BotID)
+	if err != nil {
+		return apperr.BadRequest("invalid bot id")
+	}
+	// endregion
+
+	// region Check if client exists
+	if _, err = s.clientRepository.FindByID(ctx, dto.ClientID); err != nil {
+		return err
+	}
+	// endregion
+
+	// region Check if bot exists
+	if _, err = s.repository.FindByID(ctx, dto.BotID); err != nil {
+		return err
+	}
+	// endregion
+
+	return s.repository.LinkClientToBot(ctx, clientUUID, botUUID)
+}
+
+func NewService(repository IRepository, clientRepository client.IRepository) *Service {
+	return &Service{
+		repository:       repository,
+		clientRepository: clientRepository,
+	}
 }
