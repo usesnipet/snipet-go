@@ -1,7 +1,6 @@
 package organization
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -24,7 +23,7 @@ func (h *Handler) findBy(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return json.NewEncoder(w).Encode(data)
+	return api.WriteJSON(w, http.StatusOK, data)
 }
 
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
