@@ -1,0 +1,21 @@
+package memory
+
+import (
+	"github.com/usesnipet/snipet/internal/infra/database"
+	"github.com/usesnipet/snipet/internal/model"
+	"gorm.io/gorm"
+)
+
+type IRepository interface {
+	database.IRepository[model.Memory]
+}
+
+type Repository struct {
+	*database.Repository[model.Memory]
+}
+
+func NewRepository(db *gorm.DB) IRepository {
+	return &Repository{
+		Repository: database.NewRepository[model.Memory](db),
+	}
+}
