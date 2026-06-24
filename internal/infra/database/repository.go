@@ -10,6 +10,7 @@ import (
 
 type IRepository[T any] interface {
 	Create(ctx context.Context, model *T) error
+	FindByID(ctx context.Context, id string) (*T, error)
 	FindBy(ctx context.Context, filter *filter.Options[T]) (*Paginated[T], error)
 	UpdateByID(ctx context.Context, id string, model *T) error
 	DeleteByID(ctx context.Context, id string) error
@@ -57,6 +58,17 @@ func (r *Repository[T]) DeleteByID(ctx context.Context, id string) error {
 		return apperr.NotFound("entity not found")
 	}
 	return nil
+}
+
+func (r *Repository[T]) FindByID(ctx context.Context, id string) (*T, error) {
+	paginated, err := r.FindBy(ctx, filter.New[T](filter.WhereEq("id", id)))
+	if err != nil {
+		return nil, err
+	}
+	if paginated.IsEmpty() {
+		return nil, apperr.NotFound("entity not found")
+	}
+	return paginated.First(), nil
 }
 
 func NewRepository[T any](db *gorm.DB) *Repository[T] {
