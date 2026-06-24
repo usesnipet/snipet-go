@@ -12,7 +12,7 @@ type Handler struct {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/conversation", func(r chi.Router) {
+	r.Route("/client/{client_id}/conversation", func(r chi.Router) {
 		r.Get("/", serve(h.findBy))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
@@ -41,7 +41,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	data, err := h.service.Create(r.Context(), dto)
+	data, err := h.service.Create(r.Context(), chi.URLParam(r, "client_id"), dto)
 	if err != nil {
 		return err
 	}

@@ -22,7 +22,7 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.Conversation,
 	return s.repository.FindByID(ctx, id)
 }
 
-func (s *Service) Create(ctx context.Context, dto CreateConversationDTO) (*model.Conversation, error) {
+func (s *Service) Create(ctx context.Context, clientID string, dto CreateConversationDTO) (*model.Conversation, error) {
 	memoryID, err := uuid.Parse(dto.MemoryID)
 	if err != nil {
 		return nil, apperr.BadRequest("invalid memory id")
@@ -32,9 +32,16 @@ func (s *Service) Create(ctx context.Context, dto CreateConversationDTO) (*model
 		return nil, apperr.BadRequest("invalid bot id")
 	}
 
+	cID, err := uuid.Parse(clientID)
+	if err != nil {
+		return nil, apperr.BadRequest("invalid client id")
+	}
+
 	conversation := &model.Conversation{
 		MemoryID: memoryID,
 		BotID:    botID,
+		Metadata: dto.Metadata,
+		ClientID: cID,
 	}
 	if err := s.repository.Create(ctx, conversation); err != nil {
 		return nil, err

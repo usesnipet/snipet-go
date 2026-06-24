@@ -7,5 +7,6 @@ type Client struct {
 
 	Name string `gorm:"type:varchar(255);not null" json:"name"`
 
-	ClientBots []ClientBot `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ClientBots    []ClientBot    `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Conversations []Conversation `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }

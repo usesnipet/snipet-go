@@ -1,3 +1,4 @@
-h1:1JJZVx/PeuctEEkenaJ73zjCecai9z1DEZW8bEp9PCI=
+h1:9Lxv5JzKjGTrI+it7DvNTulUxB09GNGp24FMMYgtO7U=
 20260623182516_initial.up.sql h1:Dgri1omfjaKzk5lR/yq/N5aNfcc7n4WKzwVUyypQjGo=
 20260623232704_client_bots_unique.up.sql h1:LhZHW4YexhoyKlnd0v1V5yLZvKSvqhDYAdBe0kVu6E4=
+20260624004117_add_conversation_metadata_and_client_ref.up.sql h1:2j9qOLdHGr37eamnOKczESmysYpORBt543HVANrkfgM=
