@@ -18,6 +18,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Get("/{id}", serve(h.findByID))
 		r.Put("/{id}", serve(h.update))
 		r.Delete("/{id}", serve(h.deleteByID))
+		r.Post("/default", serve(h.setAsDefault))
 	})
 }
 
@@ -65,6 +66,19 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 	if err := h.service.DeleteByID(r.Context(), chi.URLParam(r, "id")); err != nil {
 		return err
 	}
+	return api.WriteNoContent(w)
+}
+
+func (h *Handler) setAsDefault(w http.ResponseWriter, r *http.Request) error {
+	var dto SetAsDefaultMemoryDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+	err := h.service.SetAsDefault(r.Context(), dto)
+	if err != nil {
+		return err
+	}
+
 	return api.WriteNoContent(w)
 }
 
