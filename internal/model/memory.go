@@ -9,8 +9,8 @@ import (
 type MemoryType string
 
 const (
-	MemoryTypeChat   MemoryType = "bot"
-	MemoryTypeVector MemoryType = "conversation"
+	MemoryTypeBot          MemoryType = "bot"
+	MemoryTypeConversation MemoryType = "conversation"
 )
 
 type Memory struct {

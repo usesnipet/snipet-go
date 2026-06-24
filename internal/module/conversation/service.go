@@ -8,10 +8,12 @@ import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/module/memory"
 )
 
 type Service struct {
-	repository IRepository
+	repository       IRepository
+	memoryRepository memory.IRepository
 }
 
 func (s *Service) FindBy(ctx context.Context) (*database.Paginated[model.Conversation], error) {
@@ -37,6 +39,15 @@ func (s *Service) Create(ctx context.Context, clientID string, dto CreateConvers
 		return nil, apperr.BadRequest("invalid client id")
 	}
 
+	memory, err := s.memoryRepository.FindByID(ctx, dto.MemoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	if memory.Type != model.MemoryTypeConversation {
+		return nil, apperr.BadRequest("invalid memory type")
+	}
+
 	conversation := &model.Conversation{
 		MemoryID: memoryID,
 		BotID:    botID,
@@ -53,6 +64,9 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	return s.repository.DeleteByID(ctx, id)
 }
 
-func NewService(repository IRepository) *Service {
-	return &Service{repository: repository}
+func NewService(repository IRepository, memoryRepository memory.IRepository) *Service {
+	return &Service{
+		repository:       repository,
+		memoryRepository: memoryRepository,
+	}
 }

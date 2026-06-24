@@ -9,6 +9,7 @@ import (
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/logger"
+	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	"github.com/usesnipet/snipet/internal/module/bot"
 	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/module/conversation"
@@ -24,18 +25,21 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	}
 
 	// repository
+	apiKeyRepo := apikey.NewRepository(db)
 	botRepo := bot.NewRepository(db)
 	clientRepo := client.NewRepository(db)
 	conversationRepo := conversation.NewRepository(db)
 	memoryRepo := memory.NewRepository(db)
 
 	// service
+	apiKeyService := apikey.NewService(apiKeyRepo)
 	botService := bot.NewService(botRepo, clientRepo)
 	clientService := client.NewService(clientRepo)
-	conversationService := conversation.NewService(conversationRepo)
+	conversationService := conversation.NewService(conversationRepo, memoryRepo)
 	memoryService := memory.NewService(memoryRepo)
 
 	// handler
+	apiKeyHandler := apikey.NewHandler(apiKeyService)
 	botHandler := bot.NewHandler(botService)
 	clientHandler := client.NewHandler(clientService)
 	conversationHandler := conversation.NewHandler(conversationService)
@@ -44,6 +48,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// register handlers
 	api := api.New()
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
+		apiKeyHandler.RegisterRoutes(r, api.Serve)
 		botHandler.RegisterRoutes(r, api.Serve)
 		clientHandler.RegisterRoutes(r, api.Serve)
 		conversationHandler.RegisterRoutes(r, api.Serve)
