@@ -1,4 +1,4 @@
-package bot
+package repository
 
 import (
 	"context"
@@ -6,21 +6,20 @@ import (
 
 	"github.com/google/uuid"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
-	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
 	"gorm.io/gorm"
 )
 
-type IRepository interface {
-	database.IRepository[model.Bot]
+type IBotRepository interface {
+	IRepository[model.Bot]
 	LinkClientToBot(ctx context.Context, clientID, botID uuid.UUID) error
 }
 
-type Repository struct {
-	*database.Repository[model.Bot]
+type BotRepository struct {
+	*Repository[model.Bot]
 }
 
-func (r *Repository) LinkClientToBot(ctx context.Context, clientID, botID uuid.UUID) error {
+func (r *BotRepository) LinkClientToBot(ctx context.Context, clientID, botID uuid.UUID) error {
 	clientBot := &model.ClientBot{
 		ClientID: clientID,
 		BotID:    botID,
@@ -35,8 +34,8 @@ func (r *Repository) LinkClientToBot(ctx context.Context, clientID, botID uuid.U
 	return nil
 }
 
-func NewRepository(db *gorm.DB) IRepository {
-	return &Repository{
-		Repository: database.NewRepository[model.Bot](db),
+func NewBotRepository(db *gorm.DB) IBotRepository {
+	return &BotRepository{
+		Repository: NewRepository[model.Bot](db),
 	}
 }

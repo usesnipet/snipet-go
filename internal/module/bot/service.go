@@ -6,32 +6,22 @@ import (
 	"github.com/google/uuid"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
-	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/module/client"
+	"github.com/usesnipet/snipet/internal/page"
+	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
-	repository       IRepository
-	clientRepository client.IRepository
+	botRepo    repository.IBotRepository
+	clientRepo repository.IClientRepository
 }
 
-func (s *Service) FindBy(ctx context.Context) (*database.Paginated[model.Bot], error) {
-	return s.repository.FindBy(ctx, filter.Default[model.Bot]())
+func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.Bot], error) {
+	return s.botRepo.FilterBy(ctx, filter.Default[model.Bot]())
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Bot, error) {
-	paginated, err := s.repository.FindBy(
-		ctx,
-		filter.New[model.Bot](filter.WhereEq("id", id)),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if paginated.IsEmpty() {
-		return nil, apperr.NotFound("bot not found")
-	}
-	return paginated.First(), nil
+	return s.botRepo.FindByID(ctx, id)
 }
 
 func (s *Service) Create(ctx context.Context, dto CreateBotDTO) (*model.Bot, error) {
@@ -40,7 +30,7 @@ func (s *Service) Create(ctx context.Context, dto CreateBotDTO) (*model.Bot, err
 		Description:   dto.Description,
 		Configuration: dto.Configuration,
 	}
-	if err := s.repository.Create(ctx, bot); err != nil {
+	if err := s.botRepo.Create(ctx, bot); err != nil {
 		return nil, err
 	}
 	return bot, nil
@@ -57,11 +47,11 @@ func (s *Service) Update(ctx context.Context, id string, dto UpdateBotDTO) error
 	if dto.Configuration != nil {
 		updates.Configuration = *dto.Configuration
 	}
-	return s.repository.UpdateByID(ctx, id, updates)
+	return s.botRepo.UpdateByID(ctx, id, updates)
 }
 
 func (s *Service) DeleteByID(ctx context.Context, id string) error {
-	return s.repository.DeleteByID(ctx, id)
+	return s.botRepo.DeleteByID(ctx, id)
 }
 
 func (s *Service) LinkClientToBot(ctx context.Context, dto LinkClientToBotDTO) error {
@@ -77,23 +67,23 @@ func (s *Service) LinkClientToBot(ctx context.Context, dto LinkClientToBotDTO) e
 	// endregion
 
 	// region Check if client exists
-	if _, err = s.clientRepository.FindByID(ctx, dto.ClientID); err != nil {
+	if _, err = s.clientRepo.FindByID(ctx, dto.ClientID); err != nil {
 		return err
 	}
 	// endregion
 
 	// region Check if bot exists
-	if _, err = s.repository.FindByID(ctx, dto.BotID); err != nil {
+	if _, err = s.botRepo.FindByID(ctx, dto.BotID); err != nil {
 		return err
 	}
 	// endregion
 
-	return s.repository.LinkClientToBot(ctx, clientUUID, botUUID)
+	return s.botRepo.LinkClientToBot(ctx, clientUUID, botUUID)
 }
 
-func NewService(repository IRepository, clientRepository client.IRepository) *Service {
+func NewService(botRepo repository.IBotRepository, clientRepo repository.IClientRepository) *Service {
 	return &Service{
-		repository:       repository,
-		clientRepository: clientRepository,
+		botRepo:    botRepo,
+		clientRepo: clientRepo,
 	}
 }

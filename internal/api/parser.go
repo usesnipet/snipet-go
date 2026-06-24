@@ -6,14 +6,16 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/go-playground/form/v4"
 	"github.com/go-playground/mold/v4/modifiers"
 	"github.com/go-playground/validator/v10"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 )
 
 var (
-	validate = validator.New()
-	conform  = modifiers.New()
+	validate    = validator.New()
+	conform     = modifiers.New()
+	formDecoder = form.NewDecoder()
 )
 
 func ParseBody[T any](r *http.Request, v *T) error {
@@ -23,6 +25,22 @@ func ParseBody[T any](r *http.Request, v *T) error {
 		}
 		return apperr.BadRequest("invalid JSON body: " + err.Error())
 	}
+	if err := validate.Struct(v); err != nil {
+		return apperr.BadRequest(err.Error())
+	}
+
+	if err := conform.Struct(r.Context(), v); err != nil {
+		return apperr.BadRequest(err.Error())
+	}
+
+	return nil
+}
+
+func ParseQuery[T any](r *http.Request, v *T) error {
+	if err := formDecoder.Decode(v, r.URL.Query()); err != nil {
+		return apperr.BadRequest(err.Error())
+	}
+
 	if err := validate.Struct(v); err != nil {
 		return apperr.BadRequest(err.Error())
 	}

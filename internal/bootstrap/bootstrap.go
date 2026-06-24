@@ -14,6 +14,7 @@ import (
 	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/module/conversation"
 	"github.com/usesnipet/snipet/internal/module/memory"
+	"github.com/usesnipet/snipet/internal/repository"
 )
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
@@ -25,18 +26,19 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	}
 
 	// repository
-	apiKeyRepo := apikey.NewRepository(db)
-	botRepo := bot.NewRepository(db)
-	clientRepo := client.NewRepository(db)
-	conversationRepo := conversation.NewRepository(db)
-	memoryRepo := memory.NewRepository(db)
+	apiKeyRepo := repository.NewApiKeyRepository(db)
+	botRepo := repository.NewBotRepository(db)
+	clientRepo := repository.NewClientRepository(db)
+	conversationRepo := repository.NewConversationRepository(db)
+	conversationMessageRepo := repository.NewConversationMessageRepository(db)
+	memoryRepo := repository.NewMemoryRepository(db)
 
 	// service
 	apiKeyService := apikey.NewService(apiKeyRepo)
 	botService := bot.NewService(botRepo, clientRepo)
 	clientService := client.NewService(clientRepo)
-	conversationService := conversation.NewService(conversationRepo, memoryRepo)
 	memoryService := memory.NewService(memoryRepo)
+	conversationService := conversation.NewService(conversationRepo, conversationMessageRepo, memoryRepo)
 
 	// handler
 	apiKeyHandler := apikey.NewHandler(apiKeyService)

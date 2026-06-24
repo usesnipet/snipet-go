@@ -5,16 +5,17 @@ import (
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
-	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
+	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
-	repository IRepository
+	repository repository.IMemoryRepository
 }
 
-func (s *Service) FindBy(ctx context.Context) (*database.Paginated[model.Memory], error) {
-	return s.repository.FindBy(ctx, filter.Default[model.Memory]())
+func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.Memory], error) {
+	return s.repository.FilterBy(ctx, filter.Default[model.Memory]())
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Memory, error) {
@@ -59,6 +60,6 @@ func (s *Service) SetAsDefault(ctx context.Context, dto SetAsDefaultMemoryDTO) e
 	return s.repository.SetAsDefault(ctx, dto.MemoryID)
 }
 
-func NewService(repository IRepository) *Service {
+func NewService(repository repository.IMemoryRepository) *Service {
 	return &Service{repository: repository}
 }

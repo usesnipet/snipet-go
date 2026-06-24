@@ -1,24 +1,23 @@
-package memory
+package repository
 
 import (
 	"context"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
-	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
 	"gorm.io/gorm"
 )
 
-type IRepository interface {
-	database.IRepository[model.Memory]
+type IMemoryRepository interface {
+	IRepository[model.Memory]
 	SetAsDefault(ctx context.Context, memoryID string) error
 }
 
-type Repository struct {
-	*database.Repository[model.Memory]
+type MemoryRepository struct {
+	*Repository[model.Memory]
 }
 
-func (r *Repository) SetAsDefault(ctx context.Context, memoryID string) error {
+func (r *MemoryRepository) SetAsDefault(ctx context.Context, memoryID string) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		_, err := gorm.G[model.Memory](tx).Where("is_default = ?", true).Update(ctx, "is_default", false)
 		if err != nil {
@@ -35,8 +34,8 @@ func (r *Repository) SetAsDefault(ctx context.Context, memoryID string) error {
 	})
 }
 
-func NewRepository(db *gorm.DB) IRepository {
-	return &Repository{
-		Repository: database.NewRepository[model.Memory](db),
+func NewMemoryRepository(db *gorm.DB) IMemoryRepository {
+	return &MemoryRepository{
+		Repository: NewRepository[model.Memory](db),
 	}
 }

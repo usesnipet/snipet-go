@@ -3,39 +3,29 @@ package client
 import (
 	"context"
 
-	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
-	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
+	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
-	repository IRepository
+	clientRepo repository.IClientRepository
 }
 
-func (s *Service) FindBy(ctx context.Context) (*database.Paginated[model.Client], error) {
-	return s.repository.FindBy(ctx, filter.Default[model.Client]())
+func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.Client], error) {
+	return s.clientRepo.FilterBy(ctx, filter.Default[model.Client]())
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Client, error) {
-	paginated, err := s.repository.FindBy(
-		ctx,
-		filter.New[model.Client](filter.WhereEq("id", id)),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if paginated.IsEmpty() {
-		return nil, apperr.NotFound("client not found")
-	}
-	return paginated.First(), nil
+	return s.clientRepo.FindByID(ctx, id)
 }
 
 func (s *Service) Create(ctx context.Context, dto CreateClientDTO) (*model.Client, error) {
 	client := &model.Client{
 		Name: dto.Name,
 	}
-	if err := s.repository.Create(ctx, client); err != nil {
+	if err := s.clientRepo.Create(ctx, client); err != nil {
 		return nil, err
 	}
 	return client, nil
@@ -46,13 +36,13 @@ func (s *Service) Update(ctx context.Context, id string, dto UpdateClientDTO) er
 	if dto.Name != nil {
 		updates.Name = *dto.Name
 	}
-	return s.repository.UpdateByID(ctx, id, updates)
+	return s.clientRepo.UpdateByID(ctx, id, updates)
 }
 
 func (s *Service) DeleteByID(ctx context.Context, id string) error {
-	return s.repository.DeleteByID(ctx, id)
+	return s.clientRepo.DeleteByID(ctx, id)
 }
 
-func NewService(repository IRepository) *Service {
-	return &Service{repository: repository}
+func NewService(clientRepo repository.IClientRepository) *Service {
+	return &Service{clientRepo: clientRepo}
 }

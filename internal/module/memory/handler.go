@@ -13,7 +13,7 @@ type Handler struct {
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/memory", func(r chi.Router) {
-		r.Get("/", serve(h.findBy))
+		r.Get("/", serve(h.filterBy))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
 		r.Put("/{id}", serve(h.update))
@@ -22,8 +22,8 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 }
 
-func (h *Handler) findBy(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FindBy(r.Context())
+func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.FilterBy(r.Context())
 	if err != nil {
 		return err
 	}

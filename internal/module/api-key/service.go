@@ -4,18 +4,19 @@ import (
 	"context"
 
 	"github.com/usesnipet/snipet/internal/filter"
-	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
+	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
-	repository IRepository
+	repository repository.IApiKeyRepository
 	generator  *APIKeyGenerator
 	hasher     *KeyHasher
 }
 
-func (s *Service) FindBy(ctx context.Context) (*database.Paginated[model.APIKey], error) {
-	return s.repository.FindBy(ctx, filter.Default[model.APIKey]())
+func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.APIKey], error) {
+	return s.repository.FilterBy(ctx, filter.Default[model.APIKey]())
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.APIKey, error) {
@@ -92,7 +93,7 @@ func (s *Service) ToggleActive(ctx context.Context, id string, active bool) erro
 	return s.repository.ToggleActive(ctx, id, active)
 }
 
-func NewService(repository IRepository) *Service {
+func NewService(repository repository.IApiKeyRepository) *Service {
 	return &Service{
 		repository: repository,
 		generator:  NewAPIKeyGenerator(),

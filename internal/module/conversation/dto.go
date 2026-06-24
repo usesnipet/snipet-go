@@ -1,7 +1,18 @@
 package conversation
 
+import (
+	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/util"
+)
+
 type CreateConversationDTO struct {
-	MemoryID string         `json:"memory_id" validate:"required,uuid"`
-	BotID    string         `json:"bot_id" validate:"required,uuid"`
-	Metadata map[string]any `json:"metadata" validate:"omitempty"`
+	MemoryID string       `json:"memory_id" validate:"required,uuid"`
+	BotID    string       `json:"bot_id" validate:"required,uuid"`
+	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
+}
+
+type FindMessagesFilterDTO struct {
+	Sort filter.OrderDirection `form:"sort"`
+	Take int                   `form:"take"`
+	Skip int                   `form:"skip"`
 }

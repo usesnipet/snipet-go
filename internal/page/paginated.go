@@ -1,4 +1,4 @@
-package database
+package page
 
 type Paginated[T any] struct {
 	Data  []T   `json:"data"`

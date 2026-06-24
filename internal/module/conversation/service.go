@@ -6,40 +6,41 @@ import (
 	"github.com/google/uuid"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
-	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/module/memory"
+	"github.com/usesnipet/snipet/internal/page"
+	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
-	repository       IRepository
-	memoryRepository memory.IRepository
+	conversationRepo        repository.IConversationRepository
+	conversationMessageRepo repository.IConversationMessageRepository
+	memoryRepo              repository.IMemoryRepository
 }
 
-func (s *Service) FindBy(ctx context.Context) (*database.Paginated[model.Conversation], error) {
-	return s.repository.FindBy(ctx, filter.Default[model.Conversation]())
+func (s *Service) FindBy(ctx context.Context, clientID string) (*page.Paginated[model.Conversation], error) {
+	return s.conversationRepo.FilterInClient(ctx, clientID, filter.Default[model.Conversation]())
 }
 
-func (s *Service) FindByID(ctx context.Context, id string) (*model.Conversation, error) {
-	return s.repository.FindByID(ctx, id)
+func (s *Service) FindByID(ctx context.Context, clientID string, id string) (*model.Conversation, error) {
+	return s.conversationRepo.FindByIDInClient(ctx, clientID, id)
 }
 
 func (s *Service) Create(ctx context.Context, clientID string, dto CreateConversationDTO) (*model.Conversation, error) {
-	memoryID, err := uuid.Parse(dto.MemoryID)
+	memoryUUID, err := uuid.Parse(dto.MemoryID)
 	if err != nil {
 		return nil, apperr.BadRequest("invalid memory id")
 	}
-	botID, err := uuid.Parse(dto.BotID)
+	botUUID, err := uuid.Parse(dto.BotID)
 	if err != nil {
 		return nil, apperr.BadRequest("invalid bot id")
 	}
 
-	cID, err := uuid.Parse(clientID)
+	clientUUID, err := uuid.Parse(clientID)
 	if err != nil {
 		return nil, apperr.BadRequest("invalid client id")
 	}
 
-	memory, err := s.memoryRepository.FindByID(ctx, dto.MemoryID)
+	memory, err := s.memoryRepo.FindByID(ctx, dto.MemoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -49,24 +50,47 @@ func (s *Service) Create(ctx context.Context, clientID string, dto CreateConvers
 	}
 
 	conversation := &model.Conversation{
-		MemoryID: memoryID,
-		BotID:    botID,
+		MemoryID: memoryUUID,
+		BotID:    botUUID,
+		ClientID: clientUUID,
 		Metadata: dto.Metadata,
-		ClientID: cID,
 	}
-	if err := s.repository.Create(ctx, conversation); err != nil {
+	if err := s.conversationRepo.CreateInClient(ctx, clientID, conversation); err != nil {
 		return nil, err
 	}
 	return conversation, nil
 }
 
-func (s *Service) DeleteByID(ctx context.Context, id string) error {
-	return s.repository.DeleteByID(ctx, id)
+func (s *Service) DeleteByID(ctx context.Context, clientID string, id string) error {
+	return s.conversationRepo.DeleteInClient(ctx, clientID, id)
 }
 
-func NewService(repository IRepository, memoryRepository memory.IRepository) *Service {
+func (s *Service) FindMessages(
+	ctx context.Context,
+	clientID string,
+	conversationID string,
+	messageFilter FindMessagesFilterDTO,
+) (*page.Paginated[model.ConversationMessage], error) {
+	return s.conversationMessageRepo.FilterInConversation(
+		ctx,
+		clientID,
+		conversationID,
+		filter.New[model.ConversationMessage](
+			filter.Take(messageFilter.Take),
+			filter.Skip(messageFilter.Skip),
+			filter.OrderBy("created_at", messageFilter.Sort),
+		),
+	)
+}
+
+func NewService(
+	conversationRepo repository.IConversationRepository,
+	conversationMessageRepo repository.IConversationMessageRepository,
+	memoryRepo repository.IMemoryRepository,
+) *Service {
 	return &Service{
-		repository:       repository,
-		memoryRepository: memoryRepository,
+		conversationRepo:        conversationRepo,
+		conversationMessageRepo: conversationMessageRepo,
+		memoryRepo:              memoryRepo,
 	}
 }

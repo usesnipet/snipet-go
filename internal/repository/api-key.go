@@ -1,26 +1,25 @@
-package apikey
+package repository
 
 import (
 	"context"
 	"time"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
-	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/model"
 	"gorm.io/gorm"
 )
 
-type IRepository interface {
-	database.IRepository[model.APIKey]
+type IApiKeyRepository interface {
+	IRepository[model.APIKey]
 	UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error
 	ToggleActive(ctx context.Context, id string, active bool) error
 }
 
-type Repository struct {
-	*database.Repository[model.APIKey]
+type ApiKeyRepository struct {
+	*Repository[model.APIKey]
 }
 
-func (r *Repository) UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error {
+func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error {
 	affected, err := gorm.G[model.APIKey](r.DB).
 		Where("id = ?", id).
 		Update(ctx, "expires_at", expiresAt)
@@ -33,7 +32,7 @@ func (r *Repository) UpdateExpiration(ctx context.Context, id string, expiresAt 
 	return nil
 }
 
-func (r *Repository) ToggleActive(ctx context.Context, id string, active bool) error {
+func (r *ApiKeyRepository) ToggleActive(ctx context.Context, id string, active bool) error {
 	_, err := gorm.G[model.APIKey](r.DB).
 		Where("id = ?", id).
 		Update(ctx, "active", active)
@@ -43,8 +42,8 @@ func (r *Repository) ToggleActive(ctx context.Context, id string, active bool) e
 	return nil
 }
 
-func NewRepository(db *gorm.DB) IRepository {
-	return &Repository{
-		Repository: database.NewRepository[model.APIKey](db),
+func NewApiKeyRepository(db *gorm.DB) IApiKeyRepository {
+	return &ApiKeyRepository{
+		Repository: NewRepository[model.APIKey](db),
 	}
 }

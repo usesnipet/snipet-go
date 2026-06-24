@@ -1,20 +1,13 @@
-package database
+package repository
 
 import (
 	"context"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/page"
 	"gorm.io/gorm"
 )
-
-type IRepository[T any] interface {
-	Create(ctx context.Context, model *T) error
-	FindByID(ctx context.Context, id string) (*T, error)
-	FindBy(ctx context.Context, filter *filter.Options[T]) (*Paginated[T], error)
-	UpdateByID(ctx context.Context, id string, model *T) error
-	DeleteByID(ctx context.Context, id string) error
-}
 
 type Repository[T any] struct {
 	DB *gorm.DB
@@ -24,18 +17,21 @@ func (r *Repository[T]) Create(ctx context.Context, model *T) error {
 	return gorm.G[T](r.DB).Create(ctx, model)
 }
 
-func (r *Repository[T]) FindBy(ctx context.Context, filter *filter.Options[T]) (*Paginated[T], error) {
+func (r *Repository[T]) FilterBy(ctx context.Context, filterOptions *filter.Options[T]) (*page.Paginated[T], error) {
+	if filterOptions == nil {
+		filterOptions = filter.Default[T]()
+	}
 	total, err := gorm.G[T](r.DB).Count(ctx, "1 = 1")
 	if err != nil {
 		return nil, err
 	}
 
-	chain, err := filter.ToGorm(gorm.G[T](r.DB))
+	chain, err := filterOptions.ToGorm(gorm.G[T](r.DB))
 	if err != nil {
 		return nil, err
 	}
-	orgs, err := chain.Find(ctx)
-	return NewPaginated(orgs, total, int64(filter.Skip), int64(filter.Take)), err
+	data, err := chain.Find(ctx)
+	return page.NewPaginated(data, total, int64(filterOptions.Skip), int64(filterOptions.Take)), err
 }
 
 func (r *Repository[T]) UpdateByID(ctx context.Context, id string, model *T) error {
@@ -61,7 +57,7 @@ func (r *Repository[T]) DeleteByID(ctx context.Context, id string) error {
 }
 
 func (r *Repository[T]) FindByID(ctx context.Context, id string) (*T, error) {
-	paginated, err := r.FindBy(ctx, filter.New[T](filter.WhereEq("id", id)))
+	paginated, err := r.FilterBy(ctx, filter.New[T](filter.WhereEq("id", id)))
 	if err != nil {
 		return nil, err
 	}
