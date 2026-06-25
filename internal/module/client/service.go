@@ -2,7 +2,13 @@ package client
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"net/http"
 
+	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
@@ -21,9 +27,45 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.Client, error
 	return s.clientRepo.FindByID(ctx, id)
 }
 
+func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, error) {
+	paginated, err := s.clientRepo.FilterBy(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
+	if err != nil {
+		return nil, err
+	}
+	if paginated.IsEmpty() {
+		return nil, apperr.NotFound("client not found")
+	}
+	return paginated.First(), nil
+}
+
+func (s *Service) GenerateCode(ctx context.Context) (string, error) {
+	randomBytes := make([]byte, 8)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", fmt.Errorf("failed to generate code: %w", err)
+	}
+	code := base64.RawURLEncoding.EncodeToString(randomBytes)[:10] // first 10 characters
+
+	// check if code is already in use
+	_, err := s.FindByCode(ctx, code)
+	var notFoundError *apperr.Error
+	if errors.As(err, &notFoundError) && notFoundError.StatusCode == http.StatusNotFound {
+		return code, nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return s.GenerateCode(ctx)
+}
+
 func (s *Service) Create(ctx context.Context, dto CreateClientDTO) (*model.Client, error) {
+	code, err := s.GenerateCode(ctx)
+	if err != nil {
+		return nil, err
+	}
 	client := &model.Client{
-		Name: dto.Name,
+		Code:       code,
+		Name:       dto.Name,
+		WebhookURL: dto.WebhookURL,
 	}
 	if err := s.clientRepo.Create(ctx, client); err != nil {
 		return nil, err
@@ -35,6 +77,9 @@ func (s *Service) Update(ctx context.Context, id string, dto UpdateClientDTO) er
 	updates := &model.Client{}
 	if dto.Name != nil {
 		updates.Name = *dto.Name
+	}
+	if dto.WebhookURL != nil {
+		updates.WebhookURL = *dto.WebhookURL
 	}
 	return s.clientRepo.UpdateByID(ctx, id, updates)
 }
