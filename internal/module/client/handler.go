@@ -15,9 +15,9 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/client", func(r chi.Router) {
 		r.Get("/", serve(h.filterBy))
 		r.Post("/", serve(h.create))
-		r.Get("/{id}", serve(h.findByID))
-		r.Put("/{id}", serve(h.update))
-		r.Delete("/{id}", serve(h.deleteByID))
+		r.Get("/{code}", serve(h.findByCode))
+		r.Put("/{code}", serve(h.update))
+		r.Delete("/{code}", serve(h.delete))
 	})
 }
 
@@ -29,8 +29,8 @@ func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteJSON(w, http.StatusOK, data)
 }
 
-func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FindByID(r.Context(), chi.URLParam(r, "id"))
+func (h *Handler) findByCode(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.FindByCode(r.Context(), chi.URLParam(r, "code"))
 	if err != nil {
 		return err
 	}
@@ -54,15 +54,15 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	err := h.service.Update(r.Context(), chi.URLParam(r, "id"), dto)
+	err := h.service.UpdateByCode(r.Context(), chi.URLParam(r, "code"), dto)
 	if err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
 }
 
-func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
-	if err := h.service.DeleteByID(r.Context(), chi.URLParam(r, "id")); err != nil {
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) error {
+	if err := h.service.DeleteByCode(r.Context(), chi.URLParam(r, "code")); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)

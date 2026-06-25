@@ -23,10 +23,6 @@ func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.Client], 
 	return s.clientRepo.FilterBy(ctx, filter.Default[model.Client]())
 }
 
-func (s *Service) FindByID(ctx context.Context, id string) (*model.Client, error) {
-	return s.clientRepo.FindByID(ctx, id)
-}
-
 func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, error) {
 	paginated, err := s.clientRepo.FilterBy(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
 	if err != nil {
@@ -73,7 +69,7 @@ func (s *Service) Create(ctx context.Context, dto CreateClientDTO) (*model.Clien
 	return client, nil
 }
 
-func (s *Service) Update(ctx context.Context, id string, dto UpdateClientDTO) error {
+func (s *Service) UpdateByCode(ctx context.Context, code string, dto UpdateClientDTO) error {
 	updates := &model.Client{}
 	if dto.Name != nil {
 		updates.Name = *dto.Name
@@ -81,11 +77,11 @@ func (s *Service) Update(ctx context.Context, id string, dto UpdateClientDTO) er
 	if dto.WebhookURL != nil {
 		updates.WebhookURL = *dto.WebhookURL
 	}
-	return s.clientRepo.UpdateByID(ctx, id, updates)
+	return s.clientRepo.UpdateByCode(ctx, code, updates)
 }
 
-func (s *Service) DeleteByID(ctx context.Context, id string) error {
-	return s.clientRepo.DeleteByID(ctx, id)
+func (s *Service) DeleteByCode(ctx context.Context, code string) error {
+	return s.clientRepo.DeleteByCode(ctx, code)
 }
 
 func NewService(clientRepo repository.IClientRepository) *Service {

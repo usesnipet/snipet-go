@@ -15,6 +15,6 @@ type UpdateBotDTO struct {
 }
 
 type LinkClientToBotDTO struct {
-	ClientID string `json:"client_id" validate:"required,uuid"`
-	BotID    string `json:"bot_id" validate:"required,uuid"`
+	ClientCode string `json:"client_code" validate:"required,max=10"`
+	BotID      string `json:"bot_id" validate:"required,uuid"`
 }

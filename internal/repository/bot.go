@@ -29,6 +29,9 @@ func (r *BotRepository) LinkClientToBot(ctx context.Context, clientID, botID uui
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return apperr.Conflict("client already linked to bot")
 		}
+		if errors.Is(err, gorm.ErrForeignKeyViolated) {
+			return apperr.NotFound("client or bot not found")
+		}
 		return err
 	}
 	return nil
