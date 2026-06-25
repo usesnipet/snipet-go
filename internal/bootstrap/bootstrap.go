@@ -29,8 +29,8 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyRepo := repository.NewApiKeyRepository(db)
 	botRepo := repository.NewBotRepository(db)
 	clientRepo := repository.NewClientRepository(db)
-	conversationRepo := repository.NewConversationRepository(db)
-	conversationMessageRepo := repository.NewConversationMessageRepository(db)
+	conversationRepo := repository.NewConversationRepository(db, clientRepo)
+	conversationMessageRepo := repository.NewConversationMessageRepository(db, clientRepo)
 	memoryRepo := repository.NewMemoryRepository(db)
 
 	// service

@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 
-	"github.com/google/uuid"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
@@ -14,50 +13,59 @@ import (
 type IConversationRepository interface {
 	FilterInClient(
 		ctx context.Context,
-		clientID string,
+		clientCode string,
 		filter *filter.Options[model.Conversation],
 	) (*page.Paginated[model.Conversation], error)
 	FindByIDInClient(
 		ctx context.Context,
-		clientID string,
+		clientCode string,
 		id string,
 	) (*model.Conversation, error)
 	CreateInClient(
 		ctx context.Context,
-		clientID string,
+		clientCode string,
 		conversation *model.Conversation,
 	) error
 	DeleteInClient(
 		ctx context.Context,
-		clientID string,
+		clientCode string,
 		id string,
 	) error
 }
 
 type ConversationRepository struct {
 	*Repository[model.Conversation]
+	clientRepo IClientRepository
 }
 
 func (r *ConversationRepository) FilterInClient(
 	ctx context.Context,
-	clientID string,
+	clientCode string,
 	conversationFilter *filter.Options[model.Conversation],
 ) (*page.Paginated[model.Conversation], error) {
+	client, err := r.clientRepo.FindByCode(ctx, clientCode)
+	if err != nil {
+		return nil, err
+	}
 	return r.FilterBy(
 		ctx,
 		filter.Merge(
 			conversationFilter,
-			filter.New[model.Conversation](filter.WhereEq("client_id", clientID)),
+			filter.New[model.Conversation](filter.WhereEq("client_id", client.ID)),
 		),
 	)
 }
 
 func (r *ConversationRepository) FindByIDInClient(
 	ctx context.Context,
-	clientID string,
+	clientCode string,
 	id string,
 ) (*model.Conversation, error) {
-	paginated, err := r.FilterInClient(ctx, clientID, filter.New[model.Conversation](filter.WhereEq("id", id)))
+	paginated, err := r.FilterInClient(
+		ctx,
+		clientCode,
+		filter.New[model.Conversation](filter.WhereEq("id", id)),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -69,23 +77,27 @@ func (r *ConversationRepository) FindByIDInClient(
 
 func (r *ConversationRepository) CreateInClient(
 	ctx context.Context,
-	clientID string,
+	clientCode string,
 	conversation *model.Conversation,
 ) error {
-	var err error
-	conversation.ClientID, err = r.parseClientID(clientID)
+	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return err
 	}
+	conversation.ClientID = client.ID
 	return r.Create(ctx, conversation)
 }
 
 func (r *ConversationRepository) DeleteInClient(
 	ctx context.Context,
-	clientID string,
+	clientCode string,
 	id string,
 ) error {
-	affected, err := gorm.G[model.Conversation](r.DB).Where("client_id = ? AND id = ?", clientID, id).Delete(ctx)
+	client, err := r.clientRepo.FindByCode(ctx, clientCode)
+	if err != nil {
+		return err
+	}
+	affected, err := gorm.G[model.Conversation](r.DB).Where("client_id = ? AND id = ?", client.ID, id).Delete(ctx)
 	if err != nil {
 		return err
 	}
@@ -95,16 +107,9 @@ func (r *ConversationRepository) DeleteInClient(
 	return nil
 }
 
-func (r ConversationRepository) parseClientID(clientID string) (uuid.UUID, error) {
-	id, err := uuid.Parse(clientID)
-	if err != nil {
-		return uuid.Nil, apperr.BadRequest("invalid client id")
-	}
-	return id, nil
-}
-
-func NewConversationRepository(db *gorm.DB) IConversationRepository {
+func NewConversationRepository(db *gorm.DB, clientRepo IClientRepository) IConversationRepository {
 	return &ConversationRepository{
 		Repository: NewRepository[model.Conversation](db),
+		clientRepo: clientRepo,
 	}
 }

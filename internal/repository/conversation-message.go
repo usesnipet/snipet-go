@@ -13,7 +13,7 @@ import (
 type IConversationMessageRepository interface {
 	FilterInConversation(
 		ctx context.Context,
-		clientID string,
+		clientCode string,
 		conversationID string,
 		filter *filter.Options[model.ConversationMessage],
 	) (*page.Paginated[model.ConversationMessage], error)
@@ -21,21 +21,27 @@ type IConversationMessageRepository interface {
 
 type ConversationMessageRepository struct {
 	*Repository[model.ConversationMessage]
+	clientRepo IClientRepository
 }
 
 func (r *ConversationMessageRepository) FilterInConversation(
 	ctx context.Context,
-	clientID string,
+	clientCode string,
 	conversationID string,
 	filterOptions *filter.Options[model.ConversationMessage],
 ) (*page.Paginated[model.ConversationMessage], error) {
+	client, err := r.clientRepo.FindByCode(ctx, clientCode)
+	if err != nil {
+		return nil, err
+	}
+
 	if filterOptions == nil {
 		filterOptions = filter.Default[model.ConversationMessage]()
 	}
 	total, err := gorm.G[model.ConversationMessage](r.DB).
 		Joins(clause.LeftJoin.Association("conversations"), nil).
 		Where("conversation_id = ?", conversationID).
-		Where("conversations.client_id = ?", clientID).Count(ctx, "1 = 1")
+		Where("conversations.client_id = ?", client.ID).Count(ctx, "1 = 1")
 
 	if err != nil {
 		return nil, err
@@ -48,13 +54,14 @@ func (r *ConversationMessageRepository) FilterInConversation(
 
 	data, err := chain.Joins(clause.LeftJoin.Association("conversations"), nil).
 		Where("conversation_id = ?", conversationID).
-		Where("conversations.client_id = ?", clientID).Find(ctx)
+		Where("conversations.client_id = ?", client.ID).Find(ctx)
 
 	return page.NewPaginated(data, total, int64(filterOptions.Skip), int64(filterOptions.Take)), err
 }
 
-func NewConversationMessageRepository(db *gorm.DB) IConversationMessageRepository {
+func NewConversationMessageRepository(db *gorm.DB, clientRepo IClientRepository) IConversationMessageRepository {
 	return &ConversationMessageRepository{
 		Repository: NewRepository[model.ConversationMessage](db),
+		clientRepo: clientRepo,
 	}
 }

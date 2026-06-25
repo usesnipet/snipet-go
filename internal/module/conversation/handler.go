@@ -14,26 +14,23 @@ type Handler struct {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/client/{client_id}/conversation", func(r chi.Router) {
-		// r.Use(ClientExistsMiddleware(h.clientService))
-
+	r.Route("/client/{client_code}/conversation", func(r chi.Router) {
 		r.Get("/", serve(h.findBy))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
 		r.Delete("/{id}", serve(h.deleteByID))
-
 		r.Get("/{id}/messages", serve(h.findMessages))
 	})
 }
 
 func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
-	clientID := chi.URLParam(r, "client_id")
+	clientCode := chi.URLParam(r, "client_code")
 	conversationID := chi.URLParam(r, "id")
 	var filter FindMessagesFilterDTO
 	if err := api.ParseQuery(r, &filter); err != nil {
 		return err
 	}
-	data, err := h.service.FindMessages(r.Context(), clientID, conversationID, filter)
+	data, err := h.service.FindMessages(r.Context(), clientCode, conversationID, filter)
 	if err != nil {
 		return err
 	}
@@ -41,9 +38,9 @@ func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findBy(w http.ResponseWriter, r *http.Request) error {
-	clientID := chi.URLParam(r, "client_id")
+	clientCode := chi.URLParam(r, "client_code")
 
-	data, err := h.service.FindBy(r.Context(), clientID)
+	data, err := h.service.FindBy(r.Context(), clientCode)
 	if err != nil {
 		return err
 	}
@@ -51,9 +48,9 @@ func (h *Handler) findBy(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
-	clientID := chi.URLParam(r, "client_id")
+	clientCode := chi.URLParam(r, "client_code")
 	conversationID := chi.URLParam(r, "id")
-	data, err := h.service.FindByID(r.Context(), clientID, conversationID)
+	data, err := h.service.FindByID(r.Context(), clientCode, conversationID)
 	if err != nil {
 		return err
 	}
@@ -65,7 +62,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	data, err := h.service.Create(r.Context(), chi.URLParam(r, "client_id"), dto)
+	data, err := h.service.Create(r.Context(), chi.URLParam(r, "client_code"), dto)
 	if err != nil {
 		return err
 	}
@@ -73,9 +70,9 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
-	clientID := chi.URLParam(r, "client_id")
+	clientCode := chi.URLParam(r, "client_code")
 	conversationID := chi.URLParam(r, "id")
-	if err := h.service.DeleteByID(r.Context(), clientID, conversationID); err != nil {
+	if err := h.service.DeleteByID(r.Context(), clientCode, conversationID); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)

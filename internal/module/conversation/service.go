@@ -17,15 +17,15 @@ type Service struct {
 	memoryRepo              repository.IMemoryRepository
 }
 
-func (s *Service) FindBy(ctx context.Context, clientID string) (*page.Paginated[model.Conversation], error) {
-	return s.conversationRepo.FilterInClient(ctx, clientID, filter.Default[model.Conversation]())
+func (s *Service) FindBy(ctx context.Context, clientCode string) (*page.Paginated[model.Conversation], error) {
+	return s.conversationRepo.FilterInClient(ctx, clientCode, filter.Default[model.Conversation]())
 }
 
-func (s *Service) FindByID(ctx context.Context, clientID string, id string) (*model.Conversation, error) {
-	return s.conversationRepo.FindByIDInClient(ctx, clientID, id)
+func (s *Service) FindByID(ctx context.Context, clientCode string, id string) (*model.Conversation, error) {
+	return s.conversationRepo.FindByIDInClient(ctx, clientCode, id)
 }
 
-func (s *Service) Create(ctx context.Context, clientID string, dto CreateConversationDTO) (*model.Conversation, error) {
+func (s *Service) Create(ctx context.Context, clientCode string, dto CreateConversationDTO) (*model.Conversation, error) {
 	memoryUUID, err := uuid.Parse(dto.MemoryID)
 	if err != nil {
 		return nil, apperr.BadRequest("invalid memory id")
@@ -33,11 +33,6 @@ func (s *Service) Create(ctx context.Context, clientID string, dto CreateConvers
 	botUUID, err := uuid.Parse(dto.BotID)
 	if err != nil {
 		return nil, apperr.BadRequest("invalid bot id")
-	}
-
-	clientUUID, err := uuid.Parse(clientID)
-	if err != nil {
-		return nil, apperr.BadRequest("invalid client id")
 	}
 
 	memory, err := s.memoryRepo.FindByID(ctx, dto.MemoryID)
@@ -52,28 +47,27 @@ func (s *Service) Create(ctx context.Context, clientID string, dto CreateConvers
 	conversation := &model.Conversation{
 		MemoryID: memoryUUID,
 		BotID:    botUUID,
-		ClientID: clientUUID,
 		Metadata: dto.Metadata,
 	}
-	if err := s.conversationRepo.CreateInClient(ctx, clientID, conversation); err != nil {
+	if err := s.conversationRepo.CreateInClient(ctx, clientCode, conversation); err != nil {
 		return nil, err
 	}
 	return conversation, nil
 }
 
-func (s *Service) DeleteByID(ctx context.Context, clientID string, id string) error {
-	return s.conversationRepo.DeleteInClient(ctx, clientID, id)
+func (s *Service) DeleteByID(ctx context.Context, clientCode string, id string) error {
+	return s.conversationRepo.DeleteInClient(ctx, clientCode, id)
 }
 
 func (s *Service) FindMessages(
 	ctx context.Context,
-	clientID string,
+	clientCode string,
 	conversationID string,
 	messageFilter FindMessagesFilterDTO,
 ) (*page.Paginated[model.ConversationMessage], error) {
 	return s.conversationMessageRepo.FilterInConversation(
 		ctx,
-		clientID,
+		clientCode,
 		conversationID,
 		filter.New[model.ConversationMessage](
 			filter.Take(messageFilter.Take),
