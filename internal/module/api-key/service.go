@@ -5,6 +5,7 @@ import (
 	"time"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
+	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
@@ -15,16 +16,21 @@ import (
 type Service struct {
 	logger     *logger.Logger
 	repository repository.IApiKeyRepository
-	generator  *APIKeyGenerator
-	hasher     *KeyHasher
+	generator  *auth.APIKeyGenerator
+	hasher     *auth.KeyHasher
 }
 
-func NewService(logger *logger.Logger, repository repository.IApiKeyRepository) *Service {
+func NewService(
+	logger *logger.Logger,
+	repository repository.IApiKeyRepository,
+	generator *auth.APIKeyGenerator,
+	hasher *auth.KeyHasher,
+) *Service {
 	return &Service{
 		logger:     logger,
 		repository: repository,
-		generator:  NewAPIKeyGenerator(),
-		hasher:     NewKeyHasher(),
+		generator:  generator,
+		hasher:     hasher,
 	}
 }
 
@@ -45,7 +51,7 @@ func (s *Service) Init(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) error {
+func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) (*model.APIKey, error) {
 	keyID := s.generator.GetKeyID(apiKey)
 	paginatedApiKeys, err := s.repository.FilterBy(
 		ctx,
@@ -54,25 +60,25 @@ func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) error {
 		),
 	)
 	if err != nil {
-		return apperr.Unauthorized("invalid api key")
+		return nil, apperr.Unauthorized("invalid api key")
 	}
 	if paginatedApiKeys.IsEmpty() {
-		return apperr.NotFound("api key not found")
+		return nil, apperr.NotFound("api key not found")
 	}
 
 	key := paginatedApiKeys.First()
 	if !key.Active {
-		return apperr.Forbidden("api key is disabled")
+		return nil, apperr.Forbidden("api key is disabled")
 	}
 	if key.ExpiresAt != nil && key.ExpiresAt.Before(time.Now()) {
-		return apperr.Forbidden("api key is expired")
+		return nil, apperr.Forbidden("api key is expired")
 	}
 
 	valid, err := s.hasher.Verify(apiKey, key.Key)
 	if err != nil || !valid {
-		return apperr.Unauthorized("invalid api key")
+		return nil, apperr.Unauthorized("invalid api key")
 	}
-	return nil
+	return key, nil
 }
 
 func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.APIKey], error) {

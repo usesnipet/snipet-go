@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/config"
 	"github.com/usesnipet/snipet/internal/api"
+	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/logger"
@@ -38,7 +39,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	memoryRepo := repository.NewMemoryRepository(db)
 
 	// service
-	apiKeyService := apikey.NewService(logger, apiKeyRepo)
+	apiKeyGenerator := auth.NewAPIKeyGenerator()
+	apiKeyHasher := auth.NewKeyHasher()
+	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 	apiKeyService.Init(context.Background())
 	botService := bot.NewService(botRepo, clientRepo)
 	clientService := client.NewService(clientRepo)
