@@ -59,9 +59,9 @@ func (s *Service) Create(ctx context.Context, dto CreateClientDTO) (*model.Clien
 		return nil, err
 	}
 	client := &model.Client{
-		Code:       code,
-		Name:       dto.Name,
-		WebhookURL: dto.WebhookURL,
+		Code:   code,
+		Name:   dto.Name,
+		Config: dto.Config,
 	}
 	if err := s.clientRepo.Create(ctx, client); err != nil {
 		return nil, err
@@ -74,8 +74,8 @@ func (s *Service) UpdateByCode(ctx context.Context, code string, dto UpdateClien
 	if dto.Name != nil {
 		updates.Name = *dto.Name
 	}
-	if dto.WebhookURL != nil {
-		updates.WebhookURL = *dto.WebhookURL
+	if dto.Config != nil {
+		updates.Config = *dto.Config
 	}
 	return s.clientRepo.UpdateByCode(ctx, code, updates)
 }

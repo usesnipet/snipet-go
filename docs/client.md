@@ -15,3 +15,9 @@ O cliente é o aplicativo que irá interagir com o bot. Ele pode ser um aplicati
 3. A API do Snipet vai gerar um JWT para o usuario
 4. O JWT é retornado
 5. No frontend do app cliente, o JWT é usado para fazer as requisições para a API do Snipet
+
+
+### Anonymous User
+1. O usuario pode ser anonimo, ou seja, não precisa ser autenticado
+2. É feita uma requisição para a API do Snipet para criar um usuario anonimo
+3. A API do Snipet vai gerar um JWT para o usuario anonimo
