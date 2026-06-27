@@ -72,10 +72,10 @@ func (r *UserRepository) FindByExternalIDInClient(
 func (r *UserRepository) FilterInClient(
 	ctx context.Context,
 	clientCode string,
-	cUserFilter *filter.Options[model.User],
+	userFilter *filter.Options[model.User],
 ) (*page.Paginated[model.User], error) {
-	if cUserFilter == nil {
-		cUserFilter = filter.Default[model.User]()
+	if userFilter == nil {
+		userFilter = filter.Default[model.User]()
 	}
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
@@ -89,7 +89,7 @@ func (r *UserRepository) FilterInClient(
 		return nil, err
 	}
 
-	chain, err := cUserFilter.ToGorm(gorm.G[model.User](r.DB))
+	chain, err := userFilter.ToGorm(gorm.G[model.User](r.DB))
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (r *UserRepository) FilterInClient(
 	data, err := chain.Joins(clause.LeftJoin.Association("client_to_users"), nil).
 		Where("client_to_users.client_id = ?", client.ID).Find(ctx)
 
-	return page.NewPaginated(data, total, int64(cUserFilter.Skip), int64(cUserFilter.Take)), err
+	return page.NewPaginated(data, total, int64(userFilter.Skip), int64(userFilter.Take)), err
 }
 
 func (r *UserRepository) FindByIDInClient(

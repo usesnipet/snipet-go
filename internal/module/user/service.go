@@ -12,12 +12,12 @@ import (
 )
 
 type Service struct {
-	cUserRepo  repository.IUserRepository
+	userRepo   repository.IUserRepository
 	clientRepo repository.IClientRepository
 }
 
-func NewService(cUserRepo repository.IUserRepository, clientRepo repository.IClientRepository) *Service {
-	return &Service{cUserRepo: cUserRepo, clientRepo: clientRepo}
+func NewService(userRepo repository.IUserRepository, clientRepo repository.IClientRepository) *Service {
+	return &Service{userRepo: userRepo, clientRepo: clientRepo}
 }
 
 func (s *Service) generateAnonymousName() string {
@@ -29,27 +29,27 @@ func (s *Service) CreateAnonymous(ctx context.Context, clientCode string, dto Cr
 	if dto.Name != nil {
 		name = *dto.Name
 	}
-	cUser := &model.User{
+	user := &model.User{
 		Name:     name,
 		Metadata: dto.Metadata,
 	}
-	if err := s.cUserRepo.CreateInClient(ctx, clientCode, cUser, nil); err != nil {
+	if err := s.userRepo.CreateInClient(ctx, clientCode, user, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *Service) CreateAuthenticated(ctx context.Context, clientCode string, dto CreateAuthenticatedClientUserDTO) error {
-	cUser := &model.User{
+	user := &model.User{
 		Name:     dto.Name,
 		Metadata: dto.Metadata,
 	}
-	if err := s.cUserRepo.CreateInClient(ctx, clientCode, cUser, &dto.ExternalID); err != nil {
+	if err := s.userRepo.CreateInClient(ctx, clientCode, user, &dto.ExternalID); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *Service) FilterInClient(ctx context.Context, clientCode string) (*page.Paginated[model.User], error) {
-	return s.cUserRepo.FilterInClient(ctx, clientCode, filter.Default[model.User]())
+	return s.userRepo.FilterInClient(ctx, clientCode, filter.Default[model.User]())
 }

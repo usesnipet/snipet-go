@@ -58,6 +58,14 @@ func (s *Service) Create(ctx context.Context, dto CreateClientDTO) (*model.Clien
 	if err != nil {
 		return nil, err
 	}
+
+	if dto.Config.Webhook.URL != "" {
+		dto.Config.Webhook.Enabled = true
+	}
+	if dto.Config.OIDC.Issuer != "" || dto.Config.OIDC.Audience != "" {
+		dto.Config.OIDC.Enabled = true
+	}
+
 	client := &model.Client{
 		Code:   code,
 		Name:   dto.Name,

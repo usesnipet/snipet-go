@@ -6,9 +6,9 @@ import (
 
 type ClientConfig struct {
 	OIDC struct {
-		Issuer   *string `json:"issuer" validate:"omitempty,url"`
-		Audience *string `json:"audience" validate:"omitempty,url"`
-		Enabled  bool    `json:"enabled"`
+		Issuer   string `json:"issuer" validate:"omitempty,url"`
+		Audience string `json:"audience" validate:"omitempty,url"`
+		Enabled  bool   `json:"enabled"`
 	} `json:"oidc"`
 	Webhook struct {
 		URL     string `json:"url" validate:"omitempty,url"`

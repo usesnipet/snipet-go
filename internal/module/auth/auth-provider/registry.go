@@ -48,7 +48,7 @@ func (r *Registry) Authenticate(
 	}
 
 	if identity.ExternalID == "" {
-		return nil, apperr.BadRequest("client authentication response missing subject")
+		return nil, apperr.BadRequest("client authentication response missing external id")
 	}
 
 	identity.Provider = providerName

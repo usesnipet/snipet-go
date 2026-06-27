@@ -74,8 +74,8 @@ func (p *OIDCProvider) Authenticate(
 	}
 
 	issuer := unverified.Issuer
-	if clientConfig.OIDC.Issuer != nil {
-		issuer = *clientConfig.OIDC.Issuer
+	if clientConfig.OIDC.Issuer != "" {
+		issuer = clientConfig.OIDC.Issuer
 	}
 
 	if issuer == "" {
@@ -89,8 +89,8 @@ func (p *OIDCProvider) Authenticate(
 
 	config := &oidc.Config{}
 
-	if clientConfig.OIDC.Audience != nil {
-		config.ClientID = *clientConfig.OIDC.Audience
+	if clientConfig.OIDC.Audience != "" {
+		config.ClientID = clientConfig.OIDC.Audience
 	} else {
 		config.SkipClientIDCheck = true
 	}

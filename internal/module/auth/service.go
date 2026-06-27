@@ -12,7 +12,7 @@ import (
 type Service struct {
 	registry   *auth_provider.Registry
 	clientRepo repository.IClientRepository
-	cUserRepo  repository.IUserRepository
+	userRepo   repository.IUserRepository
 	jwtService *auth.JWTService
 }
 
@@ -21,7 +21,7 @@ func NewService(registry *auth_provider.Registry, clientRepo repository.IClientR
 }
 
 func (s *Service) generateToken(ctx context.Context, clientCode string, externalID string) (string, error) {
-	user, err := s.cUserRepo.FindByExternalIDInClient(ctx, clientCode, externalID)
+	user, err := s.userRepo.FindByExternalIDInClient(ctx, clientCode, externalID)
 	if err != nil {
 		return "", err
 	}
