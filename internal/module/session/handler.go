@@ -26,14 +26,20 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 }
 
+func (h *Handler) clientCode(r *http.Request) string {
+	return chi.URLParam(r, "client_code")
+}
+
+func (h *Handler) sessionID(r *http.Request) string {
+	return chi.URLParam(r, "id")
+}
+
 func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
-	clientCode := chi.URLParam(r, "client_code")
-	sessionID := chi.URLParam(r, "id")
-	var filter FindMessagesFilterDTO
-	if err := api.ParseQuery(r, &filter); err != nil {
+	query := &FindMessagesFilterDTO{}
+	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}
-	data, err := h.service.FindMessages(r.Context(), clientCode, sessionID, filter)
+	data, err := h.service.FindMessages(r.Context(), h.clientCode(r), h.sessionID(r), query.ToFilter())
 	if err != nil {
 		return err
 	}
@@ -41,9 +47,7 @@ func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findBy(w http.ResponseWriter, r *http.Request) error {
-	clientCode := chi.URLParam(r, "client_code")
-
-	data, err := h.service.FindBy(r.Context(), clientCode)
+	data, err := h.service.FindBy(r.Context(), h.clientCode(r))
 	if err != nil {
 		return err
 	}
@@ -51,9 +55,7 @@ func (h *Handler) findBy(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
-	clientCode := chi.URLParam(r, "client_code")
-	sessionID := chi.URLParam(r, "id")
-	data, err := h.service.FindByID(r.Context(), clientCode, sessionID)
+	data, err := h.service.FindByID(r.Context(), h.clientCode(r), h.sessionID(r))
 	if err != nil {
 		return err
 	}
@@ -65,7 +67,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	data, err := h.service.Create(r.Context(), chi.URLParam(r, "client_code"), dto)
+	data, err := h.service.Create(r.Context(), h.clientCode(r), dto)
 	if err != nil {
 		return err
 	}
@@ -73,9 +75,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
-	clientCode := chi.URLParam(r, "client_code")
-	sessionID := chi.URLParam(r, "id")
-	if err := h.service.DeleteByID(r.Context(), clientCode, sessionID); err != nil {
+	if err := h.service.DeleteByID(r.Context(), h.clientCode(r), h.sessionID(r)); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)

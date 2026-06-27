@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -12,7 +13,15 @@ type CreateSessionDTO struct {
 }
 
 type FindMessagesFilterDTO struct {
-	Sort filter.OrderDirection `form:"sort"`
-	Take int                   `form:"take"`
-	Skip int                   `form:"skip"`
+	Sort *filter.OrderDirection `form:"sort" validate:"omitempty,oneof=asc desc"`
+	Take *int                   `form:"take" validate:"omitempty,min=1"`
+	Skip *int                   `form:"skip" validate:"omitempty,min=0"`
+}
+
+func (dto *FindMessagesFilterDTO) ToFilter() *filter.Options[model.SessionMessage] {
+	return filter.New[model.SessionMessage](
+		filter.PtrOrderBy("created_at", dto.Sort),
+		filter.PtrTake(dto.Take),
+		filter.PtrSkip(dto.Skip),
+	)
 }

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -42,7 +43,7 @@ func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string,
 		return "", UserClaims{}, err
 	}
 
-	return tokenString, claims, nil
+	return fmt.Sprintf("Bearer %s", tokenString), claims, nil
 }
 
 func (s *JWTService) VerifyToken(tokenString string) (*UserClaims, error) {

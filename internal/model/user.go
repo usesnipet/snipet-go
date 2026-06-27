@@ -8,11 +8,10 @@ import (
 type User struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	Name    string  `gorm:"type:varchar(255);not null" json:"name"`
-	Picture *string `gorm:"type:text" json:"picture"`
-	Email   *string `gorm:"type:text" json:"email"`
-
-	Metadata util.JSONMap `gorm:"type:jsonb;not null;serializer:json" json:"metadata"`
+	Name     string       `gorm:"type:varchar(255);not null" json:"name"`
+	Picture  *string      `gorm:"type:text" json:"picture"`
+	Email    *string      `gorm:"type:text" json:"email"`
+	Metadata util.JSONMap `gorm:"type:jsonb;not null" json:"metadata"`
 
 	SessionMessages []SessionMessage `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	UserToSessions  []UserToSession  `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
@@ -32,6 +31,6 @@ type UserToSession struct {
 	UserID    uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
 	SessionID uuid.UUID `gorm:"type:uuid;not null;index" json:"session_id"`
 
-	CUser   User    `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	User    User    `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Session Session `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }

@@ -22,6 +22,9 @@ func ToJSONMap[T any](v T) (JSONMap, error) {
 type JSONMap map[string]any
 
 func (j JSONMap) Value() (driver.Value, error) {
+	if j == nil {
+		return []byte("{}"), nil
+	}
 	return json.Marshal(j)
 }
 

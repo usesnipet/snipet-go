@@ -40,7 +40,7 @@ type UserRepository struct {
 	clientRepo IClientRepository
 }
 
-func NewCUserRepository(db *gorm.DB, clientRepo IClientRepository) IUserRepository {
+func NewUserRepository(db *gorm.DB, clientRepo IClientRepository) IUserRepository {
 	return &UserRepository{
 		Repository: NewRepository[model.User](db),
 		clientRepo: clientRepo,
@@ -129,12 +129,14 @@ func (r *UserRepository) CreateInClient(
 	if err != nil {
 		return err
 	}
-	user.ClientToUsers = []model.ClientToUser{
-		{
+	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := gorm.G[model.User](tx).Create(ctx, user); err != nil {
+			return err
+		}
+		return gorm.G[model.ClientToUser](tx).Create(ctx, &model.ClientToUser{
 			ClientID:   client.ID,
 			UserID:     user.ID,
 			ExternalID: externalID,
-		},
-	}
-	return r.Create(ctx, user)
+		})
+	})
 }

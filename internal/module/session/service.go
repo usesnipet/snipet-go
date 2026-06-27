@@ -63,17 +63,13 @@ func (s *Service) FindMessages(
 	ctx context.Context,
 	clientCode string,
 	sessionID string,
-	messageFilter FindMessagesFilterDTO,
+	filter *filter.Options[model.SessionMessage],
 ) (*page.Paginated[model.SessionMessage], error) {
 	return s.sessionMessageRepo.FilterInSession(
 		ctx,
 		clientCode,
 		sessionID,
-		filter.New[model.SessionMessage](
-			filter.Take(messageFilter.Take),
-			filter.Skip(messageFilter.Skip),
-			filter.OrderBy("created_at", messageFilter.Sort),
-		),
+		filter,
 	)
 }
 

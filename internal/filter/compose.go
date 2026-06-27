@@ -45,10 +45,23 @@ func Take(n int) Option {
 		s.take = n
 	}
 }
-
+func PtrTake(n *int) Option {
+	return func(s *state) {
+		if n != nil {
+			s.take = *n
+		}
+	}
+}
 func Skip(n int) Option {
 	return func(s *state) {
 		s.skip = n
+	}
+}
+func PtrSkip(n *int) Option {
+	return func(s *state) {
+		if n != nil {
+			s.skip = *n
+		}
 	}
 }
 
@@ -57,13 +70,34 @@ func OrderBy(field string, direction OrderDirection) Option {
 		s.order.Fields[field] = direction
 	}
 }
+func PtrOrderBy(field string, direction *OrderDirection) Option {
+	return func(s *state) {
+		if direction != nil {
+			s.order.Fields[field] = *direction
+		}
+	}
+}
 
 func OrderAsc(field string) Option {
 	return OrderBy(field, OrderDirectionAsc)
 }
+func PtrOrderAsc(field *string) Option {
+	return func(s *state) {
+		if field != nil {
+			OrderBy(*field, OrderDirectionAsc)
+		}
+	}
+}
 
 func OrderDesc(field string) Option {
 	return OrderBy(field, OrderDirectionDesc)
+}
+func PtrOrderDesc(field *string) Option {
+	return func(s *state) {
+		if field != nil {
+			OrderBy(*field, OrderDirectionDesc)
+		}
+	}
 }
 
 func Where(field string, operator WhereOperator, values ...any) Option {

@@ -12,12 +12,11 @@ import (
 )
 
 type Service struct {
-	userRepo   repository.IUserRepository
-	clientRepo repository.IClientRepository
+	userRepo repository.IUserRepository
 }
 
-func NewService(userRepo repository.IUserRepository, clientRepo repository.IClientRepository) *Service {
-	return &Service{userRepo: userRepo, clientRepo: clientRepo}
+func NewService(userRepo repository.IUserRepository) *Service {
+	return &Service{userRepo: userRepo}
 }
 
 func (s *Service) generateAnonymousName() string {
@@ -50,6 +49,6 @@ func (s *Service) CreateAuthenticated(ctx context.Context, clientCode string, dt
 	return nil
 }
 
-func (s *Service) FilterInClient(ctx context.Context, clientCode string) (*page.Paginated[model.User], error) {
-	return s.userRepo.FilterInClient(ctx, clientCode, filter.Default[model.User]())
+func (s *Service) FilterInClient(ctx context.Context, clientCode string, filter *filter.Options[model.User]) (*page.Paginated[model.User], error) {
+	return s.userRepo.FilterInClient(ctx, clientCode, filter)
 }
