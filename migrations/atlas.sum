@@ -1,7 +1,2 @@
-h1:/JWvUta8WBvkdCHTooi1EBudSbIsa7sww9WSuNhfHZ0=
-20260623182516_initial.up.sql h1:Dgri1omfjaKzk5lR/yq/N5aNfcc7n4WKzwVUyypQjGo=
-20260623232704_client_bots_unique.up.sql h1:LhZHW4YexhoyKlnd0v1V5yLZvKSvqhDYAdBe0kVu6E4=
-20260624004117_add_conversation_metadata_and_client_ref.up.sql h1:2j9qOLdHGr37eamnOKczESmysYpORBt543HVANrkfgM=
-20260624125250_add_api_keys.up.sql h1:+msyMzeZv+MXBwB7fP1iE3HX2girspYtVhJpY7Rg14E=
-20260624234253_add_client_code_and_webhook.up.sql h1:62LAndQwxGZWVZSLIz45D+PSNXxMQOg1VudkhqhcT9o=
-20260625102623_client_user.up.sql h1:HaoeUh1Rg5TdlbkmCCW4cfGev7gz+Ne+y2bF3HrL0is=
+h1:IDeigWvfn0EdnYinYUX00htuHqJmYgOL4QPKD0H01hc=
+20260627012522_initial.up.sql h1:XAi8ZpM9JuWosfPCDGImUv/Q6rTXAl4ZNMd1E2/wmRU=

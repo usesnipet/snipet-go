@@ -18,11 +18,11 @@ type SessionMessagePart struct {
 type SessionMessage struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	CUserID   uuid.UUID            `gorm:"type:uuid;not null;index" json:"c_user_id"`
+	UserID    uuid.UUID            `gorm:"type:uuid;not null;index" json:"c_user_id"`
 	SessionID uuid.UUID            `gorm:"type:uuid;not null;index" json:"session_id"`
 	Role      string               `gorm:"type:varchar(255);not null" json:"role"`
 	Parts     []SessionMessagePart `gorm:"type:jsonb;not null" json:"parts"`
 
-	CUser   CUser   `gorm:"foreignKey:CUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	User    User    `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Session Session `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -14,17 +13,14 @@ func (a *Api) Serve(handler HandlerFunc) http.HandlerFunc {
 		if err := handler(w, r); err != nil {
 			var appErr *apperr.Error
 			if errors.As(err, &appErr) {
-				w.WriteHeader(appErr.StatusCode)
-				json.NewEncoder(w).Encode(appErr)
+				WriteAppError(w, appErr)
 				return
 			} else {
 				if err, ok := database.HandleDBError(err); ok {
-					w.WriteHeader(err.StatusCode)
-					json.NewEncoder(w).Encode(err)
+					WriteAppError(w, err)
 					return
 				}
-				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(apperr.InternalServerError("internal server error"))
+				WriteError(w, http.StatusInternalServerError, err)
 				return
 			}
 		}

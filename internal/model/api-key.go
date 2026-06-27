@@ -10,7 +10,7 @@ type APIKey struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
 	Name   string `gorm:"type:varchar(255);not null" json:"name"`
-	KeyID  string `gorm:"type:varchar(255);not null" json:"key_id"`
+	KeyID  string `gorm:"type:varchar(255);not null;unique" json:"key_id"`
 	Key    string `gorm:"type:text;not null;unique" json:"-"`
 	Active bool   `gorm:"type:boolean;not null;default:true" json:"active"`
 

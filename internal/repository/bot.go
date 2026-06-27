@@ -12,19 +12,19 @@ import (
 
 type IBotRepository interface {
 	IRepository[model.Bot]
-	LinkClientToBot(ctx context.Context, clientID, botID uuid.UUID) error
+	LinkBotToClient(ctx context.Context, clientID, botID uuid.UUID) error
 }
 
 type BotRepository struct {
 	*Repository[model.Bot]
 }
 
-func (r *BotRepository) LinkClientToBot(ctx context.Context, clientID, botID uuid.UUID) error {
-	clientBot := &model.ClientBot{
+func (r *BotRepository) LinkBotToClient(ctx context.Context, clientID, botID uuid.UUID) error {
+	clientBot := &model.ClientToBot{
 		ClientID: clientID,
 		BotID:    botID,
 	}
-	err := gorm.G[model.ClientBot](r.DB).Create(ctx, clientBot)
+	err := gorm.G[model.ClientToBot](r.DB).Create(ctx, clientBot)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return apperr.Conflict("client already linked to bot")

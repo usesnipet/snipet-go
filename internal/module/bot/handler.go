@@ -8,11 +8,23 @@ import (
 )
 
 type Handler struct {
-	service *Service
+	service          *Service
+	apiKeyMiddleware api.MiddlewareFunc
+}
+
+func NewHandler(
+	service *Service,
+	apiKeyMiddleware api.MiddlewareFunc,
+) api.Handler {
+	return &Handler{
+		service:          service,
+		apiKeyMiddleware: apiKeyMiddleware,
+	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/bot", func(r chi.Router) {
+		r.Use(h.apiKeyMiddleware)
 		r.Get("/", serve(h.filterBy))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
@@ -75,8 +87,4 @@ func (h *Handler) linkClient(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return h.service.LinkClientToBot(r.Context(), dto)
-}
-
-func NewHandler(service *Service) api.Handler {
-	return &Handler{service: service}
 }

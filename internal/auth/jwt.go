@@ -8,7 +8,7 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 )
 
-type CUserClaims struct {
+type UserClaims struct {
 	jwt.RegisteredClaims
 
 	ClientCode string `json:"client_code"`
@@ -22,15 +22,12 @@ func NewJWTService(config config.AuthConfig) *JWTService {
 	return &JWTService{config: config}
 }
 
-func (s *JWTService) GenerateToken(
-	clientCode string,
-	cUser *model.CUser,
-) (string, CUserClaims, error) {
-	claims := CUserClaims{
+func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string, UserClaims, error) {
+	claims := UserClaims{
 		ClientCode: clientCode,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.config.JWTIssuer,
-			Subject:   cUser.ID.String(),
+			Subject:   user.ID.String(),
 			Audience:  jwt.ClaimStrings{s.config.JWTAudience},
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
@@ -42,18 +39,18 @@ func (s *JWTService) GenerateToken(
 
 	tokenString, err := token.SignedString([]byte(s.config.JWTSecret))
 	if err != nil {
-		return "", CUserClaims{}, err
+		return "", UserClaims{}, err
 	}
 
 	return tokenString, claims, nil
 }
 
-func (s *JWTService) VerifyToken(tokenString string) (*CUserClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &CUserClaims{}, func(token *jwt.Token) (any, error) {
+func (s *JWTService) VerifyToken(tokenString string) (*UserClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		return []byte(s.config.JWTSecret), nil
 	})
 	if err != nil {
-		return &CUserClaims{}, err
+		return &UserClaims{}, err
 	}
-	return token.Claims.(*CUserClaims), nil
+	return token.Claims.(*UserClaims), nil
 }

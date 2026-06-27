@@ -1,4 +1,4 @@
-package c_user
+package user
 
 import (
 	"context"
@@ -12,11 +12,11 @@ import (
 )
 
 type Service struct {
-	cUserRepo  repository.ICUserRepository
+	cUserRepo  repository.IUserRepository
 	clientRepo repository.IClientRepository
 }
 
-func NewService(cUserRepo repository.ICUserRepository, clientRepo repository.IClientRepository) *Service {
+func NewService(cUserRepo repository.IUserRepository, clientRepo repository.IClientRepository) *Service {
 	return &Service{cUserRepo: cUserRepo, clientRepo: clientRepo}
 }
 
@@ -29,7 +29,7 @@ func (s *Service) CreateAnonymous(ctx context.Context, clientCode string, dto Cr
 	if dto.Name != nil {
 		name = *dto.Name
 	}
-	cUser := &model.CUser{
+	cUser := &model.User{
 		Name:     name,
 		Metadata: dto.Metadata,
 	}
@@ -40,7 +40,7 @@ func (s *Service) CreateAnonymous(ctx context.Context, clientCode string, dto Cr
 }
 
 func (s *Service) CreateAuthenticated(ctx context.Context, clientCode string, dto CreateAuthenticatedClientUserDTO) error {
-	cUser := &model.CUser{
+	cUser := &model.User{
 		Name:     dto.Name,
 		Metadata: dto.Metadata,
 	}
@@ -50,6 +50,6 @@ func (s *Service) CreateAuthenticated(ctx context.Context, clientCode string, dt
 	return nil
 }
 
-func (s *Service) FilterInClient(ctx context.Context, clientCode string) (*page.Paginated[model.CUser], error) {
-	return s.cUserRepo.FilterInClient(ctx, clientCode, filter.Default[model.CUser]())
+func (s *Service) FilterInClient(ctx context.Context, clientCode string) (*page.Paginated[model.User], error) {
+	return s.cUserRepo.FilterInClient(ctx, clientCode, filter.Default[model.User]())
 }

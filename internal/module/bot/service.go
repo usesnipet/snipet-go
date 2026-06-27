@@ -69,7 +69,7 @@ func (s *Service) LinkClientToBot(ctx context.Context, dto LinkClientToBotDTO) e
 	}
 	// endregion
 
-	return s.botRepo.LinkClientToBot(ctx, client.ID, botUUID)
+	return s.botRepo.LinkBotToClient(ctx, client.ID, botUUID)
 }
 
 func NewService(botRepo repository.IBotRepository, clientRepo repository.IClientRepository) *Service {

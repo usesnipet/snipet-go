@@ -1,11 +1,11 @@
-package c_auth
+package auth
 
 import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/internal/api"
-	auth_provider "github.com/usesnipet/snipet/internal/module/c-auth/auth-provider"
+	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 )
 
 type Handler struct {

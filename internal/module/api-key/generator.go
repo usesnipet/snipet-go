@@ -29,6 +29,11 @@ func NewAPIKeyGenerator() *APIKeyGenerator {
 	}
 }
 
+// Generate a short key ID for lookups (first 10 chars of full key)
+func (g *APIKeyGenerator) GetKeyID(fullKey string) string {
+	return fullKey[:10]
+}
+
 // Generate creates a new cryptographically secure API key
 // Returns the full key (for the user) and the key ID (for lookups)
 func (g *APIKeyGenerator) Generate() (fullKey string, keyID string, err error) {
@@ -44,8 +49,7 @@ func (g *APIKeyGenerator) Generate() (fullKey string, keyID string, err error) {
 	// Construct the full key with prefix
 	fullKey = fmt.Sprintf("%s_%s", g.prefix, randomPart)
 
-	// Generate a short key ID for lookups (first 10 chars of full key)
-	keyID = fullKey[:10]
+	keyID = g.GetKeyID(fullKey)
 
 	return fullKey, keyID, nil
 }

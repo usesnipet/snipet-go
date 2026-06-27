@@ -1,4 +1,4 @@
-package c_auth
+package auth
 
 type AuthenticateResponse struct {
 	Token string `json:"token"`

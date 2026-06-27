@@ -1,14 +1,18 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/config"
 	"github.com/usesnipet/snipet/internal/api"
+	"github.com/usesnipet/snipet/internal/infra/cache"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/logger"
+	"github.com/usesnipet/snipet/internal/middleware"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	"github.com/usesnipet/snipet/internal/module/bot"
 	"github.com/usesnipet/snipet/internal/module/client"
@@ -34,18 +38,25 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	memoryRepo := repository.NewMemoryRepository(db)
 
 	// service
-	apiKeyService := apikey.NewService(apiKeyRepo)
+	apiKeyService := apikey.NewService(logger, apiKeyRepo)
+	apiKeyService.Init(context.Background())
 	botService := bot.NewService(botRepo, clientRepo)
 	clientService := client.NewService(clientRepo)
 	memoryService := memory.NewService(memoryRepo)
 	sessionService := session.NewService(sessionRepo, sessionMessageRepo, memoryRepo)
 
+	// middleware
+	apiKeyMiddleware := middleware.APIKeyMiddleware(
+		apiKeyService,
+		cache.NewMemoryCache(1000, 1*time.Hour),
+	)
+
 	// handler
-	apiKeyHandler := apikey.NewHandler(apiKeyService)
-	botHandler := bot.NewHandler(botService)
-	clientHandler := client.NewHandler(clientService)
-	sessionHandler := session.NewHandler(sessionService)
-	memoryHandler := memory.NewHandler(memoryService)
+	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
+	botHandler := bot.NewHandler(botService, apiKeyMiddleware)
+	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
+	sessionHandler := session.NewHandler(sessionService, apiKeyMiddleware)
+	memoryHandler := memory.NewHandler(memoryService, apiKeyMiddleware)
 
 	// register handlers
 	api := api.New()

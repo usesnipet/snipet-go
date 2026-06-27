@@ -2,17 +2,77 @@ package apikey
 
 import (
 	"context"
+	"time"
 
+	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
+	logger     *logger.Logger
 	repository repository.IApiKeyRepository
 	generator  *APIKeyGenerator
 	hasher     *KeyHasher
+}
+
+func NewService(logger *logger.Logger, repository repository.IApiKeyRepository) *Service {
+	return &Service{
+		logger:     logger,
+		repository: repository,
+		generator:  NewAPIKeyGenerator(),
+		hasher:     NewKeyHasher(),
+	}
+}
+
+func (s *Service) Init(ctx context.Context) error {
+	apiKeys, err := s.repository.FilterBy(ctx, filter.Default[model.APIKey]())
+	if err != nil {
+		return err
+	}
+	if apiKeys.IsEmpty() {
+		s.logger.Infof("no api keys found, creating root api key")
+		created, err := s.Create(ctx, CreateAPIKeyDTO{Name: "Root"})
+		if err != nil {
+			s.logger.Errorf("failed to create root api key: %v", err)
+			return err
+		}
+		s.logger.Infof("root api key created: %s", created.Key)
+	}
+	return nil
+}
+
+func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) error {
+	keyID := s.generator.GetKeyID(apiKey)
+	paginatedApiKeys, err := s.repository.FilterBy(
+		ctx,
+		filter.New[model.APIKey](
+			filter.WhereEq("key_id", keyID),
+		),
+	)
+	if err != nil {
+		return apperr.Unauthorized("invalid api key")
+	}
+	if paginatedApiKeys.IsEmpty() {
+		return apperr.NotFound("api key not found")
+	}
+
+	key := paginatedApiKeys.First()
+	if !key.Active {
+		return apperr.Forbidden("api key is disabled")
+	}
+	if key.ExpiresAt != nil && key.ExpiresAt.Before(time.Now()) {
+		return apperr.Forbidden("api key is expired")
+	}
+
+	valid, err := s.hasher.Verify(apiKey, key.Key)
+	if err != nil || !valid {
+		return apperr.Unauthorized("invalid api key")
+	}
+	return nil
 }
 
 func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.APIKey], error) {
@@ -91,12 +151,4 @@ func (s *Service) UpdateExpiration(ctx context.Context, id string, dto UpdateExp
 
 func (s *Service) ToggleActive(ctx context.Context, id string, active bool) error {
 	return s.repository.ToggleActive(ctx, id, active)
-}
-
-func NewService(repository repository.IApiKeyRepository) *Service {
-	return &Service{
-		repository: repository,
-		generator:  NewAPIKeyGenerator(),
-		hasher:     NewKeyHasher(),
-	}
 }

@@ -1,18 +1,18 @@
-package c_auth
+package auth
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/usesnipet/snipet/internal/auth"
-	auth_provider "github.com/usesnipet/snipet/internal/module/c-auth/auth-provider"
+	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
 	registry   *auth_provider.Registry
 	clientRepo repository.IClientRepository
-	cUserRepo  repository.ICUserRepository
+	cUserRepo  repository.IUserRepository
 	jwtService *auth.JWTService
 }
 

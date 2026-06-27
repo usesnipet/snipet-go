@@ -11,53 +11,53 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type ICUserRepository interface {
+type IUserRepository interface {
 	FilterInClient(
 		ctx context.Context,
 		clientCode string,
-		filter *filter.Options[model.CUser],
-	) (*page.Paginated[model.CUser], error)
+		filter *filter.Options[model.User],
+	) (*page.Paginated[model.User], error)
 	FindByIDInClient(
 		ctx context.Context,
 		clientCode string,
 		id string,
-	) (*model.CUser, error)
+	) (*model.User, error)
 	CreateInClient(
 		ctx context.Context,
 		clientCode string,
-		cUser *model.CUser,
+		user *model.User,
 		externalID *string,
 	) error
 	FindByExternalIDInClient(
 		ctx context.Context,
 		clientCode string,
 		externalID string,
-	) (*model.CUser, error)
+	) (*model.User, error)
 }
 
-type CUserRepository struct {
-	*Repository[model.CUser]
+type UserRepository struct {
+	*Repository[model.User]
 	clientRepo IClientRepository
 }
 
-func NewCUserRepository(db *gorm.DB, clientRepo IClientRepository) ICUserRepository {
-	return &CUserRepository{
-		Repository: NewRepository[model.CUser](db),
+func NewCUserRepository(db *gorm.DB, clientRepo IClientRepository) IUserRepository {
+	return &UserRepository{
+		Repository: NewRepository[model.User](db),
 		clientRepo: clientRepo,
 	}
 }
 
-func (r *CUserRepository) FindByExternalIDInClient(
+func (r *UserRepository) FindByExternalIDInClient(
 	ctx context.Context,
 	clientCode string,
 	externalID string,
-) (*model.CUser, error) {
+) (*model.User, error) {
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := gorm.G[model.CUser](r.DB).
+	user, err := gorm.G[model.User](r.DB).
 		Joins(clause.LeftJoin.Association("client_to_users"), nil).
 		Where("client_to_users.client_id = ?", client.ID).
 		Where("client_to_users.external_id = ?", externalID).
@@ -69,27 +69,27 @@ func (r *CUserRepository) FindByExternalIDInClient(
 	return &user, nil
 }
 
-func (r *CUserRepository) FilterInClient(
+func (r *UserRepository) FilterInClient(
 	ctx context.Context,
 	clientCode string,
-	cUserFilter *filter.Options[model.CUser],
-) (*page.Paginated[model.CUser], error) {
+	cUserFilter *filter.Options[model.User],
+) (*page.Paginated[model.User], error) {
 	if cUserFilter == nil {
-		cUserFilter = filter.Default[model.CUser]()
+		cUserFilter = filter.Default[model.User]()
 	}
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return nil, err
 	}
 
-	total, err := gorm.G[model.CUser](r.DB).
+	total, err := gorm.G[model.User](r.DB).
 		Joins(clause.LeftJoin.Association("client_to_users"), nil).
 		Where("client_to_users.client_id = ?", client.ID).Count(ctx, "1 = 1")
 	if err != nil {
 		return nil, err
 	}
 
-	chain, err := cUserFilter.ToGorm(gorm.G[model.CUser](r.DB))
+	chain, err := cUserFilter.ToGorm(gorm.G[model.User](r.DB))
 	if err != nil {
 		return nil, err
 	}
@@ -100,15 +100,15 @@ func (r *CUserRepository) FilterInClient(
 	return page.NewPaginated(data, total, int64(cUserFilter.Skip), int64(cUserFilter.Take)), err
 }
 
-func (r *CUserRepository) FindByIDInClient(
+func (r *UserRepository) FindByIDInClient(
 	ctx context.Context,
 	clientCode string,
 	id string,
-) (*model.CUser, error) {
+) (*model.User, error) {
 	paginated, err := r.FilterInClient(
 		ctx,
 		clientCode,
-		filter.New[model.CUser](filter.WhereEq("id", id)),
+		filter.New[model.User](filter.WhereEq("id", id)),
 	)
 	if err != nil {
 		return nil, err
@@ -119,22 +119,22 @@ func (r *CUserRepository) FindByIDInClient(
 	return paginated.First(), nil
 }
 
-func (r *CUserRepository) CreateInClient(
+func (r *UserRepository) CreateInClient(
 	ctx context.Context,
 	clientCode string,
-	cUser *model.CUser,
+	user *model.User,
 	externalID *string,
 ) error {
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return err
 	}
-	cUser.ClientToUsers = []model.ClientToUser{
+	user.ClientToUsers = []model.ClientToUser{
 		{
-			ClientID:     client.ID,
-			ClientUserID: cUser.ID,
-			ExternalID:   externalID,
+			ClientID:   client.ID,
+			UserID:     user.ID,
+			ExternalID: externalID,
 		},
 	}
-	return r.Create(ctx, cUser)
+	return r.Create(ctx, user)
 }

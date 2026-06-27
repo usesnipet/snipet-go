@@ -5,12 +5,15 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/internal/api"
-	"github.com/usesnipet/snipet/internal/module/client"
 )
 
 type Handler struct {
-	service       *Service
-	clientService *client.Service
+	service          *Service
+	apiKeyMiddleware api.MiddlewareFunc
+}
+
+func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handler {
+	return &Handler{service: service, apiKeyMiddleware: apiKeyMiddleware}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
@@ -76,8 +79,4 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteNoContent(w)
-}
-
-func NewHandler(service *Service) api.Handler {
-	return &Handler{service: service}
 }

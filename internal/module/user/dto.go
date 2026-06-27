@@ -1,4 +1,4 @@
-package c_user
+package user
 
 import (
 	"github.com/usesnipet/snipet/internal/util"

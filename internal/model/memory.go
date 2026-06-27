@@ -21,5 +21,5 @@ type Memory struct {
 	Provider      string       `gorm:"type:varchar(255);not null" json:"provider"`
 	Configuration util.JSONMap `gorm:"type:jsonb;not null" json:"configuration"`
 
-	BotMemories []BotMemory `gorm:"foreignKey:MemoryID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	BotMemories []BotToMemory `gorm:"foreignKey:MemoryID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
