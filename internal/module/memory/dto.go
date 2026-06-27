@@ -1,9 +1,8 @@
 package memory
 
 import (
-	"encoding/json"
-
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/util"
 )
 
 type CreateMemoryDTO struct {
@@ -11,7 +10,7 @@ type CreateMemoryDTO struct {
 	Type          model.MemoryType `json:"type" validate:"required,max=255"`
 	IsDefault     bool             `json:"is_default" validate:"required"`
 	Provider      string           `json:"provider" validate:"required,max=255"`
-	Configuration json.RawMessage  `json:"configuration" validate:"required"`
+	Configuration util.JSONMap     `json:"configuration" validate:"required"`
 }
 
 type UpdateMemoryDTO struct {

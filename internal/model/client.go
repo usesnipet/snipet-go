@@ -24,6 +24,6 @@ type Client struct {
 	Config ClientConfig `gorm:"type:jsonb;not null;serializer:json" json:"config"`
 
 	ClientBots    []ClientBot    `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Conversations []Conversation `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Sessions      []Session      `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	ClientToUsers []ClientToUser `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }

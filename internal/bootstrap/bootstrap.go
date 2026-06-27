@@ -12,8 +12,8 @@ import (
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	"github.com/usesnipet/snipet/internal/module/bot"
 	"github.com/usesnipet/snipet/internal/module/client"
-	"github.com/usesnipet/snipet/internal/module/conversation"
 	"github.com/usesnipet/snipet/internal/module/memory"
+	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/repository"
 )
 
@@ -29,8 +29,8 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyRepo := repository.NewApiKeyRepository(db)
 	botRepo := repository.NewBotRepository(db)
 	clientRepo := repository.NewClientRepository(db)
-	conversationRepo := repository.NewConversationRepository(db, clientRepo)
-	conversationMessageRepo := repository.NewConversationMessageRepository(db, clientRepo)
+	sessionRepo := repository.NewSessionRepository(db, clientRepo)
+	sessionMessageRepo := repository.NewSessionMessageRepository(db, clientRepo)
 	memoryRepo := repository.NewMemoryRepository(db)
 
 	// service
@@ -38,13 +38,13 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	botService := bot.NewService(botRepo, clientRepo)
 	clientService := client.NewService(clientRepo)
 	memoryService := memory.NewService(memoryRepo)
-	conversationService := conversation.NewService(conversationRepo, conversationMessageRepo, memoryRepo)
+	sessionService := session.NewService(sessionRepo, sessionMessageRepo, memoryRepo)
 
 	// handler
 	apiKeyHandler := apikey.NewHandler(apiKeyService)
 	botHandler := bot.NewHandler(botService)
 	clientHandler := client.NewHandler(clientService)
-	conversationHandler := conversation.NewHandler(conversationService)
+	sessionHandler := session.NewHandler(sessionService)
 	memoryHandler := memory.NewHandler(memoryService)
 
 	// register handlers
@@ -53,7 +53,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
 		botHandler.RegisterRoutes(r, api.Serve)
 		clientHandler.RegisterRoutes(r, api.Serve)
-		conversationHandler.RegisterRoutes(r, api.Serve)
+		sessionHandler.RegisterRoutes(r, api.Serve)
 		memoryHandler.RegisterRoutes(r, api.Serve)
 	})
 

@@ -1,4 +1,4 @@
-package conversation
+package session
 
 import (
 	"net/http"
@@ -14,7 +14,7 @@ type Handler struct {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/client/{client_code}/conversation", func(r chi.Router) {
+	r.Route("/client/{client_code}/session", func(r chi.Router) {
 		r.Get("/", serve(h.findBy))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
@@ -25,12 +25,12 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 
 func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
 	clientCode := chi.URLParam(r, "client_code")
-	conversationID := chi.URLParam(r, "id")
+	sessionID := chi.URLParam(r, "id")
 	var filter FindMessagesFilterDTO
 	if err := api.ParseQuery(r, &filter); err != nil {
 		return err
 	}
-	data, err := h.service.FindMessages(r.Context(), clientCode, conversationID, filter)
+	data, err := h.service.FindMessages(r.Context(), clientCode, sessionID, filter)
 	if err != nil {
 		return err
 	}
@@ -49,8 +49,8 @@ func (h *Handler) findBy(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 	clientCode := chi.URLParam(r, "client_code")
-	conversationID := chi.URLParam(r, "id")
-	data, err := h.service.FindByID(r.Context(), clientCode, conversationID)
+	sessionID := chi.URLParam(r, "id")
+	data, err := h.service.FindByID(r.Context(), clientCode, sessionID)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
-	var dto CreateConversationDTO
+	var dto CreateSessionDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
@@ -71,8 +71,8 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 	clientCode := chi.URLParam(r, "client_code")
-	conversationID := chi.URLParam(r, "id")
-	if err := h.service.DeleteByID(r.Context(), clientCode, conversationID); err != nil {
+	sessionID := chi.URLParam(r, "id")
+	if err := h.service.DeleteByID(r.Context(), clientCode, sessionID); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)

@@ -11,9 +11,9 @@ type CUser struct {
 	Name     string       `gorm:"type:varchar(255);not null" json:"name"`
 	Metadata util.JSONMap `gorm:"type:jsonb;not null;serializer:json" json:"metadata"`
 
-	ConversationMessages    []ConversationMessage    `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientUserConversations []ClientUserConversation `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientToUsers           []ClientToUser           `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	SessionMessages    []SessionMessage `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ClientUserSessions []CUserSession   `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ClientToUsers      []ClientToUser   `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 type ClientToUser struct {

@@ -1,30 +1,13 @@
 package model
 
 import (
-	"database/sql/driver"
-	"encoding/json"
-	"fmt"
-
 	"github.com/google/uuid"
+	"github.com/usesnipet/snipet/internal/util"
 )
 
 type BotConfiguration struct {
+	util.JSONMap
 	LLMs []any `json:"llms"`
-}
-
-func (c *BotConfiguration) Scan(value any) error {
-	if value == nil {
-		return nil
-	}
-	bytes, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("failed to scan BotConfiguration: expected []byte, got %T", value)
-	}
-	return json.Unmarshal(bytes, c)
-}
-
-func (c BotConfiguration) Value() (driver.Value, error) {
-	return json.Marshal(c)
 }
 
 type Bot struct {

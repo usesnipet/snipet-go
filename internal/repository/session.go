@@ -10,21 +10,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type IConversationRepository interface {
+type ISessionRepository interface {
 	FilterInClient(
 		ctx context.Context,
 		clientCode string,
-		filter *filter.Options[model.Conversation],
-	) (*page.Paginated[model.Conversation], error)
+		filter *filter.Options[model.Session],
+	) (*page.Paginated[model.Session], error)
 	FindByIDInClient(
 		ctx context.Context,
 		clientCode string,
 		id string,
-	) (*model.Conversation, error)
+	) (*model.Session, error)
 	CreateInClient(
 		ctx context.Context,
 		clientCode string,
-		conversation *model.Conversation,
+		session *model.Session,
 	) error
 	DeleteInClient(
 		ctx context.Context,
@@ -33,16 +33,16 @@ type IConversationRepository interface {
 	) error
 }
 
-type ConversationRepository struct {
-	*Repository[model.Conversation]
+type SessionRepository struct {
+	*Repository[model.Session]
 	clientRepo IClientRepository
 }
 
-func (r *ConversationRepository) FilterInClient(
+func (r *SessionRepository) FilterInClient(
 	ctx context.Context,
 	clientCode string,
-	conversationFilter *filter.Options[model.Conversation],
-) (*page.Paginated[model.Conversation], error) {
+	sessionFilter *filter.Options[model.Session],
+) (*page.Paginated[model.Session], error) {
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return nil, err
@@ -50,45 +50,45 @@ func (r *ConversationRepository) FilterInClient(
 	return r.FilterBy(
 		ctx,
 		filter.Merge(
-			conversationFilter,
-			filter.New[model.Conversation](filter.WhereEq("client_id", client.ID)),
+			sessionFilter,
+			filter.New[model.Session](filter.WhereEq("client_id", client.ID)),
 		),
 	)
 }
 
-func (r *ConversationRepository) FindByIDInClient(
+func (r *SessionRepository) FindByIDInClient(
 	ctx context.Context,
 	clientCode string,
 	id string,
-) (*model.Conversation, error) {
+) (*model.Session, error) {
 	paginated, err := r.FilterInClient(
 		ctx,
 		clientCode,
-		filter.New[model.Conversation](filter.WhereEq("id", id)),
+		filter.New[model.Session](filter.WhereEq("id", id)),
 	)
 	if err != nil {
 		return nil, err
 	}
 	if paginated.IsEmpty() {
-		return nil, apperr.NotFound("conversation not found")
+		return nil, apperr.NotFound("session not found")
 	}
 	return paginated.First(), nil
 }
 
-func (r *ConversationRepository) CreateInClient(
+func (r *SessionRepository) CreateInClient(
 	ctx context.Context,
 	clientCode string,
-	conversation *model.Conversation,
+	session *model.Session,
 ) error {
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return err
 	}
-	conversation.ClientID = client.ID
-	return r.Create(ctx, conversation)
+	session.ClientID = client.ID
+	return r.Create(ctx, session)
 }
 
-func (r *ConversationRepository) DeleteInClient(
+func (r *SessionRepository) DeleteInClient(
 	ctx context.Context,
 	clientCode string,
 	id string,
@@ -97,19 +97,19 @@ func (r *ConversationRepository) DeleteInClient(
 	if err != nil {
 		return err
 	}
-	affected, err := gorm.G[model.Conversation](r.DB).Where("client_id = ? AND id = ?", client.ID, id).Delete(ctx)
+	affected, err := gorm.G[model.Session](r.DB).Where("client_id = ? AND id = ?", client.ID, id).Delete(ctx)
 	if err != nil {
 		return err
 	}
 	if affected == 0 {
-		return apperr.NotFound("conversation not found")
+		return apperr.NotFound("session not found")
 	}
 	return nil
 }
 
-func NewConversationRepository(db *gorm.DB, clientRepo IClientRepository) IConversationRepository {
-	return &ConversationRepository{
-		Repository: NewRepository[model.Conversation](db),
+func NewSessionRepository(db *gorm.DB, clientRepo IClientRepository) ISessionRepository {
+	return &SessionRepository{
+		Repository: NewRepository[model.Session](db),
 		clientRepo: clientRepo,
 	}
 }

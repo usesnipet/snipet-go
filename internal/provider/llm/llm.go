@@ -11,6 +11,6 @@ type Provider[TConfig any] interface {
 	Run(
 		ctx context.Context,
 		configuration Configuration[TConfig],
-		messages []model.ConversationMessage,
-	) ([]model.ConversationMessagePart, error)
+		messages []model.SessionMessage,
+	) ([]model.SessionMessagePart, error)
 }

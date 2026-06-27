@@ -1,11 +1,11 @@
-package conversation
+package session
 
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
-type CreateConversationDTO struct {
+type CreateSessionDTO struct {
 	MemoryID string       `json:"memory_id" validate:"required,uuid"`
 	BotID    string       `json:"bot_id" validate:"required,uuid"`
 	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
