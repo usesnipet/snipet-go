@@ -48,7 +48,11 @@ func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.Filter(r.Context(), h.clientCode(r))
+	var query FindSessionsFilterDTO
+	if err := api.ParseQuery(r, &query); err != nil {
+		return err
+	}
+	data, err := h.service.Filter(r.Context(), h.clientCode(r), query.ToFilter())
 	if err != nil {
 		return err
 	}

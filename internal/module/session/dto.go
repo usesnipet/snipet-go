@@ -12,6 +12,18 @@ type CreateSessionDTO struct {
 	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
+type FindSessionsFilterDTO struct {
+	Take *int `form:"take" validate:"omitempty,min=1"`
+	Skip *int `form:"skip" validate:"omitempty,min=0"`
+}
+
+func (dto *FindSessionsFilterDTO) ToFilter() *filter.Options[model.Session] {
+	return filter.New[model.Session](
+		filter.PtrTake(dto.Take),
+		filter.PtrSkip(dto.Skip),
+	)
+}
+
 type FindMessagesFilterDTO struct {
 	Sort *filter.OrderDirection `form:"sort" validate:"omitempty,oneof=asc desc"`
 	Take *int                   `form:"take" validate:"omitempty,min=1"`

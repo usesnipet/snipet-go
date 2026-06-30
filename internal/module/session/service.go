@@ -30,8 +30,21 @@ func NewService(
 	}
 }
 
-func (s *Service) Filter(ctx context.Context, clientCode string) (*page.Paginated[model.Session], error) {
-	return s.sessionRepo.FilterInClient(ctx, clientCode, filter.Default[model.Session]())
+func (s *Service) Filter(
+	ctx context.Context,
+	clientCode string,
+	filter *filter.Options[model.Session],
+) (*page.Paginated[model.Session], error) {
+	principal := auth.GetPrincipal(ctx)
+	if principal.GetType() == auth.PrincipalTypeJWT {
+		return s.sessionRepo.FilterInClientWithUser(
+			ctx,
+			clientCode,
+			principal.GetJWTClaims().Subject,
+			filter,
+		)
+	}
+	return s.sessionRepo.FilterInClient(ctx, clientCode, filter)
 }
 
 func (s *Service) FindByID(ctx context.Context, clientCode string, id string) (*model.Session, error) {
