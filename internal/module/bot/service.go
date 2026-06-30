@@ -16,8 +16,8 @@ type Service struct {
 	clientRepo repository.IClientRepository
 }
 
-func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.Bot], error) {
-	return s.botRepo.FilterBy(ctx, filter.Default[model.Bot]())
+func (s *Service) Filter(ctx context.Context) (*page.Paginated[model.Bot], error) {
+	return s.botRepo.Filter(ctx, filter.Default[model.Bot]())
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Bot, error) {

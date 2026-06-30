@@ -19,7 +19,7 @@ func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handl
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/api-key", func(r chi.Router) {
 		r.Use(h.apiKeyMiddleware)
-		r.Get("/", serve(h.filterBy))
+		r.Get("/", serve(h.filter))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
 		r.Post("/{id}/roll", serve(h.roll))
@@ -29,8 +29,8 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 }
 
-func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FilterBy(r.Context())
+func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.Filter(r.Context())
 	if err != nil {
 		return err
 	}

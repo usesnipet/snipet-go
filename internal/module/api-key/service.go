@@ -35,7 +35,7 @@ func NewService(
 }
 
 func (s *Service) Init(ctx context.Context) error {
-	apiKeys, err := s.repository.FilterBy(ctx, filter.Default[model.APIKey]())
+	apiKeys, err := s.repository.Filter(ctx, filter.Default[model.APIKey]())
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (s *Service) Init(ctx context.Context) error {
 
 func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) (*model.APIKey, error) {
 	keyID := s.generator.GetKeyID(apiKey)
-	paginatedApiKeys, err := s.repository.FilterBy(
+	paginatedApiKeys, err := s.repository.Filter(
 		ctx,
 		filter.New[model.APIKey](
 			filter.WhereEq("key_id", keyID),
@@ -81,8 +81,8 @@ func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) (*model.APIKe
 	return key, nil
 }
 
-func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.APIKey], error) {
-	return s.repository.FilterBy(ctx, filter.Default[model.APIKey]())
+func (s *Service) Filter(ctx context.Context) (*page.Paginated[model.APIKey], error) {
+	return s.repository.Filter(ctx, filter.Default[model.APIKey]())
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.APIKey, error) {

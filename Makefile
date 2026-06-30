@@ -1,4 +1,4 @@
-.PHONY: test install dev-app build-app build-prod-app db-generate
+.PHONY: test install dev-app build-app build-prod-app db-generate mocks
 
 GO ?= go
 ATLAS ?= atlas
@@ -14,6 +14,9 @@ install:
 
 test:
 	$(GO) test ./...
+
+mocks:
+	$(GO) tool mockery
 
 dev:
 	air

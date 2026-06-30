@@ -65,7 +65,7 @@ func (r *ClientRepository) FilterByUserID(
 }
 
 func (r *ClientRepository) FindByCode(ctx context.Context, code string) (*model.Client, error) {
-	paginated, err := r.FilterBy(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
+	paginated, err := r.Filter(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
 	if err != nil {
 		return nil, err
 	}

@@ -19,8 +19,8 @@ type Service struct {
 	clientRepo repository.IClientRepository
 }
 
-func (s *Service) FilterBy(ctx context.Context, filter *filter.Options[model.Client]) (*page.Paginated[model.Client], error) {
-	return s.clientRepo.FilterBy(ctx, filter)
+func (s *Service) Filter(ctx context.Context, filter *filter.Options[model.Client]) (*page.Paginated[model.Client], error) {
+	return s.clientRepo.Filter(ctx, filter)
 }
 
 func (s *Service) FilterByUser(
@@ -32,7 +32,7 @@ func (s *Service) FilterByUser(
 }
 
 func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, error) {
-	paginated, err := s.clientRepo.FilterBy(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
+	paginated, err := s.clientRepo.Filter(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
 	if err != nil {
 		return nil, err
 	}

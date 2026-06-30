@@ -24,7 +24,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/client", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.anyAuthMiddleware)
-			r.Get("/", serve(h.filterBy))
+			r.Get("/", serve(h.filter))
 		})
 
 		r.Group(func(r chi.Router) {
@@ -37,7 +37,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 }
 
-func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
+func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 	var query FindClientsFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
@@ -47,7 +47,7 @@ func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
 	var clients *page.Paginated[model.Client]
 	var err error
 	if principal.GetType() == auth.PrincipalTypeAPIKey {
-		clients, err = h.service.FilterBy(r.Context(), query.ToFilter())
+		clients, err = h.service.Filter(r.Context(), query.ToFilter())
 	} else if principal.GetType() == auth.PrincipalTypeJWT {
 		clients, err = h.service.FilterByUser(r.Context(), principal.GetJWTClaims().Subject, query.ToFilter())
 	}

@@ -56,7 +56,7 @@ func (g *APIKeyGenerator) Generate() (fullKey string, keyID string, err error) {
 
 // ParseKey extracts components from a full API key
 func (g *APIKeyGenerator) ParseKey(fullKey string) (prefix, randomPart string, err error) {
-	parts := strings.Split(fullKey, "_")
+	parts := strings.SplitN(fullKey, "_", 2)
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("invalid key format: expected 2 parts, got %d", len(parts))
 	}

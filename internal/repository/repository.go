@@ -17,7 +17,7 @@ func (r *Repository[T]) Create(ctx context.Context, model *T) error {
 	return gorm.G[T](r.DB).Create(ctx, model)
 }
 
-func (r *Repository[T]) FilterBy(ctx context.Context, filterOptions *filter.Options[T]) (*page.Paginated[T], error) {
+func (r *Repository[T]) Filter(ctx context.Context, filterOptions *filter.Options[T]) (*page.Paginated[T], error) {
 	if filterOptions == nil {
 		filterOptions = filter.Default[T]()
 	}
@@ -57,7 +57,7 @@ func (r *Repository[T]) DeleteByID(ctx context.Context, id string) error {
 }
 
 func (r *Repository[T]) FindByID(ctx context.Context, id string) (*T, error) {
-	paginated, err := r.FilterBy(ctx, filter.New[T](filter.WhereEq("id", id)))
+	paginated, err := r.Filter(ctx, filter.New[T](filter.WhereEq("id", id)))
 	if err != nil {
 		return nil, err
 	}

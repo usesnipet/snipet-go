@@ -8,17 +8,18 @@ import (
 )
 
 type Handler struct {
-	service          *Service
-	apiKeyMiddleware api.MiddlewareFunc
+	service           *Service
+	anyAuthMiddleware api.MiddlewareFunc
 }
 
-func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handler {
-	return &Handler{service: service, apiKeyMiddleware: apiKeyMiddleware}
+func NewHandler(service *Service, anyAuthMiddleware api.MiddlewareFunc) api.Handler {
+	return &Handler{service: service, anyAuthMiddleware: anyAuthMiddleware}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/client/{client_code}/session", func(r chi.Router) {
-		r.Get("/", serve(h.findBy))
+		r.Use(h.anyAuthMiddleware)
+		r.Get("/", serve(h.filter))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
 		r.Delete("/{id}", serve(h.deleteByID))
@@ -46,8 +47,8 @@ func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteJSON(w, http.StatusOK, data)
 }
 
-func (h *Handler) findBy(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FindBy(r.Context(), h.clientCode(r))
+func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.Filter(r.Context(), h.clientCode(r))
 	if err != nil {
 		return err
 	}

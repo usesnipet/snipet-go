@@ -8,7 +8,7 @@ import (
 )
 
 type IFilterableRepository[T any] interface {
-	FilterBy(ctx context.Context, filter *filter.Options[T]) (*page.Paginated[T], error)
+	Filter(ctx context.Context, filter *filter.Options[T]) (*page.Paginated[T], error)
 }
 
 type IFindableRepository[T any] interface {

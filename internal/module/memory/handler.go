@@ -18,7 +18,7 @@ func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handl
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/memory", func(r chi.Router) {
-		r.Get("/", serve(h.filterBy))
+		r.Get("/", serve(h.filter))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
 		r.Put("/{id}", serve(h.update))
@@ -27,8 +27,8 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 }
 
-func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FilterBy(r.Context())
+func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.Filter(r.Context())
 	if err != nil {
 		return err
 	}

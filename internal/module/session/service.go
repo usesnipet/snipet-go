@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
+	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
@@ -17,7 +18,19 @@ type Service struct {
 	memoryRepo         repository.IMemoryRepository
 }
 
-func (s *Service) FindBy(ctx context.Context, clientCode string) (*page.Paginated[model.Session], error) {
+func NewService(
+	sessionRepo repository.ISessionRepository,
+	sessionMessageRepo repository.ISessionMessageRepository,
+	memoryRepo repository.IMemoryRepository,
+) *Service {
+	return &Service{
+		sessionRepo:        sessionRepo,
+		sessionMessageRepo: sessionMessageRepo,
+		memoryRepo:         memoryRepo,
+	}
+}
+
+func (s *Service) Filter(ctx context.Context, clientCode string) (*page.Paginated[model.Session], error) {
 	return s.sessionRepo.FilterInClient(ctx, clientCode, filter.Default[model.Session]())
 }
 
@@ -65,22 +78,23 @@ func (s *Service) FindMessages(
 	sessionID string,
 	filter *filter.Options[model.SessionMessage],
 ) (*page.Paginated[model.SessionMessage], error) {
+	principal := auth.GetPrincipal(ctx)
+
+	if principal.GetType() == auth.PrincipalTypeJWT {
+		userID := principal.GetJWTClaims().Subject
+		hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientCode, userID, sessionID)
+		if err != nil {
+			return nil, err
+		}
+		if !hasAccess {
+			return nil, apperr.Forbidden("user does not have access to this session")
+		}
+	}
+
 	return s.sessionMessageRepo.FilterInSession(
 		ctx,
 		clientCode,
 		sessionID,
 		filter,
 	)
-}
-
-func NewService(
-	sessionRepo repository.ISessionRepository,
-	sessionMessageRepo repository.ISessionMessageRepository,
-	memoryRepo repository.IMemoryRepository,
-) *Service {
-	return &Service{
-		sessionRepo:        sessionRepo,
-		sessionMessageRepo: sessionMessageRepo,
-		memoryRepo:         memoryRepo,
-	}
 }
