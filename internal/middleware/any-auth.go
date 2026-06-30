@@ -19,7 +19,7 @@ func jwtAuth(jwtService *auth.JWTService, next http.Handler, w http.ResponseWrit
 		api.WriteError(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
-	token = strings.TrimPrefix(token, "Bearer ")
+
 	claims, err := jwtService.VerifyToken(token)
 	if err != nil {
 		api.WriteError(w, http.StatusUnauthorized, errors.New("unauthorized"))
@@ -37,7 +37,6 @@ func apiKeyAuth(apiKeyService *apikey.Service, apiKeyCache cache.ICache, next ht
 		http.Error(w, "API key is required", http.StatusUnauthorized)
 		return
 	}
-
 	keyID, found := cache.GetAs[uuid.UUID](apiKeyCache, apiKey)
 	if found {
 		principal := auth.NewPrincipal(auth.PrincipalTypeAPIKey, &keyID, nil)

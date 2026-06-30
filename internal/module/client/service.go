@@ -19,8 +19,16 @@ type Service struct {
 	clientRepo repository.IClientRepository
 }
 
-func (s *Service) FilterBy(ctx context.Context) (*page.Paginated[model.Client], error) {
-	return s.clientRepo.FilterBy(ctx, filter.Default[model.Client]())
+func (s *Service) FilterBy(ctx context.Context, filter *filter.Options[model.Client]) (*page.Paginated[model.Client], error) {
+	return s.clientRepo.FilterBy(ctx, filter)
+}
+
+func (s *Service) FilterByUser(
+	ctx context.Context,
+	userID string,
+	filter *filter.Options[model.Client],
+) (*page.Paginated[model.Client], error) {
+	return s.clientRepo.FilterByUserID(ctx, userID, filter)
 }
 
 func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, error) {

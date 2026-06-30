@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -47,6 +48,7 @@ func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string,
 }
 
 func (s *JWTService) VerifyToken(tokenString string) (*UserClaims, error) {
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		return []byte(s.config.JWTSecret), nil
 	})

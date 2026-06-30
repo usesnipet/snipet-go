@@ -8,7 +8,6 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type IUserRepository interface {
@@ -57,10 +56,13 @@ func (r *UserRepository) FindByExternalIDInClient(
 		return nil, err
 	}
 
+	userIDs := gorm.G[model.ClientToUser](r.DB).
+		Where("client_id = ?", client.ID).
+		Where("external_id = ?", externalID).
+		Select("user_id")
+
 	user, err := gorm.G[model.User](r.DB).
-		Joins(clause.LeftJoin.Association("client_to_users"), nil).
-		Where("client_to_users.client_id = ?", client.ID).
-		Where("client_to_users.external_id = ?", externalID).
+		Where("id IN (?)", userIDs).
 		First(ctx)
 
 	if err != nil {
@@ -82,9 +84,13 @@ func (r *UserRepository) FilterInClient(
 		return nil, err
 	}
 
+	userIDs := gorm.G[model.ClientToUser](r.DB).
+		Where("client_id = ?", client.ID).
+		Select("user_id")
+
 	total, err := gorm.G[model.User](r.DB).
-		Joins(clause.LeftJoin.Association("client_to_users"), nil).
-		Where("client_to_users.client_id = ?", client.ID).Count(ctx, "1 = 1")
+		Where("id IN (?)", userIDs).
+		Count(ctx, "1 = 1")
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +100,9 @@ func (r *UserRepository) FilterInClient(
 		return nil, err
 	}
 
-	data, err := chain.Joins(clause.LeftJoin.Association("client_to_users"), nil).
-		Where("client_to_users.client_id = ?", client.ID).Find(ctx)
+	data, err := chain.
+		Where("id IN (?)", userIDs).
+		Find(ctx)
 
 	return page.NewPaginated(data, total, int64(userFilter.Skip), int64(userFilter.Take)), err
 }

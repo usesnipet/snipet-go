@@ -39,9 +39,9 @@ func (r *SessionMessageRepository) FilterInSession(
 		filterOptions = filter.Default[model.SessionMessage]()
 	}
 	total, err := gorm.G[model.SessionMessage](r.DB).
-		Joins(clause.LeftJoin.Association("sessions"), nil).
+		Joins(clause.LeftJoin.Association("Session"), nil).
 		Where("session_id = ?", sessionID).
-		Where("sessions.client_id = ?", client.ID).Count(ctx, "1 = 1")
+		Where(`"Session"."client_id" = ?`, client.ID).Count(ctx, "1 = 1")
 
 	if err != nil {
 		return nil, err
@@ -52,9 +52,9 @@ func (r *SessionMessageRepository) FilterInSession(
 		return nil, err
 	}
 
-	data, err := chain.Joins(clause.LeftJoin.Association("sessions"), nil).
+	data, err := chain.Joins(clause.LeftJoin.Association("Session"), nil).
 		Where("session_id = ?", sessionID).
-		Where("sessions.client_id = ?", client.ID).Find(ctx)
+		Where(`"Session"."client_id" = ?`, client.ID).Find(ctx)
 
 	return page.NewPaginated(data, total, int64(filterOptions.Skip), int64(filterOptions.Take)), err
 }
