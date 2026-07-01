@@ -22,8 +22,8 @@ type Bot struct {
 }
 
 type BotToMemory struct {
-	BotID    uuid.UUID `gorm:"type:uuid;not null;index" json:"bot_id"`
-	MemoryID uuid.UUID `gorm:"type:uuid;not null;index" json:"memory_id"`
+	BotID    uuid.UUID `gorm:"primaryKey" json:"bot_id"`
+	MemoryID uuid.UUID `gorm:"primaryKey" json:"memory_id"`
 	Active   bool      `gorm:"type:boolean;not null;default:true" json:"active"`
 
 	Bot    Bot    `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
@@ -31,8 +31,9 @@ type BotToMemory struct {
 }
 
 type ClientToBot struct {
-	ClientID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_client_bots_client_bot" json:"client_id"`
-	BotID    uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_client_bots_client_bot" json:"bot_id"`
-	Client   Client    `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Bot      Bot       `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ClientID uuid.UUID `gorm:"primaryKey" json:"client_id"`
+	BotID    uuid.UUID `gorm:"primaryKey" json:"bot_id"`
+
+	Client Client `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Bot    Bot    `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }

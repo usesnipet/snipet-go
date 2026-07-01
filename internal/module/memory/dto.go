@@ -8,7 +8,7 @@ import (
 type CreateMemoryDTO struct {
 	Name          string           `json:"name" validate:"required,max=255"`
 	Type          model.MemoryType `json:"type" validate:"required,max=255"`
-	IsDefault     bool             `json:"is_default" validate:"required"`
+	IsDefault     bool             `json:"is_default"`
 	Provider      string           `json:"provider" validate:"required,max=255"`
 	Configuration util.JSONMap     `json:"configuration" validate:"required"`
 }

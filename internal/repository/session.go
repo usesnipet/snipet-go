@@ -107,6 +107,8 @@ func (r *SessionRepository) FilterInClientWithUser(
 	var total int64
 	err := r.DB.WithContext(ctx).Table("sessions").
 		Joins("LEFT JOIN user_to_sessions uts ON uts.session_id = sessions.id").
+		Joins("LEFT JOIN clients c ON c.id = sessions.client_id").
+		Where("c.code = ?", clientCode).
 		Where("uts.user_id = ?", userID).
 		Count(&total).Error
 	if err != nil {
@@ -118,6 +120,8 @@ func (r *SessionRepository) FilterInClientWithUser(
 	}
 	var data []model.Session
 	err = chain.Joins("LEFT JOIN user_to_sessions uts ON uts.session_id = sessions.id").
+		Joins("LEFT JOIN clients c ON c.id = sessions.client_id").
+		Where("c.code = ?", clientCode).
 		Where("uts.user_id = ?", userID).Find(&data).Error
 	if err != nil {
 		return nil, err

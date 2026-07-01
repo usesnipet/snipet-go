@@ -5,30 +5,22 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/internal/api"
-	"github.com/usesnipet/snipet/internal/auth"
-	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/page"
 )
 
 type Handler struct {
-	service           *Service
-	apiKeyMiddleware  api.MiddlewareFunc
-	anyAuthMiddleware api.MiddlewareFunc
+	service          *Service
+	apiKeyMiddleware api.MiddlewareFunc
 }
 
-func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc, anyAuthMiddleware api.MiddlewareFunc) api.Handler {
-	return &Handler{service: service, apiKeyMiddleware: apiKeyMiddleware, anyAuthMiddleware: anyAuthMiddleware}
+func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handler {
+	return &Handler{service: service, apiKeyMiddleware: apiKeyMiddleware}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/client", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(h.anyAuthMiddleware)
-			r.Get("/", serve(h.filter))
-		})
-
-		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
+			r.Get("/", serve(h.filter))
 			r.Post("/", serve(h.create))
 			r.Get("/{code}", serve(h.findByCode))
 			r.Put("/{code}", serve(h.update))
@@ -43,15 +35,7 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	principal := auth.GetPrincipal(r.Context())
-	var clients *page.Paginated[model.Client]
-	var err error
-	if principal.GetType() == auth.PrincipalTypeAPIKey {
-		clients, err = h.service.Filter(r.Context(), query.ToFilter())
-	} else if principal.GetType() == auth.PrincipalTypeJWT {
-		clients, err = h.service.FilterByUser(r.Context(), principal.GetJWTClaims().Subject, query.ToFilter())
-	}
-
+	clients, err := h.service.Filter(r.Context(), query.ToFilter())
 	if err != nil {
 		return err
 	}

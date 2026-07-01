@@ -19,8 +19,8 @@ type User struct {
 }
 
 type ClientToUser struct {
-	ClientID   uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_client_to_users_client_user" json:"client_id"`
-	UserID     uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_client_to_users_client_user" json:"user_id"`
+	ClientID   uuid.UUID `gorm:"primaryKey" json:"client_id"`
+	UserID     uuid.UUID `gorm:"primaryKey" json:"user_id"`
 	ExternalID *string   `gorm:"type:varchar(255);index" json:"external_id"`
 
 	Client Client `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
@@ -28,8 +28,8 @@ type ClientToUser struct {
 }
 
 type UserToSession struct {
-	UserID    uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
-	SessionID uuid.UUID `gorm:"type:uuid;not null;index" json:"session_id"`
+	UserID    uuid.UUID `gorm:"primaryKey" json:"user_id"`
+	SessionID uuid.UUID `gorm:"primaryKey" json:"session_id"`
 
 	User    User    `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Session Session `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`

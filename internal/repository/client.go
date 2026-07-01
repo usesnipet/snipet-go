@@ -6,20 +6,17 @@ import (
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/page"
 	"gorm.io/gorm"
 )
 
 type IClientRepository interface {
 	IFilterableRepository[model.Client]
-	ICreatableRepository[model.Client]
-	FilterByUserID(
-		ctx context.Context,
-		userID string,
-		filter *filter.Options[model.Client],
-	) (*page.Paginated[model.Client], error)
 	FindByCode(ctx context.Context, code string) (*model.Client, error)
+
+	ICreatableRepository[model.Client]
+
 	UpdateByCode(ctx context.Context, code string, updates *model.Client) error
+
 	DeleteByCode(ctx context.Context, code string) error
 }
 
@@ -31,37 +28,6 @@ func NewClientRepository(db *gorm.DB) IClientRepository {
 	return &ClientRepository{
 		Repository: NewRepository[model.Client](db),
 	}
-}
-
-func (r *ClientRepository) FilterByUserID(
-	ctx context.Context,
-	userID string,
-	filterOptions *filter.Options[model.Client],
-) (*page.Paginated[model.Client], error) {
-	if filterOptions == nil {
-		filterOptions = filter.Default[model.Client]()
-	}
-
-	var total int64
-	err := r.DB.WithContext(ctx).Table("clients").
-		Joins("LEFT JOIN client_to_users ctu ON ctu.client_id = clients.id").
-		Where("ctu.user_id = ?", userID).
-		Count(&total).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	var data []model.Client
-	tx, err := filterOptions.ToGormTx(r.DB.WithContext(ctx).Table("clients"))
-	if err != nil {
-		return nil, err
-	}
-	err = tx.Joins(
-		"LEFT JOIN client_to_users ctu ON ctu.client_id = clients.id",
-	).Where("ctu.user_id = ?", userID).Find(&data).Error
-
-	return page.NewPaginated(data, total, int64(filterOptions.Skip), int64(filterOptions.Take)), err
 }
 
 func (r *ClientRepository) FindByCode(ctx context.Context, code string) (*model.Client, error) {

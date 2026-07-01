@@ -23,14 +23,6 @@ func (s *Service) Filter(ctx context.Context, filter *filter.Options[model.Clien
 	return s.clientRepo.Filter(ctx, filter)
 }
 
-func (s *Service) FilterByUser(
-	ctx context.Context,
-	userID string,
-	filter *filter.Options[model.Client],
-) (*page.Paginated[model.Client], error) {
-	return s.clientRepo.FilterByUserID(ctx, userID, filter)
-}
-
 func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, error) {
 	paginated, err := s.clientRepo.Filter(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
 	if err != nil {

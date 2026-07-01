@@ -69,8 +69,8 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	authHandler := auth_module.NewHandler(authService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	botHandler := bot.NewHandler(botService, apiKeyMiddleware)
-	clientHandler := client.NewHandler(clientService, apiKeyMiddleware, anyAuthMiddleware)
-	sessionHandler := session.NewHandler(sessionService, apiKeyMiddleware)
+	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
+	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
 	memoryHandler := memory.NewHandler(memoryService, apiKeyMiddleware)
 	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware)
 

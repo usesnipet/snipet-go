@@ -21,17 +21,18 @@ type IUserRepository interface {
 		clientCode string,
 		id string,
 	) (*model.User, error)
+	FindByExternalIDInClient(
+		ctx context.Context,
+		clientCode string,
+		externalID string,
+	) (*model.User, error)
+
 	CreateInClient(
 		ctx context.Context,
 		clientCode string,
 		user *model.User,
 		externalID *string,
 	) error
-	FindByExternalIDInClient(
-		ctx context.Context,
-		clientCode string,
-		externalID string,
-	) (*model.User, error)
 }
 
 type UserRepository struct {

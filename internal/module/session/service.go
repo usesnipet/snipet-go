@@ -30,24 +30,47 @@ func NewService(
 	}
 }
 
-func (s *Service) Filter(
-	ctx context.Context,
-	clientCode string,
-	filter *filter.Options[model.Session],
-) (*page.Paginated[model.Session], error) {
-	principal := auth.GetPrincipal(ctx)
-	if principal.GetType() == auth.PrincipalTypeJWT {
-		return s.sessionRepo.FilterInClientWithUser(
-			ctx,
-			clientCode,
-			principal.GetJWTClaims().Subject,
-			filter,
-		)
+func (s *Service) requireUserSessionAccess(ctx context.Context, clientCode string, sessionID string) error {
+	principal, ok := auth.GetPrincipal(ctx)
+	if !ok {
+		return apperr.Unauthorized("unauthorized")
 	}
-	return s.sessionRepo.FilterInClient(ctx, clientCode, filter)
+	if principal.GetType() == auth.PrincipalTypeAPIKey {
+		return nil
+	}
+
+	userId := principal.GetJWTClaims().Subject
+	hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientCode, userId, sessionID)
+	if err != nil {
+		return err
+	}
+	if !hasAccess {
+		return apperr.Forbidden("user does not have access to this session")
+	}
+	return nil
+}
+
+func (s *Service) Filter(ctx context.Context, clientCode string, filter *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
+	principal, ok := auth.GetPrincipal(ctx)
+	if !ok {
+		return nil, apperr.Unauthorized("unauthorized")
+	}
+	if principal.GetType() == auth.PrincipalTypeAPIKey {
+		return s.sessionRepo.FilterInClient(ctx, clientCode, filter)
+	}
+	return s.sessionRepo.FilterInClientWithUser(
+		ctx,
+		clientCode,
+		principal.GetJWTClaims().Subject,
+		filter,
+	)
 }
 
 func (s *Service) FindByID(ctx context.Context, clientCode string, id string) (*model.Session, error) {
+	if err := s.requireUserSessionAccess(ctx, clientCode, id); err != nil {
+		return nil, err
+	}
+
 	return s.sessionRepo.FindByIDInClient(ctx, clientCode, id)
 }
 
@@ -75,6 +98,20 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 		BotID:    botUUID,
 		Metadata: dto.Metadata,
 	}
+
+	principal, ok := auth.GetPrincipal(ctx)
+	if !ok {
+		return nil, apperr.Unauthorized("unauthorized")
+	}
+	if principal.GetType() == auth.PrincipalTypeJWT {
+		userID, err := uuid.Parse(principal.GetJWTClaims().Subject)
+		if err != nil {
+			return nil, err
+		}
+		session.UserToSessions = append(session.UserToSessions, model.UserToSession{
+			UserID: userID,
+		})
+	}
 	if err := s.sessionRepo.CreateInClient(ctx, clientCode, session); err != nil {
 		return nil, err
 	}
@@ -82,6 +119,10 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 }
 
 func (s *Service) DeleteByID(ctx context.Context, clientCode string, id string) error {
+	if err := s.requireUserSessionAccess(ctx, clientCode, id); err != nil {
+		return err
+	}
+
 	return s.sessionRepo.DeleteInClient(ctx, clientCode, id)
 }
 
@@ -91,17 +132,8 @@ func (s *Service) FindMessages(
 	sessionID string,
 	filter *filter.Options[model.SessionMessage],
 ) (*page.Paginated[model.SessionMessage], error) {
-	principal := auth.GetPrincipal(ctx)
-
-	if principal.GetType() == auth.PrincipalTypeJWT {
-		userID := principal.GetJWTClaims().Subject
-		hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientCode, userID, sessionID)
-		if err != nil {
-			return nil, err
-		}
-		if !hasAccess {
-			return nil, apperr.Forbidden("user does not have access to this session")
-		}
+	if err := s.requireUserSessionAccess(ctx, clientCode, sessionID); err != nil {
+		return nil, err
 	}
 
 	return s.sessionMessageRepo.FilterInSession(
