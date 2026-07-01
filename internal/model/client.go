@@ -1,9 +1,5 @@
 package model
 
-import (
-	"github.com/google/uuid"
-)
-
 type ClientConfig struct {
 	OIDC struct {
 		Issuer   string `json:"issuer" validate:"omitempty,url"`
@@ -17,7 +13,7 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
 	Code   string       `gorm:"type:char(10);not null;unique" json:"code"`
 	Name   string       `gorm:"type:varchar(255);not null" json:"name"`

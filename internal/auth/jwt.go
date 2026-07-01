@@ -29,7 +29,7 @@ func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string,
 		ClientCode: clientCode,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.config.JWTIssuer,
-			Subject:   user.ID.String(),
+			Subject:   user.ID,
 			Audience:  jwt.ClaimStrings{s.config.JWTAudience},
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),

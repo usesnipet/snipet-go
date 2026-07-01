@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
@@ -37,7 +36,7 @@ func apiKeyAuth(apiKeyService *apikey.Service, apiKeyCache cache.ICache, next ht
 		http.Error(w, "API key is required", http.StatusUnauthorized)
 		return
 	}
-	keyID, found := cache.GetAs[uuid.UUID](apiKeyCache, apiKey)
+	keyID, found := cache.GetAs[string](apiKeyCache, apiKey)
 	if found {
 		principal := auth.NewPrincipal(auth.PrincipalTypeAPIKey, &keyID, nil)
 		ctx := auth.SetPrincipal(r.Context(), principal)

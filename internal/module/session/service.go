@@ -3,11 +3,12 @@ package session
 import (
 	"context"
 
-	"github.com/google/uuid"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/module/client"
+	"github.com/usesnipet/snipet/internal/module/memory"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 )
@@ -15,75 +16,86 @@ import (
 type Service struct {
 	sessionRepo        repository.ISessionRepository
 	sessionMessageRepo repository.ISessionMessageRepository
-	memoryRepo         repository.IMemoryRepository
+	memoryService      *memory.Service
+	clientService      *client.Service
 }
 
 func NewService(
 	sessionRepo repository.ISessionRepository,
 	sessionMessageRepo repository.ISessionMessageRepository,
-	memoryRepo repository.IMemoryRepository,
+	memoryService *memory.Service,
+	clientService *client.Service,
 ) *Service {
 	return &Service{
 		sessionRepo:        sessionRepo,
 		sessionMessageRepo: sessionMessageRepo,
-		memoryRepo:         memoryRepo,
+		memoryService:      memoryService,
+		clientService:      clientService,
 	}
 }
 
-func (s *Service) requireUserSessionAccess(ctx context.Context, clientCode string, sessionID string) error {
-	principal, ok := auth.GetPrincipal(ctx)
-	if !ok {
-		return apperr.Unauthorized("unauthorized")
-	}
-	if principal.GetType() == auth.PrincipalTypeAPIKey {
-		return nil
-	}
-
-	userId := principal.GetJWTClaims().Subject
-	hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientCode, userId, sessionID)
-	if err != nil {
-		return err
-	}
-	if !hasAccess {
-		return apperr.Forbidden("user does not have access to this session")
-	}
-	return nil
-}
-
-func (s *Service) Filter(ctx context.Context, clientCode string, filter *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
+func (s *Service) requireUserSessionAccess(ctx context.Context, clientId string, sessionID string) (*auth.UserClaims, error) {
 	principal, ok := auth.GetPrincipal(ctx)
 	if !ok {
 		return nil, apperr.Unauthorized("unauthorized")
 	}
 	if principal.GetType() == auth.PrincipalTypeAPIKey {
-		return s.sessionRepo.FilterInClient(ctx, clientCode, filter)
+		return nil, nil
+	}
+
+	userId := principal.GetJWTClaims().Subject
+	hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientId, userId, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAccess {
+		return nil, apperr.Forbidden("user does not have access to this session")
+	}
+	return principal.GetJWTClaims(), nil
+}
+
+func (s *Service) Filter(ctx context.Context, clientCode string, filter *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
+	client, err := s.clientService.FindByCode(ctx, clientCode)
+	if err != nil {
+		return nil, err
+	}
+	principal, ok := auth.GetPrincipal(ctx)
+	if !ok {
+		return nil, apperr.Unauthorized("unauthorized")
+	}
+	if principal.GetType() == auth.PrincipalTypeAPIKey {
+		return s.sessionRepo.FilterInClient(ctx, client.ID, filter)
 	}
 	return s.sessionRepo.FilterInClientWithUser(
 		ctx,
-		clientCode,
+		client.ID,
 		principal.GetJWTClaims().Subject,
 		filter,
 	)
 }
 
 func (s *Service) FindByID(ctx context.Context, clientCode string, id string) (*model.Session, error) {
-	if err := s.requireUserSessionAccess(ctx, clientCode, id); err != nil {
+	client, err := s.clientService.FindByCode(ctx, clientCode)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.requireUserSessionAccess(ctx, client.ID, id); err != nil {
 		return nil, err
 	}
 
-	return s.sessionRepo.FindByIDInClient(ctx, clientCode, id)
+	return s.sessionRepo.FindByIDInClient(ctx, client.ID, id)
 }
 
 func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessionDTO) (*model.Session, error) {
-	botUUID, err := uuid.Parse(dto.BotID)
+	client, err := s.clientService.FindByCode(ctx, clientCode)
 	if err != nil {
-		return nil, apperr.BadRequest("invalid bot id")
+		return nil, err
 	}
 
 	var memory *model.Memory
 
 	if dto.MemoryID == "" {
-		memories, err := s.memoryRepo.Filter(
+		memories, err := s.memoryService.Filter(
 			ctx,
 			filter.New[model.Memory](
 				filter.WhereEq("type", model.MemoryTypeSession),
@@ -98,11 +110,7 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 		}
 		memory = memories.First()
 	} else {
-		_, err := uuid.Parse(dto.MemoryID)
-		if err != nil {
-			return nil, apperr.BadRequest("invalid memory id")
-		}
-		memory, err = s.memoryRepo.FindByID(ctx, dto.MemoryID)
+		memory, err = s.memoryService.FindByID(ctx, dto.MemoryID)
 		if err != nil {
 			return nil, err
 		}
@@ -113,9 +121,10 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 	}
 
 	session := &model.Session{
-		MemoryID: memory.ID,
-		BotID:    botUUID,
+		BotID:    dto.BotID,
 		Metadata: dto.Metadata,
+		MemoryID: memory.ID,
+		ClientID: client.ID,
 	}
 
 	principal, ok := auth.GetPrincipal(ctx)
@@ -123,22 +132,18 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 		return nil, apperr.Unauthorized("unauthorized")
 	}
 	if principal.GetType() == auth.PrincipalTypeJWT {
-		userID, err := uuid.Parse(principal.GetJWTClaims().Subject)
-		if err != nil {
-			return nil, err
-		}
 		session.UserToSessions = append(session.UserToSessions, model.UserToSession{
-			UserID: userID,
+			UserID: principal.GetJWTClaims().Subject,
 		})
 	}
-	if err := s.sessionRepo.CreateInClient(ctx, clientCode, session); err != nil {
+	if err := s.sessionRepo.Create(ctx, session); err != nil {
 		return nil, err
 	}
 	return session, nil
 }
 
 func (s *Service) DeleteByID(ctx context.Context, clientCode string, id string) error {
-	if err := s.requireUserSessionAccess(ctx, clientCode, id); err != nil {
+	if _, err := s.requireUserSessionAccess(ctx, clientCode, id); err != nil {
 		return err
 	}
 
@@ -151,7 +156,7 @@ func (s *Service) FindMessages(
 	sessionID string,
 	filter *filter.Options[model.SessionMessage],
 ) (*page.Paginated[model.SessionMessage], error) {
-	if err := s.requireUserSessionAccess(ctx, clientCode, sessionID); err != nil {
+	if _, err := s.requireUserSessionAccess(ctx, clientCode, sessionID); err != nil {
 		return nil, err
 	}
 
@@ -161,4 +166,24 @@ func (s *Service) FindMessages(
 		sessionID,
 		filter,
 	)
+}
+
+func (s *Service) SendMessage(ctx context.Context, clientCode string, sessionID string, dto SendMessageDTO) error {
+	principal, err := s.requireUserSessionAccess(ctx, clientCode, sessionID)
+	if err != nil {
+		return err
+	}
+
+	message := &model.SessionMessage{
+		UserID:    principal.Subject,
+		SessionID: sessionID,
+		Role:      "user",
+		Parts: []model.SessionMessagePart{
+			{
+				Type:    model.SessionMessagePartTypeText,
+				Content: dto.Message,
+			},
+		},
+	}
+	return s.sessionMessageRepo.Create(ctx, message)
 }

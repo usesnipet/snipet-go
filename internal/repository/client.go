@@ -10,13 +10,10 @@ import (
 )
 
 type IClientRepository interface {
-	IFilterableRepository[model.Client]
+	IRepository[model.Client]
+
 	FindByCode(ctx context.Context, code string) (*model.Client, error)
-
-	ICreatableRepository[model.Client]
-
 	UpdateByCode(ctx context.Context, code string, updates *model.Client) error
-
 	DeleteByCode(ctx context.Context, code string) error
 }
 

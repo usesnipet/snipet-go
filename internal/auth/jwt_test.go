@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/usesnipet/snipet/config"
@@ -24,7 +23,7 @@ func testAuthConfig() config.AuthConfig {
 
 func testUser() *model.User {
 	return &model.User{
-		ID:   uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+		ID:   "11111111-1111-1111-1111-111111111111",
 		Name: "Test User",
 	}
 }
@@ -50,7 +49,7 @@ func TestGenerateTokenEmbedsExpectedClaims(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "client-abc", claims.ClientCode)
-	assert.Equal(t, user.ID.String(), claims.Subject)
+	assert.Equal(t, user.ID, claims.Subject)
 	assert.Equal(t, cfg.JWTIssuer, claims.Issuer)
 	assert.Equal(t, cfg.JWTAudience, claims.Audience[0])
 	assert.WithinDuration(t, time.Now(), claims.IssuedAt.Time, time.Second)

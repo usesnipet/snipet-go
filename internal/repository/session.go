@@ -11,67 +11,59 @@ import (
 )
 
 type ISessionRepository interface {
+	IRepository[model.Session]
 	CheckUserAccess(
 		ctx context.Context,
-		clientCode string,
+		clientId string,
 		userID string,
 		sessionID string,
 	) (bool, error)
 
 	FilterInClient(
 		ctx context.Context,
-		clientCode string,
+		clientId string,
 		filter *filter.Options[model.Session],
 	) (*page.Paginated[model.Session], error)
 	FilterInClientWithUser(
 		ctx context.Context,
-		clientCode string,
+		clientId string,
 		userID string,
 		filter *filter.Options[model.Session],
 	) (*page.Paginated[model.Session], error)
 
 	FindByIDInClient(
 		ctx context.Context,
-		clientCode string,
+		clientId string,
 		id string,
 	) (*model.Session, error)
 
-	CreateInClient(
-		ctx context.Context,
-		clientCode string,
-		session *model.Session,
-	) error
-
 	DeleteInClient(
 		ctx context.Context,
-		clientCode string,
+		clientId string,
 		id string,
 	) error
 }
 
 type SessionRepository struct {
 	*Repository[model.Session]
-	clientRepo IClientRepository
 }
 
 func NewSessionRepository(db *gorm.DB, clientRepo IClientRepository) ISessionRepository {
 	return &SessionRepository{
 		Repository: NewRepository[model.Session](db),
-		clientRepo: clientRepo,
 	}
 }
 
 func (r *SessionRepository) CheckUserAccess(
 	ctx context.Context,
-	clientCode string,
+	clientId string,
 	userID string,
 	sessionID string,
 ) (bool, error) {
 	var total int64
 	err := r.db(ctx).Table("user_to_sessions").
 		Joins("LEFT JOIN sessions s ON s.id = user_to_sessions.session_id").
-		Joins("LEFT JOIN clients c ON c.id = s.client_id").
-		Where("c.code = ?", clientCode).
+		Where("s.client_id = ?", clientId).
 		Where("user_id = ? AND session_id = ?", userID, sessionID).
 		Count(&total).Error
 	return total > 0, err
@@ -79,18 +71,14 @@ func (r *SessionRepository) CheckUserAccess(
 
 func (r *SessionRepository) FilterInClient(
 	ctx context.Context,
-	clientCode string,
+	clientId string,
 	sessionFilter *filter.Options[model.Session],
 ) (*page.Paginated[model.Session], error) {
-	client, err := r.clientRepo.FindByCode(ctx, clientCode)
-	if err != nil {
-		return nil, err
-	}
 	return r.Filter(
 		ctx,
 		filter.Merge(
 			sessionFilter,
-			filter.New[model.Session](filter.WhereEq("client_id", client.ID)),
+			filter.New[model.Session](filter.WhereEq("client_id", clientId)),
 		),
 	)
 }
@@ -131,12 +119,12 @@ func (r *SessionRepository) FilterInClientWithUser(
 
 func (r *SessionRepository) FindByIDInClient(
 	ctx context.Context,
-	clientCode string,
+	clientId string,
 	id string,
 ) (*model.Session, error) {
 	paginated, err := r.FilterInClient(
 		ctx,
-		clientCode,
+		clientId,
 		filter.New[model.Session](filter.WhereEq("id", id)),
 	)
 	if err != nil {
@@ -148,29 +136,12 @@ func (r *SessionRepository) FindByIDInClient(
 	return paginated.First(), nil
 }
 
-func (r *SessionRepository) CreateInClient(
-	ctx context.Context,
-	clientCode string,
-	session *model.Session,
-) error {
-	client, err := r.clientRepo.FindByCode(ctx, clientCode)
-	if err != nil {
-		return err
-	}
-	session.ClientID = client.ID
-	return r.Create(ctx, session)
-}
-
 func (r *SessionRepository) DeleteInClient(
 	ctx context.Context,
-	clientCode string,
+	clientId string,
 	id string,
 ) error {
-	client, err := r.clientRepo.FindByCode(ctx, clientCode)
-	if err != nil {
-		return err
-	}
-	affected, err := gorm.G[model.Session](r.db(ctx)).Where("client_id = ? AND id = ?", client.ID, id).Delete(ctx)
+	affected, err := gorm.G[model.Session](r.db(ctx)).Where("client_id = ? AND id = ?", clientId, id).Delete(ctx)
 	if err != nil {
 		return err
 	}

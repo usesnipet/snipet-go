@@ -3,17 +3,23 @@ package bot
 import (
 	"context"
 
-	"github.com/google/uuid"
-	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
-	botRepo    repository.IBotRepository
-	clientRepo repository.IClientRepository
+	botRepo       repository.IBotRepository
+	clientService *client.Service
+}
+
+func NewService(botRepo repository.IBotRepository, clientService *client.Service) *Service {
+	return &Service{
+		botRepo:       botRepo,
+		clientService: clientService,
+	}
 }
 
 func (s *Service) Filter(ctx context.Context) (*page.Paginated[model.Bot], error) {
@@ -55,26 +61,14 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 }
 
 func (s *Service) LinkClientToBot(ctx context.Context, dto LinkClientToBotDTO) error {
-	botUUID, err := uuid.Parse(dto.BotID)
-	if err != nil {
-		return apperr.BadRequest("invalid bot id")
-	}
-
 	if _, err := s.botRepo.FindByID(ctx, dto.BotID); err != nil {
 		return err
 	}
 
-	client, err := s.clientRepo.FindByCode(ctx, dto.ClientCode)
+	client, err := s.clientService.FindByCode(ctx, dto.ClientCode)
 	if err != nil {
 		return err
 	}
 
-	return s.botRepo.LinkBotToClient(ctx, client.ID, botUUID)
-}
-
-func NewService(botRepo repository.IBotRepository, clientRepo repository.IClientRepository) *Service {
-	return &Service{
-		botRepo:    botRepo,
-		clientRepo: clientRepo,
-	}
+	return s.botRepo.LinkBotToClient(ctx, client.ID, dto.BotID)
 }

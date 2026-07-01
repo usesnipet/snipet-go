@@ -14,6 +14,7 @@ import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	bot "github.com/usesnipet/snipet/internal/module/bot"
+	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
@@ -23,7 +24,7 @@ func newTestService(
 	botRepo repository.IBotRepository,
 	clientRepo repository.IClientRepository,
 ) *bot.Service {
-	return bot.NewService(botRepo, clientRepo)
+	return bot.NewService(botRepo, client.NewService(clientRepo))
 }
 
 func assertAppError(t *testing.T, err error, statusCode int, message string) {
@@ -57,7 +58,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	expected := &model.Bot{ID: uuid.MustParse(id), Name: "Found"}
+	expected := &model.Bot{ID: id, Name: "Found"}
 	botRepo := mocks.NewMockIBotRepository(t)
 	botRepo.EXPECT().
 		FindByID(mock.Anything, id).
@@ -81,7 +82,7 @@ func TestCreateStoresBotAndReturnsIt(t *testing.T) {
 		Create(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, b *model.Bot) {
 			stored = b
-			b.ID = uuid.New()
+			b.ID = uuid.New().String()
 		}).
 		Return(nil)
 
@@ -211,7 +212,7 @@ func TestLinkClientToBotReturnsClientLookupError(t *testing.T) {
 	botRepo := mocks.NewMockIBotRepository(t)
 	botRepo.EXPECT().
 		FindByID(mock.Anything, botID).
-		Return(&model.Bot{ID: uuid.MustParse(botID)}, nil)
+		Return(&model.Bot{ID: botID}, nil)
 
 	clientRepo := mocks.NewMockIClientRepository(t)
 	clientRepo.EXPECT().
@@ -250,8 +251,8 @@ func TestLinkClientToBotReturnsBotLookupError(t *testing.T) {
 func TestLinkClientToBotLinksClientToBot(t *testing.T) {
 	t.Parallel()
 
-	clientID := uuid.New()
-	botID := uuid.New()
+	clientID := uuid.New().String()
+	botID := uuid.New().String()
 	client := &model.Client{ID: clientID, Code: "CLIENT01"}
 
 	clientRepo := mocks.NewMockIClientRepository(t)
@@ -261,7 +262,7 @@ func TestLinkClientToBotLinksClientToBot(t *testing.T) {
 
 	botRepo := mocks.NewMockIBotRepository(t)
 	botRepo.EXPECT().
-		FindByID(mock.Anything, botID.String()).
+		FindByID(mock.Anything, botID).
 		Return(&model.Bot{ID: botID}, nil)
 	botRepo.EXPECT().
 		LinkBotToClient(mock.Anything, clientID, botID).
@@ -271,7 +272,7 @@ func TestLinkClientToBotLinksClientToBot(t *testing.T) {
 
 	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
 		ClientCode: "CLIENT01",
-		BotID:      botID.String(),
+		BotID:      botID,
 	})
 	require.NoError(t, err)
 }
@@ -279,8 +280,8 @@ func TestLinkClientToBotLinksClientToBot(t *testing.T) {
 func TestLinkClientToBotReturnsLinkError(t *testing.T) {
 	t.Parallel()
 
-	clientID := uuid.New()
-	botID := uuid.New()
+	clientID := uuid.New().String()
+	botID := uuid.New().String()
 	expectedErr := errors.New("link failed")
 
 	clientRepo := mocks.NewMockIClientRepository(t)
@@ -290,7 +291,7 @@ func TestLinkClientToBotReturnsLinkError(t *testing.T) {
 
 	botRepo := mocks.NewMockIBotRepository(t)
 	botRepo.EXPECT().
-		FindByID(mock.Anything, botID.String()).
+		FindByID(mock.Anything, botID).
 		Return(&model.Bot{ID: botID}, nil)
 	botRepo.EXPECT().
 		LinkBotToClient(mock.Anything, clientID, botID).
@@ -300,7 +301,7 @@ func TestLinkClientToBotReturnsLinkError(t *testing.T) {
 
 	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
 		ClientCode: "CLIENT01",
-		BotID:      botID.String(),
+		BotID:      botID,
 	})
 	require.ErrorIs(t, err, expectedErr)
 }

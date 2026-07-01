@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/google/uuid"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -11,7 +10,7 @@ type BotConfiguration struct {
 }
 
 type Bot struct {
-	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
 	Name          string           `gorm:"type:varchar(255);not null" json:"name"`
 	Description   string           `gorm:"type:text;not null" json:"description"`
@@ -22,17 +21,17 @@ type Bot struct {
 }
 
 type BotToMemory struct {
-	BotID    uuid.UUID `gorm:"primaryKey" json:"bot_id"`
-	MemoryID uuid.UUID `gorm:"primaryKey" json:"memory_id"`
-	Active   bool      `gorm:"type:boolean;not null;default:true" json:"active"`
+	BotID    string `gorm:"primaryKey" json:"bot_id"`
+	MemoryID string `gorm:"primaryKey" json:"memory_id"`
+	Active   bool   `gorm:"type:boolean;not null;default:true" json:"active"`
 
 	Bot    Bot    `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Memory Memory `gorm:"foreignKey:MemoryID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 type ClientToBot struct {
-	ClientID uuid.UUID `gorm:"primaryKey" json:"client_id"`
-	BotID    uuid.UUID `gorm:"primaryKey" json:"bot_id"`
+	ClientID string `gorm:"primaryKey" json:"client_id"`
+	BotID    string `gorm:"primaryKey" json:"bot_id"`
 
 	Client Client `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Bot    Bot    `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`

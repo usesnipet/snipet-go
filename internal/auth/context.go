@@ -2,8 +2,6 @@ package auth
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 type PrincipalType string
@@ -16,11 +14,11 @@ const (
 type Principal struct {
 	Type PrincipalType
 
-	APIKeyID  *uuid.UUID
+	APIKeyID  *string
 	JWTClaims *UserClaims
 }
 
-func NewPrincipal(t PrincipalType, apiKeyID *uuid.UUID, jwtClaims *UserClaims) *Principal {
+func NewPrincipal(t PrincipalType, apiKeyID *string, jwtClaims *UserClaims) *Principal {
 	return &Principal{
 		Type:      t,
 		APIKeyID:  apiKeyID,
@@ -32,7 +30,7 @@ func (p *Principal) GetType() PrincipalType {
 	return p.Type
 }
 
-func (p *Principal) GetAPIKeyID() *uuid.UUID {
+func (p *Principal) GetAPIKeyID() *string {
 	return p.APIKeyID
 }
 

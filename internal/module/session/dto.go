@@ -6,6 +6,10 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 )
 
+type SendMessageDTO struct {
+	Message string `json:"message" validate:"required"`
+}
+
 type CreateSessionDTO struct {
 	MemoryID string       `json:"memory_id" validate:"omitempty,uuid"`
 	BotID    string       `json:"bot_id" validate:"required,uuid"`

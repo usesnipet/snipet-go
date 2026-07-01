@@ -28,7 +28,11 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 }
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.Filter(r.Context())
+	var dto FindMemoriesFilterDTO
+	if err := api.ParseQuery(r, &dto); err != nil {
+		return err
+	}
+	data, err := h.service.Filter(r.Context(), dto.ToFilter())
 	if err != nil {
 		return err
 	}

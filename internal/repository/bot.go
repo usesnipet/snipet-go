@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/model"
 	"gorm.io/gorm"
@@ -12,14 +11,14 @@ import (
 
 type IBotRepository interface {
 	IRepository[model.Bot]
-	LinkBotToClient(ctx context.Context, clientID, botID uuid.UUID) error
+	LinkBotToClient(ctx context.Context, clientID, botID string) error
 }
 
 type BotRepository struct {
 	*Repository[model.Bot]
 }
 
-func (r *BotRepository) LinkBotToClient(ctx context.Context, clientID, botID uuid.UUID) error {
+func (r *BotRepository) LinkBotToClient(ctx context.Context, clientID, botID string) error {
 	clientBot := &model.ClientToBot{
 		ClientID: clientID,
 		BotID:    botID,

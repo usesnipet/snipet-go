@@ -14,8 +14,8 @@ type Service struct {
 	repository repository.IMemoryRepository
 }
 
-func (s *Service) Filter(ctx context.Context) (*page.Paginated[model.Memory], error) {
-	return s.repository.Filter(ctx, filter.Default[model.Memory]())
+func (s *Service) Filter(ctx context.Context, filter *filter.Options[model.Memory]) (*page.Paginated[model.Memory], error) {
+	return s.repository.Filter(ctx, filter)
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Memory, error) {

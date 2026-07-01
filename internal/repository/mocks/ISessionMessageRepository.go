@@ -41,6 +41,63 @@ func (_m *MockISessionMessageRepository) EXPECT() *MockISessionMessageRepository
 	return &MockISessionMessageRepository_Expecter{mock: &_m.Mock}
 }
 
+// Create provides a mock function for the type MockISessionMessageRepository
+func (_mock *MockISessionMessageRepository) Create(ctx context.Context, model1 *model.SessionMessage) error {
+	ret := _mock.Called(ctx, model1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Create")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.SessionMessage) error); ok {
+		r0 = returnFunc(ctx, model1)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockISessionMessageRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockISessionMessageRepository_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - ctx context.Context
+//   - model1 *model.SessionMessage
+func (_e *MockISessionMessageRepository_Expecter) Create(ctx any, model1 any) *MockISessionMessageRepository_Create_Call {
+	return &MockISessionMessageRepository_Create_Call{Call: _e.mock.On("Create", ctx, model1)}
+}
+
+func (_c *MockISessionMessageRepository_Create_Call) Run(run func(ctx context.Context, model1 *model.SessionMessage)) *MockISessionMessageRepository_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *model.SessionMessage
+		if args[1] != nil {
+			arg1 = args[1].(*model.SessionMessage)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISessionMessageRepository_Create_Call) Return(err error) *MockISessionMessageRepository_Create_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockISessionMessageRepository_Create_Call) RunAndReturn(run func(ctx context.Context, model1 *model.SessionMessage) error) *MockISessionMessageRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FilterInSession provides a mock function for the type MockISessionMessageRepository
 func (_mock *MockISessionMessageRepository) FilterInSession(ctx context.Context, clientCode string, sessionID string, filter1 *filter.Options[model.SessionMessage]) (*page.Paginated[model.SessionMessage], error) {
 	ret := _mock.Called(ctx, clientCode, sessionID, filter1)

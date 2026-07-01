@@ -11,6 +11,8 @@ import (
 )
 
 type ISessionMessageRepository interface {
+	ICreatableRepository[model.SessionMessage]
+
 	FilterInSession(
 		ctx context.Context,
 		clientCode string,
@@ -22,6 +24,13 @@ type ISessionMessageRepository interface {
 type SessionMessageRepository struct {
 	*Repository[model.SessionMessage]
 	clientRepo IClientRepository
+}
+
+func NewSessionMessageRepository(db *gorm.DB, clientRepo IClientRepository) ISessionMessageRepository {
+	return &SessionMessageRepository{
+		Repository: NewRepository[model.SessionMessage](db),
+		clientRepo: clientRepo,
+	}
 }
 
 func (r *SessionMessageRepository) FilterInSession(
@@ -57,11 +66,4 @@ func (r *SessionMessageRepository) FilterInSession(
 		Where(`"Session"."client_id" = ?`, client.ID).Find(ctx)
 
 	return page.NewPaginated(data, total, int64(filterOptions.Skip), int64(filterOptions.Take)), err
-}
-
-func NewSessionMessageRepository(db *gorm.DB, clientRepo IClientRepository) ISessionMessageRepository {
-	return &SessionMessageRepository{
-		Repository: NewRepository[model.SessionMessage](db),
-		clientRepo: clientRepo,
-	}
 }

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/google/uuid"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -13,7 +12,7 @@ const (
 )
 
 type Memory struct {
-	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
 	Name          string       `gorm:"type:varchar(255);not null" json:"name"`
 	Type          MemoryType   `gorm:"type:varchar(255);not null" json:"type"`

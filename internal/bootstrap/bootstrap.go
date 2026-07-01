@@ -50,12 +50,18 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	authRegistry := auth_provider.NewRegistry()
 
 	authService := auth_module.NewService(authRegistry, clientRepo, userRepo, jwtService)
+
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 	apiKeyService.Init(context.Background())
-	botService := bot.NewService(botRepo, clientRepo)
+
 	clientService := client.NewService(clientRepo)
+
+	botService := bot.NewService(botRepo, clientService)
+
 	memoryService := memory.NewService(memoryRepo)
-	sessionService := session.NewService(sessionRepo, sessionMessageRepo, memoryRepo)
+
+	sessionService := session.NewService(sessionRepo, sessionMessageRepo, memoryService, clientService)
+
 	userService := user.NewService(userRepo)
 
 	// cache
@@ -63,6 +69,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	// middlewares
 	apiKeyMiddleware := middleware.APIKeyMiddleware(apiKeyService, apiKeyCache)
+	jwtAuthMiddleware := middleware.JWT(jwtService)
 	anyAuthMiddleware := middleware.AnyAuth(jwtService, apiKeyService, apiKeyCache)
 
 	// handlers
@@ -70,7 +77,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	botHandler := bot.NewHandler(botService, apiKeyMiddleware)
 	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
-	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
+	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware, jwtAuthMiddleware)
 	memoryHandler := memory.NewHandler(memoryService, apiKeyMiddleware)
 	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware)
 

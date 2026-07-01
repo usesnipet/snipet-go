@@ -42,8 +42,8 @@ func (_m *MockISessionRepository) EXPECT() *MockISessionRepository_Expecter {
 }
 
 // CheckUserAccess provides a mock function for the type MockISessionRepository
-func (_mock *MockISessionRepository) CheckUserAccess(ctx context.Context, clientCode string, userID string, sessionID string) (bool, error) {
-	ret := _mock.Called(ctx, clientCode, userID, sessionID)
+func (_mock *MockISessionRepository) CheckUserAccess(ctx context.Context, clientId string, userID string, sessionID string) (bool, error) {
+	ret := _mock.Called(ctx, clientId, userID, sessionID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CheckUserAccess")
@@ -52,15 +52,15 @@ func (_mock *MockISessionRepository) CheckUserAccess(ctx context.Context, client
 	var r0 bool
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (bool, error)); ok {
-		return returnFunc(ctx, clientCode, userID, sessionID)
+		return returnFunc(ctx, clientId, userID, sessionID)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) bool); ok {
-		r0 = returnFunc(ctx, clientCode, userID, sessionID)
+		r0 = returnFunc(ctx, clientId, userID, sessionID)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = returnFunc(ctx, clientCode, userID, sessionID)
+		r1 = returnFunc(ctx, clientId, userID, sessionID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -74,14 +74,14 @@ type MockISessionRepository_CheckUserAccess_Call struct {
 
 // CheckUserAccess is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
+//   - clientId string
 //   - userID string
 //   - sessionID string
-func (_e *MockISessionRepository_Expecter) CheckUserAccess(ctx any, clientCode any, userID any, sessionID any) *MockISessionRepository_CheckUserAccess_Call {
-	return &MockISessionRepository_CheckUserAccess_Call{Call: _e.mock.On("CheckUserAccess", ctx, clientCode, userID, sessionID)}
+func (_e *MockISessionRepository_Expecter) CheckUserAccess(ctx any, clientId any, userID any, sessionID any) *MockISessionRepository_CheckUserAccess_Call {
+	return &MockISessionRepository_CheckUserAccess_Call{Call: _e.mock.On("CheckUserAccess", ctx, clientId, userID, sessionID)}
 }
 
-func (_c *MockISessionRepository_CheckUserAccess_Call) Run(run func(ctx context.Context, clientCode string, userID string, sessionID string)) *MockISessionRepository_CheckUserAccess_Call {
+func (_c *MockISessionRepository_CheckUserAccess_Call) Run(run func(ctx context.Context, clientId string, userID string, sessionID string)) *MockISessionRepository_CheckUserAccess_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -114,42 +114,98 @@ func (_c *MockISessionRepository_CheckUserAccess_Call) Return(b bool, err error)
 	return _c
 }
 
-func (_c *MockISessionRepository_CheckUserAccess_Call) RunAndReturn(run func(ctx context.Context, clientCode string, userID string, sessionID string) (bool, error)) *MockISessionRepository_CheckUserAccess_Call {
+func (_c *MockISessionRepository_CheckUserAccess_Call) RunAndReturn(run func(ctx context.Context, clientId string, userID string, sessionID string) (bool, error)) *MockISessionRepository_CheckUserAccess_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateInClient provides a mock function for the type MockISessionRepository
-func (_mock *MockISessionRepository) CreateInClient(ctx context.Context, clientCode string, session *model.Session) error {
-	ret := _mock.Called(ctx, clientCode, session)
+// Create provides a mock function for the type MockISessionRepository
+func (_mock *MockISessionRepository) Create(ctx context.Context, model1 *model.Session) error {
+	ret := _mock.Called(ctx, model1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateInClient")
+		panic("no return value specified for Create")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.Session) error); ok {
-		r0 = returnFunc(ctx, clientCode, session)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.Session) error); ok {
+		r0 = returnFunc(ctx, model1)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// MockISessionRepository_CreateInClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInClient'
-type MockISessionRepository_CreateInClient_Call struct {
+// MockISessionRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockISessionRepository_Create_Call struct {
 	*mock.Call
 }
 
-// CreateInClient is a helper method to define mock.On call
+// Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
-//   - session *model.Session
-func (_e *MockISessionRepository_Expecter) CreateInClient(ctx any, clientCode any, session any) *MockISessionRepository_CreateInClient_Call {
-	return &MockISessionRepository_CreateInClient_Call{Call: _e.mock.On("CreateInClient", ctx, clientCode, session)}
+//   - model1 *model.Session
+func (_e *MockISessionRepository_Expecter) Create(ctx any, model1 any) *MockISessionRepository_Create_Call {
+	return &MockISessionRepository_Create_Call{Call: _e.mock.On("Create", ctx, model1)}
 }
 
-func (_c *MockISessionRepository_CreateInClient_Call) Run(run func(ctx context.Context, clientCode string, session *model.Session)) *MockISessionRepository_CreateInClient_Call {
+func (_c *MockISessionRepository_Create_Call) Run(run func(ctx context.Context, model1 *model.Session)) *MockISessionRepository_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *model.Session
+		if args[1] != nil {
+			arg1 = args[1].(*model.Session)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISessionRepository_Create_Call) Return(err error) *MockISessionRepository_Create_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockISessionRepository_Create_Call) RunAndReturn(run func(ctx context.Context, model1 *model.Session) error) *MockISessionRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteByID provides a mock function for the type MockISessionRepository
+func (_mock *MockISessionRepository) DeleteByID(ctx context.Context, id string) error {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteByID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockISessionRepository_DeleteByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByID'
+type MockISessionRepository_DeleteByID_Call struct {
+	*mock.Call
+}
+
+// DeleteByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockISessionRepository_Expecter) DeleteByID(ctx any, id any) *MockISessionRepository_DeleteByID_Call {
+	return &MockISessionRepository_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
+}
+
+func (_c *MockISessionRepository_DeleteByID_Call) Run(run func(ctx context.Context, id string)) *MockISessionRepository_DeleteByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -159,32 +215,27 @@ func (_c *MockISessionRepository_CreateInClient_Call) Run(run func(ctx context.C
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *model.Session
-		if args[2] != nil {
-			arg2 = args[2].(*model.Session)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockISessionRepository_CreateInClient_Call) Return(err error) *MockISessionRepository_CreateInClient_Call {
+func (_c *MockISessionRepository_DeleteByID_Call) Return(err error) *MockISessionRepository_DeleteByID_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockISessionRepository_CreateInClient_Call) RunAndReturn(run func(ctx context.Context, clientCode string, session *model.Session) error) *MockISessionRepository_CreateInClient_Call {
+func (_c *MockISessionRepository_DeleteByID_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockISessionRepository_DeleteByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteInClient provides a mock function for the type MockISessionRepository
-func (_mock *MockISessionRepository) DeleteInClient(ctx context.Context, clientCode string, id string) error {
-	ret := _mock.Called(ctx, clientCode, id)
+func (_mock *MockISessionRepository) DeleteInClient(ctx context.Context, clientId string, id string) error {
+	ret := _mock.Called(ctx, clientId, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteInClient")
@@ -192,7 +243,7 @@ func (_mock *MockISessionRepository) DeleteInClient(ctx context.Context, clientC
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, clientCode, id)
+		r0 = returnFunc(ctx, clientId, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -206,13 +257,13 @@ type MockISessionRepository_DeleteInClient_Call struct {
 
 // DeleteInClient is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
+//   - clientId string
 //   - id string
-func (_e *MockISessionRepository_Expecter) DeleteInClient(ctx any, clientCode any, id any) *MockISessionRepository_DeleteInClient_Call {
-	return &MockISessionRepository_DeleteInClient_Call{Call: _e.mock.On("DeleteInClient", ctx, clientCode, id)}
+func (_e *MockISessionRepository_Expecter) DeleteInClient(ctx any, clientId any, id any) *MockISessionRepository_DeleteInClient_Call {
+	return &MockISessionRepository_DeleteInClient_Call{Call: _e.mock.On("DeleteInClient", ctx, clientId, id)}
 }
 
-func (_c *MockISessionRepository_DeleteInClient_Call) Run(run func(ctx context.Context, clientCode string, id string)) *MockISessionRepository_DeleteInClient_Call {
+func (_c *MockISessionRepository_DeleteInClient_Call) Run(run func(ctx context.Context, clientId string, id string)) *MockISessionRepository_DeleteInClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -240,14 +291,82 @@ func (_c *MockISessionRepository_DeleteInClient_Call) Return(err error) *MockISe
 	return _c
 }
 
-func (_c *MockISessionRepository_DeleteInClient_Call) RunAndReturn(run func(ctx context.Context, clientCode string, id string) error) *MockISessionRepository_DeleteInClient_Call {
+func (_c *MockISessionRepository_DeleteInClient_Call) RunAndReturn(run func(ctx context.Context, clientId string, id string) error) *MockISessionRepository_DeleteInClient_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Filter provides a mock function for the type MockISessionRepository
+func (_mock *MockISessionRepository) Filter(ctx context.Context, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
+	ret := _mock.Called(ctx, filter1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Filter")
+	}
+
+	var r0 *page.Paginated[model.Session]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.Session]) (*page.Paginated[model.Session], error)); ok {
+		return returnFunc(ctx, filter1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.Session]) *page.Paginated[model.Session]); ok {
+		r0 = returnFunc(ctx, filter1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*page.Paginated[model.Session])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *filter.Options[model.Session]) error); ok {
+		r1 = returnFunc(ctx, filter1)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockISessionRepository_Filter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Filter'
+type MockISessionRepository_Filter_Call struct {
+	*mock.Call
+}
+
+// Filter is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filter1 *filter.Options[model.Session]
+func (_e *MockISessionRepository_Expecter) Filter(ctx any, filter1 any) *MockISessionRepository_Filter_Call {
+	return &MockISessionRepository_Filter_Call{Call: _e.mock.On("Filter", ctx, filter1)}
+}
+
+func (_c *MockISessionRepository_Filter_Call) Run(run func(ctx context.Context, filter1 *filter.Options[model.Session])) *MockISessionRepository_Filter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *filter.Options[model.Session]
+		if args[1] != nil {
+			arg1 = args[1].(*filter.Options[model.Session])
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISessionRepository_Filter_Call) Return(paginated *page.Paginated[model.Session], err error) *MockISessionRepository_Filter_Call {
+	_c.Call.Return(paginated, err)
+	return _c
+}
+
+func (_c *MockISessionRepository_Filter_Call) RunAndReturn(run func(ctx context.Context, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error)) *MockISessionRepository_Filter_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FilterInClient provides a mock function for the type MockISessionRepository
-func (_mock *MockISessionRepository) FilterInClient(ctx context.Context, clientCode string, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
-	ret := _mock.Called(ctx, clientCode, filter1)
+func (_mock *MockISessionRepository) FilterInClient(ctx context.Context, clientId string, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
+	ret := _mock.Called(ctx, clientId, filter1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FilterInClient")
@@ -256,17 +375,17 @@ func (_mock *MockISessionRepository) FilterInClient(ctx context.Context, clientC
 	var r0 *page.Paginated[model.Session]
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *filter.Options[model.Session]) (*page.Paginated[model.Session], error)); ok {
-		return returnFunc(ctx, clientCode, filter1)
+		return returnFunc(ctx, clientId, filter1)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *filter.Options[model.Session]) *page.Paginated[model.Session]); ok {
-		r0 = returnFunc(ctx, clientCode, filter1)
+		r0 = returnFunc(ctx, clientId, filter1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*page.Paginated[model.Session])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *filter.Options[model.Session]) error); ok {
-		r1 = returnFunc(ctx, clientCode, filter1)
+		r1 = returnFunc(ctx, clientId, filter1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -280,13 +399,13 @@ type MockISessionRepository_FilterInClient_Call struct {
 
 // FilterInClient is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
+//   - clientId string
 //   - filter1 *filter.Options[model.Session]
-func (_e *MockISessionRepository_Expecter) FilterInClient(ctx any, clientCode any, filter1 any) *MockISessionRepository_FilterInClient_Call {
-	return &MockISessionRepository_FilterInClient_Call{Call: _e.mock.On("FilterInClient", ctx, clientCode, filter1)}
+func (_e *MockISessionRepository_Expecter) FilterInClient(ctx any, clientId any, filter1 any) *MockISessionRepository_FilterInClient_Call {
+	return &MockISessionRepository_FilterInClient_Call{Call: _e.mock.On("FilterInClient", ctx, clientId, filter1)}
 }
 
-func (_c *MockISessionRepository_FilterInClient_Call) Run(run func(ctx context.Context, clientCode string, filter1 *filter.Options[model.Session])) *MockISessionRepository_FilterInClient_Call {
+func (_c *MockISessionRepository_FilterInClient_Call) Run(run func(ctx context.Context, clientId string, filter1 *filter.Options[model.Session])) *MockISessionRepository_FilterInClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -314,14 +433,14 @@ func (_c *MockISessionRepository_FilterInClient_Call) Return(paginated *page.Pag
 	return _c
 }
 
-func (_c *MockISessionRepository_FilterInClient_Call) RunAndReturn(run func(ctx context.Context, clientCode string, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error)) *MockISessionRepository_FilterInClient_Call {
+func (_c *MockISessionRepository_FilterInClient_Call) RunAndReturn(run func(ctx context.Context, clientId string, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error)) *MockISessionRepository_FilterInClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FilterInClientWithUser provides a mock function for the type MockISessionRepository
-func (_mock *MockISessionRepository) FilterInClientWithUser(ctx context.Context, clientCode string, userID string, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
-	ret := _mock.Called(ctx, clientCode, userID, filter1)
+func (_mock *MockISessionRepository) FilterInClientWithUser(ctx context.Context, clientId string, userID string, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
+	ret := _mock.Called(ctx, clientId, userID, filter1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FilterInClientWithUser")
@@ -330,17 +449,17 @@ func (_mock *MockISessionRepository) FilterInClientWithUser(ctx context.Context,
 	var r0 *page.Paginated[model.Session]
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *filter.Options[model.Session]) (*page.Paginated[model.Session], error)); ok {
-		return returnFunc(ctx, clientCode, userID, filter1)
+		return returnFunc(ctx, clientId, userID, filter1)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *filter.Options[model.Session]) *page.Paginated[model.Session]); ok {
-		r0 = returnFunc(ctx, clientCode, userID, filter1)
+		r0 = returnFunc(ctx, clientId, userID, filter1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*page.Paginated[model.Session])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *filter.Options[model.Session]) error); ok {
-		r1 = returnFunc(ctx, clientCode, userID, filter1)
+		r1 = returnFunc(ctx, clientId, userID, filter1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -354,14 +473,14 @@ type MockISessionRepository_FilterInClientWithUser_Call struct {
 
 // FilterInClientWithUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
+//   - clientId string
 //   - userID string
 //   - filter1 *filter.Options[model.Session]
-func (_e *MockISessionRepository_Expecter) FilterInClientWithUser(ctx any, clientCode any, userID any, filter1 any) *MockISessionRepository_FilterInClientWithUser_Call {
-	return &MockISessionRepository_FilterInClientWithUser_Call{Call: _e.mock.On("FilterInClientWithUser", ctx, clientCode, userID, filter1)}
+func (_e *MockISessionRepository_Expecter) FilterInClientWithUser(ctx any, clientId any, userID any, filter1 any) *MockISessionRepository_FilterInClientWithUser_Call {
+	return &MockISessionRepository_FilterInClientWithUser_Call{Call: _e.mock.On("FilterInClientWithUser", ctx, clientId, userID, filter1)}
 }
 
-func (_c *MockISessionRepository_FilterInClientWithUser_Call) Run(run func(ctx context.Context, clientCode string, userID string, filter1 *filter.Options[model.Session])) *MockISessionRepository_FilterInClientWithUser_Call {
+func (_c *MockISessionRepository_FilterInClientWithUser_Call) Run(run func(ctx context.Context, clientId string, userID string, filter1 *filter.Options[model.Session])) *MockISessionRepository_FilterInClientWithUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -394,14 +513,82 @@ func (_c *MockISessionRepository_FilterInClientWithUser_Call) Return(paginated *
 	return _c
 }
 
-func (_c *MockISessionRepository_FilterInClientWithUser_Call) RunAndReturn(run func(ctx context.Context, clientCode string, userID string, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error)) *MockISessionRepository_FilterInClientWithUser_Call {
+func (_c *MockISessionRepository_FilterInClientWithUser_Call) RunAndReturn(run func(ctx context.Context, clientId string, userID string, filter1 *filter.Options[model.Session]) (*page.Paginated[model.Session], error)) *MockISessionRepository_FilterInClientWithUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindByID provides a mock function for the type MockISessionRepository
+func (_mock *MockISessionRepository) FindByID(ctx context.Context, id string) (*model.Session, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByID")
+	}
+
+	var r0 *model.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.Session, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.Session); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockISessionRepository_FindByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByID'
+type MockISessionRepository_FindByID_Call struct {
+	*mock.Call
+}
+
+// FindByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockISessionRepository_Expecter) FindByID(ctx any, id any) *MockISessionRepository_FindByID_Call {
+	return &MockISessionRepository_FindByID_Call{Call: _e.mock.On("FindByID", ctx, id)}
+}
+
+func (_c *MockISessionRepository_FindByID_Call) Run(run func(ctx context.Context, id string)) *MockISessionRepository_FindByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISessionRepository_FindByID_Call) Return(session *model.Session, err error) *MockISessionRepository_FindByID_Call {
+	_c.Call.Return(session, err)
+	return _c
+}
+
+func (_c *MockISessionRepository_FindByID_Call) RunAndReturn(run func(ctx context.Context, id string) (*model.Session, error)) *MockISessionRepository_FindByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FindByIDInClient provides a mock function for the type MockISessionRepository
-func (_mock *MockISessionRepository) FindByIDInClient(ctx context.Context, clientCode string, id string) (*model.Session, error) {
-	ret := _mock.Called(ctx, clientCode, id)
+func (_mock *MockISessionRepository) FindByIDInClient(ctx context.Context, clientId string, id string) (*model.Session, error) {
+	ret := _mock.Called(ctx, clientId, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindByIDInClient")
@@ -410,17 +597,17 @@ func (_mock *MockISessionRepository) FindByIDInClient(ctx context.Context, clien
 	var r0 *model.Session
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*model.Session, error)); ok {
-		return returnFunc(ctx, clientCode, id)
+		return returnFunc(ctx, clientId, id)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *model.Session); ok {
-		r0 = returnFunc(ctx, clientCode, id)
+		r0 = returnFunc(ctx, clientId, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Session)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, clientCode, id)
+		r1 = returnFunc(ctx, clientId, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -434,13 +621,13 @@ type MockISessionRepository_FindByIDInClient_Call struct {
 
 // FindByIDInClient is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
+//   - clientId string
 //   - id string
-func (_e *MockISessionRepository_Expecter) FindByIDInClient(ctx any, clientCode any, id any) *MockISessionRepository_FindByIDInClient_Call {
-	return &MockISessionRepository_FindByIDInClient_Call{Call: _e.mock.On("FindByIDInClient", ctx, clientCode, id)}
+func (_e *MockISessionRepository_Expecter) FindByIDInClient(ctx any, clientId any, id any) *MockISessionRepository_FindByIDInClient_Call {
+	return &MockISessionRepository_FindByIDInClient_Call{Call: _e.mock.On("FindByIDInClient", ctx, clientId, id)}
 }
 
-func (_c *MockISessionRepository_FindByIDInClient_Call) Run(run func(ctx context.Context, clientCode string, id string)) *MockISessionRepository_FindByIDInClient_Call {
+func (_c *MockISessionRepository_FindByIDInClient_Call) Run(run func(ctx context.Context, clientId string, id string)) *MockISessionRepository_FindByIDInClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -468,7 +655,70 @@ func (_c *MockISessionRepository_FindByIDInClient_Call) Return(session *model.Se
 	return _c
 }
 
-func (_c *MockISessionRepository_FindByIDInClient_Call) RunAndReturn(run func(ctx context.Context, clientCode string, id string) (*model.Session, error)) *MockISessionRepository_FindByIDInClient_Call {
+func (_c *MockISessionRepository_FindByIDInClient_Call) RunAndReturn(run func(ctx context.Context, clientId string, id string) (*model.Session, error)) *MockISessionRepository_FindByIDInClient_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateByID provides a mock function for the type MockISessionRepository
+func (_mock *MockISessionRepository) UpdateByID(ctx context.Context, id string, model1 *model.Session) error {
+	ret := _mock.Called(ctx, id, model1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateByID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.Session) error); ok {
+		r0 = returnFunc(ctx, id, model1)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockISessionRepository_UpdateByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateByID'
+type MockISessionRepository_UpdateByID_Call struct {
+	*mock.Call
+}
+
+// UpdateByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - model1 *model.Session
+func (_e *MockISessionRepository_Expecter) UpdateByID(ctx any, id any, model1 any) *MockISessionRepository_UpdateByID_Call {
+	return &MockISessionRepository_UpdateByID_Call{Call: _e.mock.On("UpdateByID", ctx, id, model1)}
+}
+
+func (_c *MockISessionRepository_UpdateByID_Call) Run(run func(ctx context.Context, id string, model1 *model.Session)) *MockISessionRepository_UpdateByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 *model.Session
+		if args[2] != nil {
+			arg2 = args[2].(*model.Session)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISessionRepository_UpdateByID_Call) Return(err error) *MockISessionRepository_UpdateByID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockISessionRepository_UpdateByID_Call) RunAndReturn(run func(ctx context.Context, id string, model1 *model.Session) error) *MockISessionRepository_UpdateByID_Call {
 	_c.Call.Return(run)
 	return _c
 }

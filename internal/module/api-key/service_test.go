@@ -15,8 +15,8 @@ import (
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
-	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	"github.com/usesnipet/snipet/internal/model"
+	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
@@ -48,7 +48,7 @@ func TestCreateStoresHashedKeyAndReturnsSecret(t *testing.T) {
 		Create(mock.Anything, mock.Anything).
 		Run(func(ctx context.Context, apiKey *model.APIKey) {
 			stored = apiKey
-			apiKey.ID = uuid.New()
+			apiKey.ID = uuid.New().String()
 		}).
 		Return(nil)
 
@@ -90,7 +90,7 @@ func TestVerifyAPIKeyAcceptsValidKey(t *testing.T) {
 	require.NoError(t, err)
 
 	stored := model.APIKey{
-		ID:     uuid.New(),
+		ID:     uuid.New().String(),
 		Name:   "Valid Key",
 		KeyID:  keyID,
 		Key:    hash,
@@ -249,7 +249,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	expected := &model.APIKey{ID: uuid.MustParse(id), Name: "Found"}
+	expected := &model.APIKey{ID: id, Name: "Found"}
 	repo := mocks.NewMockIApiKeyRepository(t)
 	repo.EXPECT().
 		FindByID(mock.Anything, id).
@@ -265,16 +265,16 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 func TestRollUpdatesKeyAndReturnsNewSecret(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := uuid.New().String()
 	existing := &model.APIKey{ID: id, Name: "Rollable", KeyID: "old-key-id", Key: "old-hash"}
 	findCalls := 0
 	var updatedKeyID, updatedHash string
 
 	repo := mocks.NewMockIApiKeyRepository(t)
 	repo.EXPECT().
-		FindByID(mock.Anything, id.String()).
+		FindByID(mock.Anything, id).
 		RunAndReturn(func(_ context.Context, gotID string) (*model.APIKey, error) {
-			assert.Equal(t, id.String(), gotID)
+			assert.Equal(t, id, gotID)
 			findCalls++
 			return &model.APIKey{
 				ID:    id,
@@ -285,9 +285,9 @@ func TestRollUpdatesKeyAndReturnsNewSecret(t *testing.T) {
 		}).
 		Times(2)
 	repo.EXPECT().
-		UpdateByID(mock.Anything, id.String(), mock.Anything).
+		UpdateByID(mock.Anything, id, mock.Anything).
 		Run(func(_ context.Context, gotID string, updates *model.APIKey) {
-			assert.Equal(t, id.String(), gotID)
+			assert.Equal(t, id, gotID)
 			updatedKeyID = updates.KeyID
 			updatedHash = updates.Key
 			existing.KeyID = updates.KeyID
@@ -297,7 +297,7 @@ func TestRollUpdatesKeyAndReturnsNewSecret(t *testing.T) {
 
 	svc := newTestService(repo)
 
-	result, err := svc.Roll(context.Background(), id.String())
+	result, err := svc.Roll(context.Background(), id)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -375,7 +375,7 @@ func TestInitCreatesRootKeyWhenNoneExist(t *testing.T) {
 		Run(func(_ context.Context, apiKey *model.APIKey) {
 			createCalls++
 			assert.Equal(t, "Root", apiKey.Name)
-			apiKey.ID = uuid.New()
+			apiKey.ID = uuid.New().String()
 		}).
 		Return(nil)
 

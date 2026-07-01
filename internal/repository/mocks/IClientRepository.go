@@ -155,6 +155,63 @@ func (_c *MockIClientRepository_DeleteByCode_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// DeleteByID provides a mock function for the type MockIClientRepository
+func (_mock *MockIClientRepository) DeleteByID(ctx context.Context, id string) error {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteByID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIClientRepository_DeleteByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByID'
+type MockIClientRepository_DeleteByID_Call struct {
+	*mock.Call
+}
+
+// DeleteByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockIClientRepository_Expecter) DeleteByID(ctx any, id any) *MockIClientRepository_DeleteByID_Call {
+	return &MockIClientRepository_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
+}
+
+func (_c *MockIClientRepository_DeleteByID_Call) Run(run func(ctx context.Context, id string)) *MockIClientRepository_DeleteByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIClientRepository_DeleteByID_Call) Return(err error) *MockIClientRepository_DeleteByID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIClientRepository_DeleteByID_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockIClientRepository_DeleteByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Filter provides a mock function for the type MockIClientRepository
 func (_mock *MockIClientRepository) Filter(ctx context.Context, filter1 *filter.Options[model.Client]) (*page.Paginated[model.Client], error) {
 	ret := _mock.Called(ctx, filter1)
@@ -291,6 +348,74 @@ func (_c *MockIClientRepository_FindByCode_Call) RunAndReturn(run func(ctx conte
 	return _c
 }
 
+// FindByID provides a mock function for the type MockIClientRepository
+func (_mock *MockIClientRepository) FindByID(ctx context.Context, id string) (*model.Client, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByID")
+	}
+
+	var r0 *model.Client
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.Client, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.Client); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Client)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIClientRepository_FindByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByID'
+type MockIClientRepository_FindByID_Call struct {
+	*mock.Call
+}
+
+// FindByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockIClientRepository_Expecter) FindByID(ctx any, id any) *MockIClientRepository_FindByID_Call {
+	return &MockIClientRepository_FindByID_Call{Call: _e.mock.On("FindByID", ctx, id)}
+}
+
+func (_c *MockIClientRepository_FindByID_Call) Run(run func(ctx context.Context, id string)) *MockIClientRepository_FindByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIClientRepository_FindByID_Call) Return(client *model.Client, err error) *MockIClientRepository_FindByID_Call {
+	_c.Call.Return(client, err)
+	return _c
+}
+
+func (_c *MockIClientRepository_FindByID_Call) RunAndReturn(run func(ctx context.Context, id string) (*model.Client, error)) *MockIClientRepository_FindByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateByCode provides a mock function for the type MockIClientRepository
 func (_mock *MockIClientRepository) UpdateByCode(ctx context.Context, code string, updates *model.Client) error {
 	ret := _mock.Called(ctx, code, updates)
@@ -350,6 +475,69 @@ func (_c *MockIClientRepository_UpdateByCode_Call) Return(err error) *MockIClien
 }
 
 func (_c *MockIClientRepository_UpdateByCode_Call) RunAndReturn(run func(ctx context.Context, code string, updates *model.Client) error) *MockIClientRepository_UpdateByCode_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateByID provides a mock function for the type MockIClientRepository
+func (_mock *MockIClientRepository) UpdateByID(ctx context.Context, id string, model1 *model.Client) error {
+	ret := _mock.Called(ctx, id, model1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateByID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.Client) error); ok {
+		r0 = returnFunc(ctx, id, model1)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIClientRepository_UpdateByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateByID'
+type MockIClientRepository_UpdateByID_Call struct {
+	*mock.Call
+}
+
+// UpdateByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - model1 *model.Client
+func (_e *MockIClientRepository_Expecter) UpdateByID(ctx any, id any, model1 any) *MockIClientRepository_UpdateByID_Call {
+	return &MockIClientRepository_UpdateByID_Call{Call: _e.mock.On("UpdateByID", ctx, id, model1)}
+}
+
+func (_c *MockIClientRepository_UpdateByID_Call) Run(run func(ctx context.Context, id string, model1 *model.Client)) *MockIClientRepository_UpdateByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 *model.Client
+		if args[2] != nil {
+			arg2 = args[2].(*model.Client)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIClientRepository_UpdateByID_Call) Return(err error) *MockIClientRepository_UpdateByID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIClientRepository_UpdateByID_Call) RunAndReturn(run func(ctx context.Context, id string, model1 *model.Client) error) *MockIClientRepository_UpdateByID_Call {
 	_c.Call.Return(run)
 	return _c
 }

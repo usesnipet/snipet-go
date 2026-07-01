@@ -292,16 +292,16 @@ func (_c *MockIMemoryRepository_FindByID_Call) RunAndReturn(run func(ctx context
 }
 
 // SetAsDefault provides a mock function for the type MockIMemoryRepository
-func (_mock *MockIMemoryRepository) SetAsDefault(ctx context.Context, memoryID string) error {
-	ret := _mock.Called(ctx, memoryID)
+func (_mock *MockIMemoryRepository) SetAsDefault(ctx context.Context, memoryType model.MemoryType, memoryID string) error {
+	ret := _mock.Called(ctx, memoryType, memoryID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetAsDefault")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, memoryID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.MemoryType, string) error); ok {
+		r0 = returnFunc(ctx, memoryType, memoryID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -315,24 +315,30 @@ type MockIMemoryRepository_SetAsDefault_Call struct {
 
 // SetAsDefault is a helper method to define mock.On call
 //   - ctx context.Context
+//   - memoryType model.MemoryType
 //   - memoryID string
-func (_e *MockIMemoryRepository_Expecter) SetAsDefault(ctx any, memoryID any) *MockIMemoryRepository_SetAsDefault_Call {
-	return &MockIMemoryRepository_SetAsDefault_Call{Call: _e.mock.On("SetAsDefault", ctx, memoryID)}
+func (_e *MockIMemoryRepository_Expecter) SetAsDefault(ctx any, memoryType any, memoryID any) *MockIMemoryRepository_SetAsDefault_Call {
+	return &MockIMemoryRepository_SetAsDefault_Call{Call: _e.mock.On("SetAsDefault", ctx, memoryType, memoryID)}
 }
 
-func (_c *MockIMemoryRepository_SetAsDefault_Call) Run(run func(ctx context.Context, memoryID string)) *MockIMemoryRepository_SetAsDefault_Call {
+func (_c *MockIMemoryRepository_SetAsDefault_Call) Run(run func(ctx context.Context, memoryType model.MemoryType, memoryID string)) *MockIMemoryRepository_SetAsDefault_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 model.MemoryType
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(model.MemoryType)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -343,7 +349,7 @@ func (_c *MockIMemoryRepository_SetAsDefault_Call) Return(err error) *MockIMemor
 	return _c
 }
 
-func (_c *MockIMemoryRepository_SetAsDefault_Call) RunAndReturn(run func(ctx context.Context, memoryID string) error) *MockIMemoryRepository_SetAsDefault_Call {
+func (_c *MockIMemoryRepository_SetAsDefault_Call) RunAndReturn(run func(ctx context.Context, memoryType model.MemoryType, memoryID string) error) *MockIMemoryRepository_SetAsDefault_Call {
 	_c.Call.Return(run)
 	return _c
 }
