@@ -55,19 +55,19 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 }
 
 func (s *Service) LinkClientToBot(ctx context.Context, dto LinkClientToBotDTO) error {
-	// region Check if bot exists
 	botUUID, err := uuid.Parse(dto.BotID)
 	if err != nil {
 		return apperr.BadRequest("invalid bot id")
 	}
-	// endregion
 
-	// region Get client
+	if _, err := s.botRepo.FindByID(ctx, dto.BotID); err != nil {
+		return err
+	}
+
 	client, err := s.clientRepo.FindByCode(ctx, dto.ClientCode)
 	if err != nil {
 		return err
 	}
-	// endregion
 
 	return s.botRepo.LinkBotToClient(ctx, client.ID, botUUID)
 }

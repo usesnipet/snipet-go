@@ -24,13 +24,15 @@ func NewHandler(
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/bot", func(r chi.Router) {
-		r.Use(h.apiKeyMiddleware)
-		r.Get("/", serve(h.filter))
-		r.Post("/", serve(h.create))
-		r.Get("/{id}", serve(h.findByID))
-		r.Put("/{id}", serve(h.update))
-		r.Delete("/{id}", serve(h.deleteByID))
-		r.Post("/link-client", serve(h.linkClient))
+		r.Group(func(r chi.Router) {
+			r.Use(h.apiKeyMiddleware)
+			r.Get("/", serve(h.filter))
+			r.Post("/", serve(h.create))
+			r.Post("/link-client", serve(h.linkClient))
+			r.Get("/{id}", serve(h.findByID))
+			r.Put("/{id}", serve(h.update))
+			r.Delete("/{id}", serve(h.deleteByID))
+		})
 	})
 }
 
@@ -86,5 +88,8 @@ func (h *Handler) linkClient(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	return h.service.LinkClientToBot(r.Context(), dto)
+	if err := h.service.LinkClientToBot(r.Context(), dto); err != nil {
+		return err
+	}
+	return api.WriteNoContent(w)
 }

@@ -205,19 +205,46 @@ func TestLinkClientToBotRejectsInvalidBotID(t *testing.T) {
 func TestLinkClientToBotReturnsClientLookupError(t *testing.T) {
 	t.Parallel()
 
+	botID := uuid.New().String()
 	expectedErr := apperr.NotFound("client not found")
+
+	botRepo := mocks.NewMockIBotRepository(t)
+	botRepo.EXPECT().
+		FindByID(mock.Anything, botID).
+		Return(&model.Bot{ID: uuid.MustParse(botID)}, nil)
+
 	clientRepo := mocks.NewMockIClientRepository(t)
 	clientRepo.EXPECT().
 		FindByCode(mock.Anything, "CLIENT01").
 		Return(nil, expectedErr)
 
-	svc := newTestService(mocks.NewMockIBotRepository(t), clientRepo)
+	svc := newTestService(botRepo, clientRepo)
 
 	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
 		ClientCode: "CLIENT01",
-		BotID:      uuid.New().String(),
+		BotID:      botID,
 	})
 	assertAppError(t, err, http.StatusNotFound, "client not found")
+}
+
+func TestLinkClientToBotReturnsBotLookupError(t *testing.T) {
+	t.Parallel()
+
+	expectedErr := apperr.NotFound("entity not found")
+	botID := uuid.New().String()
+
+	botRepo := mocks.NewMockIBotRepository(t)
+	botRepo.EXPECT().
+		FindByID(mock.Anything, botID).
+		Return(nil, expectedErr)
+
+	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
+
+	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
+		ClientCode: "CLIENT01",
+		BotID:      botID,
+	})
+	assertAppError(t, err, http.StatusNotFound, "entity not found")
 }
 
 func TestLinkClientToBotLinksClientToBot(t *testing.T) {
@@ -233,6 +260,9 @@ func TestLinkClientToBotLinksClientToBot(t *testing.T) {
 		Return(client, nil)
 
 	botRepo := mocks.NewMockIBotRepository(t)
+	botRepo.EXPECT().
+		FindByID(mock.Anything, botID.String()).
+		Return(&model.Bot{ID: botID}, nil)
 	botRepo.EXPECT().
 		LinkBotToClient(mock.Anything, clientID, botID).
 		Return(nil)
@@ -259,6 +289,9 @@ func TestLinkClientToBotReturnsLinkError(t *testing.T) {
 		Return(&model.Client{ID: clientID, Code: "CLIENT01"}, nil)
 
 	botRepo := mocks.NewMockIBotRepository(t)
+	botRepo.EXPECT().
+		FindByID(mock.Anything, botID.String()).
+		Return(&model.Bot{ID: botID}, nil)
 	botRepo.EXPECT().
 		LinkBotToClient(mock.Anything, clientID, botID).
 		Return(expectedErr)
