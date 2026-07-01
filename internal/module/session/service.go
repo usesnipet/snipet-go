@@ -34,7 +34,7 @@ func NewService(
 	}
 }
 
-func (s *Service) ensureSessionAccess(ctx context.Context, clientID string, sessionID string) (*auth.UserClaims, error) {
+func (s *Service) ensureSessionUserAccess(ctx context.Context, clientID string, sessionID string) (*auth.UserClaims, error) {
 	principal, ok := auth.GetPrincipal(ctx)
 	if !ok {
 		return nil, apperr.Unauthorized("unauthorized")
@@ -79,7 +79,7 @@ func (s *Service) FindByID(ctx context.Context, clientCode string, id string) (*
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.ensureSessionAccess(ctx, client.ID, id); err != nil {
+	if _, err := s.ensureSessionUserAccess(ctx, client.ID, id); err != nil {
 		return nil, err
 	}
 
@@ -143,7 +143,7 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 }
 
 func (s *Service) DeleteByID(ctx context.Context, clientCode string, id string) error {
-	if _, err := s.ensureSessionAccess(ctx, clientCode, id); err != nil {
+	if _, err := s.ensureSessionUserAccess(ctx, clientCode, id); err != nil {
 		return err
 	}
 
@@ -156,7 +156,7 @@ func (s *Service) FindMessages(
 	sessionID string,
 	filter *filter.Options[model.SessionMessage],
 ) (*page.Paginated[model.SessionMessage], error) {
-	if _, err := s.ensureSessionAccess(ctx, clientCode, sessionID); err != nil {
+	if _, err := s.ensureSessionUserAccess(ctx, clientCode, sessionID); err != nil {
 		return nil, err
 	}
 
@@ -169,7 +169,7 @@ func (s *Service) FindMessages(
 }
 
 func (s *Service) SendMessage(ctx context.Context, clientCode string, sessionID string, dto SendMessageDTO) error {
-	principal, err := s.ensureSessionAccess(ctx, clientCode, sessionID)
+	principal, err := s.ensureSessionUserAccess(ctx, clientCode, sessionID)
 	if err != nil {
 		return err
 	}
