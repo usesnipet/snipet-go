@@ -20,7 +20,7 @@ type ApiKeyRepository struct {
 }
 
 func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error {
-	affected, err := gorm.G[model.APIKey](r.DB).
+	affected, err := gorm.G[model.APIKey](r.db(ctx)).
 		Where("id = ?", id).
 		Update(ctx, "expires_at", expiresAt)
 	if err != nil {
@@ -33,7 +33,7 @@ func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, id string, expi
 }
 
 func (r *ApiKeyRepository) ToggleActive(ctx context.Context, id string, active bool) error {
-	_, err := gorm.G[model.APIKey](r.DB).
+	_, err := gorm.G[model.APIKey](r.db(ctx)).
 		Where("id = ?", id).
 		Update(ctx, "active", active)
 	if err != nil {

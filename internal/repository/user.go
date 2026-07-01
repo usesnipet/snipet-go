@@ -57,12 +57,12 @@ func (r *UserRepository) FindByExternalIDInClient(
 		return nil, err
 	}
 
-	userIDs := gorm.G[model.ClientToUser](r.DB).
+	userIDs := gorm.G[model.ClientToUser](r.db(ctx)).
 		Where("client_id = ?", client.ID).
 		Where("external_id = ?", externalID).
 		Select("user_id")
 
-	user, err := gorm.G[model.User](r.DB).
+	user, err := gorm.G[model.User](r.db(ctx)).
 		Where("id IN (?)", userIDs).
 		First(ctx)
 
@@ -85,18 +85,18 @@ func (r *UserRepository) FilterInClient(
 		return nil, err
 	}
 
-	userIDs := gorm.G[model.ClientToUser](r.DB).
+	userIDs := gorm.G[model.ClientToUser](r.db(ctx)).
 		Where("client_id = ?", client.ID).
 		Select("user_id")
 
-	total, err := gorm.G[model.User](r.DB).
+	total, err := gorm.G[model.User](r.db(ctx)).
 		Where("id IN (?)", userIDs).
 		Count(ctx, "1 = 1")
 	if err != nil {
 		return nil, err
 	}
 
-	chain, err := userFilter.ToGorm(gorm.G[model.User](r.DB))
+	chain, err := userFilter.ToGorm(gorm.G[model.User](r.db(ctx)))
 	if err != nil {
 		return nil, err
 	}
@@ -137,11 +137,11 @@ func (r *UserRepository) CreateInClient(
 	if err != nil {
 		return err
 	}
-	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := gorm.G[model.User](tx).Create(ctx, user); err != nil {
+	return WithTransaction(ctx, r.DB, func(ctx context.Context) error {
+		if err := gorm.G[model.User](r.db(ctx)).Create(ctx, user); err != nil {
 			return err
 		}
-		return gorm.G[model.ClientToUser](tx).Create(ctx, &model.ClientToUser{
+		return gorm.G[model.ClientToUser](r.db(ctx)).Create(ctx, &model.ClientToUser{
 			ClientID:   client.ID,
 			UserID:     user.ID,
 			ExternalID: externalID,

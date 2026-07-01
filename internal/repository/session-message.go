@@ -38,7 +38,7 @@ func (r *SessionMessageRepository) FilterInSession(
 	if filterOptions == nil {
 		filterOptions = filter.Default[model.SessionMessage]()
 	}
-	total, err := gorm.G[model.SessionMessage](r.DB).
+	total, err := gorm.G[model.SessionMessage](r.db(ctx)).
 		Joins(clause.LeftJoin.Association("Session"), nil).
 		Where("session_id = ?", sessionID).
 		Where(`"Session"."client_id" = ?`, client.ID).Count(ctx, "1 = 1")
@@ -47,7 +47,7 @@ func (r *SessionMessageRepository) FilterInSession(
 		return nil, err
 	}
 
-	chain, err := filterOptions.ToGorm(gorm.G[model.SessionMessage](r.DB))
+	chain, err := filterOptions.ToGorm(gorm.G[model.SessionMessage](r.db(ctx)))
 	if err != nil {
 		return nil, err
 	}

@@ -34,3 +34,7 @@ type IRepository[T any] interface {
 	IUpdatableRepository[T]
 	IDeletableRepository[T]
 }
+
+type ITxManager interface {
+	WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+}

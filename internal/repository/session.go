@@ -68,7 +68,7 @@ func (r *SessionRepository) CheckUserAccess(
 	sessionID string,
 ) (bool, error) {
 	var total int64
-	err := r.DB.WithContext(ctx).Table("user_to_sessions").
+	err := r.db(ctx).Table("user_to_sessions").
 		Joins("LEFT JOIN sessions s ON s.id = user_to_sessions.session_id").
 		Joins("LEFT JOIN clients c ON c.id = s.client_id").
 		Where("c.code = ?", clientCode).
@@ -105,7 +105,7 @@ func (r *SessionRepository) FilterInClientWithUser(
 	}
 
 	var total int64
-	err := r.DB.WithContext(ctx).Table("sessions").
+	err := r.db(ctx).Table("sessions").
 		Joins("LEFT JOIN user_to_sessions uts ON uts.session_id = sessions.id").
 		Joins("LEFT JOIN clients c ON c.id = sessions.client_id").
 		Where("c.code = ?", clientCode).
@@ -114,7 +114,7 @@ func (r *SessionRepository) FilterInClientWithUser(
 	if err != nil {
 		return nil, err
 	}
-	chain, err := sessionFilter.ToGormTx(r.DB.WithContext(ctx).Table("sessions"))
+	chain, err := sessionFilter.ToGormTx(r.db(ctx).Table("sessions"))
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (r *SessionRepository) DeleteInClient(
 	if err != nil {
 		return err
 	}
-	affected, err := gorm.G[model.Session](r.DB).Where("client_id = ? AND id = ?", client.ID, id).Delete(ctx)
+	affected, err := gorm.G[model.Session](r.db(ctx)).Where("client_id = ? AND id = ?", client.ID, id).Delete(ctx)
 	if err != nil {
 		return err
 	}

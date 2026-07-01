@@ -10,25 +10,26 @@ import (
 
 type IMemoryRepository interface {
 	IRepository[model.Memory]
-	SetAsDefault(ctx context.Context, memoryID string) error
+	SetAsDefault(ctx context.Context, memoryType model.MemoryType, memoryID string) error
 }
 
 type MemoryRepository struct {
 	*Repository[model.Memory]
 }
 
-func (r *MemoryRepository) SetAsDefault(ctx context.Context, memoryID string) error {
-	return r.DB.Transaction(func(tx *gorm.DB) error {
-		_, err := gorm.G[model.Memory](tx).Where("is_default = ?", true).Update(ctx, "is_default", false)
+func (r *MemoryRepository) SetAsDefault(ctx context.Context, memoryType model.MemoryType, memoryID string) error {
+	return WithTransaction(ctx, r.DB, func(ctx context.Context) error {
+		db := r.db(ctx)
+		_, err := gorm.G[model.Memory](db).Where("type = ? AND is_default = ?", memoryType, true).Update(ctx, "is_default", false)
 		if err != nil {
 			return err
 		}
-		affected, err := gorm.G[model.Memory](tx).Where("id = ?", memoryID).Update(ctx, "is_default", true)
+		affected, err := gorm.G[model.Memory](db).Where("type = ? AND id = ?", memoryType, memoryID).Update(ctx, "is_default", true)
 		if err != nil {
-			if affected == 0 {
-				return apperr.NotFound("memory not found")
-			}
 			return err
+		}
+		if affected == 0 {
+			return apperr.NotFound("memory not found")
 		}
 		return nil
 	})

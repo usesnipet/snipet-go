@@ -42,7 +42,7 @@ func (r *ClientRepository) FindByCode(ctx context.Context, code string) (*model.
 }
 
 func (r *ClientRepository) UpdateByCode(ctx context.Context, code string, updates *model.Client) error {
-	affected, err := gorm.G[model.Client](r.DB).Where("code = ?", code).Updates(ctx, *updates)
+	affected, err := gorm.G[model.Client](r.db(ctx)).Where("code = ?", code).Updates(ctx, *updates)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (r *ClientRepository) UpdateByCode(ctx context.Context, code string, update
 }
 
 func (r *ClientRepository) DeleteByCode(ctx context.Context, code string) error {
-	affected, err := gorm.G[model.Client](r.DB).Where("code = ?", code).Delete(ctx)
+	affected, err := gorm.G[model.Client](r.db(ctx)).Where("code = ?", code).Delete(ctx)
 	if err != nil {
 		return err
 	}

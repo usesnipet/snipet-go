@@ -13,20 +13,24 @@ type Repository[T any] struct {
 	DB *gorm.DB
 }
 
+func (r *Repository[T]) db(ctx context.Context) *gorm.DB {
+	return DB(ctx, r.DB)
+}
+
 func (r *Repository[T]) Create(ctx context.Context, model *T) error {
-	return gorm.G[T](r.DB).Create(ctx, model)
+	return gorm.G[T](r.db(ctx)).Create(ctx, model)
 }
 
 func (r *Repository[T]) Filter(ctx context.Context, filterOptions *filter.Options[T]) (*page.Paginated[T], error) {
 	if filterOptions == nil {
 		filterOptions = filter.Default[T]()
 	}
-	total, err := gorm.G[T](r.DB).Count(ctx, "1 = 1")
+	total, err := gorm.G[T](r.db(ctx)).Count(ctx, "1 = 1")
 	if err != nil {
 		return nil, err
 	}
 
-	chain, err := filterOptions.ToGorm(gorm.G[T](r.DB))
+	chain, err := filterOptions.ToGorm(gorm.G[T](r.db(ctx)))
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +39,7 @@ func (r *Repository[T]) Filter(ctx context.Context, filterOptions *filter.Option
 }
 
 func (r *Repository[T]) UpdateByID(ctx context.Context, id string, model *T) error {
-	affected, err := gorm.G[T](r.DB).Where("id = ?", id).Updates(ctx, *model)
+	affected, err := gorm.G[T](r.db(ctx)).Where("id = ?", id).Updates(ctx, *model)
 	if err != nil {
 		return err
 	}
@@ -46,7 +50,7 @@ func (r *Repository[T]) UpdateByID(ctx context.Context, id string, model *T) err
 }
 
 func (r *Repository[T]) DeleteByID(ctx context.Context, id string) error {
-	affected, err := gorm.G[T](r.DB).Where("id = ?", id).Delete(ctx)
+	affected, err := gorm.G[T](r.db(ctx)).Where("id = ?", id).Delete(ctx)
 	if err != nil {
 		return err
 	}

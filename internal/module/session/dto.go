@@ -7,7 +7,7 @@ import (
 )
 
 type CreateSessionDTO struct {
-	MemoryID string       `json:"memory_id" validate:"required,uuid"`
+	MemoryID string       `json:"memory_id" validate:"omitempty,uuid"`
 	BotID    string       `json:"bot_id" validate:"required,uuid"`
 	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
 }

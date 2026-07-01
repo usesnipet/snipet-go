@@ -57,7 +57,7 @@ func (s *Service) SetAsDefault(ctx context.Context, dto SetAsDefaultMemoryDTO) e
 		return apperr.BadRequest("memory is already default")
 	}
 
-	return s.repository.SetAsDefault(ctx, dto.MemoryID)
+	return s.repository.SetAsDefault(ctx, memory.Type, dto.MemoryID)
 }
 
 func NewService(repository repository.IMemoryRepository) *Service {

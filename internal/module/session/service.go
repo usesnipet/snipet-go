@@ -75,18 +75,37 @@ func (s *Service) FindByID(ctx context.Context, clientCode string, id string) (*
 }
 
 func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessionDTO) (*model.Session, error) {
-	memoryUUID, err := uuid.Parse(dto.MemoryID)
-	if err != nil {
-		return nil, apperr.BadRequest("invalid memory id")
-	}
 	botUUID, err := uuid.Parse(dto.BotID)
 	if err != nil {
 		return nil, apperr.BadRequest("invalid bot id")
 	}
 
-	memory, err := s.memoryRepo.FindByID(ctx, dto.MemoryID)
-	if err != nil {
-		return nil, err
+	var memory *model.Memory
+
+	if dto.MemoryID == "" {
+		memories, err := s.memoryRepo.Filter(
+			ctx,
+			filter.New[model.Memory](
+				filter.WhereEq("type", model.MemoryTypeSession),
+				filter.WhereEq("is_default", true),
+			),
+		)
+		if err != nil {
+			return nil, err
+		}
+		if memories.IsEmpty() {
+			return nil, apperr.NotFound("no default memory found")
+		}
+		memory = memories.First()
+	} else {
+		_, err := uuid.Parse(dto.MemoryID)
+		if err != nil {
+			return nil, apperr.BadRequest("invalid memory id")
+		}
+		memory, err = s.memoryRepo.FindByID(ctx, dto.MemoryID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if memory.Type != model.MemoryTypeSession {
@@ -94,7 +113,7 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 	}
 
 	session := &model.Session{
-		MemoryID: memoryUUID,
+		MemoryID: memory.ID,
 		BotID:    botUUID,
 		Metadata: dto.Metadata,
 	}

@@ -24,7 +24,7 @@ func (r *BotRepository) LinkBotToClient(ctx context.Context, clientID, botID uui
 		ClientID: clientID,
 		BotID:    botID,
 	}
-	err := gorm.G[model.ClientToBot](r.DB).Create(ctx, clientBot)
+	err := gorm.G[model.ClientToBot](r.db(ctx)).Create(ctx, clientBot)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return apperr.Conflict("client already linked to bot")
