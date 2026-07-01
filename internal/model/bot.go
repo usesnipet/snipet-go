@@ -17,7 +17,6 @@ type Bot struct {
 	Configuration BotConfiguration `gorm:"type:jsonb;not null;serializer:json" json:"configuration"`
 
 	BotToMemories []BotToMemory `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientToBots  []ClientToBot `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 type BotToMemory struct {
@@ -27,12 +26,4 @@ type BotToMemory struct {
 
 	Bot    Bot    `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Memory Memory `gorm:"foreignKey:MemoryID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-}
-
-type ClientToBot struct {
-	ClientID string `gorm:"primaryKey" json:"client_id"`
-	BotID    string `gorm:"primaryKey" json:"bot_id"`
-
-	Client Client `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Bot    Bot    `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }

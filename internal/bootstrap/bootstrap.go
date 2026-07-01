@@ -56,7 +56,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	clientService := client.NewService(clientRepo)
 
-	botService := bot.NewService(botRepo, clientService)
+	botService := bot.NewService(botRepo)
 
 	memoryService := memory.NewService(memoryRepo)
 

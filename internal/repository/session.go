@@ -14,33 +14,33 @@ type ISessionRepository interface {
 	IRepository[model.Session]
 	CheckUserAccess(
 		ctx context.Context,
-		clientId string,
+		clientID string,
 		userID string,
 		sessionID string,
 	) (bool, error)
 
 	FilterInClient(
 		ctx context.Context,
-		clientId string,
+		clientID string,
 		filter *filter.Options[model.Session],
 	) (*page.Paginated[model.Session], error)
 	FilterInClientWithUser(
 		ctx context.Context,
-		clientId string,
+		clientID string,
 		userID string,
 		filter *filter.Options[model.Session],
 	) (*page.Paginated[model.Session], error)
 
 	FindByIDInClient(
 		ctx context.Context,
-		clientId string,
+		clientID string,
 		id string,
 	) (*model.Session, error)
 
 	DeleteInClient(
 		ctx context.Context,
-		clientId string,
-		id string,
+		clientID string,
+		ID string,
 	) error
 }
 
@@ -84,7 +84,7 @@ func (r *SessionRepository) FilterInClient(
 }
 func (r *SessionRepository) FilterInClientWithUser(
 	ctx context.Context,
-	clientCode string,
+	clientID string,
 	userID string,
 	sessionFilter *filter.Options[model.Session],
 ) (*page.Paginated[model.Session], error) {
@@ -95,8 +95,7 @@ func (r *SessionRepository) FilterInClientWithUser(
 	var total int64
 	err := r.db(ctx).Table("sessions").
 		Joins("LEFT JOIN user_to_sessions uts ON uts.session_id = sessions.id").
-		Joins("LEFT JOIN clients c ON c.id = sessions.client_id").
-		Where("c.code = ?", clientCode).
+		Where("client_id = ?", clientID).
 		Where("uts.user_id = ?", userID).
 		Count(&total).Error
 	if err != nil {
@@ -108,8 +107,7 @@ func (r *SessionRepository) FilterInClientWithUser(
 	}
 	var data []model.Session
 	err = chain.Joins("LEFT JOIN user_to_sessions uts ON uts.session_id = sessions.id").
-		Joins("LEFT JOIN clients c ON c.id = sessions.client_id").
-		Where("c.code = ?", clientCode).
+		Where("client_id = ?", clientID).
 		Where("uts.user_id = ?", userID).Find(&data).Error
 	if err != nil {
 		return nil, err

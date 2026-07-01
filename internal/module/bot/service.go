@@ -5,20 +5,17 @@ import (
 
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 )
 
 type Service struct {
-	botRepo       repository.IBotRepository
-	clientService *client.Service
+	botRepo repository.IBotRepository
 }
 
-func NewService(botRepo repository.IBotRepository, clientService *client.Service) *Service {
+func NewService(botRepo repository.IBotRepository) *Service {
 	return &Service{
-		botRepo:       botRepo,
-		clientService: clientService,
+		botRepo: botRepo,
 	}
 }
 
@@ -58,17 +55,4 @@ func (s *Service) Update(ctx context.Context, id string, dto UpdateBotDTO) error
 
 func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	return s.botRepo.DeleteByID(ctx, id)
-}
-
-func (s *Service) LinkClientToBot(ctx context.Context, dto LinkClientToBotDTO) error {
-	if _, err := s.botRepo.FindByID(ctx, dto.BotID); err != nil {
-		return err
-	}
-
-	client, err := s.clientService.FindByCode(ctx, dto.ClientCode)
-	if err != nil {
-		return err
-	}
-
-	return s.botRepo.LinkBotToClient(ctx, client.ID, dto.BotID)
 }

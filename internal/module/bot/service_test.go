@@ -3,7 +3,6 @@ package bot_test
 import (
 	"context"
 	"errors"
-	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
@@ -14,7 +13,6 @@ import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	bot "github.com/usesnipet/snipet/internal/module/bot"
-	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
@@ -22,9 +20,8 @@ import (
 
 func newTestService(
 	botRepo repository.IBotRepository,
-	clientRepo repository.IClientRepository,
 ) *bot.Service {
-	return bot.NewService(botRepo, client.NewService(clientRepo))
+	return bot.NewService(botRepo)
 }
 
 func assertAppError(t *testing.T, err error, statusCode int, message string) {
@@ -47,7 +44,7 @@ func TestFilterDelegatesToRepository(t *testing.T) {
 		}).
 		Return(expected, nil)
 
-	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
+	svc := newTestService(botRepo)
 
 	result, err := svc.Filter(context.Background())
 	require.NoError(t, err)
@@ -64,7 +61,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 		FindByID(mock.Anything, id).
 		Return(expected, nil)
 
-	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
+	svc := newTestService(botRepo)
 
 	result, err := svc.FindByID(context.Background(), id)
 	require.NoError(t, err)
@@ -86,7 +83,7 @@ func TestCreateStoresBotAndReturnsIt(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
+	svc := newTestService(botRepo)
 
 	result, err := svc.Create(context.Background(), bot.CreateBotDTO{
 		Name:          "Support Bot",
@@ -115,7 +112,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 		Create(mock.Anything, mock.Anything).
 		Return(expectedErr)
 
-	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
+	svc := newTestService(botRepo)
 
 	_, err := svc.Create(context.Background(), bot.CreateBotDTO{
 		Name:          "Bot",
@@ -142,7 +139,7 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
+	svc := newTestService(botRepo)
 
 	err := svc.Update(context.Background(), id, bot.UpdateBotDTO{
 		Name:        &newName,
@@ -165,7 +162,7 @@ func TestUpdateDelegatesConfigurationToRepository(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
+	svc := newTestService(botRepo)
 
 	err := svc.Update(context.Background(), id, bot.UpdateBotDTO{
 		Configuration: &config,
@@ -182,126 +179,8 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 		DeleteByID(mock.Anything, id).
 		Return(nil)
 
-	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
+	svc := newTestService(botRepo)
 
 	err := svc.DeleteByID(context.Background(), id)
 	require.NoError(t, err)
-}
-
-func TestLinkClientToBotRejectsInvalidBotID(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(
-		mocks.NewMockIBotRepository(t),
-		mocks.NewMockIClientRepository(t),
-	)
-
-	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
-		ClientCode: "CLIENT01",
-		BotID:      "not-a-uuid",
-	})
-	assertAppError(t, err, http.StatusBadRequest, "invalid bot id")
-}
-
-func TestLinkClientToBotReturnsClientLookupError(t *testing.T) {
-	t.Parallel()
-
-	botID := uuid.New().String()
-	expectedErr := apperr.NotFound("client not found")
-
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
-		FindByID(mock.Anything, botID).
-		Return(&model.Bot{ID: botID}, nil)
-
-	clientRepo := mocks.NewMockIClientRepository(t)
-	clientRepo.EXPECT().
-		FindByCode(mock.Anything, "CLIENT01").
-		Return(nil, expectedErr)
-
-	svc := newTestService(botRepo, clientRepo)
-
-	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
-		ClientCode: "CLIENT01",
-		BotID:      botID,
-	})
-	assertAppError(t, err, http.StatusNotFound, "client not found")
-}
-
-func TestLinkClientToBotReturnsBotLookupError(t *testing.T) {
-	t.Parallel()
-
-	expectedErr := apperr.NotFound("entity not found")
-	botID := uuid.New().String()
-
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
-		FindByID(mock.Anything, botID).
-		Return(nil, expectedErr)
-
-	svc := newTestService(botRepo, mocks.NewMockIClientRepository(t))
-
-	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
-		ClientCode: "CLIENT01",
-		BotID:      botID,
-	})
-	assertAppError(t, err, http.StatusNotFound, "entity not found")
-}
-
-func TestLinkClientToBotLinksClientToBot(t *testing.T) {
-	t.Parallel()
-
-	clientID := uuid.New().String()
-	botID := uuid.New().String()
-	client := &model.Client{ID: clientID, Code: "CLIENT01"}
-
-	clientRepo := mocks.NewMockIClientRepository(t)
-	clientRepo.EXPECT().
-		FindByCode(mock.Anything, "CLIENT01").
-		Return(client, nil)
-
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
-		FindByID(mock.Anything, botID).
-		Return(&model.Bot{ID: botID}, nil)
-	botRepo.EXPECT().
-		LinkBotToClient(mock.Anything, clientID, botID).
-		Return(nil)
-
-	svc := newTestService(botRepo, clientRepo)
-
-	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
-		ClientCode: "CLIENT01",
-		BotID:      botID,
-	})
-	require.NoError(t, err)
-}
-
-func TestLinkClientToBotReturnsLinkError(t *testing.T) {
-	t.Parallel()
-
-	clientID := uuid.New().String()
-	botID := uuid.New().String()
-	expectedErr := errors.New("link failed")
-
-	clientRepo := mocks.NewMockIClientRepository(t)
-	clientRepo.EXPECT().
-		FindByCode(mock.Anything, "CLIENT01").
-		Return(&model.Client{ID: clientID, Code: "CLIENT01"}, nil)
-
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
-		FindByID(mock.Anything, botID).
-		Return(&model.Bot{ID: botID}, nil)
-	botRepo.EXPECT().
-		LinkBotToClient(mock.Anything, clientID, botID).
-		Return(expectedErr)
-
-	svc := newTestService(botRepo, clientRepo)
-
-	err := svc.LinkClientToBot(context.Background(), bot.LinkClientToBotDTO{
-		ClientCode: "CLIENT01",
-		BotID:      botID,
-	})
-	require.ErrorIs(t, err, expectedErr)
 }
