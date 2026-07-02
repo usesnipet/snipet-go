@@ -19,6 +19,9 @@ import (
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/bot"
 	"github.com/usesnipet/snipet/internal/module/client"
+	indexedknowledgeitem "github.com/usesnipet/snipet/internal/module/indexed-knowledge-item"
+	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
+	knowledgeitem "github.com/usesnipet/snipet/internal/module/knowledge-item"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/module/user"
@@ -40,6 +43,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sessionRepo := repository.NewSessionRepository(db, clientRepo)
 	sessionMessageRepo := repository.NewSessionMessageRepository(db, clientRepo)
 	knowledgeRepo := repository.NewKnowledgeRepository(db)
+	knowledgeIndexRepo := repository.NewKnowledgeIndexRepository(db)
+	knowledgeItemRepo := repository.NewKnowledgeItemRepository(db)
+	indexedKnowledgeItemRepo := repository.NewIndexedKnowledgeItemRepository(db)
 	userRepo := repository.NewUserRepository(db, clientRepo)
 
 	// services
@@ -59,6 +65,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	botService := bot.NewService(botRepo)
 
 	knowledgeService := knowledge.NewService(knowledgeRepo)
+	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo)
+	knowledgeItemService := knowledgeitem.NewService(knowledgeItemRepo)
+	indexedKnowledgeItemService := indexedknowledgeitem.NewService(indexedKnowledgeItemRepo)
 
 	sessionService := session.NewService(sessionRepo, sessionMessageRepo, clientService)
 
@@ -79,6 +88,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
 	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware, jwtAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
+	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
+	knowledgeItemHandler := knowledgeitem.NewHandler(knowledgeItemService, apiKeyMiddleware)
+	indexedKnowledgeItemHandler := indexedknowledgeitem.NewHandler(indexedKnowledgeItemService, apiKeyMiddleware)
 	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware)
 
 	// register routes
@@ -90,6 +102,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		clientHandler.RegisterRoutes(r, api.Serve)
 		sessionHandler.RegisterRoutes(r, api.Serve)
 		knowledgeHandler.RegisterRoutes(r, api.Serve)
+		knowledgeIndexHandler.RegisterRoutes(r, api.Serve)
+		knowledgeItemHandler.RegisterRoutes(r, api.Serve)
+		indexedKnowledgeItemHandler.RegisterRoutes(r, api.Serve)
 		userHandler.RegisterRoutes(r, api.Serve)
 	})
 
