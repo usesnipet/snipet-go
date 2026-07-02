@@ -39,6 +39,9 @@ func (s *Service) Update(ctx context.Context, id string, dto UpdateKnowledgeDTO)
 	if dto.Name != nil {
 		updates.Name = *dto.Name
 	}
+	if dto.Description != nil {
+		updates.Description = *dto.Description
+	}
 	return s.repository.UpdateByID(ctx, id, updates)
 }
 
