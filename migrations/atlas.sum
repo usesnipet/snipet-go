@@ -1,4 +1,5 @@
-h1:a+NF2Cm9bzdBHGSs51lrPmTz+11PhvWPzlfXTrpr+LY=
+h1:S24JoHPMH6wu244mHRw8HUUNANq6t9CHBUXti4F9o8Q=
 20260627012522_initial.up.sql h1:XAi8ZpM9JuWosfPCDGImUv/Q6rTXAl4ZNMd1E2/wmRU=
 20260630225056_primary_key_on_composite_key.up.sql h1:dxZvhXMsI7fU509R8j5XlDZbGprCScgq+QYw/GstrXo=
 20260701184519_remove_client_to_bot.up.sql h1:YkGyvBcfOMbXSxhj/B5OqsfUDWo7mtYLc7vnbr7dyL4=
+20260702172254_add_knowledge.up.sql h1:fzK2zTmYWn4VWfPe0/0UGrie4qHeXwsYWhO4jtClYso=
