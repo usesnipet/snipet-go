@@ -76,7 +76,7 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 	result, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
 		Name:          "Product Docs",
 		Description:   "Internal documentation",
-		Provider:      "pinecone",
+		Driver:        "pinecone",
 		Configuration: config,
 	})
 	require.NoError(t, err)
@@ -84,13 +84,13 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 
 	assert.Equal(t, "Product Docs", result.Name)
 	assert.Equal(t, "Internal documentation", result.Description)
-	assert.Equal(t, "pinecone", result.Provider)
+	assert.Equal(t, "pinecone", result.Driver)
 	assert.Equal(t, config, result.Configuration)
 
 	require.NotNil(t, stored)
 	assert.Equal(t, result.Name, stored.Name)
 	assert.Equal(t, result.Description, stored.Description)
-	assert.Equal(t, result.Provider, stored.Provider)
+	assert.Equal(t, result.Driver, stored.Driver)
 	assert.Equal(t, result.Configuration, stored.Configuration)
 }
 
@@ -107,7 +107,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 
 	_, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
 		Name:          "Knowledge",
-		Provider:      "pinecone",
+		Driver:        "pinecone",
 		Configuration: util.JSONMap{},
 	})
 	require.ErrorIs(t, err, expectedErr)
@@ -127,7 +127,7 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 			assert.Equal(t, id, gotID)
 			assert.Equal(t, newName, updates.Name)
 			assert.Equal(t, newDescription, updates.Description)
-			assert.Empty(t, updates.Provider)
+			assert.Empty(t, updates.Driver)
 			assert.Nil(t, updates.Configuration)
 		}).
 		Return(nil)

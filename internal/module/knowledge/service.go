@@ -25,7 +25,7 @@ func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Kn
 	memory := &model.Knowledge{
 		Name:          dto.Name,
 		Description:   dto.Description,
-		Provider:      dto.Provider,
+		Driver:        dto.Driver,
 		Configuration: dto.Configuration,
 	}
 	if err := s.repository.Create(ctx, memory); err != nil {

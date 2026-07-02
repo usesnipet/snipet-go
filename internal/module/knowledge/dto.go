@@ -21,7 +21,7 @@ func (dto *KnowledgeFilterDTO) ToFilter() *filter.Options[model.Knowledge] {
 type CreateKnowledgeDTO struct {
 	Name          string       `json:"name" validate:"required,max=255"`
 	Description   string       `json:"description" validate:"omitempty"`
-	Provider      string       `json:"provider" validate:"required,max=255"`
+	Driver        string       `json:"driver" validate:"required,max=255"`
 	Configuration util.JSONMap `json:"configuration" validate:"required"`
 }
 

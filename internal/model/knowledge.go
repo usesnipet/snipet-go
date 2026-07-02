@@ -14,7 +14,7 @@ type Knowledge struct {
 	Name          string        `gorm:"type:varchar(255);not null" json:"name"`
 	Description   string        `gorm:"type:text" json:"description"`
 	Type          KnowledgeType `gorm:"type:varchar(100);not null;index" json:"type"`
-	Provider      string        `gorm:"type:varchar(100);not null" json:"provider"`
+	Driver        string        `gorm:"type:varchar(100);not null" json:"driver"`
 	Configuration util.JSONMap  `gorm:"type:jsonb;not null" json:"configuration"`
 
 	Items   []KnowledgeItem  `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"-"`
