@@ -25,18 +25,18 @@ func newTestService(repo repository.IIndexedKnowledgeItemRepository) *indexedkno
 func TestFilterDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
+	knowledgeID := uuid.New().String()
+	indexID := uuid.New().String()
+	opts := filter.Default[model.IndexedKnowledgeItem]()
 	expected := page.NewPaginated([]model.IndexedKnowledgeItem{{Status: model.IndexedStatusPending}}, 1, 0, 10)
 	repo := mocks.NewMockIIndexedKnowledgeItemRepository(t)
 	repo.EXPECT().
-		Filter(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, opts *filter.Options[model.IndexedKnowledgeItem]) {
-			assert.Equal(t, filter.Default[model.IndexedKnowledgeItem]().Take, opts.Take)
-		}).
+		FilterInIndex(mock.Anything, knowledgeID, indexID, opts).
 		Return(expected, nil)
 
 	svc := newTestService(repo)
 
-	result, err := svc.Filter(context.Background())
+	result, err := svc.Filter(context.Background(), knowledgeID, indexID, opts)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -44,16 +44,18 @@ func TestFilterDelegatesToRepository(t *testing.T) {
 func TestFindByIDDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
+	knowledgeID := uuid.New().String()
+	indexID := uuid.New().String()
 	id := uuid.New().String()
 	expected := &model.IndexedKnowledgeItem{ID: id, Status: model.IndexedStatusIndexed}
 	repo := mocks.NewMockIIndexedKnowledgeItemRepository(t)
 	repo.EXPECT().
-		FindByID(mock.Anything, id).
+		FindByIDInIndex(mock.Anything, knowledgeID, indexID, id).
 		Return(expected, nil)
 
 	svc := newTestService(repo)
 
-	result, err := svc.FindByID(context.Background(), id)
+	result, err := svc.FindByID(context.Background(), knowledgeID, indexID, id)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -61,6 +63,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 func TestCreateStoresItemAndReturnsIt(t *testing.T) {
 	t.Parallel()
 
+	knowledgeID := uuid.New().String()
 	indexID := uuid.New().String()
 	knowledgeItemID := uuid.New().String()
 	metadata := util.JSONMap{"chunk": 1}
@@ -68,8 +71,10 @@ func TestCreateStoresItemAndReturnsIt(t *testing.T) {
 
 	repo := mocks.NewMockIIndexedKnowledgeItemRepository(t)
 	repo.EXPECT().
-		Create(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, item *model.IndexedKnowledgeItem) {
+		CreateInIndex(mock.Anything, knowledgeID, indexID, mock.Anything).
+		Run(func(_ context.Context, gotKnowledgeID, gotIndexID string, item *model.IndexedKnowledgeItem) {
+			assert.Equal(t, knowledgeID, gotKnowledgeID)
+			assert.Equal(t, indexID, gotIndexID)
 			stored = item
 			item.ID = uuid.New().String()
 		}).
@@ -77,12 +82,11 @@ func TestCreateStoresItemAndReturnsIt(t *testing.T) {
 
 	svc := newTestService(repo)
 
-	result, err := svc.Create(context.Background(), indexedknowledgeitem.CreateIndexedKnowledgeItemDTO{
+	result, err := svc.Create(context.Background(), knowledgeID, indexID, indexedknowledgeitem.CreateIndexedKnowledgeItemDTO{
 		Status:          model.IndexedStatusPending,
 		Version:         1,
 		Hash:            "abc123",
 		Metadata:        metadata,
-		IndexID:         indexID,
 		KnowledgeItemID: knowledgeItemID,
 	})
 	require.NoError(t, err)
@@ -107,16 +111,17 @@ func TestCreateStoresItemAndReturnsIt(t *testing.T) {
 func TestCreateReturnsRepositoryError(t *testing.T) {
 	t.Parallel()
 
+	knowledgeID := uuid.New().String()
+	indexID := uuid.New().String()
 	expectedErr := errors.New("create failed")
 	repo := mocks.NewMockIIndexedKnowledgeItemRepository(t)
 	repo.EXPECT().
-		Create(mock.Anything, mock.Anything).
+		CreateInIndex(mock.Anything, knowledgeID, indexID, mock.Anything).
 		Return(expectedErr)
 
 	svc := newTestService(repo)
 
-	_, err := svc.Create(context.Background(), indexedknowledgeitem.CreateIndexedKnowledgeItemDTO{
-		IndexID:         uuid.New().String(),
+	_, err := svc.Create(context.Background(), knowledgeID, indexID, indexedknowledgeitem.CreateIndexedKnowledgeItemDTO{
 		KnowledgeItemID: uuid.New().String(),
 	})
 	require.ErrorIs(t, err, expectedErr)
@@ -125,14 +130,18 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 	t.Parallel()
 
+	knowledgeID := uuid.New().String()
+	indexID := uuid.New().String()
 	id := uuid.New().String()
 	newStatus := model.IndexedStatusIndexed
 	newVersion := 2
 
 	repo := mocks.NewMockIIndexedKnowledgeItemRepository(t)
 	repo.EXPECT().
-		UpdateByID(mock.Anything, id, mock.Anything).
-		Run(func(_ context.Context, gotID string, updates *model.IndexedKnowledgeItem) {
+		UpdateInIndex(mock.Anything, knowledgeID, indexID, id, mock.Anything).
+		Run(func(_ context.Context, gotKnowledgeID, gotIndexID, gotID string, updates *model.IndexedKnowledgeItem) {
+			assert.Equal(t, knowledgeID, gotKnowledgeID)
+			assert.Equal(t, indexID, gotIndexID)
 			assert.Equal(t, id, gotID)
 			assert.Equal(t, newStatus, updates.Status)
 			assert.Equal(t, newVersion, updates.Version)
@@ -143,7 +152,7 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 
 	svc := newTestService(repo)
 
-	err := svc.Update(context.Background(), id, indexedknowledgeitem.UpdateIndexedKnowledgeItemDTO{
+	err := svc.Update(context.Background(), knowledgeID, indexID, id, indexedknowledgeitem.UpdateIndexedKnowledgeItemDTO{
 		Status:  &newStatus,
 		Version: &newVersion,
 	})
@@ -153,14 +162,16 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
+	knowledgeID := uuid.New().String()
+	indexID := uuid.New().String()
 	id := uuid.New().String()
 	repo := mocks.NewMockIIndexedKnowledgeItemRepository(t)
 	repo.EXPECT().
-		DeleteByID(mock.Anything, id).
+		DeleteInIndex(mock.Anything, knowledgeID, indexID, id).
 		Return(nil)
 
 	svc := newTestService(repo)
 
-	err := svc.DeleteByID(context.Background(), id)
+	err := svc.DeleteByID(context.Background(), knowledgeID, indexID, id)
 	require.NoError(t, err)
 }

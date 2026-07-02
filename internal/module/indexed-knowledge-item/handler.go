@@ -23,7 +23,7 @@ func NewHandler(
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/indexed-knowledge-item", func(r chi.Router) {
+	r.Route("/knowledge/{knowledge_id}/index/{index_id}/items", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
 			r.Get("/", serve(h.filter))
@@ -35,8 +35,20 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 }
 
+func (h *Handler) knowledgeID(r *http.Request) string {
+	return chi.URLParam(r, "knowledge_id")
+}
+
+func (h *Handler) indexID(r *http.Request) string {
+	return chi.URLParam(r, "index_id")
+}
+
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.Filter(r.Context())
+	var dto FilterIndexedKnowledgeItemDTO
+	if err := api.ParseQuery(r, &dto); err != nil {
+		return err
+	}
+	data, err := h.service.Filter(r.Context(), h.knowledgeID(r), h.indexID(r), dto.ToFilter())
 	if err != nil {
 		return err
 	}
@@ -44,7 +56,7 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FindByID(r.Context(), chi.URLParam(r, "id"))
+	data, err := h.service.FindByID(r.Context(), h.knowledgeID(r), h.indexID(r), chi.URLParam(r, "id"))
 	if err != nil {
 		return err
 	}
@@ -56,7 +68,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	data, err := h.service.Create(r.Context(), dto)
+	data, err := h.service.Create(r.Context(), h.knowledgeID(r), h.indexID(r), dto)
 	if err != nil {
 		return err
 	}
@@ -68,7 +80,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	err := h.service.Update(r.Context(), chi.URLParam(r, "id"), dto)
+	err := h.service.Update(r.Context(), h.knowledgeID(r), h.indexID(r), chi.URLParam(r, "id"), dto)
 	if err != nil {
 		return err
 	}
@@ -76,7 +88,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
-	if err := h.service.DeleteByID(r.Context(), chi.URLParam(r, "id")); err != nil {
+	if err := h.service.DeleteByID(r.Context(), h.knowledgeID(r), h.indexID(r), chi.URLParam(r, "id")); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)

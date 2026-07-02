@@ -41,93 +41,38 @@ func (_m *MockIIndexedKnowledgeItemRepository) EXPECT() *MockIIndexedKnowledgeIt
 	return &MockIIndexedKnowledgeItemRepository_Expecter{mock: &_m.Mock}
 }
 
-// Create provides a mock function for the type MockIIndexedKnowledgeItemRepository
-func (_mock *MockIIndexedKnowledgeItemRepository) Create(ctx context.Context, model1 *model.IndexedKnowledgeItem) error {
-	ret := _mock.Called(ctx, model1)
+// CreateInIndex provides a mock function for the type MockIIndexedKnowledgeItemRepository
+func (_mock *MockIIndexedKnowledgeItemRepository) CreateInIndex(ctx context.Context, knowledgeID string, indexID string, item *model.IndexedKnowledgeItem) error {
+	ret := _mock.Called(ctx, knowledgeID, indexID, item)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Create")
+		panic("no return value specified for CreateInIndex")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.IndexedKnowledgeItem) error); ok {
-		r0 = returnFunc(ctx, model1)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *model.IndexedKnowledgeItem) error); ok {
+		r0 = returnFunc(ctx, knowledgeID, indexID, item)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// MockIIndexedKnowledgeItemRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
-type MockIIndexedKnowledgeItemRepository_Create_Call struct {
+// MockIIndexedKnowledgeItemRepository_CreateInIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInIndex'
+type MockIIndexedKnowledgeItemRepository_CreateInIndex_Call struct {
 	*mock.Call
 }
 
-// Create is a helper method to define mock.On call
+// CreateInIndex is a helper method to define mock.On call
 //   - ctx context.Context
-//   - model1 *model.IndexedKnowledgeItem
-func (_e *MockIIndexedKnowledgeItemRepository_Expecter) Create(ctx any, model1 any) *MockIIndexedKnowledgeItemRepository_Create_Call {
-	return &MockIIndexedKnowledgeItemRepository_Create_Call{Call: _e.mock.On("Create", ctx, model1)}
+//   - knowledgeID string
+//   - indexID string
+//   - item *model.IndexedKnowledgeItem
+func (_e *MockIIndexedKnowledgeItemRepository_Expecter) CreateInIndex(ctx any, knowledgeID any, indexID any, item any) *MockIIndexedKnowledgeItemRepository_CreateInIndex_Call {
+	return &MockIIndexedKnowledgeItemRepository_CreateInIndex_Call{Call: _e.mock.On("CreateInIndex", ctx, knowledgeID, indexID, item)}
 }
 
-func (_c *MockIIndexedKnowledgeItemRepository_Create_Call) Run(run func(ctx context.Context, model1 *model.IndexedKnowledgeItem)) *MockIIndexedKnowledgeItemRepository_Create_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *model.IndexedKnowledgeItem
-		if args[1] != nil {
-			arg1 = args[1].(*model.IndexedKnowledgeItem)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_Create_Call) Return(err error) *MockIIndexedKnowledgeItemRepository_Create_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_Create_Call) RunAndReturn(run func(ctx context.Context, model1 *model.IndexedKnowledgeItem) error) *MockIIndexedKnowledgeItemRepository_Create_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DeleteByID provides a mock function for the type MockIIndexedKnowledgeItemRepository
-func (_mock *MockIIndexedKnowledgeItemRepository) DeleteByID(ctx context.Context, id string) error {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteByID")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockIIndexedKnowledgeItemRepository_DeleteByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByID'
-type MockIIndexedKnowledgeItemRepository_DeleteByID_Call struct {
-	*mock.Call
-}
-
-// DeleteByID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-func (_e *MockIIndexedKnowledgeItemRepository_Expecter) DeleteByID(ctx any, id any) *MockIIndexedKnowledgeItemRepository_DeleteByID_Call {
-	return &MockIIndexedKnowledgeItemRepository_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_DeleteByID_Call) Run(run func(ctx context.Context, id string)) *MockIIndexedKnowledgeItemRepository_DeleteByID_Call {
+func (_c *MockIIndexedKnowledgeItemRepository_CreateInIndex_Call) Run(run func(ctx context.Context, knowledgeID string, indexID string, item *model.IndexedKnowledgeItem)) *MockIIndexedKnowledgeItemRepository_CreateInIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -137,219 +82,334 @@ func (_c *MockIIndexedKnowledgeItemRepository_DeleteByID_Call) Run(run func(ctx 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_DeleteByID_Call) Return(err error) *MockIIndexedKnowledgeItemRepository_DeleteByID_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_DeleteByID_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockIIndexedKnowledgeItemRepository_DeleteByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Filter provides a mock function for the type MockIIndexedKnowledgeItemRepository
-func (_mock *MockIIndexedKnowledgeItemRepository) Filter(ctx context.Context, filter1 *filter.Options[model.IndexedKnowledgeItem]) (*page.Paginated[model.IndexedKnowledgeItem], error) {
-	ret := _mock.Called(ctx, filter1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Filter")
-	}
-
-	var r0 *page.Paginated[model.IndexedKnowledgeItem]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.IndexedKnowledgeItem]) (*page.Paginated[model.IndexedKnowledgeItem], error)); ok {
-		return returnFunc(ctx, filter1)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.IndexedKnowledgeItem]) *page.Paginated[model.IndexedKnowledgeItem]); ok {
-		r0 = returnFunc(ctx, filter1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*page.Paginated[model.IndexedKnowledgeItem])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *filter.Options[model.IndexedKnowledgeItem]) error); ok {
-		r1 = returnFunc(ctx, filter1)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockIIndexedKnowledgeItemRepository_Filter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Filter'
-type MockIIndexedKnowledgeItemRepository_Filter_Call struct {
-	*mock.Call
-}
-
-// Filter is a helper method to define mock.On call
-//   - ctx context.Context
-//   - filter1 *filter.Options[model.IndexedKnowledgeItem]
-func (_e *MockIIndexedKnowledgeItemRepository_Expecter) Filter(ctx any, filter1 any) *MockIIndexedKnowledgeItemRepository_Filter_Call {
-	return &MockIIndexedKnowledgeItemRepository_Filter_Call{Call: _e.mock.On("Filter", ctx, filter1)}
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_Filter_Call) Run(run func(ctx context.Context, filter1 *filter.Options[model.IndexedKnowledgeItem])) *MockIIndexedKnowledgeItemRepository_Filter_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *filter.Options[model.IndexedKnowledgeItem]
-		if args[1] != nil {
-			arg1 = args[1].(*filter.Options[model.IndexedKnowledgeItem])
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_Filter_Call) Return(paginated *page.Paginated[model.IndexedKnowledgeItem], err error) *MockIIndexedKnowledgeItemRepository_Filter_Call {
-	_c.Call.Return(paginated, err)
-	return _c
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_Filter_Call) RunAndReturn(run func(ctx context.Context, filter1 *filter.Options[model.IndexedKnowledgeItem]) (*page.Paginated[model.IndexedKnowledgeItem], error)) *MockIIndexedKnowledgeItemRepository_Filter_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// FindByID provides a mock function for the type MockIIndexedKnowledgeItemRepository
-func (_mock *MockIIndexedKnowledgeItemRepository) FindByID(ctx context.Context, id string) (*model.IndexedKnowledgeItem, error) {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindByID")
-	}
-
-	var r0 *model.IndexedKnowledgeItem
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.IndexedKnowledgeItem, error)); ok {
-		return returnFunc(ctx, id)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.IndexedKnowledgeItem); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.IndexedKnowledgeItem)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockIIndexedKnowledgeItemRepository_FindByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByID'
-type MockIIndexedKnowledgeItemRepository_FindByID_Call struct {
-	*mock.Call
-}
-
-// FindByID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-func (_e *MockIIndexedKnowledgeItemRepository_Expecter) FindByID(ctx any, id any) *MockIIndexedKnowledgeItemRepository_FindByID_Call {
-	return &MockIIndexedKnowledgeItemRepository_FindByID_Call{Call: _e.mock.On("FindByID", ctx, id)}
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_FindByID_Call) Run(run func(ctx context.Context, id string)) *MockIIndexedKnowledgeItemRepository_FindByID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_FindByID_Call) Return(indexedKnowledgeItem *model.IndexedKnowledgeItem, err error) *MockIIndexedKnowledgeItemRepository_FindByID_Call {
-	_c.Call.Return(indexedKnowledgeItem, err)
-	return _c
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_FindByID_Call) RunAndReturn(run func(ctx context.Context, id string) (*model.IndexedKnowledgeItem, error)) *MockIIndexedKnowledgeItemRepository_FindByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateByID provides a mock function for the type MockIIndexedKnowledgeItemRepository
-func (_mock *MockIIndexedKnowledgeItemRepository) UpdateByID(ctx context.Context, id string, model1 *model.IndexedKnowledgeItem) error {
-	ret := _mock.Called(ctx, id, model1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateByID")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.IndexedKnowledgeItem) error); ok {
-		r0 = returnFunc(ctx, id, model1)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockIIndexedKnowledgeItemRepository_UpdateByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateByID'
-type MockIIndexedKnowledgeItemRepository_UpdateByID_Call struct {
-	*mock.Call
-}
-
-// UpdateByID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - model1 *model.IndexedKnowledgeItem
-func (_e *MockIIndexedKnowledgeItemRepository_Expecter) UpdateByID(ctx any, id any, model1 any) *MockIIndexedKnowledgeItemRepository_UpdateByID_Call {
-	return &MockIIndexedKnowledgeItemRepository_UpdateByID_Call{Call: _e.mock.On("UpdateByID", ctx, id, model1)}
-}
-
-func (_c *MockIIndexedKnowledgeItemRepository_UpdateByID_Call) Run(run func(ctx context.Context, id string, model1 *model.IndexedKnowledgeItem)) *MockIIndexedKnowledgeItemRepository_UpdateByID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 *model.IndexedKnowledgeItem
+		var arg2 string
 		if args[2] != nil {
-			arg2 = args[2].(*model.IndexedKnowledgeItem)
+			arg2 = args[2].(string)
+		}
+		var arg3 *model.IndexedKnowledgeItem
+		if args[3] != nil {
+			arg3 = args[3].(*model.IndexedKnowledgeItem)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *MockIIndexedKnowledgeItemRepository_UpdateByID_Call) Return(err error) *MockIIndexedKnowledgeItemRepository_UpdateByID_Call {
+func (_c *MockIIndexedKnowledgeItemRepository_CreateInIndex_Call) Return(err error) *MockIIndexedKnowledgeItemRepository_CreateInIndex_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockIIndexedKnowledgeItemRepository_UpdateByID_Call) RunAndReturn(run func(ctx context.Context, id string, model1 *model.IndexedKnowledgeItem) error) *MockIIndexedKnowledgeItemRepository_UpdateByID_Call {
+func (_c *MockIIndexedKnowledgeItemRepository_CreateInIndex_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string, indexID string, item *model.IndexedKnowledgeItem) error) *MockIIndexedKnowledgeItemRepository_CreateInIndex_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteInIndex provides a mock function for the type MockIIndexedKnowledgeItemRepository
+func (_mock *MockIIndexedKnowledgeItemRepository) DeleteInIndex(ctx context.Context, knowledgeID string, indexID string, id string) error {
+	ret := _mock.Called(ctx, knowledgeID, indexID, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteInIndex")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
+		r0 = returnFunc(ctx, knowledgeID, indexID, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteInIndex'
+type MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call struct {
+	*mock.Call
+}
+
+// DeleteInIndex is a helper method to define mock.On call
+//   - ctx context.Context
+//   - knowledgeID string
+//   - indexID string
+//   - id string
+func (_e *MockIIndexedKnowledgeItemRepository_Expecter) DeleteInIndex(ctx any, knowledgeID any, indexID any, id any) *MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call {
+	return &MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call{Call: _e.mock.On("DeleteInIndex", ctx, knowledgeID, indexID, id)}
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call) Run(run func(ctx context.Context, knowledgeID string, indexID string, id string)) *MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call) Return(err error) *MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string, indexID string, id string) error) *MockIIndexedKnowledgeItemRepository_DeleteInIndex_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FilterInIndex provides a mock function for the type MockIIndexedKnowledgeItemRepository
+func (_mock *MockIIndexedKnowledgeItemRepository) FilterInIndex(ctx context.Context, knowledgeID string, indexID string, filter1 *filter.Options[model.IndexedKnowledgeItem]) (*page.Paginated[model.IndexedKnowledgeItem], error) {
+	ret := _mock.Called(ctx, knowledgeID, indexID, filter1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FilterInIndex")
+	}
+
+	var r0 *page.Paginated[model.IndexedKnowledgeItem]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *filter.Options[model.IndexedKnowledgeItem]) (*page.Paginated[model.IndexedKnowledgeItem], error)); ok {
+		return returnFunc(ctx, knowledgeID, indexID, filter1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *filter.Options[model.IndexedKnowledgeItem]) *page.Paginated[model.IndexedKnowledgeItem]); ok {
+		r0 = returnFunc(ctx, knowledgeID, indexID, filter1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*page.Paginated[model.IndexedKnowledgeItem])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *filter.Options[model.IndexedKnowledgeItem]) error); ok {
+		r1 = returnFunc(ctx, knowledgeID, indexID, filter1)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIIndexedKnowledgeItemRepository_FilterInIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FilterInIndex'
+type MockIIndexedKnowledgeItemRepository_FilterInIndex_Call struct {
+	*mock.Call
+}
+
+// FilterInIndex is a helper method to define mock.On call
+//   - ctx context.Context
+//   - knowledgeID string
+//   - indexID string
+//   - filter1 *filter.Options[model.IndexedKnowledgeItem]
+func (_e *MockIIndexedKnowledgeItemRepository_Expecter) FilterInIndex(ctx any, knowledgeID any, indexID any, filter1 any) *MockIIndexedKnowledgeItemRepository_FilterInIndex_Call {
+	return &MockIIndexedKnowledgeItemRepository_FilterInIndex_Call{Call: _e.mock.On("FilterInIndex", ctx, knowledgeID, indexID, filter1)}
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_FilterInIndex_Call) Run(run func(ctx context.Context, knowledgeID string, indexID string, filter1 *filter.Options[model.IndexedKnowledgeItem])) *MockIIndexedKnowledgeItemRepository_FilterInIndex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 *filter.Options[model.IndexedKnowledgeItem]
+		if args[3] != nil {
+			arg3 = args[3].(*filter.Options[model.IndexedKnowledgeItem])
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_FilterInIndex_Call) Return(paginated *page.Paginated[model.IndexedKnowledgeItem], err error) *MockIIndexedKnowledgeItemRepository_FilterInIndex_Call {
+	_c.Call.Return(paginated, err)
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_FilterInIndex_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string, indexID string, filter1 *filter.Options[model.IndexedKnowledgeItem]) (*page.Paginated[model.IndexedKnowledgeItem], error)) *MockIIndexedKnowledgeItemRepository_FilterInIndex_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindByIDInIndex provides a mock function for the type MockIIndexedKnowledgeItemRepository
+func (_mock *MockIIndexedKnowledgeItemRepository) FindByIDInIndex(ctx context.Context, knowledgeID string, indexID string, id string) (*model.IndexedKnowledgeItem, error) {
+	ret := _mock.Called(ctx, knowledgeID, indexID, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByIDInIndex")
+	}
+
+	var r0 *model.IndexedKnowledgeItem
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*model.IndexedKnowledgeItem, error)); ok {
+		return returnFunc(ctx, knowledgeID, indexID, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *model.IndexedKnowledgeItem); ok {
+		r0 = returnFunc(ctx, knowledgeID, indexID, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.IndexedKnowledgeItem)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = returnFunc(ctx, knowledgeID, indexID, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByIDInIndex'
+type MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call struct {
+	*mock.Call
+}
+
+// FindByIDInIndex is a helper method to define mock.On call
+//   - ctx context.Context
+//   - knowledgeID string
+//   - indexID string
+//   - id string
+func (_e *MockIIndexedKnowledgeItemRepository_Expecter) FindByIDInIndex(ctx any, knowledgeID any, indexID any, id any) *MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call {
+	return &MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call{Call: _e.mock.On("FindByIDInIndex", ctx, knowledgeID, indexID, id)}
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call) Run(run func(ctx context.Context, knowledgeID string, indexID string, id string)) *MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call) Return(indexedKnowledgeItem *model.IndexedKnowledgeItem, err error) *MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call {
+	_c.Call.Return(indexedKnowledgeItem, err)
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string, indexID string, id string) (*model.IndexedKnowledgeItem, error)) *MockIIndexedKnowledgeItemRepository_FindByIDInIndex_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateInIndex provides a mock function for the type MockIIndexedKnowledgeItemRepository
+func (_mock *MockIIndexedKnowledgeItemRepository) UpdateInIndex(ctx context.Context, knowledgeID string, indexID string, id string, item *model.IndexedKnowledgeItem) error {
+	ret := _mock.Called(ctx, knowledgeID, indexID, id, item)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateInIndex")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, *model.IndexedKnowledgeItem) error); ok {
+		r0 = returnFunc(ctx, knowledgeID, indexID, id, item)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateInIndex'
+type MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call struct {
+	*mock.Call
+}
+
+// UpdateInIndex is a helper method to define mock.On call
+//   - ctx context.Context
+//   - knowledgeID string
+//   - indexID string
+//   - id string
+//   - item *model.IndexedKnowledgeItem
+func (_e *MockIIndexedKnowledgeItemRepository_Expecter) UpdateInIndex(ctx any, knowledgeID any, indexID any, id any, item any) *MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call {
+	return &MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call{Call: _e.mock.On("UpdateInIndex", ctx, knowledgeID, indexID, id, item)}
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call) Run(run func(ctx context.Context, knowledgeID string, indexID string, id string, item *model.IndexedKnowledgeItem)) *MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 *model.IndexedKnowledgeItem
+		if args[4] != nil {
+			arg4 = args[4].(*model.IndexedKnowledgeItem)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call) Return(err error) *MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string, indexID string, id string, item *model.IndexedKnowledgeItem) error) *MockIIndexedKnowledgeItemRepository_UpdateInIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
