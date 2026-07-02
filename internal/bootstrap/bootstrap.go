@@ -19,7 +19,7 @@ import (
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/bot"
 	"github.com/usesnipet/snipet/internal/module/client"
-	"github.com/usesnipet/snipet/internal/module/memory"
+	"github.com/usesnipet/snipet/internal/module/knowledge"
 	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/repository"
@@ -39,7 +39,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	clientRepo := repository.NewClientRepository(db)
 	sessionRepo := repository.NewSessionRepository(db, clientRepo)
 	sessionMessageRepo := repository.NewSessionMessageRepository(db, clientRepo)
-	memoryRepo := repository.NewMemoryRepository(db)
+	knowledgeRepo := repository.NewKnowledgeRepository(db)
 	userRepo := repository.NewUserRepository(db, clientRepo)
 
 	// services
@@ -58,9 +58,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	botService := bot.NewService(botRepo)
 
-	memoryService := memory.NewService(memoryRepo)
+	knowledgeService := knowledge.NewService(knowledgeRepo)
 
-	sessionService := session.NewService(sessionRepo, sessionMessageRepo, memoryService, clientService)
+	sessionService := session.NewService(sessionRepo, sessionMessageRepo, clientService)
 
 	userService := user.NewService(userRepo)
 
@@ -78,7 +78,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	botHandler := bot.NewHandler(botService, apiKeyMiddleware)
 	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
 	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware, jwtAuthMiddleware)
-	memoryHandler := memory.NewHandler(memoryService, apiKeyMiddleware)
+	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware)
 
 	// register routes
@@ -89,7 +89,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		botHandler.RegisterRoutes(r, api.Serve)
 		clientHandler.RegisterRoutes(r, api.Serve)
 		sessionHandler.RegisterRoutes(r, api.Serve)
-		memoryHandler.RegisterRoutes(r, api.Serve)
+		knowledgeHandler.RegisterRoutes(r, api.Serve)
 		userHandler.RegisterRoutes(r, api.Serve)
 	})
 

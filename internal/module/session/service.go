@@ -8,7 +8,6 @@ import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/module/client"
-	"github.com/usesnipet/snipet/internal/module/memory"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 )
@@ -16,20 +15,17 @@ import (
 type Service struct {
 	sessionRepo        repository.ISessionRepository
 	sessionMessageRepo repository.ISessionMessageRepository
-	memoryService      *memory.Service
 	clientService      *client.Service
 }
 
 func NewService(
 	sessionRepo repository.ISessionRepository,
 	sessionMessageRepo repository.ISessionMessageRepository,
-	memoryService *memory.Service,
 	clientService *client.Service,
 ) *Service {
 	return &Service{
 		sessionRepo:        sessionRepo,
 		sessionMessageRepo: sessionMessageRepo,
-		memoryService:      memoryService,
 		clientService:      clientService,
 	}
 }
@@ -92,38 +88,9 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 		return nil, err
 	}
 
-	var memory *model.Memory
-
-	if dto.MemoryID == "" {
-		memories, err := s.memoryService.Filter(
-			ctx,
-			filter.New[model.Memory](
-				filter.WhereEq("type", model.MemoryTypeSession),
-				filter.WhereEq("is_default", true),
-			),
-		)
-		if err != nil {
-			return nil, err
-		}
-		if memories.IsEmpty() {
-			return nil, apperr.NotFound("no default memory found")
-		}
-		memory = memories.First()
-	} else {
-		memory, err = s.memoryService.FindByID(ctx, dto.MemoryID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if memory.Type != model.MemoryTypeSession {
-		return nil, apperr.BadRequest("invalid memory type")
-	}
-
 	session := &model.Session{
 		BotID:    dto.BotID,
 		Metadata: dto.Metadata,
-		MemoryID: memory.ID,
 		ClientID: client.ID,
 	}
 

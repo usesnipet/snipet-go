@@ -69,7 +69,7 @@ func (h *Handler) sendMessage(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
-	query := &FindMessagesFilterDTO{}
+	query := &MessagesFilterDTO{}
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-	var query FindSessionsFilterDTO
+	var query SessionsFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}

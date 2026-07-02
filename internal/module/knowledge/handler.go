@@ -1,4 +1,4 @@
-package memory
+package knowledge
 
 import (
 	"net/http"
@@ -17,18 +17,17 @@ func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handl
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/memory", func(r chi.Router) {
+	r.Route("/knowledge", func(r chi.Router) {
 		r.Get("/", serve(h.filter))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
 		r.Put("/{id}", serve(h.update))
 		r.Delete("/{id}", serve(h.deleteByID))
-		r.Post("/default", serve(h.setAsDefault))
 	})
 }
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-	var dto FindMemoriesFilterDTO
+	var dto KnowledgeFilterDTO
 	if err := api.ParseQuery(r, &dto); err != nil {
 		return err
 	}
@@ -48,7 +47,7 @@ func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
-	var dto CreateMemoryDTO
+	var dto CreateKnowledgeDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
@@ -60,7 +59,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
-	var dto UpdateMemoryDTO
+	var dto UpdateKnowledgeDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
@@ -75,18 +74,5 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 	if err := h.service.DeleteByID(r.Context(), chi.URLParam(r, "id")); err != nil {
 		return err
 	}
-	return api.WriteNoContent(w)
-}
-
-func (h *Handler) setAsDefault(w http.ResponseWriter, r *http.Request) error {
-	var dto SetAsDefaultMemoryDTO
-	if err := api.ParseBody(r, &dto); err != nil {
-		return err
-	}
-	err := h.service.SetAsDefault(r.Context(), dto)
-	if err != nil {
-		return err
-	}
-
 	return api.WriteNoContent(w)
 }

@@ -16,14 +16,14 @@ type Bot struct {
 	Description   string           `gorm:"type:text;not null" json:"description"`
 	Configuration BotConfiguration `gorm:"type:jsonb;not null;serializer:json" json:"configuration"`
 
-	BotToMemories []BotToMemory `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	BotToKnowledge []BotToKnowledge `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
-type BotToMemory struct {
-	BotID    string `gorm:"primaryKey" json:"bot_id"`
-	MemoryID string `gorm:"primaryKey" json:"memory_id"`
-	Active   bool   `gorm:"type:boolean;not null;default:true" json:"active"`
+type BotToKnowledge struct {
+	BotID       string `gorm:"primaryKey" json:"bot_id"`
+	KnowledgeID string `gorm:"primaryKey" json:"knowledge_id"`
+	Active      bool   `gorm:"type:boolean;not null;default:true" json:"active"`
 
-	Bot    Bot    `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Memory Memory `gorm:"foreignKey:MemoryID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Bot       Bot       `gorm:"foreignKey:BotID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Knowledge Knowledge `gorm:"foreignKey:KnowledgeID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
