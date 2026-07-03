@@ -1,4 +1,4 @@
-.PHONY: test install dev-app build-app build-prod-app db-generate mocks
+.PHONY: test install dev-app build-app build-prod-app db-generate db-hash mocks
 
 GO ?= go
 ATLAS ?= atlas
@@ -35,3 +35,7 @@ db-generate:
 		exit 1; \
 	fi; \
 	$(ATLAS) migrate diff "$(MIGRATION_NAME)" --env $(ATLAS_ENV)
+
+
+db-hash:
+	$(ATLAS) migrate hash --env $(ATLAS_ENV)
