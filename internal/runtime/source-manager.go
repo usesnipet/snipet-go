@@ -1,6 +1,8 @@
 package runtime
 
 import (
+	"context"
+
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -36,4 +38,22 @@ func (m *SourceManager) ValidateConfiguration(schema util.JSONMap, config util.J
 	}
 
 	return nil
+}
+
+func (m *SourceManager) Prepare(ctx context.Context, driver string, config util.JSONMap) (SourceDriver, error) {
+	sourceDriver, err := m.GetSourceDriver(driver)
+	if err != nil {
+		return nil, err
+	}
+	configurationSchema, err := sourceDriver.GetConfigurationSchema(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.ValidateConfiguration(configurationSchema, config); err != nil {
+		return nil, err
+	}
+	if err := sourceDriver.TestConnection(ctx, config); err != nil {
+		return nil, ErrConnectionFailed
+	}
+	return sourceDriver, nil
 }

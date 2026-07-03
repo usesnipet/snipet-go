@@ -2,6 +2,7 @@ package knowledge
 
 import (
 	"context"
+	"errors"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
@@ -64,16 +65,12 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 }
 
 func (s *Service) TestConnection(ctx context.Context, driver string, config util.JSONMap) error {
-	sourceDriver, err := s.sourceManager.GetSourceDriver(driver)
+	_, err := s.sourceManager.Prepare(ctx, driver, config)
 	if err != nil {
-		return apperr.NotFound(err.Error())
-	}
-	configurationSchema, err := sourceDriver.GetConfigurationSchema(ctx)
-	if err != nil {
+		if errors.Is(err, runtime.ErrSourceDriverNotFound) {
+			return apperr.NotFound(err.Error())
+		}
 		return apperr.BadRequest(err.Error())
 	}
-	if err := s.sourceManager.ValidateConfiguration(configurationSchema, config); err != nil {
-		return apperr.BadRequest(err.Error())
-	}
-	return sourceDriver.TestConnection(ctx, config)
+	return nil
 }

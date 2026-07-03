@@ -9,14 +9,21 @@ import (
 
 type SourceItem struct {
 	ID           string
-	Name         string       `gorm:"type:text" json:"name"`
-	Hash         string       `gorm:"type:varchar(128);index" json:"hash"`
-	Metadata     util.JSONMap `gorm:"type:jsonb" json:"metadata"`
-	LastModified *time.Time   `json:"last_modified,omitempty"`
+	Name         string
+	Metadata     util.JSONMap
+	LastModified *time.Time
+}
+
+type SourceIterator interface {
+	Next(ctx context.Context) bool
+	Item() *SourceItem
+	GetHash() string
+	Err() error
+	Close() error
 }
 
 type SourceDriver interface {
-	Scan(ctx context.Context, config util.JSONMap, take *int, skip *int) ([]SourceItem, error)
+	Iterator(ctx context.Context, config util.JSONMap) (SourceIterator, error)
 	TestConnection(ctx context.Context, config util.JSONMap) error
 	GetConfigurationSchema(ctx context.Context) (util.JSONMap, error)
 }

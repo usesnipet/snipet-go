@@ -33,12 +33,12 @@ type mockSourceDriver struct {
 	mock.Mock
 }
 
-func (m *mockSourceDriver) Scan(ctx context.Context, config util.JSONMap, take *int, skip *int) ([]runtime.SourceItem, error) {
-	args := m.Called(ctx, config, take, skip)
+func (m *mockSourceDriver) Iterator(ctx context.Context, config util.JSONMap) (runtime.SourceIterator, error) {
+	args := m.Called(ctx, config)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]runtime.SourceItem), args.Error(1)
+	return args.Get(0).(runtime.SourceIterator), args.Error(1)
 }
 
 func (m *mockSourceDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
@@ -197,7 +197,7 @@ func TestCreateReturnsBadRequestWhenConnectionFails(t *testing.T) {
 		Driver:        "pinecone",
 		Configuration: config,
 	})
-	assertAppError(t, err, http.StatusBadRequest, connectionErr.Error())
+	assertAppError(t, err, http.StatusBadRequest, "bad request: "+runtime.ErrConnectionFailed.Error())
 
 	driver.AssertExpectations(t)
 }
@@ -338,7 +338,7 @@ func TestTestConnectionReturnsDriverConnectionError(t *testing.T) {
 	svc := newTestService(mocks.NewMockIKnowledgeRepository(t), map[string]*mockSourceDriver{"pinecone": driver})
 
 	err := svc.TestConnection(context.Background(), "pinecone", config)
-	require.ErrorIs(t, err, connectionErr)
+	assertAppError(t, err, http.StatusBadRequest, runtime.ErrConnectionFailed.Error())
 
 	driver.AssertExpectations(t)
 }

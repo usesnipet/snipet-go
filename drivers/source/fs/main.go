@@ -1,17 +1,11 @@
 package fs
 
 import (
-	_ "embed"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
+	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/fs"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/usesnipet/snipet/internal/runtime"
@@ -68,104 +62,15 @@ func (d *Driver) TestConnection(ctx context.Context, config util.JSONMap) error 
 	return nil
 }
 
-func (d *Driver) Scan(ctx context.Context, config util.JSONMap, take *int, skip *int) ([]runtime.SourceItem, error) {
+func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.SourceIterator, error) {
 	cfg, err := parseConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	items, err := collectItems(ctx, cfg.BasePath)
+	files, err := listFiles(cfg.BasePath)
 	if err != nil {
 		return nil, err
 	}
-
-	return paginateItems(items, skip, take), nil
-}
-
-func collectItems(ctx context.Context, basePath string) ([]runtime.SourceItem, error) {
-	var items []runtime.SourceItem
-
-	err := filepath.WalkDir(basePath, func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-
-		if entry.IsDir() {
-			return nil
-		}
-
-		info, err := entry.Info()
-		if err != nil {
-			return fmt.Errorf("fs: stat %q: %w", path, err)
-		}
-
-		relPath, err := filepath.Rel(basePath, path)
-		if err != nil {
-			return fmt.Errorf("fs: relative path for %q: %w", path, err)
-		}
-
-		hash, err := hashFile(path)
-		if err != nil {
-			return fmt.Errorf("fs: hash %q: %w", path, err)
-		}
-
-		modTime := info.ModTime()
-		items = append(items, runtime.SourceItem{
-			ID:   filepath.ToSlash(relPath),
-			Name: filepath.Base(path),
-			Hash: hash,
-			Metadata: util.JSONMap{
-				"path": filepath.ToSlash(relPath),
-				"size": info.Size(),
-			},
-			LastModified: &modTime,
-		})
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].ID < items[j].ID
-	})
-
-	return items, nil
-}
-
-func hashFile(path string) (string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	hasher := sha256.New()
-	if _, err := io.Copy(hasher, file); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(hasher.Sum(nil)), nil
-}
-
-func paginateItems(items []runtime.SourceItem, skip, take *int) []runtime.SourceItem {
-	start := 0
-	if skip != nil {
-		start = *skip
-	}
-	if start >= len(items) {
-		return []runtime.SourceItem{}
-	}
-
-	items = items[start:]
-	if take != nil && *take < len(items) {
-		items = items[:*take]
-	}
-
-	return items
+	return NewIterator(files), nil
 }

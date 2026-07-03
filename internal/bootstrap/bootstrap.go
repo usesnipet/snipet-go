@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	fsdriver "github.com/usesnipet/snipet/drivers/source/fs"
 	"github.com/usesnipet/snipet/config"
+	fsdriver "github.com/usesnipet/snipet/drivers/source/fs"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"

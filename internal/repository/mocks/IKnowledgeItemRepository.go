@@ -383,3 +383,60 @@ func (_c *MockIKnowledgeItemRepository_UpdateInKnowledge_Call) RunAndReturn(run 
 	_c.Call.Return(run)
 	return _c
 }
+
+// UpsertMany provides a mock function for the type MockIKnowledgeItemRepository
+func (_mock *MockIKnowledgeItemRepository) UpsertMany(ctx context.Context, items []model.KnowledgeItem) error {
+	ret := _mock.Called(ctx, items)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertMany")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []model.KnowledgeItem) error); ok {
+		r0 = returnFunc(ctx, items)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIKnowledgeItemRepository_UpsertMany_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpsertMany'
+type MockIKnowledgeItemRepository_UpsertMany_Call struct {
+	*mock.Call
+}
+
+// UpsertMany is a helper method to define mock.On call
+//   - ctx context.Context
+//   - items []model.KnowledgeItem
+func (_e *MockIKnowledgeItemRepository_Expecter) UpsertMany(ctx any, items any) *MockIKnowledgeItemRepository_UpsertMany_Call {
+	return &MockIKnowledgeItemRepository_UpsertMany_Call{Call: _e.mock.On("UpsertMany", ctx, items)}
+}
+
+func (_c *MockIKnowledgeItemRepository_UpsertMany_Call) Run(run func(ctx context.Context, items []model.KnowledgeItem)) *MockIKnowledgeItemRepository_UpsertMany_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []model.KnowledgeItem
+		if args[1] != nil {
+			arg1 = args[1].([]model.KnowledgeItem)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIKnowledgeItemRepository_UpsertMany_Call) Return(err error) *MockIKnowledgeItemRepository_UpsertMany_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIKnowledgeItemRepository_UpsertMany_Call) RunAndReturn(run func(ctx context.Context, items []model.KnowledgeItem) error) *MockIKnowledgeItemRepository_UpsertMany_Call {
+	_c.Call.Return(run)
+	return _c
+}

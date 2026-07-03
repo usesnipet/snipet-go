@@ -29,6 +29,11 @@ type IKnowledgeItemRepository interface {
 		item *model.KnowledgeItem,
 	) error
 
+	UpsertMany(
+		ctx context.Context,
+		items []model.KnowledgeItem,
+	) error
+
 	UpdateInKnowledge(
 		ctx context.Context,
 		knowledgeID string,
@@ -96,6 +101,10 @@ func (r *KnowledgeItemRepository) CreateInKnowledge(
 		return err
 	}
 	return nil
+}
+
+func (r *KnowledgeItemRepository) UpsertMany(ctx context.Context, items []model.KnowledgeItem) error {
+	return r.db(ctx).CreateInBatches(items, 1).Error
 }
 
 func (r *KnowledgeItemRepository) UpdateInKnowledge(
