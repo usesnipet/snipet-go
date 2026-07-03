@@ -8,6 +8,7 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type IKnowledgeItemRepository interface {
@@ -32,6 +33,7 @@ type IKnowledgeItemRepository interface {
 	UpsertMany(
 		ctx context.Context,
 		items []model.KnowledgeItem,
+		batchSize int,
 	) error
 
 	UpdateInKnowledge(
@@ -103,8 +105,17 @@ func (r *KnowledgeItemRepository) CreateInKnowledge(
 	return nil
 }
 
-func (r *KnowledgeItemRepository) UpsertMany(ctx context.Context, items []model.KnowledgeItem) error {
-	return r.db(ctx).CreateInBatches(items, 1).Error
+func (r *KnowledgeItemRepository) UpsertMany(ctx context.Context, items []model.KnowledgeItem, batchSize int) error {
+	if len(items) == 0 {
+		return nil
+	}
+	return r.db(ctx).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "knowledge_id"}, {Name: "external_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"name", "hash", "metadata", "last_modified"}),
+		}).
+		CreateInBatches(items, batchSize).
+		Error
 }
 
 func (r *KnowledgeItemRepository) UpdateInKnowledge(

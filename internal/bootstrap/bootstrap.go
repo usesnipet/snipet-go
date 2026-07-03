@@ -51,7 +51,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	userRepo := repository.NewUserRepository(db, clientRepo)
 
 	// runtime
-	sourceRegistry := runtime.NewRegistry[runtime.SourceDriver]()
+	sourceRegistry := runtime.NewRegistry[runtime.ISourceDriver]()
 	sourceRegistry.MustRegister("fs", fsdriver.NewDriver())
 	sourceManager := runtime.NewSourceManager(sourceRegistry)
 

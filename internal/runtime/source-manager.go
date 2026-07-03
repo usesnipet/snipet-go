@@ -8,18 +8,18 @@ import (
 )
 
 type SourceManager struct {
-	registry *Registry[SourceDriver]
+	registry *Registry[ISourceDriver]
 }
 
 func NewSourceManager(
-	registry *Registry[SourceDriver],
+	registry *Registry[ISourceDriver],
 ) *SourceManager {
 	return &SourceManager{
 		registry: registry,
 	}
 }
 
-func (m *SourceManager) GetSourceDriver(name string) (SourceDriver, error) {
+func (m *SourceManager) GetSourceDriver(name string) (ISourceDriver, error) {
 	driver, ok := m.registry.Get(name)
 	if !ok {
 		return nil, ErrSourceDriverNotFound
@@ -40,7 +40,7 @@ func (m *SourceManager) ValidateConfiguration(schema util.JSONMap, config util.J
 	return nil
 }
 
-func (m *SourceManager) Prepare(ctx context.Context, driver string, config util.JSONMap) (SourceDriver, error) {
+func (m *SourceManager) Prepare(ctx context.Context, driver string, config util.JSONMap) (ISourceDriver, error) {
 	sourceDriver, err := m.GetSourceDriver(driver)
 	if err != nil {
 		return nil, err

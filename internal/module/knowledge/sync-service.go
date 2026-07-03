@@ -68,7 +68,7 @@ func (s *SyncService) Sync(ctx context.Context, knowledgeID string) (*SyncResult
 			LastModified: item.LastModified,
 		})
 		if len(items) > s.batchSize {
-			if err := s.knowledgeItemRepo.UpsertMany(ctx, items); err != nil {
+			if err := s.knowledgeItemRepo.UpsertMany(ctx, items, s.batchSize); err != nil {
 				result.Failed += int64(s.batchSize)
 			}
 			items = []model.KnowledgeItem{}

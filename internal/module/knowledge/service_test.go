@@ -33,12 +33,12 @@ type mockSourceDriver struct {
 	mock.Mock
 }
 
-func (m *mockSourceDriver) Iterator(ctx context.Context, config util.JSONMap) (runtime.SourceIterator, error) {
+func (m *mockSourceDriver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISourceIterator, error) {
 	args := m.Called(ctx, config)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(runtime.SourceIterator), args.Error(1)
+	return args.Get(0).(runtime.ISourceIterator), args.Error(1)
 }
 
 func (m *mockSourceDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
@@ -54,7 +54,7 @@ func (m *mockSourceDriver) GetConfigurationSchema(ctx context.Context) (util.JSO
 }
 
 func newTestService(repo repository.IKnowledgeRepository, drivers map[string]*mockSourceDriver) *knowledge.Service {
-	registry := runtime.NewRegistry[runtime.SourceDriver]()
+	registry := runtime.NewRegistry[runtime.ISourceDriver]()
 	for name, driver := range drivers {
 		registry.MustRegister(name, driver)
 	}

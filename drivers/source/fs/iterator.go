@@ -26,7 +26,7 @@ type Iterator struct {
 	index   int
 }
 
-func NewIterator(files []string) runtime.SourceIterator {
+func NewIterator(files []string) runtime.ISourceIterator {
 	return &Iterator{
 		files:   files,
 		current: nil,

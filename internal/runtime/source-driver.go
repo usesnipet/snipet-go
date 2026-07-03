@@ -14,7 +14,7 @@ type SourceItem struct {
 	LastModified *time.Time
 }
 
-type SourceIterator interface {
+type ISourceIterator interface {
 	Next(ctx context.Context) bool
 	Item() *SourceItem
 	GetHash() string
@@ -22,8 +22,8 @@ type SourceIterator interface {
 	Close() error
 }
 
-type SourceDriver interface {
-	Iterator(ctx context.Context, config util.JSONMap) (SourceIterator, error)
+type ISourceDriver interface {
+	Iterator(ctx context.Context, config util.JSONMap) (ISourceIterator, error)
 	TestConnection(ctx context.Context, config util.JSONMap) error
 	GetConfigurationSchema(ctx context.Context) (util.JSONMap, error)
 }

@@ -17,7 +17,7 @@ var schemaJSON []byte
 
 type Driver struct{}
 
-func NewDriver() runtime.SourceDriver {
+func NewDriver() runtime.ISourceDriver {
 	return &Driver{}
 }
 
@@ -62,7 +62,7 @@ func (d *Driver) TestConnection(ctx context.Context, config util.JSONMap) error 
 	return nil
 }
 
-func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.SourceIterator, error) {
+func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISourceIterator, error) {
 	cfg, err := parseConfig(config)
 	if err != nil {
 		return nil, err
