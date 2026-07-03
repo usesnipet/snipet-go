@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	fsdriver "github.com/usesnipet/snipet/drivers/source/fs"
 	"github.com/usesnipet/snipet/config"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
@@ -20,12 +21,13 @@ import (
 	"github.com/usesnipet/snipet/internal/module/bot"
 	"github.com/usesnipet/snipet/internal/module/client"
 	indexedknowledgeitem "github.com/usesnipet/snipet/internal/module/indexed-knowledge-item"
+	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	knowledgeitem "github.com/usesnipet/snipet/internal/module/knowledge-item"
-	"github.com/usesnipet/snipet/internal/module/knowledge"
 	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/repository"
+	"github.com/usesnipet/snipet/internal/runtime"
 )
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
@@ -48,6 +50,11 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	indexedKnowledgeItemRepo := repository.NewIndexedKnowledgeItemRepository(db)
 	userRepo := repository.NewUserRepository(db, clientRepo)
 
+	// runtime
+	sourceRegistry := runtime.NewRegistry[runtime.SourceDriver]()
+	sourceRegistry.MustRegister("fs", fsdriver.NewDriver())
+	sourceManager := runtime.NewSourceManager(sourceRegistry)
+
 	// services
 	apiKeyGenerator := auth.NewAPIKeyGenerator()
 	apiKeyHasher := auth.NewKeyHasher()
@@ -64,7 +71,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	botService := bot.NewService(botRepo)
 
-	knowledgeService := knowledge.NewService(knowledgeRepo)
+	knowledgeService := knowledge.NewService(knowledgeRepo, sourceManager)
 	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo)
 	knowledgeItemService := knowledgeitem.NewService(knowledgeItemRepo)
 	indexedKnowledgeItemService := indexedknowledgeitem.NewService(indexedKnowledgeItemRepo)

@@ -29,3 +29,8 @@ type UpdateKnowledgeDTO struct {
 	Name        *string `json:"name" validate:"omitempty,max=255"`
 	Description *string `json:"description" validate:"omitempty"`
 }
+
+type TestConnectionDTO struct {
+	Driver        string       `json:"driver" validate:"required,max=255"`
+	Configuration util.JSONMap `json:"configuration" validate:"required"`
+}

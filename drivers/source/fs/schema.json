@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "basePath": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "basePath"
+  ]
+}

@@ -16,7 +16,7 @@ type SourceItem struct {
 }
 
 type SourceDriver interface {
-	Scan(ctx context.Context, take *int, skip *int) ([]SourceItem, error)
-	TestConnection(ctx context.Context, configuration util.JSONMap) (bool, error)
-	GetConfigurationSchema() util.JSONMap
+	Scan(ctx context.Context, config util.JSONMap, take *int, skip *int) ([]SourceItem, error)
+	TestConnection(ctx context.Context, config util.JSONMap) error
+	GetConfigurationSchema(ctx context.Context) (util.JSONMap, error)
 }

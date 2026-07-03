@@ -3,14 +3,22 @@ package knowledge
 import (
 	"context"
 
+	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
+	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/util"
 )
 
 type Service struct {
-	repository repository.IKnowledgeRepository
+	repository    repository.IKnowledgeRepository
+	sourceManager *runtime.SourceManager
+}
+
+func NewService(repository repository.IKnowledgeRepository, sourceManager *runtime.SourceManager) *Service {
+	return &Service{repository: repository, sourceManager: sourceManager}
 }
 
 func (s *Service) Filter(ctx context.Context, filter *filter.Options[model.Knowledge]) (*page.Paginated[model.Knowledge], error) {
@@ -22,16 +30,22 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.Knowledge, er
 }
 
 func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Knowledge, error) {
-	memory := &model.Knowledge{
+	if err := s.TestConnection(ctx, dto.Driver, dto.Configuration); err != nil {
+		return nil, apperr.BadRequest(err.Error())
+	}
+
+	knowledge := &model.Knowledge{
 		Name:          dto.Name,
 		Description:   dto.Description,
 		Driver:        dto.Driver,
 		Configuration: dto.Configuration,
 	}
-	if err := s.repository.Create(ctx, memory); err != nil {
+
+	if err := s.repository.Create(ctx, knowledge); err != nil {
 		return nil, err
 	}
-	return memory, nil
+
+	return knowledge, nil
 }
 
 func (s *Service) Update(ctx context.Context, id string, dto UpdateKnowledgeDTO) error {
@@ -49,6 +63,17 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	return s.repository.DeleteByID(ctx, id)
 }
 
-func NewService(repository repository.IKnowledgeRepository) *Service {
-	return &Service{repository: repository}
+func (s *Service) TestConnection(ctx context.Context, driver string, config util.JSONMap) error {
+	sourceDriver, err := s.sourceManager.GetSourceDriver(driver)
+	if err != nil {
+		return apperr.NotFound(err.Error())
+	}
+	configurationSchema, err := sourceDriver.GetConfigurationSchema(ctx)
+	if err != nil {
+		return apperr.BadRequest(err.Error())
+	}
+	if err := s.sourceManager.ValidateConfiguration(configurationSchema, config); err != nil {
+		return apperr.BadRequest(err.Error())
+	}
+	return sourceDriver.TestConnection(ctx, config)
 }
