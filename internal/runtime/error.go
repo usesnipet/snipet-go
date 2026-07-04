@@ -3,7 +3,7 @@ package runtime
 import "errors"
 
 var (
-	ErrSourceDriverNotFound = errors.New("source driver not found")
+	ErrDriverNotFound       = errors.New("driver not found")
 	ErrInvalidConfiguration = errors.New("invalid configuration")
 	ErrConnectionFailed     = errors.New("connection failed")
 )

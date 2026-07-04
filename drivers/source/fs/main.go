@@ -33,6 +33,10 @@ func parseConfig(config util.JSONMap) (driverConfig, error) {
 	return driverConfig{BasePath: basePath}, nil
 }
 
+func (d *Driver) Type() runtime.SourceType {
+	return runtime.SourceTypeFile
+}
+
 func (d *Driver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, error) {
 	var schema util.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
