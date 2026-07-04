@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
 			r.Get("/", serve(h.filter))
+			r.Get("/{id}/items", serve(h.filterItems))
 			r.Post("/", serve(h.create))
 			r.Get("/{id}", serve(h.findByID))
 			r.Put("/{id}", serve(h.update))
@@ -45,6 +46,18 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	data, err := h.service.Filter(r.Context(), h.knowledgeID(r), dto.ToFilter())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
+}
+
+func (h *Handler) filterItems(w http.ResponseWriter, r *http.Request) error {
+	var dto FilterIndexedKnowledgeItemDTO
+	if err := api.ParseQuery(r, &dto); err != nil {
+		return err
+	}
+	data, err := h.service.FilterItems(r.Context(), h.knowledgeID(r), chi.URLParam(r, "id"), dto.ToFilter())
 	if err != nil {
 		return err
 	}

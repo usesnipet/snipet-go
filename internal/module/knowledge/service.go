@@ -16,28 +16,39 @@ import (
 )
 
 type Service struct {
-	txManager     repository.ITxManager
-	repo          repository.IKnowledgeRepository
-	sourceManager *runtime.SourceManager
-	riverClient   *river.Client[*sql.Tx]
+	txManager         repository.ITxManager
+	repo              repository.IKnowledgeRepository
+	knowledgeItemRepo repository.IKnowledgeItemRepository
+	sourceManager     *runtime.SourceManager
+	riverClient       *river.Client[*sql.Tx]
 }
 
 func NewService(
 	txManager repository.ITxManager,
 	repo repository.IKnowledgeRepository,
+	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	sourceManager *runtime.SourceManager,
 	riverClient *river.Client[*sql.Tx],
 ) *Service {
 	return &Service{
-		txManager:     txManager,
-		repo:          repo,
-		sourceManager: sourceManager,
-		riverClient:   riverClient,
+		txManager:         txManager,
+		repo:              repo,
+		knowledgeItemRepo: knowledgeItemRepo,
+		sourceManager:     sourceManager,
+		riverClient:       riverClient,
 	}
 }
 
 func (s *Service) Filter(ctx context.Context, filter *filter.Options[model.Knowledge]) (*page.Paginated[model.Knowledge], error) {
 	return s.repo.Filter(ctx, filter)
+}
+
+func (s *Service) FilterItems(
+	ctx context.Context,
+	knowledgeID string,
+	filter *filter.Options[model.KnowledgeItem],
+) (*page.Paginated[model.KnowledgeItem], error) {
+	return s.knowledgeItemRepo.FilterInKnowledge(ctx, knowledgeID, filter)
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Knowledge, error) {

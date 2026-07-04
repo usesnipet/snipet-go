@@ -27,3 +27,15 @@ func (dto *FilterKnowledgeIndexDTO) ToFilter() *filter.Options[model.KnowledgeIn
 		filter.PtrSkip(dto.Skip),
 	)
 }
+
+type FilterIndexedKnowledgeItemDTO struct {
+	Take *int `form:"take" validate:"omitempty,min=1"`
+	Skip *int `form:"skip" validate:"omitempty,min=0"`
+}
+
+func (dto *FilterIndexedKnowledgeItemDTO) ToFilter() *filter.Options[model.IndexedKnowledgeItem] {
+	return filter.New[model.IndexedKnowledgeItem](
+		filter.PtrTake(dto.Take),
+		filter.PtrSkip(dto.Skip),
+	)
+}

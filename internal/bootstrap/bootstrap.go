@@ -21,10 +21,8 @@ import (
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/bot"
 	"github.com/usesnipet/snipet/internal/module/client"
-	indexedknowledgeitem "github.com/usesnipet/snipet/internal/module/indexed-knowledge-item"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
-	knowledgeitem "github.com/usesnipet/snipet/internal/module/knowledge-item"
 	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/queue"
@@ -85,10 +83,8 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	botService := bot.NewService(botRepo)
 
-	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, sourceManager, riverClient)
-	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo)
-	knowledgeItemService := knowledgeitem.NewService(knowledgeItemRepo)
-	indexedKnowledgeItemService := indexedknowledgeitem.NewService(indexedKnowledgeItemRepo)
+	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, knowledgeItemRepo, sourceManager, riverClient)
+	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo, indexedKnowledgeItemRepo)
 
 	sessionService := session.NewService(sessionRepo, sessionMessageRepo, clientService)
 
@@ -110,8 +106,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware, jwtAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
-	knowledgeItemHandler := knowledgeitem.NewHandler(knowledgeItemService, apiKeyMiddleware)
-	indexedKnowledgeItemHandler := indexedknowledgeitem.NewHandler(indexedKnowledgeItemService, apiKeyMiddleware)
 	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware)
 
 	// register routes
@@ -124,8 +118,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		sessionHandler.RegisterRoutes(r, api.Serve)
 		knowledgeHandler.RegisterRoutes(r, api.Serve)
 		knowledgeIndexHandler.RegisterRoutes(r, api.Serve)
-		knowledgeItemHandler.RegisterRoutes(r, api.Serve)
-		indexedKnowledgeItemHandler.RegisterRoutes(r, api.Serve)
 		userHandler.RegisterRoutes(r, api.Serve)
 	})
 

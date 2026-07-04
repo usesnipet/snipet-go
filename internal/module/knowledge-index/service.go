@@ -10,15 +10,26 @@ import (
 )
 
 type Service struct {
-	repo repository.IKnowledgeIndexRepository
+	repo                     repository.IKnowledgeIndexRepository
+	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository
 }
 
-func NewService(repo repository.IKnowledgeIndexRepository) *Service {
-	return &Service{repo: repo}
+func NewService(
+	repo repository.IKnowledgeIndexRepository,
+	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository,
+) *Service {
+	return &Service{
+		repo:                     repo,
+		indexedKnowledgeItemRepo: indexedKnowledgeItemRepo,
+	}
 }
 
 func (s *Service) Filter(ctx context.Context, knowledgeID string, filter *filter.Options[model.KnowledgeIndex]) (*page.Paginated[model.KnowledgeIndex], error) {
 	return s.repo.FilterInKnowledge(ctx, knowledgeID, filter)
+}
+
+func (s *Service) FilterItems(ctx context.Context, knowledgeID, indexID string, filter *filter.Options[model.IndexedKnowledgeItem]) (*page.Paginated[model.IndexedKnowledgeItem], error) {
+	return s.indexedKnowledgeItemRepo.FilterInIndex(ctx, knowledgeID, indexID, filter)
 }
 
 func (s *Service) FindByID(ctx context.Context, knowledgeID, id string) (*model.KnowledgeIndex, error) {

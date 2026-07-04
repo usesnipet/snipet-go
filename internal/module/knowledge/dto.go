@@ -6,12 +6,24 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 )
 
-type KnowledgeFilterDTO struct {
+type FilterKnowledgeItemDTO struct {
 	Take *int `form:"take" validate:"omitempty,min=1"`
 	Skip *int `form:"skip" validate:"omitempty,min=0"`
 }
 
-func (dto *KnowledgeFilterDTO) ToFilter() *filter.Options[model.Knowledge] {
+func (dto *FilterKnowledgeItemDTO) ToFilter() *filter.Options[model.KnowledgeItem] {
+	return filter.New[model.KnowledgeItem](
+		filter.PtrTake(dto.Take),
+		filter.PtrSkip(dto.Skip),
+	)
+}
+
+type FilterKnowledgeDTO struct {
+	Take *int `form:"take" validate:"omitempty,min=1"`
+	Skip *int `form:"skip" validate:"omitempty,min=0"`
+}
+
+func (dto *FilterKnowledgeDTO) ToFilter() *filter.Options[model.Knowledge] {
 	return filter.New[model.Knowledge](
 		filter.PtrTake(dto.Take),
 		filter.PtrSkip(dto.Skip),
