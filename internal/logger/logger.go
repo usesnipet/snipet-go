@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	colorReset  = "\033[0m"
+	colorReset   = "\033[0m"
 	colorMagenta = "\033[35m"
-	colorCyan   = "\033[36m"
-	colorGreen  = "\033[32m"
-	colorYellow = "\033[33m"
-	colorRed    = "\033[31m"
+	colorCyan    = "\033[36m"
+	colorGreen   = "\033[32m"
+	colorYellow  = "\033[33m"
+	colorRed     = "\033[31m"
 )
 
 type Logger struct {
@@ -53,42 +53,42 @@ func (l *Logger) write(level Level, color, prefix, format string, v ...any) {
 	}
 }
 
-func (l *Logger) Verbose(v ...interface{}) {
+func (l *Logger) Verbose(v ...any) {
 	l.write(LevelVerbose, colorMagenta, "VERBOSE:", "%s", fmt.Sprint(v...))
 }
 
-func (l *Logger) Debug(v ...interface{}) {
+func (l *Logger) Debug(v ...any) {
 	l.write(LevelDebug, colorCyan, "DEBUG:", "%s", fmt.Sprint(v...))
 }
 
-func (l *Logger) Info(v ...interface{}) {
+func (l *Logger) Info(v ...any) {
 	l.write(LevelInfo, colorGreen, "INFO:", "%s", fmt.Sprint(v...))
 }
 
-func (l *Logger) Warn(v ...interface{}) {
+func (l *Logger) Warn(v ...any) {
 	l.write(LevelWarn, colorYellow, "WARN:", "%s", fmt.Sprint(v...))
 }
 
-func (l *Logger) Error(v ...interface{}) {
+func (l *Logger) Error(v ...any) {
 	l.write(LevelError, colorRed, "ERROR:", "%s", fmt.Sprint(v...))
 }
 
-func (l *Logger) Verbosef(format string, v ...interface{}) {
+func (l *Logger) Verbosef(format string, v ...any) {
 	l.write(LevelVerbose, colorMagenta, "VERBOSE:", format, v...)
 }
 
-func (l *Logger) Debugf(format string, v ...interface{}) {
+func (l *Logger) Debugf(format string, v ...any) {
 	l.write(LevelDebug, colorCyan, "DEBUG:", format, v...)
 }
 
-func (l *Logger) Infof(format string, v ...interface{}) {
+func (l *Logger) Infof(format string, v ...any) {
 	l.write(LevelInfo, colorGreen, "INFO:", format, v...)
 }
 
-func (l *Logger) Warnf(format string, v ...interface{}) {
+func (l *Logger) Warnf(format string, v ...any) {
 	l.write(LevelWarn, colorYellow, "WARN:", format, v...)
 }
 
-func (l *Logger) Errorf(format string, v ...interface{}) {
+func (l *Logger) Errorf(format string, v ...any) {
 	l.write(LevelError, colorRed, "ERROR:", format, v...)
 }

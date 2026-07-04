@@ -1,5 +1,7 @@
 package filter
 
+import "maps"
+
 // From applies an existing Options onto the builder state.
 // Pagination fields (Take, Skip) are only applied when the source filter
 // carries pagination intent (non-zero Take, non-zero Skip, or any Order).
@@ -17,12 +19,8 @@ func From[T any](opts *Options[T]) Option {
 			s.skip = opts.Skip
 		}
 
-		for field, direction := range opts.Order.Fields {
-			s.order.Fields[field] = direction
-		}
-		for field, where := range opts.Where.Fields {
-			s.where.Fields[field] = where
-		}
+		maps.Copy(s.order.Fields, opts.Order.Fields)
+		maps.Copy(s.where.Fields, opts.Where.Fields)
 	}
 }
 
