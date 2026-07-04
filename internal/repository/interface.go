@@ -5,6 +5,7 @@ import (
 
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/page"
+	"gorm.io/gorm"
 )
 
 type IFilterableRepository[T any] interface {
@@ -37,4 +38,5 @@ type IRepository[T any] interface {
 
 type ITxManager interface {
 	WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	Tx(ctx context.Context) *gorm.DB
 }

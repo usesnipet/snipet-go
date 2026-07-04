@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/riverqueue/river"
 	"github.com/usesnipet/snipet/config"
 	fsdriver "github.com/usesnipet/snipet/drivers/source/fs"
 	"github.com/usesnipet/snipet/internal/api"
@@ -26,19 +27,21 @@ import (
 	knowledgeitem "github.com/usesnipet/snipet/internal/module/knowledge-item"
 	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/module/user"
+	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
 )
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// database
-	db, err := database.NewDatabase(cfg, logger)
+	db, sqlDB, err := database.NewDatabase(cfg, logger)
 	if err != nil {
 		logger.Errorf("failed to create database: %v", err)
 		return err
 	}
 
 	// repositories
+	txManager := repository.NewTxManager(db)
 	apiKeyRepo := repository.NewApiKeyRepository(db)
 	botRepo := repository.NewBotRepository(db)
 	clientRepo := repository.NewClientRepository(db)
@@ -54,6 +57,17 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sourceRegistry := runtime.NewRegistry[runtime.ISourceDriver]()
 	sourceRegistry.MustRegister("fs", fsdriver.NewDriver())
 	sourceManager := runtime.NewSourceManager(sourceRegistry)
+
+	workers := river.NewWorkers()
+	river.AddWorker(
+		workers,
+		knowledge.NewSyncWorker(sourceManager, knowledgeRepo, knowledgeItemRepo, 100, logger),
+	)
+	riverClient, err := queue.NewRiver(sqlDB, workers)
+	if err != nil {
+		logger.Errorf("failed to create river client: %v", err)
+		return err
+	}
 
 	// services
 	apiKeyGenerator := auth.NewAPIKeyGenerator()
@@ -71,7 +85,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	botService := bot.NewService(botRepo)
 
-	knowledgeService := knowledge.NewService(knowledgeRepo, sourceManager)
+	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, sourceManager, riverClient)
 	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo)
 	knowledgeItemService := knowledgeitem.NewService(knowledgeItemRepo)
 	indexedKnowledgeItemService := indexedknowledgeitem.NewService(indexedKnowledgeItemRepo)
@@ -119,6 +133,12 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Server.Port), api.Router)
 	if err != nil {
 		logger.Errorf("failed to start server: %v", err)
+		return err
+	}
+
+	err = riverClient.Start(context.Background())
+	if err != nil {
+		logger.Errorf("failed to start river client: %v", err)
 		return err
 	}
 

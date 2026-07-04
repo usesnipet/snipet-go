@@ -2,8 +2,10 @@ package knowledge
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
+	"github.com/riverqueue/river"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
@@ -14,20 +16,32 @@ import (
 )
 
 type Service struct {
-	repository    repository.IKnowledgeRepository
+	txManager     repository.ITxManager
+	repo          repository.IKnowledgeRepository
 	sourceManager *runtime.SourceManager
+	riverClient   *river.Client[*sql.Tx]
 }
 
-func NewService(repository repository.IKnowledgeRepository, sourceManager *runtime.SourceManager) *Service {
-	return &Service{repository: repository, sourceManager: sourceManager}
+func NewService(
+	txManager repository.ITxManager,
+	repo repository.IKnowledgeRepository,
+	sourceManager *runtime.SourceManager,
+	riverClient *river.Client[*sql.Tx],
+) *Service {
+	return &Service{
+		txManager:     txManager,
+		repo:          repo,
+		sourceManager: sourceManager,
+		riverClient:   riverClient,
+	}
 }
 
 func (s *Service) Filter(ctx context.Context, filter *filter.Options[model.Knowledge]) (*page.Paginated[model.Knowledge], error) {
-	return s.repository.Filter(ctx, filter)
+	return s.repo.Filter(ctx, filter)
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Knowledge, error) {
-	return s.repository.FindByID(ctx, id)
+	return s.repo.FindByID(ctx, id)
 }
 
 func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Knowledge, error) {
@@ -42,11 +56,21 @@ func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Kn
 		Configuration: dto.Configuration,
 	}
 
-	if err := s.repository.Create(ctx, knowledge); err != nil {
-		return nil, err
-	}
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		tx := s.txManager.Tx(ctx)
+		sqlTx := tx.Statement.ConnPool.(*sql.Tx)
 
-	return knowledge, nil
+		_, err := s.riverClient.InsertTx(ctx, sqlTx, SyncKnowledgeArgs{KnowledgeID: knowledge.ID}, nil)
+		if err != nil {
+			return err
+		}
+		if err := s.repo.Create(ctx, knowledge); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return knowledge, err
 }
 
 func (s *Service) Update(ctx context.Context, id string, dto UpdateKnowledgeDTO) error {
@@ -57,11 +81,11 @@ func (s *Service) Update(ctx context.Context, id string, dto UpdateKnowledgeDTO)
 	if dto.Description != nil {
 		updates.Description = *dto.Description
 	}
-	return s.repository.UpdateByID(ctx, id, updates)
+	return s.repo.UpdateByID(ctx, id, updates)
 }
 
 func (s *Service) DeleteByID(ctx context.Context, id string) error {
-	return s.repository.DeleteByID(ctx, id)
+	return s.repo.DeleteByID(ctx, id)
 }
 
 func (s *Service) TestConnection(ctx context.Context, driver string, config util.JSONMap) error {
@@ -71,6 +95,14 @@ func (s *Service) TestConnection(ctx context.Context, driver string, config util
 			return apperr.NotFound(err.Error())
 		}
 		return apperr.BadRequest(err.Error())
+	}
+	return nil
+}
+
+func (s *Service) Sync(ctx context.Context, knowledgeID string) error {
+	_, err := s.riverClient.Insert(ctx, SyncKnowledgeArgs{KnowledgeID: knowledgeID}, nil)
+	if err != nil {
+		return apperr.InternalServerError(err.Error())
 	}
 	return nil
 }

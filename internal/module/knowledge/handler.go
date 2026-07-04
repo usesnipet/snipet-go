@@ -24,6 +24,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Put("/{id}", serve(h.update))
 		r.Delete("/{id}", serve(h.deleteByID))
 		r.Post("/test-connection", serve(h.testConnection))
+		r.Post("/{id}/sync", serve(h.sync))
 	})
 }
 
@@ -84,6 +85,15 @@ func (h *Handler) testConnection(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	err := h.service.TestConnection(r.Context(), dto.Driver, dto.Configuration)
+	if err != nil {
+		return err
+	}
+	return api.WriteNoContent(w)
+}
+
+func (h *Handler) sync(w http.ResponseWriter, r *http.Request) error {
+	knowledgeID := chi.URLParam(r, "id")
+	err := h.service.Sync(r.Context(), knowledgeID)
 	if err != nil {
 		return err
 	}

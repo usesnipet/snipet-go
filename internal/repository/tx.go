@@ -20,6 +20,10 @@ func (m *TxManager) WithTransaction(ctx context.Context, fn func(ctx context.Con
 	return WithTransaction(ctx, m.db, fn)
 }
 
+func (m *TxManager) Tx(ctx context.Context) *gorm.DB {
+	return DB(ctx, m.db)
+}
+
 func WithTransaction(ctx context.Context, db *gorm.DB, fn func(ctx context.Context) error) error {
 	if tx, ok := ctx.Value(txKey{}).(*gorm.DB); ok && tx != nil {
 		return fn(ctx)

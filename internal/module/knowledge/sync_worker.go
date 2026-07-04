@@ -4,12 +4,21 @@ import (
 	"context"
 	"time"
 
+	"github.com/riverqueue/river"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
 )
+
+type SyncKnowledgeArgs struct {
+	KnowledgeID string `json:"knowledge_id"`
+}
+
+func (SyncKnowledgeArgs) Kind() string {
+	return "knowledge-sync"
+}
 
 type SyncResult struct {
 	Created int64 `json:"created"`
@@ -18,7 +27,9 @@ type SyncResult struct {
 	Failed  int64 `json:"failed"`
 }
 
-type SyncService struct {
+type SyncWorker struct {
+	river.WorkerDefaults[SyncKnowledgeArgs]
+
 	sourceManager     *runtime.SourceManager
 	knowledgeRepo     repository.IKnowledgeRepository
 	knowledgeItemRepo repository.IKnowledgeItemRepository
@@ -26,14 +37,14 @@ type SyncService struct {
 	logger            *logger.Logger
 }
 
-func NewSyncService(
+func NewSyncWorker(
 	sourceManager *runtime.SourceManager,
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	batchSize int,
 	logger *logger.Logger,
-) *SyncService {
-	return &SyncService{
+) *SyncWorker {
+	return &SyncWorker{
 		sourceManager:     sourceManager,
 		knowledgeRepo:     knowledgeRepo,
 		knowledgeItemRepo: knowledgeItemRepo,
@@ -42,18 +53,20 @@ func NewSyncService(
 	}
 }
 
-func (s *SyncService) Sync(ctx context.Context, knowledgeID string) (*SyncResult, error) {
+func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]) error {
+	knowledgeID := job.Args.KnowledgeID
+
 	knowledge, err := s.knowledgeRepo.FindByID(ctx, knowledgeID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if knowledge.SyncStatus == model.SyncStatusInProgress {
-		return nil, apperr.Conflict("knowledge sync already in progress")
+		return apperr.Conflict("knowledge sync already in progress")
 	}
 	err = s.knowledgeRepo.UpdateByID(ctx, knowledgeID, &model.Knowledge{SyncStatus: model.SyncStatusInProgress})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func() {
 		var status model.SyncStatus
@@ -78,17 +91,17 @@ func (s *SyncService) Sync(ctx context.Context, knowledgeID string) (*SyncResult
 
 	sourceDriver, err := s.sourceManager.Prepare(ctx, knowledge.Driver, knowledge.Configuration)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	existingHashes, err := s.knowledgeItemRepo.HashesByExternalIDInKnowledge(ctx, knowledgeID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	it, err := sourceDriver.Iterator(ctx, knowledge.Configuration)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer it.Close()
 
@@ -143,7 +156,7 @@ func (s *SyncService) Sync(ctx context.Context, knowledgeID string) (*SyncResult
 		}
 	}
 	if err := it.Err(); err != nil {
-		return nil, err
+		return err
 	}
 	flush()
 
@@ -156,10 +169,15 @@ func (s *SyncService) Sync(ctx context.Context, knowledgeID string) (*SyncResult
 	if len(deletedExternalIDs) > 0 {
 		deleted, err := s.knowledgeItemRepo.DeleteByExternalIDsInKnowledge(ctx, knowledgeID, deletedExternalIDs)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		result.Deleted = deleted
 	}
 
-	return result, nil
+	s.logger.Infof(
+		"knowledge sync completed for knowledge %s: created=%d, updated=%d, deleted=%d, failed=%d",
+		knowledgeID, result.Created, result.Updated, result.Deleted, result.Failed,
+	)
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 
 	"gorm.io/driver/postgres"
@@ -12,30 +13,30 @@ import (
 	_ "ariga.io/atlas-provider-gorm/gormschema"
 )
 
-func NewDatabase(cfg *config.Config, logger *logger.Logger) (*gorm.DB, error) {
+func NewDatabase(cfg *config.Config, logger *logger.Logger) (*gorm.DB, *sql.DB, error) {
 	if err := ensureDatabase(cfg, logger); err != nil {
-		return nil, fmt.Errorf("ensure database: %w", err)
+		return nil, nil, fmt.Errorf("ensure database: %w", err)
 	}
 
-	gormDB, err := gorm.Open(
-		postgres.Open(cfg.Database.URL),
-		&gorm.Config{TranslateError: true, SkipDefaultTransaction: true},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("open database: %w", err)
-	}
-
-	sqlDB, err := gormDB.DB()
-	if err != nil {
-		return nil, fmt.Errorf("get sql db: %w", err)
-	}
-
+	sqlDB, err := sql.Open("pgx", cfg.Database.URL)
 	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConns)
 	sqlDB.SetMaxIdleConns(cfg.Database.MaxIdleConns)
 
-	if err := runMigrations(cfg, logger); err != nil {
-		return nil, fmt.Errorf("run migrations: %w", err)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return gormDB, nil
+	gormDB, err := gorm.Open(
+		postgres.New(postgres.Config{Conn: sqlDB}),
+		&gorm.Config{TranslateError: true, SkipDefaultTransaction: true},
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("open database: %w", err)
+	}
+
+	if err = runMigrations(cfg, logger); err != nil {
+		return nil, nil, fmt.Errorf("run migrations: %w", err)
+	}
+
+	return gormDB, sqlDB, nil
 }
