@@ -1,4 +1,4 @@
-.PHONY: test install dev-app build-app build-prod-app db-generate db-hash mocks
+.PHONY: test install dev-app build-app build-prod-app db-generate db-hash mocks fix
 
 GO ?= go
 ATLAS ?= atlas
@@ -39,3 +39,6 @@ db-generate:
 
 db-hash:
 	$(ATLAS) migrate hash --env $(ATLAS_ENV)
+
+fix:
+	$(GO) fix ./...
