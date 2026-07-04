@@ -2,14 +2,13 @@ package knowledge
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
-	"github.com/riverqueue/river"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
+	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
@@ -20,7 +19,7 @@ type Service struct {
 	repo              repository.IKnowledgeRepository
 	knowledgeItemRepo repository.IKnowledgeItemRepository
 	sourceManager     *runtime.SourceManager
-	riverClient       *river.Client[*sql.Tx]
+	riverClient       *queue.RiverQueue
 }
 
 func NewService(
@@ -28,7 +27,7 @@ func NewService(
 	repo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	sourceManager *runtime.SourceManager,
-	riverClient *river.Client[*sql.Tx],
+	riverClient *queue.RiverQueue,
 ) *Service {
 	return &Service{
 		txManager:         txManager,
@@ -68,17 +67,10 @@ func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Kn
 	}
 
 	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
-		tx := s.txManager.Tx(ctx)
-		sqlTx := tx.Statement.ConnPool.(*sql.Tx)
-
-		_, err := s.riverClient.InsertTx(ctx, sqlTx, SyncKnowledgeArgs{KnowledgeID: knowledge.ID}, nil)
-		if err != nil {
-			return err
-		}
 		if err := s.repo.Create(ctx, knowledge); err != nil {
 			return err
 		}
-		return nil
+		return s.Sync(ctx, knowledge.ID)
 	})
 
 	return knowledge, err
@@ -102,7 +94,7 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 func (s *Service) TestConnection(ctx context.Context, driver string, config util.JSONMap) error {
 	_, err := s.sourceManager.Prepare(ctx, driver, config)
 	if err != nil {
-		if errors.Is(err, runtime.ErrSourceDriverNotFound) {
+		if errors.Is(err, runtime.ErrDriverNotFound) {
 			return apperr.NotFound(err.Error())
 		}
 		return apperr.BadRequest(err.Error())
@@ -111,7 +103,13 @@ func (s *Service) TestConnection(ctx context.Context, driver string, config util
 }
 
 func (s *Service) Sync(ctx context.Context, knowledgeID string) error {
-	_, err := s.riverClient.Insert(ctx, SyncKnowledgeArgs{KnowledgeID: knowledgeID}, nil)
+	_, err := s.FindByID(ctx, knowledgeID)
+	if err != nil {
+		return err
+	}
+
+	err = s.riverClient.Push(ctx, SyncKnowledgeArgs{KnowledgeID: knowledgeID}, nil)
+
 	if err != nil {
 		return apperr.InternalServerError(err.Error())
 	}

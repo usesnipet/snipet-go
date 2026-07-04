@@ -56,6 +56,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sourceRegistry.MustRegister("fs", fsdriver.NewDriver())
 	sourceManager := runtime.NewSourceManager(sourceRegistry)
 
+	indexRegistry := runtime.NewRegistry[runtime.IIndexDriver]()
+	indexManager := runtime.NewIndexManager(indexRegistry)
+
 	workers := river.NewWorkers()
 	river.AddWorker(
 		workers,
@@ -84,7 +87,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	botService := bot.NewService(botRepo)
 
 	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, knowledgeItemRepo, sourceManager, riverClient)
-	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo, indexedKnowledgeItemRepo)
+	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo, indexedKnowledgeItemRepo, indexManager, riverClient, txManager)
 
 	sessionService := session.NewService(sessionRepo, sessionMessageRepo, clientService)
 

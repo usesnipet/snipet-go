@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
@@ -21,22 +20,6 @@ func NewDriver() runtime.ISourceDriver {
 	return &Driver{}
 }
 
-type driverConfig struct {
-	BasePath string
-}
-
-func parseConfig(config util.JSONMap) (driverConfig, error) {
-	basePath, ok := config["basePath"].(string)
-	if !ok || strings.TrimSpace(basePath) == "" {
-		return driverConfig{}, fmt.Errorf("basePath is required")
-	}
-	return driverConfig{BasePath: basePath}, nil
-}
-
-func (d *Driver) Type() runtime.SourceType {
-	return runtime.SourceTypeFile
-}
-
 func (d *Driver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, error) {
 	var schema util.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
@@ -46,7 +29,7 @@ func (d *Driver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, erro
 }
 
 func (d *Driver) TestConnection(ctx context.Context, config util.JSONMap) error {
-	cfg, err := parseConfig(config)
+	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
 		return err
 	}
@@ -67,7 +50,7 @@ func (d *Driver) TestConnection(ctx context.Context, config util.JSONMap) error 
 }
 
 func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISourceIterator, error) {
-	cfg, err := parseConfig(config)
+	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
 	}

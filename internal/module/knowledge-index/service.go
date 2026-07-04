@@ -2,25 +2,39 @@ package knowledgeindex
 
 import (
 	"context"
+	"errors"
 
+	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
+	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
+	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/util"
 )
 
 type Service struct {
 	repo                     repository.IKnowledgeIndexRepository
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository
+	indexManager             *runtime.IndexManager
+	riverClient              *queue.RiverQueue
+	txManager                repository.ITxManager
 }
 
 func NewService(
 	repo repository.IKnowledgeIndexRepository,
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository,
+	indexManager *runtime.IndexManager,
+	riverClient *queue.RiverQueue,
+	txManager repository.ITxManager,
 ) *Service {
 	return &Service{
 		repo:                     repo,
 		indexedKnowledgeItemRepo: indexedKnowledgeItemRepo,
+		indexManager:             indexManager,
+		txManager:                txManager,
+		riverClient:              riverClient,
 	}
 }
 
@@ -37,16 +51,23 @@ func (s *Service) FindByID(ctx context.Context, knowledgeID, id string) (*model.
 }
 
 func (s *Service) Create(ctx context.Context, knowledgeID string, dto CreateKnowledgeIndexDTO) (*model.KnowledgeIndex, error) {
+	if err := s.TestConnection(ctx, dto.Driver, dto.Configuration); err != nil {
+		return nil, apperr.BadRequest(err.Error())
+	}
+
 	index := &model.KnowledgeIndex{
 		Name:          dto.Name,
 		Driver:        dto.Driver,
 		Configuration: dto.Configuration,
 		KnowledgeID:   knowledgeID,
 	}
-	if err := s.repo.CreateInKnowledge(ctx, knowledgeID, index); err != nil {
-		return nil, err
-	}
-	return index, nil
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		if err := s.repo.CreateInKnowledge(ctx, knowledgeID, index); err != nil {
+			return err
+		}
+		return s.Sync(ctx, knowledgeID, index.ID)
+	})
+	return index, err
 }
 
 func (s *Service) Update(ctx context.Context, knowledgeID, id string, dto UpdateKnowledgeIndexDTO) error {
@@ -58,4 +79,29 @@ func (s *Service) Update(ctx context.Context, knowledgeID, id string, dto Update
 
 func (s *Service) DeleteByID(ctx context.Context, knowledgeID, id string) error {
 	return s.repo.DeleteInKnowledge(ctx, knowledgeID, id)
+}
+
+func (s *Service) TestConnection(ctx context.Context, driver string, config util.JSONMap) error {
+	_, err := s.indexManager.Prepare(ctx, driver, config)
+	if err != nil {
+		if errors.Is(err, runtime.ErrDriverNotFound) {
+			return apperr.NotFound(err.Error())
+		}
+		return apperr.BadRequest(err.Error())
+	}
+	return nil
+}
+
+func (s *Service) Sync(ctx context.Context, knowledgeID, indexID string) error {
+	_, err := s.FindByID(ctx, knowledgeID, indexID)
+	if err != nil {
+		return err
+	}
+
+	err = s.riverClient.Push(ctx, SyncIndexArgs{IndexID: indexID}, nil)
+
+	if err != nil {
+		return apperr.InternalServerError(err.Error())
+	}
+	return nil
 }

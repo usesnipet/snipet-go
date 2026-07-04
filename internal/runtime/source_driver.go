@@ -10,6 +10,7 @@ import (
 type SourceItem struct {
 	ID           string
 	Name         string
+	Kinds        []SourceItemKind
 	Metadata     util.JSONMap
 	LastModified *time.Time
 }
@@ -23,7 +24,6 @@ type ISourceIterator interface {
 }
 
 type ISourceDriver interface {
-	Type() SourceType
 	Iterator(ctx context.Context, config util.JSONMap) (ISourceIterator, error)
 	TestConnection(ctx context.Context, config util.JSONMap) error
 	GetConfigurationSchema(ctx context.Context) (util.JSONMap, error)

@@ -6,6 +6,22 @@ import (
 	"fmt"
 )
 
+func ParseJSONMap[T any](m JSONMap) (T, error) {
+	var v T
+
+	data, err := json.Marshal(m)
+	if err != nil {
+		return v, err
+	}
+
+	err = json.Unmarshal(data, &v)
+	if err != nil {
+		return v, err
+	}
+
+	return v, nil
+}
+
 func ToJSONMap[T any](v T) (JSONMap, error) {
 	jsonBytes, err := json.Marshal(v)
 	if err != nil {

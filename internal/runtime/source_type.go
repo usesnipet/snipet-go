@@ -1,7 +1,13 @@
 package runtime
 
-type SourceType string
+type SourceItemKind string
 
 const (
-	SourceTypeFile SourceType = "file"
+	SourceItemKindText       SourceItemKind = "text"
+	SourceItemKindDocument   SourceItemKind = "document"
+	SourceItemKindImage      SourceItemKind = "image"
+	SourceItemKindAudio      SourceItemKind = "audio"
+	SourceItemKindVideo      SourceItemKind = "video"
+	SourceItemKindStructured SourceItemKind = "structured"
+	SourceItemKindUnknown    SourceItemKind = "unknown"
 )

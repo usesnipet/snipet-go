@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Knowledge Config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "provider": {
+      "type": "string",
+      "description": "Service provider (e.g. milvus, openai)"
+    },
+    "model": {
+      "type": "string",
+      "description": "Embedding model identifier"
+    },
+    "apiKeys": {
+      "type": "object",
+      "description": "API keys indexed by provider",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+
+    "collection": {
+      "type": "string",
+      "description": "Vector collection name"
+    },
+
+    "searchStrategy": {
+      "type": "string",
+      "description": "Search strategy (dense, hybrid, etc.)"
+    },
+    "defaultTopK": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "defaultMinScore": {
+      "type": "number",
+      "minimum": 0
+    },
+    "defaultSearchParams": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "enableReRanking": {
+      "type": "boolean"
+    },
+    "rrfConstant": {
+      "type": "number",
+      "minimum": 0
+    },
+
+    "defaultChunkSize": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "defaultChunkOverlap": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "defaultBatchSize": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "defaultIndexType": {
+      "type": "string"
+    },
+
+    "vectorDBConfig": {
+      "type": "object",
+      "additionalProperties": true
+    },
+
+    "timeout": {
+      "type": "string",
+      "description": "Duration in Go format (e.g. 30s, 5m, 1h)"
+    },
+    "maxRetries": {
+      "type": "integer",
+      "minimum": 0
+    },
+
+    "extraHeaders": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "provider",
+    "collection"
+  ]
+}

@@ -13,6 +13,7 @@ type KnowledgeItem struct {
 	Name         string       `gorm:"type:text" json:"name"`
 	Hash         string       `gorm:"type:varchar(128);index" json:"hash"`
 	Metadata     util.JSONMap `gorm:"type:jsonb" json:"metadata"`
+	Kinds        util.JSONMap `gorm:"type:jsonb" json:"kinds"`
 	LastModified *time.Time   `json:"last_modified,omitempty"`
 
 	KnowledgeID string `gorm:"type:uuid;not null;uniqueIndex:idx_knowledge_items_knowledge_external_id,priority:1" json:"knowledge_id"`

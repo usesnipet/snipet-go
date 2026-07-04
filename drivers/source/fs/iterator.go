@@ -66,6 +66,7 @@ func (it *Iterator) Next(ctx context.Context) bool {
 	it.current = &runtime.SourceItem{
 		ID:           path,
 		Name:         info.Name(),
+		Kinds:        mapKind(info),
 		LastModified: &lastModified,
 		Metadata: util.JSONMap{
 			"size":          info.Size(),
