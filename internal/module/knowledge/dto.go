@@ -46,3 +46,7 @@ type TestConnectionDTO struct {
 	Driver        string       `json:"driver" validate:"required,max=255"`
 	Configuration util.JSONMap `json:"configuration" validate:"required"`
 }
+
+type SyncKnowledgeQueryDTO struct {
+	Force bool `form:"force" validate:"omitempty"`
+}

@@ -10,10 +10,12 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/util"
 )
 
 type SyncKnowledgeArgs struct {
 	KnowledgeID string `json:"knowledge_id"`
+	Force       bool   `json:"force"`
 }
 
 func (SyncKnowledgeArgs) Kind() string {
@@ -55,6 +57,13 @@ func NewSyncWorker(
 
 func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]) error {
 	knowledgeID := job.Args.KnowledgeID
+	force := job.Args.Force
+
+	if force {
+		s.logger.Verbosef("syncing knowledge %s with force", knowledgeID)
+	} else {
+		s.logger.Verbosef("syncing knowledge %s", knowledgeID)
+	}
 
 	knowledge, err := s.knowledgeRepo.FindByID(ctx, knowledgeID)
 	if err != nil {
@@ -83,7 +92,7 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 		if err = s.knowledgeRepo.UpdateByID(ctx, knowledgeID, kn); err != nil {
 			s.logger.Errorf("failed to update knowledge sync status for knowledge %s: %s", knowledgeID, err.Error())
 		}
-		s.logger.Debugf(
+		s.logger.Verbosef(
 			"knowledge sync status updated for knowledge %s: status=%s, last_synced_at=%s, sync_error=%s",
 			knowledgeID, status, now.Format(time.RFC3339), errMessage,
 		)
@@ -132,7 +141,7 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 		seen[item.ID] = struct{}{}
 
 		previousHash, exists := existingHashes[item.ID]
-		if exists && previousHash == hash {
+		if exists && previousHash == hash && !force {
 			continue
 		}
 
@@ -142,11 +151,18 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 			pendingCreated++
 		}
 
+		kinds, err := util.ToJSONArray(item.Kinds)
+		if err != nil {
+			s.logger.Errorf("failed to convert item kinds to JSON map for knowledge %s: %s", knowledgeID, err.Error())
+			result.Failed++
+			continue
+		}
 		batch = append(batch, model.KnowledgeItem{
 			KnowledgeID:  knowledgeID,
 			ExternalID:   item.ID,
 			Name:         item.Name,
 			Hash:         hash,
+			Kinds:        kinds,
 			Metadata:     item.Metadata,
 			LastModified: item.LastModified,
 		})
@@ -174,8 +190,8 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 		result.Deleted = deleted
 	}
 
-	s.logger.Infof(
-		"knowledge sync completed for knowledge %s: created=%d, updated=%d, deleted=%d, failed=%d",
+	s.logger.Verbosef(
+		"knowledge sync completed for knowledge %s: c=%d, u=%d, d=%d, f=%d",
 		knowledgeID, result.Created, result.Updated, result.Deleted, result.Failed,
 	)
 

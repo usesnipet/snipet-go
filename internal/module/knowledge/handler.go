@@ -106,8 +106,12 @@ func (h *Handler) testConnection(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) sync(w http.ResponseWriter, r *http.Request) error {
+	var dto SyncKnowledgeQueryDTO
+	if err := api.ParseQuery(r, &dto); err != nil {
+		return err
+	}
 	knowledgeID := chi.URLParam(r, "id")
-	err := h.service.Sync(r.Context(), knowledgeID)
+	err := h.service.Sync(r.Context(), knowledgeID, dto.Force)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package util
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -56,4 +57,28 @@ func (j *JSONMap) Scan(value any) error {
 	}
 
 	return json.Unmarshal(b, j)
+}
+
+func ToJSONArray[T any](v []T) (JSONArray, error) {
+	jsonBytes, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	var jsonArray JSONArray
+	err = json.Unmarshal(jsonBytes, &jsonArray)
+	return jsonArray, nil
+}
+
+type JSONArray []any
+
+func (a JSONArray) Value() (driver.Value, error) {
+	return json.Marshal(a)
+}
+
+func (a *JSONArray) Scan(value any) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(bytes, a)
 }

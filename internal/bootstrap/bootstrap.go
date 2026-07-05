@@ -124,16 +124,16 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		userHandler.RegisterRoutes(r, api.Serve)
 	})
 
+	err = riverClient.Start(context.Background())
+	if err != nil {
+		logger.Errorf("failed to start river client: %v", err)
+		return err
+	}
+
 	logger.Infof("server started on port %d", cfg.Server.Port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Server.Port), api.Router)
 	if err != nil {
 		logger.Errorf("failed to start server: %v", err)
-		return err
-	}
-
-	err = riverClient.Start(context.Background())
-	if err != nil {
-		logger.Errorf("failed to start river client: %v", err)
 		return err
 	}
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
+	"github.com/riverqueue/river/rivermigrate"
 	"github.com/usesnipet/snipet/internal/repository"
 )
 
@@ -14,10 +15,22 @@ type RiverQueue struct {
 }
 
 func NewRiver(sqlDB *sql.DB, workers *river.Workers) (*RiverQueue, error) {
+	// migrate
+	migrator, err := rivermigrate.New(riverdatabasesql.New(sqlDB), nil)
+	if err != nil {
+		return nil, err
+	}
+	migrator.Migrate(context.Background(), rivermigrate.DirectionUp, nil)
+
 	riverClient, err := river.NewClient(
 		riverdatabasesql.New(sqlDB),
 		&river.Config{
 			Workers: workers,
+			Queues: map[string]river.QueueConfig{
+				river.QueueDefault: {
+					MaxWorkers: 10,
+				},
+			},
 		},
 	)
 	return &RiverQueue{riverClient: riverClient}, err

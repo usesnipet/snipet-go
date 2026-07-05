@@ -3,6 +3,7 @@ package knowledge
 import (
 	"context"
 	"errors"
+	"log"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
@@ -70,7 +71,7 @@ func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Kn
 		if err := s.repo.Create(ctx, knowledge); err != nil {
 			return err
 		}
-		return s.Sync(ctx, knowledge.ID)
+		return s.Sync(ctx, knowledge.ID, false)
 	})
 
 	return knowledge, err
@@ -102,13 +103,13 @@ func (s *Service) TestConnection(ctx context.Context, driver string, config util
 	return nil
 }
 
-func (s *Service) Sync(ctx context.Context, knowledgeID string) error {
+func (s *Service) Sync(ctx context.Context, knowledgeID string, force bool) error {
 	_, err := s.FindByID(ctx, knowledgeID)
 	if err != nil {
 		return err
 	}
-
-	err = s.riverClient.Push(ctx, SyncKnowledgeArgs{KnowledgeID: knowledgeID}, nil)
+	log.Printf("syncing knowledge %s with force: %v", knowledgeID, force)
+	err = s.riverClient.Push(ctx, SyncKnowledgeArgs{KnowledgeID: knowledgeID, Force: force}, nil)
 
 	if err != nil {
 		return apperr.InternalServerError(err.Error())

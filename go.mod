@@ -16,11 +16,15 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.12.3
 	github.com/mattn/go-colorable v0.1.15
+	github.com/riverqueue/river v0.40.0
+	github.com/riverqueue/river/riverdriver/riverdatabasesql v0.40.0
 	github.com/sethvargo/go-envconfig v1.3.0
 	github.com/stretchr/testify v1.11.1
+	github.com/teilomillet/raggo v0.0.9
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/crypto v0.52.0
 	google.golang.org/genai v1.61.0
+	gorm.io/datatypes v1.2.6
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
@@ -116,9 +120,7 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.7 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/riverqueue/river v0.40.0 // indirect
 	github.com/riverqueue/river/riverdriver v0.40.0 // indirect
-	github.com/riverqueue/river/riverdriver/riverdatabasesql v0.40.0 // indirect
 	github.com/riverqueue/river/rivershared v0.40.0 // indirect
 	github.com/riverqueue/river/rivertype v0.40.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
@@ -130,7 +132,6 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/teilomillet/gollm v0.1.1 // indirect
-	github.com/teilomillet/raggo v0.0.9 // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
