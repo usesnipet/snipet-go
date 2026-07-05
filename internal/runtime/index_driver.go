@@ -17,8 +17,8 @@ type IIndexWriter interface {
 }
 
 type IIndexDriver interface {
-	Reader(config util.JSONMap) IIndexReader
-	Writer(config util.JSONMap) IIndexWriter
+	Reader(config util.JSONMap) (IIndexReader, error)
+	Writer(config util.JSONMap) (IIndexWriter, error)
 	TestConnection(ctx context.Context, config util.JSONMap) error
 	GetConfigurationSchema(ctx context.Context) (util.JSONMap, error)
 }

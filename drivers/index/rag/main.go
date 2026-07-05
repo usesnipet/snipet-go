@@ -2,6 +2,7 @@ package rag
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 
@@ -35,10 +36,12 @@ func (d *Driver) TestConnection(ctx context.Context, configJson util.JSONMap) er
 	}
 
 	vectorDB, err := raggo.NewVectorDB(
+		raggo.WithType("milvus"),
 		raggo.WithAddress(cfg.Milvus.Address),
 		raggo.WithDimension(cfg.Milvus.Dimension),
 		raggo.WithMaxPoolSize(cfg.Milvus.MaxPoolSize),
 	)
+
 	if err != nil {
 		return err
 	}
@@ -52,8 +55,18 @@ func (d *Driver) TestConnection(ctx context.Context, configJson util.JSONMap) er
 	return nil
 }
 
-func (d *Driver) Reader(config util.JSONMap) runtime.IIndexReader {
+func (d *Driver) Reader(config util.JSONMap) (runtime.IIndexReader, error) {
+	cfg, err := util.ParseJSONMap[Config](config)
+	if err != nil {
+		return nil, err
+	}
+	return NewReader(cfg), nil
 }
 
-func (d *Driver) Writer(config util.JSONMap) runtime.IIndexWriter {
+func (d *Driver) Writer(config util.JSONMap) (runtime.IIndexWriter, error) {
+	cfg, err := util.ParseJSONMap[Config](config)
+	if err != nil {
+		return nil, err
+	}
+	return NewWriter(cfg), nil
 }

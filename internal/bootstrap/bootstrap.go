@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/riverqueue/river"
 	"github.com/usesnipet/snipet/config"
+	"github.com/usesnipet/snipet/drivers/index/rag"
 	fsdriver "github.com/usesnipet/snipet/drivers/source/fs"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
@@ -57,6 +58,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sourceManager := runtime.NewSourceManager(sourceRegistry)
 
 	indexRegistry := runtime.NewRegistry[runtime.IIndexDriver]()
+	indexRegistry.MustRegister("rag", rag.NewDriver())
 	indexManager := runtime.NewIndexManager(indexRegistry)
 
 	workers := river.NewWorkers()
