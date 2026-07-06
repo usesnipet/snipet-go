@@ -262,6 +262,43 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func TestMeReturnsAuthenticatedAPIKey(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.New().String()
+	expected := &model.APIKey{ID: id, Name: "Current Key"}
+	repo := mocks.NewMockIApiKeyRepository(t)
+	repo.EXPECT().
+		FindByID(mock.Anything, id).
+		Return(expected, nil)
+
+	svc := newTestService(repo)
+	ctx := auth.SetPrincipal(context.Background(), auth.NewPrincipal(auth.PrincipalTypeAPIKey, &id, nil))
+
+	result, err := svc.Me(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, expected, result)
+}
+
+func TestMeRejectsMissingPrincipal(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(mocks.NewMockIApiKeyRepository(t))
+
+	_, err := svc.Me(context.Background())
+	assertAppError(t, err, http.StatusUnauthorized, "unauthorized")
+}
+
+func TestMeRejectsJWTPrincipal(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(mocks.NewMockIApiKeyRepository(t))
+	ctx := auth.SetPrincipal(context.Background(), auth.NewPrincipal(auth.PrincipalTypeJWT, nil, &auth.UserClaims{}))
+
+	_, err := svc.Me(ctx)
+	assertAppError(t, err, http.StatusUnauthorized, "unauthorized")
+}
+
 func TestRollUpdatesKeyAndReturnsNewSecret(t *testing.T) {
 	t.Parallel()
 

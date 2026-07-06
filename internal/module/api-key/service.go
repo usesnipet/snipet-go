@@ -89,6 +89,14 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.APIKey, error
 	return s.repository.FindByID(ctx, id)
 }
 
+func (s *Service) Me(ctx context.Context) (*model.APIKey, error) {
+	principal, ok := auth.GetPrincipal(ctx)
+	if !ok || principal.GetType() != auth.PrincipalTypeAPIKey || principal.GetAPIKeyID() == nil {
+		return nil, apperr.Unauthorized("unauthorized")
+	}
+	return s.repository.FindByID(ctx, *principal.GetAPIKeyID())
+}
+
 func (s *Service) Create(ctx context.Context, dto CreateAPIKeyDTO) (*APIKeyWithSecret, error) {
 	plainKey, keyID, err := s.generator.Generate()
 	if err != nil {

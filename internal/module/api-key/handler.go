@@ -21,6 +21,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Use(h.apiKeyMiddleware)
 		r.Get("/", serve(h.filter))
 		r.Post("/", serve(h.create))
+		r.Get("/me", serve(h.me))
 		r.Get("/{id}", serve(h.findByID))
 		r.Post("/{id}/roll", serve(h.roll))
 		r.Put("/{id}/expiration", serve(h.updateExpiration))
@@ -31,6 +32,14 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 	data, err := h.service.Filter(r.Context())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
+}
+
+func (h *Handler) me(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.Me(r.Context())
 	if err != nil {
 		return err
 	}
