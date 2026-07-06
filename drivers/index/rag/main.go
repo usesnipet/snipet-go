@@ -68,5 +68,5 @@ func (d *Driver) Writer(config util.JSONMap) (runtime.IIndexWriter, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewWriter(cfg), nil
+	return NewWriter(cfg)
 }

@@ -29,6 +29,7 @@ import (
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/web"
 )
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
@@ -115,6 +116,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	// register routes
 	api := api.New()
+	api.Router.Handle("/*", web.Handler())
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
 		authHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
