@@ -1,4 +1,4 @@
-import { httpGet, httpPost, httpPut } from "$lib/http";
+import { authenticatedClient, publicClient } from "$lib/http/client";
 import z from "zod";
 
 const API_KEY_URL = "/api/api-key";
@@ -17,6 +17,9 @@ export type APIKeyWithSecret = APIKey & {
   key: string;
 };
 
+const meSchema = z.object({ apiKey: z.string().trim().min(30).startsWith("sn_") });
+type MeSchema = z.infer<typeof meSchema>;
+
 const createSchema = z.object({
   name: z.string().min(1).max(255),
   expires_at: z.date().optional(),
@@ -26,46 +29,22 @@ type CreateSchema = z.infer<typeof createSchema>;
 const updateExpirationSchema = z.object({
   expires_at: z.date().optional(),
 });
-type UpdateExpirationSchema = z.infer<typeof updateExpirationSchema>;
+type UpdateExpSchema = z.infer<typeof updateExpirationSchema>;
 
 export default {
   me: {
-    schema: z.object({
-      apiKey: z.string(),
-    }),
-    run: async (apiKey: string) => {
-      return httpGet<APIKeyWithSecret>({
-        url: `${API_KEY_URL}/me`,
-        headers: {
-          "X-API-Key": apiKey,
-        },
-      });
-    }
+    schema: meSchema,
+    run: ({ apiKey }: MeSchema) => publicClient().get<APIKeyWithSecret>({ url: `${API_KEY_URL}/me`, headers: { "X-API-Key": apiKey } }),
   },
   list: {
-    run: async () => {
-      return httpGet<APIKey[]>({
-        url: API_KEY_URL,
-      });
-    }
+    run: () => authenticatedClient().get<APIKey[]>({ url: API_KEY_URL }),
   },
   create: {
     schema: createSchema,
-    run: async (data: CreateSchema) => {
-      return httpPost<APIKeyWithSecret>({
-        url: API_KEY_URL,
-        body: data,
-      });
-    }
+    run: (data: CreateSchema) => authenticatedClient().post<APIKeyWithSecret>({ url: API_KEY_URL, body: data }),
   },
   updateExpiration: {
     schema: updateExpirationSchema,
-    run: async (id: string, body: UpdateExpirationSchema) => {
-      return httpPut<APIKey>({
-        url: `${API_KEY_URL}/{id}/expiration`,
-        params: { id },
-        body: body,
-      });
-    }
+    run: (id: string, body: UpdateExpSchema) => authenticatedClient().put<APIKey>({ url: `${API_KEY_URL}/{id}/expiration`, params: { id }, body: body }),
   }
 }

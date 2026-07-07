@@ -99,3 +99,20 @@ export type HttpDeleteOptions = Omit<ApiRequestOptions<undefined>, "method" | "b
 export function httpDelete<TResponse = unknown>(options: HttpDeleteOptions): Promise<TResponse> {
   return http<TResponse, undefined>({ ...options, method: "DELETE" });
 }
+
+export class HttpClient {
+  private readonly defaultHeaders: Record<string, string>;
+
+  constructor(defaultHeaders: Record<string, string> = {}) {
+    this.defaultHeaders = defaultHeaders;
+  }
+
+  get = <T = unknown>(options: HttpGetOptions) => httpGet<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
+  post = <T = unknown>(options: HttpPostOptions) => httpPost<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
+  put = <T = unknown>(options: HttpPutOptions) => httpPut<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
+  delete = <T = unknown>(options: HttpDeleteOptions) => httpDelete<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
+
+  withHeaders(headers: Record<string, string>): HttpClient {
+    return new HttpClient({ ...this.defaultHeaders, ...headers });
+  }
+}
