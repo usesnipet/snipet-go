@@ -12,6 +12,9 @@
   import { zod4, zod4Client } from "sveltekit-superforms/adapters";
   import { api } from "$lib/api";
   import { ApiError } from "$lib/http";
+	import { login } from "$lib/store/auth.svelte";
+	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
 
   const { form, constraints, enhance, errors } = superForm(
     defaults(zod4(api.apiKey.me.schema)),
@@ -24,11 +27,12 @@
         }
 
         try {
-          const data = await api.apiKey.me.run(form.data.apiKey);
-          console.log(data);
+          await api.apiKey.me.run(form.data.apiKey);
+          login(form.data.apiKey);
+          return goto(resolve("/"));
         } catch (error) {
           if (ApiError.is(error)) {
-            setError(form, "apiKey", error.message);
+            setError(form, "", error.message);
             return;
           }
 
