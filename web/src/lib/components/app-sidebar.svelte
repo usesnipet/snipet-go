@@ -13,6 +13,10 @@
 
   const items: Array<NavItem | NavGroup> = [
     {
+      title: "Home",
+      url: "/(protected)",
+    },
+    {
       title: "Knowledge",
       items: [
         {
