@@ -36,6 +36,7 @@
   import MinusIcon from "@lucide/svelte/icons/minus";
   import PlusIcon from "@lucide/svelte/icons/plus";
   import type { ComponentProps } from "svelte";
+	import ThemeToggle from "./theme-toggle.svelte";
   let { ref = $bindable(null), ...restProps }: ComponentProps<typeof Sidebar.Root> = $props();
 </script>
 <Sidebar.Root bind:ref variant="inset" {...restProps}>
@@ -44,7 +45,8 @@
       <Sidebar.MenuItem>
         <Sidebar.MenuButton size="lg">
           {#snippet child({ props })}
-            <a href="##" {...props}>
+          <div class="flex items-center gap-2">
+            <a href={resolve("/")} {...props}>
               <div
                 class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
               >
@@ -55,7 +57,9 @@
                 <span class="truncate text-xs">v1.0.0</span>
               </div>
             </a>
-          {/snippet}
+            <ThemeToggle />
+          </div>
+        {/snippet}
         </Sidebar.MenuButton>
       </Sidebar.MenuItem>
     </Sidebar.Menu>
