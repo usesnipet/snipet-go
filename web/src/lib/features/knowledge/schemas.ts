@@ -29,12 +29,16 @@ export const filterKnowledgeSchema = z.object({
 }).default({});
 export type FilterKnowledge = z.infer<typeof filterKnowledgeSchema>;
 
-export const createKnowledgeSchema = knowledgeSchema.pick({
-  name: true,
-  description: true,
-  driver: true,
-  configuration: true,
+export const createKnowledgeSchema = z.object({
+  data: knowledgeSchema.pick({
+    name: true,
+    description: true,
+    driver: true,
+    configuration: true,
+  }),
+  job_id: z.number().optional(),
 });
+
 export type CreateKnowledge = z.infer<typeof createKnowledgeSchema>;
 
 export const updateKnowledgeSchema = z.object({
