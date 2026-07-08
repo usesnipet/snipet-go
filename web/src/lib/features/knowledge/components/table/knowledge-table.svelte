@@ -1,11 +1,12 @@
 <script lang="ts">
 	import FlexTable from "$lib/components/flex-table/flex-table.svelte";
 	import type { ColumnDef } from "@tanstack/table-core";
-	import type { Knowledge } from "../schemas";
+	import type { Knowledge } from "../../schemas";
 	import { renderComponent } from "$lib/components/ui/data-table";
 	import TableTimeField from "$lib/components/flex-table/table-time-field.svelte";
 	import TableBadgeField from "$lib/components/flex-table/table-badge-field.svelte";
 	import TableField from "$lib/components/flex-table/table-field.svelte";
+	import TableName from "./table-name.svelte";
 
   type Props = {
 		knowledges: Knowledge[]
@@ -18,7 +19,7 @@
   const columns: ColumnDef<Knowledge>[] = [
     {
       header: "Name",
-      cell: ({ row }) => renderComponent(TableField, { value: row.original.name })
+      cell: ({ row }) => renderComponent(TableName, { knowledge: row.original })
     },
     {
       header: "Description",

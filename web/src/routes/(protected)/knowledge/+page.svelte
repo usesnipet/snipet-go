@@ -1,6 +1,6 @@
 <script lang="ts">
 	import PageLayout from "$lib/components/page-layout.svelte";
-	import KnowledgeTable from "$lib/features/knowledge/components/knowledge-table.svelte";
+	import KnowledgeTable from "$lib/features/knowledge/components/table/knowledge-table.svelte";
 	import { knowledgeService } from "$lib/features/knowledge/service";
 
   const listQuery = knowledgeService.list();

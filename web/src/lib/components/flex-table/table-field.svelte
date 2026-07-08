@@ -2,7 +2,7 @@
 	import { truncate } from "$lib/utils";
 
   type Props = {
-    value: string;
+    value: string | null | undefined;
     truncate?: number;
   }
 
@@ -11,4 +11,8 @@
   const truncatedValue = $derived(props.truncate ? truncate(props.value, props.truncate) : props.value);
 </script>
 
-{truncatedValue}
+{#if truncatedValue}
+	{truncatedValue}
+{:else}
+  -
+{/if}
