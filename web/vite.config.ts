@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
 		],
 		server: {
 			proxy: {
-				"/api/*": {
+				"^/api/": {
 					target: backendUrl,
 					changeOrigin: true,
 				},

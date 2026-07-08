@@ -31,6 +31,9 @@ func NewAPIKeyGenerator() *APIKeyGenerator {
 
 // Generate a short key ID for lookups (first 10 chars of full key)
 func (g *APIKeyGenerator) GetKeyID(fullKey string) string {
+	if len(fullKey) < 10 {
+		return fullKey
+	}
 	return fullKey[:10]
 }
 

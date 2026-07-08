@@ -1,13 +1,15 @@
+import { z } from "zod";
+
 export type ApiErrorDetails = Record<string, unknown>;
 
 export type ApiErrorBody = {
-  statusCode: number;
+  statusCode?: number;
   message: string;
   details?: ApiErrorDetails | null;
 };
 
 export class ApiError extends Error {
-  readonly statusCode: number;
+  readonly statusCode?: number;
   readonly details: ApiErrorDetails | null;
 
   constructor(body: ApiErrorBody) {
@@ -62,6 +64,14 @@ export async function parseApiErrorResponse(
   }
 
   return fallbackApiError(response);
+}
+
+export function parseZodErrors(error: z.ZodError): ApiError {
+  const errors = z.treeifyError(error).errors;
+  return new ApiError({
+    message: errors[0],
+    details: { errors },
+  });
 }
 
 export async function handleApiError(response: Response): Promise<never> {

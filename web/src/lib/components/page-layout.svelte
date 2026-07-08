@@ -21,8 +21,8 @@
 	} = $props();
 </script>
 
-<div class={cn("flex flex-1 flex-col gap-6 p-4 md:p-6", className)} {...restProps}>
-	<div class="flex flex-col gap-4">
+<div class={cn("flex h-full min-h-0 flex-1 flex-col gap-6 p-4 md:p-6", className)} {...restProps}>
+	<div class="flex shrink-0 flex-col gap-4">
 		<div class="flex items-start justify-between gap-4">
 			<div class="flex min-w-0 items-start gap-3">
 				{#if actionsLeft}
@@ -49,7 +49,7 @@
 		<Separator />
 	</div>
 
-	<div class="flex flex-1 flex-col">
+	<div class="flex min-h-0 flex-1 flex-col">
 		{@render children()}
 	</div>
 </div>

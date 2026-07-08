@@ -6,19 +6,28 @@ export type SearchParamsRecord = Record<
 
 export type PathParamsRecord = Record<string, string | number | boolean>;
 
-export type ApiRequestOptions<TBody = unknown> = {
+export type ApiRequestOptions<TBody = unknown, TResponse = unknown> = {
   method: ApiMethod;
   url: string;
   body?: TBody;
   headers?: Record<string, string>;
   params?: PathParamsRecord;
   searchParams?: SearchParamsRecord;
+  schemas?: {
+    body?: z.ZodSchema<TBody>;
+    response?: z.ZodSchema<TResponse>;
+    searchParams?: z.ZodSchema<SearchParamsRecord>;
+    pathParams?: z.ZodSchema<PathParamsRecord>;
+    headers?: z.ZodSchema<Record<string, string>>;
+  }
 };
 
 export { ApiError, isApiErrorBody, parseApiErrorResponse } from "./errors.js";
 export type { ApiErrorBody, ApiErrorDetails } from "./errors.js";
 
-import { handleApiError } from "./errors.js";
+import z from "zod";
+
+import { handleApiError, parseZodErrors } from "./errors.js";
 
 export function applyPathParams(url: string, params: PathParamsRecord): string {
   return Object.entries(params).reduce(
@@ -51,10 +60,25 @@ export function applySearchParams(
 }
 
 export async function http<TResponse = unknown, TBody = unknown>(
-  options: ApiRequestOptions<TBody>,
+  options: ApiRequestOptions<TBody, TResponse>,
 ): Promise<TResponse> {
-  const { url, method, body, headers, params, searchParams } = options;
+  console.log(options);
+
+  const { url, method, schemas } = options;
+  let { body, headers, params, searchParams } = options;
   const pathUrl = params ? applyPathParams(url, params) : url;
+  try {
+    if (schemas?.pathParams) params = schemas.pathParams.parse(params);
+    if (schemas?.searchParams) searchParams = schemas.searchParams.parse(searchParams);
+    if (schemas?.headers) headers = schemas.headers.parse(headers);
+    if (schemas?.body) body = schemas.body.parse(body);
+  } catch (error) {
+    console.log(error);
+
+    if (error instanceof z.ZodError) throw parseZodErrors(error);
+    throw error;
+  }
+
   const requestUrl = searchParams
     ? applySearchParams(pathUrl, searchParams)
     : pathUrl;
@@ -80,23 +104,23 @@ export async function http<TResponse = unknown, TBody = unknown>(
 }
 
 
-export type HttpGetOptions = Omit<ApiRequestOptions<undefined>, "method" | "body">;
-export function httpGet<TResponse = unknown>(options: HttpGetOptions): Promise<TResponse> {
+export type HttpGetOptions<TResponse = unknown> = Omit<ApiRequestOptions<undefined, TResponse>, "method" | "body">;
+export function httpGet<TResponse = unknown>(options: HttpGetOptions<TResponse>): Promise<TResponse> {
   return http<TResponse, undefined>({ ...options, method: "GET" });
 }
 
-export type HttpPostOptions<TBody = unknown> = Omit<ApiRequestOptions<TBody>, "method">;
-export function httpPost<TResponse = unknown, TBody = unknown>(options: HttpPostOptions<TBody>): Promise<TResponse> {
+export type HttpPostOptions<TBody = unknown, TResponse = unknown> = Omit<ApiRequestOptions<TBody, TResponse>, "method">;
+export function httpPost<TResponse = unknown, TBody = unknown>(options: HttpPostOptions<TBody, TResponse>): Promise<TResponse> {
   return http<TResponse, TBody>({ ...options, method: "POST" });
 }
 
-export type HttpPutOptions<TBody = unknown> = Omit<ApiRequestOptions<TBody>, "method">;
-export function httpPut<TResponse = unknown, TBody = unknown>(options: HttpPutOptions<TBody>): Promise<TResponse> {
+export type HttpPutOptions<TBody = unknown, TResponse = unknown> = Omit<ApiRequestOptions<TBody, TResponse>, "method">;
+export function httpPut<TResponse = unknown, TBody = unknown>(options: HttpPutOptions<TBody, TResponse>): Promise<TResponse> {
   return http<TResponse, TBody>({ ...options, method: "PUT" });
 }
 
-export type HttpDeleteOptions = Omit<ApiRequestOptions<undefined>, "method" | "body">;
-export function httpDelete<TResponse = unknown>(options: HttpDeleteOptions): Promise<TResponse> {
+export type HttpDeleteOptions<TResponse = unknown> = Omit<ApiRequestOptions<undefined, TResponse>, "method" | "body">;
+export function httpDelete<TResponse = unknown>(options: HttpDeleteOptions<TResponse>): Promise<TResponse> {
   return http<TResponse, undefined>({ ...options, method: "DELETE" });
 }
 
@@ -107,10 +131,10 @@ export class HttpClient {
     this.defaultHeaders = defaultHeaders;
   }
 
-  get = <T = unknown>(options: HttpGetOptions) => httpGet<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
-  post = <T = unknown>(options: HttpPostOptions) => httpPost<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
-  put = <T = unknown>(options: HttpPutOptions) => httpPut<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
-  delete = <T = unknown>(options: HttpDeleteOptions) => httpDelete<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
+  get = <T = unknown>(options: HttpGetOptions<T>) => httpGet<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
+  post = <T = unknown, B = unknown>(options: HttpPostOptions<B, T>) => httpPost<T, B>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
+  put = <T = unknown, B = unknown>(options: HttpPutOptions<B, T>) => httpPut<T, B>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
+  delete = <T = unknown>(options: HttpDeleteOptions<T>) => httpDelete<T>({ ...options, headers: { ...this.defaultHeaders, ...options.headers } });
 
   withHeaders(headers: Record<string, string>): HttpClient {
     return new HttpClient({ ...this.defaultHeaders, ...headers });

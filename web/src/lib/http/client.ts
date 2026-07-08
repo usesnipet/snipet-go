@@ -1,9 +1,9 @@
-import { auth } from "$lib/store/auth.svelte";
+import { apiKeyAuth } from "$lib/features/api-key/stores/api-key-auth.svelte";
 
 import { ApiError, HttpClient } from "./http";
 
 export const authenticatedClient = (): HttpClient => {
-  const token = auth.apiKey;
+  const token = apiKeyAuth.apiKey;
   if (!token) {
     throw new ApiError({
       message: "Unauthorized",

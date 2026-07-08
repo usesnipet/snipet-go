@@ -1,8 +1,6 @@
-
-
 const API_KEY_STORAGE_KEY = "snipet@api-key";
 
-export const auth = $state({
+export const apiKeyAuth = $state({
   isAuthenticated: false,
   apiKey: null as string | null,
   loading: true,
@@ -11,22 +9,22 @@ export const auth = $state({
 export function loadAuth() {
   const apiKey = sessionStorage.getItem(API_KEY_STORAGE_KEY);
 
-  auth.loading = false;
-  auth.apiKey = apiKey;
-  auth.isAuthenticated = !!apiKey;
+  apiKeyAuth.loading = false;
+  apiKeyAuth.apiKey = apiKey;
+  apiKeyAuth.isAuthenticated = !!apiKey;
 }
 
 export function login(apiKey: string) {
   sessionStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
 
-  auth.loading = false;
-  auth.apiKey = apiKey;
-  auth.isAuthenticated = true;
+  apiKeyAuth.loading = false;
+  apiKeyAuth.apiKey = apiKey;
+  apiKeyAuth.isAuthenticated = true;
 }
 
 export function logout() {
   sessionStorage.removeItem(API_KEY_STORAGE_KEY);
 
-  auth.apiKey = null;
-  auth.isAuthenticated = false;
+  apiKeyAuth.apiKey = null;
+  apiKeyAuth.isAuthenticated = false;
 }

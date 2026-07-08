@@ -18,16 +18,7 @@
     },
     {
       title: "Knowledge",
-      items: [
-        {
-          title: "Source",
-          url: "/(protected)/knowledge/source",
-        },
-        {
-          title: "Index",
-          url: "/(protected)/knowledge/index",
-        },
-      ],
+      url: "/(protected)/knowledge",
     },
     {
       title: "Bot",
@@ -66,6 +57,9 @@
   let collapsibleOpen = $state<Record<string, boolean>>({});
 
   function isActive(url: RouteId) {
+    if (url === "/(protected)/knowledge") {
+      return page.route.id?.startsWith("/(protected)/knowledge") ?? false;
+    }
     return page.route.id === url;
   }
 
