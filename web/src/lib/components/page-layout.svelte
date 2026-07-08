@@ -55,7 +55,7 @@
 		<Separator />
 	</div>
 
-	<div class="flex min-h-0 flex-1 flex-col">
+	<div class="flex min-h-0 w-full flex-1 flex-col">
 		<svelte:boundary onerror={(e) => toast.error((e as Error).message)}>
 			{@render children()}
 		</svelte:boundary>

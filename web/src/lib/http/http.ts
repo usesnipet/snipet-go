@@ -68,9 +68,9 @@ export async function http<TResponse = unknown, TBody = unknown>(
   let { body, headers, params, searchParams } = options;
   const pathUrl = params ? applyPathParams(url, params) : url;
   try {
-    if (schemas?.pathParams) params = schemas.pathParams.parse(params);
-    if (schemas?.searchParams) searchParams = schemas.searchParams.parse(searchParams);
-    if (schemas?.headers) headers = schemas.headers.parse(headers);
+    if (schemas?.pathParams && params) params = schemas.pathParams.parse(params);
+    if (schemas?.searchParams && searchParams) searchParams = schemas.searchParams.parse(searchParams);
+    if (schemas?.headers && headers) headers = schemas.headers.parse(headers);
     if (schemas?.body) body = schemas.body.parse(body);
   } catch (error) {
     console.log(error);

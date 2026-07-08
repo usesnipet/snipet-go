@@ -30,7 +30,11 @@
 	{@const result = content(context as any)}
 	{#if result instanceof RenderComponentConfig}
 		{@const { component: Component, props } = result}
-		<Component {...props} {attach} />
+		{#if attach}
+			<Component {...props} {attach} />
+		{:else}
+			<Component {...props} />
+		{/if}
 	{:else if result instanceof RenderSnippetConfig}
 		{@const { snippet, params } = result}
 		{@render snippet({ ...params, attach })}
