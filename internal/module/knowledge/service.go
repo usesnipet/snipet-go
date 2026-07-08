@@ -20,7 +20,7 @@ type Service struct {
 	repo              repository.IKnowledgeRepository
 	knowledgeItemRepo repository.IKnowledgeItemRepository
 	sourceManager     *runtime.SourceManager
-	riverClient       *queue.RiverQueue
+	riverClient       queue.IJobQueue
 }
 
 func NewService(
@@ -28,7 +28,7 @@ func NewService(
 	repo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	sourceManager *runtime.SourceManager,
-	riverClient *queue.RiverQueue,
+	riverClient queue.IJobQueue,
 ) *Service {
 	return &Service{
 		txManager:         txManager,
@@ -55,9 +55,9 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.Knowledge, er
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Knowledge, error) {
+func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Knowledge, int64, error) {
 	if err := s.TestConnection(ctx, dto.Driver, dto.Configuration); err != nil {
-		return nil, apperr.BadRequest(err.Error())
+		return nil, 0, apperr.BadRequest(err.Error())
 	}
 
 	knowledge := &model.Knowledge{
@@ -67,14 +67,17 @@ func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Kn
 		Configuration: dto.Configuration,
 	}
 
+	var jobID int64
 	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		if err := s.repo.Create(ctx, knowledge); err != nil {
 			return err
 		}
-		return s.Sync(ctx, knowledge.ID, false)
+		jID, err := s.Sync(ctx, knowledge.ID, false)
+		jobID = jID
+		return err
 	})
 
-	return knowledge, err
+	return knowledge, jobID, err
 }
 
 func (s *Service) Update(ctx context.Context, id string, dto UpdateKnowledgeDTO) error {
@@ -103,16 +106,24 @@ func (s *Service) TestConnection(ctx context.Context, driver string, config util
 	return nil
 }
 
-func (s *Service) Sync(ctx context.Context, knowledgeID string, force bool) error {
+func (s *Service) Sync(ctx context.Context, knowledgeID string, force bool) (int64, error) {
 	_, err := s.FindByID(ctx, knowledgeID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	log.Printf("syncing knowledge %s with force: %v", knowledgeID, force)
-	err = s.riverClient.Push(ctx, SyncKnowledgeArgs{KnowledgeID: knowledgeID, Force: force}, nil)
+	jobID, err := s.riverClient.Push(ctx, SyncKnowledgeArgs{KnowledgeID: knowledgeID, Force: force}, nil)
 
 	if err != nil {
-		return apperr.InternalServerError(err.Error())
+		return 0, apperr.InternalServerError(err.Error())
 	}
-	return nil
+	return jobID, nil
+}
+
+func (s *Service) GetSyncStatus(ctx context.Context, jobID int64) (string, error) {
+	job, err := s.riverClient.JobGet(ctx, jobID)
+	if err != nil {
+		return "", apperr.InternalServerError(err.Error())
+	}
+	return string(job.State), nil
 }

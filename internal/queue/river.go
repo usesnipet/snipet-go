@@ -7,6 +7,7 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
 	"github.com/riverqueue/river/rivermigrate"
+	"github.com/riverqueue/river/rivertype"
 	"github.com/usesnipet/snipet/internal/repository"
 )
 
@@ -36,15 +37,20 @@ func NewRiver(sqlDB *sql.DB, workers *river.Workers) (*RiverQueue, error) {
 	return &RiverQueue{riverClient: riverClient}, err
 }
 
-func (q *RiverQueue) Push(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) error {
+func (q *RiverQueue) Push(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (int64, error) {
+	var result *rivertype.JobInsertResult
 	var err error
 	if tx, hasTx := repository.GetTx(ctx); hasTx {
 		sqlTx := tx.Statement.ConnPool.(*sql.Tx)
-		_, err = q.riverClient.InsertTx(ctx, sqlTx, args, opts)
+		result, err = q.riverClient.InsertTx(ctx, sqlTx, args, opts)
 	} else {
-		_, err = q.riverClient.Insert(ctx, args, opts)
+		result, err = q.riverClient.Insert(ctx, args, opts)
 	}
-	return err
+	return result.Job.ID, err
+}
+
+func (q *RiverQueue) JobGet(ctx context.Context, id int64) (*rivertype.JobRow, error) {
+	return q.riverClient.JobGet(ctx, id)
 }
 
 func (q *RiverQueue) Start(ctx context.Context) error {

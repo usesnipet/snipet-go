@@ -98,7 +98,7 @@ func (s *Service) Sync(ctx context.Context, knowledgeID, indexID string) error {
 		return err
 	}
 
-	err = s.riverClient.Push(ctx, SyncIndexArgs{IndexID: indexID}, nil)
+	_, err = s.riverClient.Push(ctx, SyncIndexArgs{IndexID: indexID}, nil)
 
 	if err != nil {
 		return apperr.InternalServerError(err.Error())

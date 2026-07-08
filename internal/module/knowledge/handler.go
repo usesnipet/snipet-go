@@ -67,11 +67,14 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	data, err := h.service.Create(r.Context(), dto)
+	data, jobID, err := h.service.Create(r.Context(), dto)
 	if err != nil {
 		return err
 	}
-	return api.WriteJSON(w, http.StatusCreated, data)
+	return api.WriteJSON(w, http.StatusCreated, map[string]any{
+		"knowledge": data,
+		"job_id":    jobID,
+	})
 }
 
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
@@ -111,9 +114,11 @@ func (h *Handler) sync(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	knowledgeID := chi.URLParam(r, "id")
-	err := h.service.Sync(r.Context(), knowledgeID, dto.Force)
+	jobID, err := h.service.Sync(r.Context(), knowledgeID, dto.Force)
 	if err != nil {
 		return err
 	}
-	return api.WriteNoContent(w)
+	return api.WriteJSON(w, http.StatusOK, map[string]any{
+		"job_id": jobID,
+	})
 }
