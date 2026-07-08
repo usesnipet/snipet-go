@@ -3,6 +3,7 @@
 	import { cn } from "$lib/utils";
 	import type { Snippet } from "svelte";
 	import type { HTMLAttributes } from "svelte/elements";
+  import { toast } from "svelte-sonner";
 
 	let {
 		title,
@@ -20,7 +21,12 @@
 		children: Snippet;
 	} = $props();
 </script>
-
+<svelte:head>
+	<title>{title}</title>
+	{#if description}
+		<meta name="description" content={description} />
+	{/if}
+</svelte:head>
 <div class={cn("flex h-full min-h-0 flex-1 flex-col gap-6 p-4 md:p-6", className)} {...restProps}>
 	<div class="flex shrink-0 flex-col gap-4">
 		<div class="flex items-start justify-between gap-4">
@@ -50,6 +56,8 @@
 	</div>
 
 	<div class="flex min-h-0 flex-1 flex-col">
-		{@render children()}
+		<svelte:boundary onerror={(e) => toast.error((e as Error).message)}>
+			{@render children()}
+		</svelte:boundary>
 	</div>
 </div>

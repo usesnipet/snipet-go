@@ -15,7 +15,8 @@ export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 
 
-export function truncate(str: string, size: number) {
+export function truncate(str: string | null | undefined, size: number) {
+	if (!str) return "";
 	if (str.length > size) {
 		return `${str.slice(0, size)}...`
 	}

@@ -21,14 +21,6 @@
       url: "/(protected)/knowledge",
     },
     {
-      title: "Bot",
-      url: "/(protected)/bot",
-    },
-    {
-      title: "Client",
-      url: "/(protected)/client",
-    },
-    {
       title: "API Key",
       url: "/(protected)/api-key",
     },
@@ -50,6 +42,9 @@
   import PlusIcon from "@lucide/svelte/icons/plus";
   import type { ComponentProps } from "svelte";
   import ThemeToggle from "./theme-toggle.svelte";
+	import Button from "./ui/button/button.svelte";
+	import LogOutIcon from "@lucide/svelte/icons/log-out";
+	import { logout } from "$lib/features/api-key/stores/api-key-auth.svelte";
 
   let { ref = $bindable(null), ...restProps }: ComponentProps<typeof Sidebar.Root> =
     $props();
@@ -151,5 +146,11 @@
       </Sidebar.Menu>
     </Sidebar.Group>
   </Sidebar.Content>
+  <Sidebar.Footer>
+    <Button variant="secondary" onclick={() => logout()}>
+      <LogOutIcon />
+      Logout
+    </Button>
+  </Sidebar.Footer>
   <Sidebar.Rail />
 </Sidebar.Root>
