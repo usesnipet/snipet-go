@@ -54,13 +54,16 @@ export const syncKnowledgeQuerySchema = z.object({
 });
 export type SyncKnowledgeQuery = z.infer<typeof syncKnowledgeQuerySchema>;
 
+export const knowledgeItemKindSchema = z.enum(["document", "image", "video", "audio", "text", "structured", "unknown"]);
+export type KnowledgeItemKind = z.infer<typeof knowledgeItemKindSchema>;
+
 export const knowledgeItemSchema = z.object({
   id: z.uuid(),
   external_id: z.string(),
   name: z.string(),
   hash: z.string(),
   metadata: z.json(),
-  kinds: z.array(z.unknown()),
+  kinds: z.array(knowledgeItemKindSchema),
   last_modified: z.coerce.date().nullable().optional(),
   knowledge_id: z.uuid(),
 });
