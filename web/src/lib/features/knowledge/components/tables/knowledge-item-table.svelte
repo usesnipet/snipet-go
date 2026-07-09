@@ -6,6 +6,7 @@
 	import TableField from "$lib/components/flex-table/table-field.svelte";
 	import TableExternalId from "./table-external-id.svelte";
 	import TableKinds from "./table-kinds.svelte";
+	import TableTimeField from "$lib/components/flex-table/table-time-field.svelte";
 
   type Props = {
 		items: KnowledgeItem[]
@@ -28,6 +29,10 @@
       header: "Kinds",
       cell: ({ row }) => renderComponent(TableKinds, { kinds: row.original.kinds })
     },
+    {
+      header: "Last Modified At",
+      cell: ({ row }) => renderComponent(TableTimeField, { date: row.original.last_modified })
+    }
   ];
 </script>
 
