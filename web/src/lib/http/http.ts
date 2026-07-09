@@ -1,3 +1,7 @@
+import z from "zod";
+
+import { handleApiError, parseZodErrors } from "./errors.js";
+
 export type ApiMethod = "GET" | "POST" | "PUT" | "DELETE";
 export type SearchParamsRecord = Record<
   string,
@@ -25,9 +29,6 @@ export type ApiRequestOptions<TBody = unknown, TResponse = unknown> = {
 export { ApiError, isApiErrorBody, parseApiErrorResponse } from "./errors.js";
 export type { ApiErrorBody, ApiErrorDetails } from "./errors.js";
 
-import z from "zod";
-
-import { handleApiError, parseZodErrors } from "./errors.js";
 
 export function applyPathParams(url: string, params: PathParamsRecord): string {
   return Object.entries(params).reduce(
@@ -62,8 +63,6 @@ export function applySearchParams(
 export async function http<TResponse = unknown, TBody = unknown>(
   options: ApiRequestOptions<TBody, TResponse>,
 ): Promise<TResponse> {
-  console.log(options);
-
   const { url, method, schemas } = options;
   let { body, headers, params, searchParams } = options;
   const pathUrl = params ? applyPathParams(url, params) : url;
@@ -73,8 +72,7 @@ export async function http<TResponse = unknown, TBody = unknown>(
     if (schemas?.headers && headers) headers = schemas.headers.parse(headers);
     if (schemas?.body) body = schemas.body.parse(body);
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
     if (error instanceof z.ZodError) throw parseZodErrors(error);
     throw error;
   }
@@ -100,7 +98,13 @@ export async function http<TResponse = unknown, TBody = unknown>(
     return undefined as TResponse;
   }
 
-  return response.json() as Promise<TResponse>;
+  const json = await response.json();
+  if (schemas?.response) {
+    const parsed = schemas.response.safeParse(json);
+    if (parsed.success) return parsed.data;
+    throw parseZodErrors(parsed.error);
+  }
+  return json as TResponse;
 }
 
 

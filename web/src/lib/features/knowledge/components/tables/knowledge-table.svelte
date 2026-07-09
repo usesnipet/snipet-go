@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
 	import FlexTable from "$lib/components/flex-table/flex-table.svelte";
 	import type { ColumnDef } from "@tanstack/table-core";
 	import type { Knowledge } from "../../schemas";
@@ -7,6 +9,10 @@
 	import TableBadgeField from "$lib/components/flex-table/table-badge-field.svelte";
 	import TableField from "$lib/components/flex-table/table-field.svelte";
 	import TableName from "./table-name.svelte";
+
+	function handleRowClick(knowledge: Knowledge) {
+		goto(resolve("/(protected)/knowledge/[id]", { id: knowledge.id }));
+	}
 
   type Props = {
 		knowledges: Knowledge[]
@@ -34,7 +40,7 @@
       cell: ({ row }) => renderComponent(TableBadgeField, {
         value: row.original.sync_status,
         variant: row.original.sync_status === "success" ? "default" : "destructive"
-      })
+      }),
     },
   ]
 </script>
@@ -43,5 +49,6 @@
   {...props}
   data={props.knowledges}
   {columns}
+  onRowClick={handleRowClick}
   emptyMessage="No Knowledge Found."
 />

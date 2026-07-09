@@ -13,6 +13,7 @@
 		columns: ColumnDef<TData, TValue>[];
 		isLoading?: boolean;
 		emptyMessage?: string;
+		onRowClick?: (row: TData) => void;
 		class?: string;
 	};
 
@@ -21,6 +22,7 @@
 		columns,
 		isLoading = false,
 		emptyMessage = "No results.",
+		onRowClick,
 		class: className,
 	}: DataTableProps<TData, TValue> = $props();
 
@@ -64,7 +66,11 @@
 						</Table.Row>
 					{:else}
 						{#each table.getRowModel().rows as row (row.id)}
-							<Table.Row data-state={row.getIsSelected() && "selected"}>
+							<Table.Row
+								data-state={row.getIsSelected() && "selected"}
+								class={onRowClick ? "cursor-pointer" : undefined}
+								onclick={() => onRowClick?.(row.original)}
+							>
 								{#each row.getVisibleCells() as cell (cell.id)}
 									<Table.Cell>
 										<FlexRender

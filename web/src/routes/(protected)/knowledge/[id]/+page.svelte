@@ -7,38 +7,25 @@
 	import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
 	import Loader2Icon from "@lucide/svelte/icons/loader-2";
 	import RefreshCwIcon from "@lucide/svelte/icons/refresh-cw";
-	import { toast } from "svelte-sonner";
 	import type { PageProps } from "./$types";
 
-	type Props = PageProps;
+	let { params }: PageProps = $props();
 
-	let { params }: Props = $props();
-	const id = $derived(params.id);
+	const knowledgeQuery = $derived(knowledgeService.findById(params.id));
+	const knowledgeItemsQuery = $derived(knowledgeService.listItems(params.id));
+	const syncMutation = $derived(knowledgeService.sync(params.id));
 
-	const knowledgeQuery = $derived(knowledgeService.findById(id));
-	const knowledgeItemsQuery = $derived(knowledgeService.listItems(id));
-	const syncMutation = $derived(knowledgeService.sync(id));
-
-	const knowledge = $derived(knowledgeQuery.data);
-	const knowledgeItems = $derived(knowledgeItemsQuery.data ?? []);
 	const isSyncing = $derived(
-		syncMutation.isPending || knowledge?.sync_status === "in_progress",
+		syncMutation.isPending || knowledgeQuery.data?.sync_status === "in_progress",
 	);
 
 	function handleSync() {
-		syncMutation.mutate(undefined, {
-			onSuccess: () => {
-				toast.success("Knowledge sync started.");
-			},
-			onError: (error) => {
-				toast.error(error.message);
-			},
-		});
+		syncMutation.mutate(undefined);
 	}
 </script>
 
 <PageLayout
-	title={knowledge?.name ?? "Knowledge"}
+	title={knowledgeQuery.data?.name ?? "Knowledge"}
 	description="View knowledge details and stored items."
 >
 	{#snippet actionsLeft()}
@@ -60,12 +47,12 @@
 
 	<div class="flex h-full min-h-0 w-full gap-4">
 		<div class="h-full w-[30%] shrink-0 basis-[30%]">
-			<KnowledgeInfo knowledge={knowledge} isLoading={knowledgeQuery.isLoading} />
+			<KnowledgeInfo knowledge={knowledgeQuery.data} isLoading={knowledgeQuery.isLoading} />
 		</div>
 
 		<div class="h-full min-w-0 flex-1 basis-0">
 			<KnowledgeItemTable
-				items={knowledgeItems}
+				items={knowledgeItemsQuery.data ?? []}
 				isLoading={knowledgeItemsQuery.isLoading}
 				class="h-full min-w-0"
 			/>
