@@ -1,11 +1,11 @@
-import adapter from "@sveltejs/adapter-static";
-import { sveltekit } from "@sveltejs/kit/vite";
-import tailwindcss from "@tailwindcss/vite";
-import { defineConfig, loadEnv } from "vite";
+import adapter from '@sveltejs/adapter-static';
+import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
+import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
-	const env = loadEnv(mode, process.cwd(), "");
-	const backendUrl = env.BACKEND_URL ?? "http://localhost:8852";
+	const env = loadEnv(mode, process.cwd(), '');
+	const backendUrl = env.BACKEND_URL ?? 'http://localhost:8852';
 
 	return {
 		plugins: [
@@ -14,20 +14,14 @@ export default defineConfig(({ mode }) => {
 				compilerOptions: {
 					// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
 					runes: ({ filename }) =>
-						filename.split(/[/\\]/).includes("node_modules") ? undefined : true,
+						filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 				},
-				adapter: adapter({
-					fallback: "index.html",
-				}),
-			}),
+				adapter: adapter({ fallback: 'index.html' })
+			})
 		],
 		server: {
-			proxy: {
-				"^/api/": {
-					target: backendUrl,
-					changeOrigin: true,
-				},
-			},
+			proxy: { '^/api/': { target: backendUrl, changeOrigin: true } }
 		},
+		ssr: { noExternal: ['@lucide/svelte'] }
 	};
 });
