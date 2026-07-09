@@ -9,5 +9,8 @@
 
   let props: Props = $props();
 </script>
-
+{#if props.date}
 <Time timestamp={props.date} format={props.format} />
+{:else}
+  -
+{/if}
