@@ -4,9 +4,9 @@ import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { toast } from "svelte-sonner";
 
 import {
-  createKnowledgeSchema, filterKnowledgeItemSchema, filterKnowledgeSchema, knowledgeItemPaginatedSchema,
-  knowledgePaginatedSchema, knowledgeSchema, syncKnowledgeQuerySchema, testConnectionSchema,
-  updateKnowledgeSchema
+  createKnowledgeSchema, driversSchema, filterKnowledgeItemSchema, filterKnowledgeSchema,
+  knowledgeItemPaginatedSchema, knowledgePaginatedSchema, knowledgeSchema, syncKnowledgeQuerySchema,
+  testConnectionSchema, updateKnowledgeSchema
 } from "./schemas";
 
 import type {
@@ -19,18 +19,20 @@ import type {
   SyncKnowledgeQuery,
   TestConnection,
   UpdateKnowledge,
+  Drivers,
 } from "./schemas";
 const BASE_URL = "/api/knowledge";
 
 const listQueryKey = (filter?: FilterKnowledge) => [BASE_URL, "list", filter];
 const listItemsQueryKey = (knowledgeId: string, filter?: FilterKnowledgeItem) => [BASE_URL, knowledgeId, "items", filter];
 const findByIdQueryKey = (id: string) => [BASE_URL, id];
-
+const listDriversQueryKey = () => [BASE_URL, "drivers"];
 export const knowledgeService = {
   queryKeys: {
     listQueryKey,
     listItemsQueryKey,
     findByIdQueryKey,
+    listDriversQueryKey,
   },
   list: (filter?: FilterKnowledge) => createQuery(() => ({
     queryKey: listQueryKey(filter),
@@ -65,8 +67,8 @@ export const knowledgeService = {
       return knowledge?.sync_status === "in_progress" ? 2000 : false;
     },
   })),
-  create: (data: CreateKnowledge) => createMutation(() => ({
-    mutationFn: () => authenticatedClient().post<Knowledge>({
+  create: () => createMutation(() => ({
+    mutationFn: (data: CreateKnowledge) => authenticatedClient().post<Knowledge>({
       url: BASE_URL,
       body: data,
       schemas: { body: createKnowledgeSchema, response: knowledgeSchema },
@@ -79,13 +81,13 @@ export const knowledgeService = {
       toast.error(error.message);
     },
   })),
-  update: (id: string, data: UpdateKnowledge) => createMutation(() => ({
-    mutationFn: () => authenticatedClient().put({
+  update: () => createMutation(() => ({
+    mutationFn: ({ data, id }: { id: string, data: UpdateKnowledge }) => authenticatedClient().put({
       url: `${BASE_URL}/${id}`,
       body: data,
       schemas: { body: updateKnowledgeSchema },
     }),
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       toast.success("Knowledge updated.");
       queryClient.invalidateQueries({ queryKey: findByIdQueryKey(id) });
     },
@@ -93,11 +95,11 @@ export const knowledgeService = {
       toast.error(error.message);
     },
   })),
-  delete: (id: string) => createMutation(() => ({
-    mutationFn: () => authenticatedClient().delete({
+  delete: () => createMutation(() => ({
+    mutationFn: (id: string) => authenticatedClient().delete({
       url: `${BASE_URL}/${id}`,
     }),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       toast.success("Knowledge deleted.");
       queryClient.invalidateQueries({ queryKey: findByIdQueryKey(id) });
       queryClient.invalidateQueries({ queryKey: listItemsQueryKey(id) });
@@ -107,8 +109,8 @@ export const knowledgeService = {
       toast.error(error.message);
     },
   })),
-  testConnection: (data: TestConnection) => createMutation(() => ({
-    mutationFn: () => authenticatedClient().post({
+  testConnection: () => createMutation(() => ({
+    mutationFn: (data: TestConnection) => authenticatedClient().post({
       url: `${BASE_URL}/test-connection`,
       body: data,
       schemas: { body: testConnectionSchema },
@@ -120,13 +122,13 @@ export const knowledgeService = {
       toast.error(error.message);
     },
   })),
-  sync: (id: string, query?: SyncKnowledgeQuery) => createMutation(() => ({
-    mutationFn: () => authenticatedClient().post({
+  sync: () => createMutation(() => ({
+    mutationFn: ({ id, query }: { id: string, query?: SyncKnowledgeQuery }) => authenticatedClient().post({
       url: `${BASE_URL}/${id}/sync`,
       searchParams: query,
       schemas: { searchParams: syncKnowledgeQuerySchema },
     }),
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       toast.success("Knowledge sync started.");
       queryClient.invalidateQueries({ queryKey: findByIdQueryKey(id) });
       queryClient.invalidateQueries({ queryKey: listItemsQueryKey(id) });
@@ -134,5 +136,12 @@ export const knowledgeService = {
     onError: (error) => {
       toast.error(error.message);
     },
+  })),
+  listDrivers: () => createQuery(() => ({
+    queryKey: listDriversQueryKey(),
+    queryFn: () => authenticatedClient().get<Drivers>({
+      url: `${BASE_URL}/drivers`,
+      schemas: { response: driversSchema },
+    }),
   })),
 };

@@ -29,14 +29,11 @@ export const filterKnowledgeSchema = z.object({
 }).default({});
 export type FilterKnowledge = z.infer<typeof filterKnowledgeSchema>;
 
-export const createKnowledgeSchema = z.object({
-  data: knowledgeSchema.pick({
-    name: true,
-    description: true,
-    driver: true,
-    configuration: true,
-  }),
-  job_id: z.number().optional(),
+export const createKnowledgeSchema = knowledgeSchema.pick({
+  name: true,
+  description: true,
+  driver: true,
+  configuration: true,
 });
 
 export type CreateKnowledge = z.infer<typeof createKnowledgeSchema>;
@@ -83,3 +80,12 @@ export type KnowledgeItemPaginated = z.infer<typeof knowledgeItemPaginatedSchema
 
 export const filterKnowledgeItemSchema = filterKnowledgeSchema;
 export type FilterKnowledgeItem = z.infer<typeof filterKnowledgeItemSchema>;
+
+
+export const driversSchema = z.object({
+  source_drivers: z.array(z.object({
+    name: z.string(),
+    configuration_schema: z.json(),
+  })),
+});
+export type Drivers = z.infer<typeof driversSchema>;

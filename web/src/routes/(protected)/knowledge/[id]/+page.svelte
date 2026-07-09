@@ -13,14 +13,14 @@
 
 	const knowledgeQuery = $derived(knowledgeService.findById(params.id));
 	const knowledgeItemsQuery = $derived(knowledgeService.listItems(params.id));
-	const syncMutation = $derived(knowledgeService.sync(params.id));
+	const syncMutation = $derived(knowledgeService.sync());
 
 	const isSyncing = $derived(
 		syncMutation.isPending || knowledgeQuery.data?.sync_status === "in_progress",
 	);
 
 	function handleSync() {
-		syncMutation.mutate(undefined);
+		syncMutation.mutate({ id: params.id });
 	}
 </script>
 
