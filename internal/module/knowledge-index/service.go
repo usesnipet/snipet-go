@@ -18,7 +18,7 @@ type Service struct {
 	repo                     repository.IKnowledgeIndexRepository
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository
 	indexManager             *runtime.IndexManager
-	riverClient              *queue.RiverQueue
+	riverClient              queue.IJobQueue
 	txManager                repository.ITxManager
 }
 
@@ -26,7 +26,7 @@ func NewService(
 	repo repository.IKnowledgeIndexRepository,
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository,
 	indexManager *runtime.IndexManager,
-	riverClient *queue.RiverQueue,
+	riverClient queue.IJobQueue,
 	txManager repository.ITxManager,
 ) *Service {
 	return &Service{
