@@ -95,6 +95,17 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	return s.repo.DeleteByID(ctx, id)
 }
 
+func (s *Service) ListDrivers(ctx context.Context) (*DriversDTO, error) {
+	sourceDrivers, err := s.sourceManager.ListDrivers(ctx)
+	if err != nil {
+		return nil, apperr.InternalServerError(err.Error())
+	}
+
+	return &DriversDTO{
+		SourceDrivers: sourceDrivers,
+	}, nil
+}
+
 func (s *Service) TestConnection(ctx context.Context, driver string, config util.JSONMap) error {
 	_, err := s.sourceManager.Prepare(ctx, driver, config)
 	if err != nil {

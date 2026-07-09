@@ -3,6 +3,7 @@ package knowledge
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -49,4 +50,8 @@ type TestConnectionDTO struct {
 
 type SyncKnowledgeQueryDTO struct {
 	Force bool `form:"force" validate:"omitempty"`
+}
+
+type DriversDTO struct {
+	SourceDrivers []runtime.DriverInfo `json:"source_drivers"`
 }

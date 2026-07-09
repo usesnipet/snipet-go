@@ -412,3 +412,26 @@ func TestTestConnectionReturnsDriverConnectionError(t *testing.T) {
 
 	driver.AssertExpectations(t)
 }
+
+func TestListDriversReturnsSourceDrivers(t *testing.T) {
+	t.Parallel()
+
+	sourceSchema := util.JSONMap{"type": "object"}
+
+	sourceDriver := new(mockSourceDriver)
+	sourceDriver.On("GetConfigurationSchema", mock.Anything).Return(sourceSchema, nil).Once()
+
+	svc := newTestService(
+		t,
+		mocks.NewMockIKnowledgeRepository(t),
+		map[string]*mockSourceDriver{"fs": sourceDriver},
+	)
+
+	result, err := svc.ListDrivers(context.Background())
+	require.NoError(t, err)
+	require.Len(t, result.SourceDrivers, 1)
+	assert.Equal(t, "fs", result.SourceDrivers[0].Name)
+	assert.Equal(t, sourceSchema, result.SourceDrivers[0].ConfigurationSchema)
+
+	sourceDriver.AssertExpectations(t)
+}

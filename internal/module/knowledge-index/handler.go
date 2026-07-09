@@ -23,6 +23,10 @@ func NewHandler(
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
+	r.Route("/knowledge/index", func(r chi.Router) {
+		r.Use(h.apiKeyMiddleware)
+		r.Get("/drivers", serve(h.listDrivers))
+	})
 	r.Route("/knowledge/{knowledge_id}/index", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
@@ -101,4 +105,12 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteNoContent(w)
+}
+
+func (h *Handler) listDrivers(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.ListDrivers(r.Context())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
 }

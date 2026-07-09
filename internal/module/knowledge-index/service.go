@@ -81,6 +81,17 @@ func (s *Service) DeleteByID(ctx context.Context, knowledgeID, id string) error 
 	return s.repo.DeleteInKnowledge(ctx, knowledgeID, id)
 }
 
+func (s *Service) ListDrivers(ctx context.Context) (*DriversDTO, error) {
+	indexDrivers, err := s.indexManager.ListDrivers(ctx)
+	if err != nil {
+		return nil, apperr.InternalServerError(err.Error())
+	}
+
+	return &DriversDTO{
+		IndexDrivers: indexDrivers,
+	}, nil
+}
+
 func (s *Service) TestConnection(ctx context.Context, driver string, config util.JSONMap) error {
 	_, err := s.indexManager.Prepare(ctx, driver, config)
 	if err != nil {

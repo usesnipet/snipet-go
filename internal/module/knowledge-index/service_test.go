@@ -285,3 +285,22 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 	err := svc.DeleteByID(context.Background(), knowledgeID, id)
 	require.NoError(t, err)
 }
+
+func TestListDriversReturnsIndexDrivers(t *testing.T) {
+	t.Parallel()
+
+	indexSchema := util.JSONMap{"type": "object", "title": "index"}
+
+	driver := new(mockIndexDriver)
+	driver.On("GetConfigurationSchema", mock.Anything).Return(indexSchema, nil).Once()
+
+	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), map[string]*mockIndexDriver{"rag": driver})
+
+	result, err := svc.ListDrivers(context.Background())
+	require.NoError(t, err)
+	require.Len(t, result.IndexDrivers, 1)
+	assert.Equal(t, "rag", result.IndexDrivers[0].Name)
+	assert.Equal(t, indexSchema, result.IndexDrivers[0].ConfigurationSchema)
+
+	driver.AssertExpectations(t)
+}

@@ -12,6 +12,11 @@ type IDriver interface {
 	TestConnection(ctx context.Context, config util.JSONMap) error
 }
 
+type DriverInfo struct {
+	Name                string       `json:"name"`
+	ConfigurationSchema util.JSONMap `json:"configuration_schema"`
+}
+
 type Manager[T IDriver] struct {
 	registry *Registry[T]
 }
@@ -57,4 +62,28 @@ func (m *Manager[T]) Prepare(ctx context.Context, driver string, config util.JSO
 		return driverInstance, ErrConnectionFailed
 	}
 	return driverInstance, nil
+}
+
+func (m *Manager[T]) ListDrivers(ctx context.Context) ([]DriverInfo, error) {
+	names := m.registry.Names()
+	drivers := make([]DriverInfo, 0, len(names))
+
+	for _, name := range names {
+		driver, err := m.GetDriver(name)
+		if err != nil {
+			return nil, err
+		}
+
+		schema, err := driver.GetConfigurationSchema(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		drivers = append(drivers, DriverInfo{
+			Name:                name,
+			ConfigurationSchema: schema,
+		})
+	}
+
+	return drivers, nil
 }

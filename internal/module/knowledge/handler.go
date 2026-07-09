@@ -20,6 +20,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/knowledge", func(r chi.Router) {
 		r.Use(h.apiKeyMiddleware)
 		r.Get("/", serve(h.filter))
+		r.Get("/drivers", serve(h.listDrivers))
 		r.Get("/{id}/items", serve(h.filterItems))
 		r.Post("/", serve(h.create))
 		r.Get("/{id}", serve(h.findByID))
@@ -106,6 +107,14 @@ func (h *Handler) testConnection(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteNoContent(w)
+}
+
+func (h *Handler) listDrivers(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.ListDrivers(r.Context())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
 }
 
 func (h *Handler) sync(w http.ResponseWriter, r *http.Request) error {

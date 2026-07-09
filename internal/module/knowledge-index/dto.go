@@ -3,6 +3,7 @@ package knowledgeindex
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -38,4 +39,8 @@ func (dto *FilterIndexedKnowledgeItemDTO) ToFilter() *filter.Options[model.Index
 		filter.PtrTake(dto.Take),
 		filter.PtrSkip(dto.Skip),
 	)
+}
+
+type DriversDTO struct {
+	IndexDrivers []runtime.DriverInfo `json:"index_drivers"`
 }
