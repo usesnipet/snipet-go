@@ -9,11 +9,11 @@ import (
 type IndexStatus string
 
 const (
-	IndexedStatusPending   IndexStatus = "pending"
-	IndexedStatusSyncing   IndexStatus = "syncing"
-	IndexedStatusIndexed   IndexStatus = "indexed"
-	IndexedStatusProcessed IndexStatus = "skipped"
-	IndexedStatusError     IndexStatus = "error"
+	IndexedStatusPending IndexStatus = "pending"
+	IndexedStatusSyncing IndexStatus = "syncing"
+	IndexedStatusIndexed IndexStatus = "indexed"
+	IndexedStatusSkipped IndexStatus = "skipped"
+	IndexedStatusError   IndexStatus = "error"
 )
 
 type IndexedKnowledgeItem struct {
@@ -23,12 +23,12 @@ type IndexedKnowledgeItem struct {
 	IndexedAt *time.Time   `json:"indexed_at,omitempty"`
 	Metadata  util.JSONMap `gorm:"type:jsonb" json:"metadata"`
 	Status    IndexStatus  `gorm:"type:varchar(20);not null;default:'pending'" json:"status"`
-	Reason    string       `gorm:"type:text" json:"reason"`
-	LastError string       `gorm:"type:text" json:"last_error"`
+	Reason    *string      `gorm:"type:text" json:"reason,omitempty"`
+	LastError *string      `gorm:"type:text" json:"last_error,omitempty"`
 
-	IndexID         string `gorm:"type:uuid;not null;index" json:"index_id"`
-	KnowledgeItemID string `gorm:"type:uuid;not null;index" json:"knowledge_item_id"`
+	IndexID         string  `gorm:"type:uuid;not null;index" json:"index_id"`
+	KnowledgeItemID *string `gorm:"type:uuid;index" json:"knowledge_item_id,omitempty"`
 
 	Index         KnowledgeIndex `gorm:"foreignKey:IndexID" json:"-"`
-	KnowledgeItem KnowledgeItem  `gorm:"foreignKey:KnowledgeItemID" json:"-"`
+	KnowledgeItem KnowledgeItem  `gorm:"foreignKey:KnowledgeItemID;references:ID;constraint:OnDelete:SET NULL" json:"-"`
 }

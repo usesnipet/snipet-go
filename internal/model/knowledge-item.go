@@ -3,18 +3,19 @@ package model
 import (
 	"time"
 
+	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
 type KnowledgeItem struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	ExternalID   string         `gorm:"type:varchar(255);uniqueIndex:idx_knowledge_items_knowledge_external_id,priority:2" json:"external_id"`
-	Name         string         `gorm:"type:text" json:"name"`
-	Hash         string         `gorm:"type:varchar(128);index" json:"hash"`
-	Metadata     util.JSONMap   `gorm:"type:jsonb" json:"metadata"`
-	Kinds        util.JSONArray `gorm:"type:jsonb" json:"kinds"`
-	LastModified *time.Time     `json:"last_modified,omitempty"`
+	ExternalID   string                 `gorm:"type:varchar(255);uniqueIndex:idx_knowledge_items_knowledge_external_id,priority:2" json:"external_id"`
+	Name         string                 `gorm:"type:text" json:"name"`
+	Hash         string                 `gorm:"type:varchar(128);index" json:"hash"`
+	Metadata     util.JSONMap           `gorm:"type:jsonb" json:"metadata"`
+	Kind         runtime.SourceItemKind `gorm:"type:varchar(255)" json:"kind"`
+	LastModified *time.Time             `json:"last_modified,omitempty"`
 
 	KnowledgeID string `gorm:"type:uuid;not null;uniqueIndex:idx_knowledge_items_knowledge_external_id,priority:1" json:"knowledge_id"`
 

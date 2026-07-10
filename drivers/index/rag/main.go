@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/teilomillet/raggo"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
 )
@@ -30,24 +29,7 @@ func (d *Driver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, erro
 }
 
 func (d *Driver) TestConnection(ctx context.Context, configJson util.JSONMap) error {
-	cfg, err := util.ParseJSONMap[Config](configJson)
-	if err != nil {
-		return err
-	}
-
-	vectorDB, err := raggo.NewVectorDB(
-		raggo.WithType("milvus"),
-		raggo.WithAddress(cfg.Milvus.Address),
-		raggo.WithDimension(cfg.Milvus.Dimension),
-		raggo.WithMaxPoolSize(cfg.Milvus.MaxPoolSize),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	err = vectorDB.Connect(ctx)
-	defer vectorDB.Close()
+	_, err := util.ParseJSONMap[Config](configJson)
 	if err != nil {
 		return err
 	}

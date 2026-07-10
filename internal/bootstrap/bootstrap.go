@@ -65,7 +65,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	workers := river.NewWorkers()
 	river.AddWorker(
 		workers,
-		knowledge.NewSyncWorker(sourceManager, knowledgeRepo, knowledgeItemRepo, 100, logger),
+		knowledge.NewSyncWorker(txManager, sourceManager, knowledgeRepo, knowledgeItemRepo, knowledgeIndexRepo, 100, logger),
 	)
 	riverClient, err := queue.NewRiver(sqlDB, workers)
 	if err != nil {

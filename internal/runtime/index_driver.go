@@ -11,9 +11,9 @@ type IIndexReader interface {
 }
 
 type IIndexWriter interface {
-	Index(ctx context.Context, item SourceItem) error
-	Delete(ctx context.Context, item SourceItem) error
-	CanIndex(ctx context.Context, item SourceItem) (bool, error)
+	Index(ctx context.Context, content IContent) error
+	DeleteMany(ctx context.Context, itemIds []string) error
+	SupportedKinds() []SourceItemKind
 }
 
 type IIndexDriver interface {

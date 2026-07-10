@@ -61,3 +61,7 @@ func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISo
 	}
 	return NewIterator(files), nil
 }
+
+func (d *Driver) GetContent(ctx context.Context, id string) (runtime.IContent, error) {
+
+}

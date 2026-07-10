@@ -1,4 +1,4 @@
-h1:jO17RsKx6VROAjtkwx0HWnviLpvuUjF6YaPXiCTPxVs=
+h1:OVLOqguSPWJyOiB0BQnhQ8uzUsSKHjLezlFssuiFT2k=
 20260627012522_initial.up.sql h1:XAi8ZpM9JuWosfPCDGImUv/Q6rTXAl4ZNMd1E2/wmRU=
 20260630225056_primary_key_on_composite_key.up.sql h1:dxZvhXMsI7fU509R8j5XlDZbGprCScgq+QYw/GstrXo=
 20260701184519_remove_client_to_bot.up.sql h1:YkGyvBcfOMbXSxhj/B5OqsfUDWo7mtYLc7vnbr7dyL4=
@@ -6,3 +6,4 @@ h1:jO17RsKx6VROAjtkwx0HWnviLpvuUjF6YaPXiCTPxVs=
 20260702235817_rename_knowledge_provider_to_driver.up.sql h1:8XyGikE/3Hm3hND6njFIOD++xbamm1iysymt68IutsE=
 20260703211344_add_knowledge_sync_stats.up.sql h1:+9MzOFiD5XDHxn57TuCh5PNEQCRmrS4VsbRjT8ibRuI=
 20260705093808_knowledge_type.up.sql h1:PuODGZqTaLtK5hf/21hxp2OhvS7JN8xMXTKBBTa8pW8=
+20260710014748_add_indexed_knowledge_id_nullable_knowledge_item_id.up.sql h1:9p8QYnT/KZV2x1t7h4fKK5GhNUnqqDLliBkrRHJXFNY=

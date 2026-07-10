@@ -38,15 +38,28 @@ func NewRiver(sqlDB *sql.DB, workers *river.Workers) (*RiverQueue, error) {
 }
 
 func (q *RiverQueue) Push(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (int64, error) {
+	return insertJob(ctx, q.riverClient, args, opts)
+}
+
+// PushFromContext enqueues a job using the River client available in a worker's context.
+func PushFromContext(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (int64, error) {
+	client := river.ClientFromContext[*sql.Tx](ctx)
+	return insertJob(ctx, client, args, opts)
+}
+
+func insertJob(ctx context.Context, client *river.Client[*sql.Tx], args river.JobArgs, opts *river.InsertOpts) (int64, error) {
 	var result *rivertype.JobInsertResult
 	var err error
 	if tx, hasTx := repository.GetTx(ctx); hasTx {
 		sqlTx := tx.Statement.ConnPool.(*sql.Tx)
-		result, err = q.riverClient.InsertTx(ctx, sqlTx, args, opts)
+		result, err = client.InsertTx(ctx, sqlTx, args, opts)
 	} else {
-		result, err = q.riverClient.Insert(ctx, args, opts)
+		result, err = client.Insert(ctx, args, opts)
 	}
-	return result.Job.ID, err
+	if err != nil {
+		return 0, err
+	}
+	return result.Job.ID, nil
 }
 
 func (q *RiverQueue) JobGet(ctx context.Context, id int64) (*rivertype.JobRow, error) {

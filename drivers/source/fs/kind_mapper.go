@@ -40,12 +40,12 @@ func normalizeMimeType(contentType string) string {
 	return mediaType
 }
 
-func mapKind(item os.FileInfo) []runtime.SourceItemKind {
+func mapKind(item os.FileInfo) runtime.SourceItemKind {
 	mimeType, ok := detectByContent(item)
 	if !ok {
 		mimeType, ok = detectByExtension(item)
 		if !ok {
-			return []runtime.SourceItemKind{runtime.SourceItemKindUnknown}
+			return runtime.SourceItemKindUnknown
 		}
 	}
 
@@ -53,18 +53,18 @@ func mapKind(item os.FileInfo) []runtime.SourceItemKind {
 
 	switch normalized {
 	case "text/plain":
-		return []runtime.SourceItemKind{runtime.SourceItemKindText}
+		return runtime.SourceItemKindText
 	case "application/pdf", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel.sheet.binary.macroEnabled.12":
-		return []runtime.SourceItemKind{runtime.SourceItemKindDocument}
+		return runtime.SourceItemKindDocument
 	case "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml":
-		return []runtime.SourceItemKind{runtime.SourceItemKindImage}
+		return runtime.SourceItemKindImage
 	case "audio/mpeg", "audio/mp3", "audio/ogg", "audio/wav", "audio/x-wav":
-		return []runtime.SourceItemKind{runtime.SourceItemKindAudio}
+		return runtime.SourceItemKindAudio
 	case "video/mp4", "video/webm", "video/ogg", "video/quicktime":
-		return []runtime.SourceItemKind{runtime.SourceItemKindVideo}
+		return runtime.SourceItemKindVideo
 	case "application/json", "application/xml", "application/yaml", "application/toml", "application/hcl", "application/sql":
-		return []runtime.SourceItemKind{runtime.SourceItemKindStructured}
+		return runtime.SourceItemKindStructured
 	default:
-		return []runtime.SourceItemKind{runtime.SourceItemKindUnknown}
+		return runtime.SourceItemKindUnknown
 	}
 }

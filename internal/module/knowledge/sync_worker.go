@@ -6,11 +6,13 @@ import (
 
 	"github.com/riverqueue/river"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
+	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
+	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
+	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/util"
 )
 
 type SyncKnowledgeArgs struct {
@@ -32,26 +34,32 @@ type SyncResult struct {
 type SyncWorker struct {
 	river.WorkerDefaults[SyncKnowledgeArgs]
 
-	sourceManager     *runtime.SourceManager
-	knowledgeRepo     repository.IKnowledgeRepository
-	knowledgeItemRepo repository.IKnowledgeItemRepository
-	batchSize         int
-	logger            *logger.Logger
+	txManager          repository.ITxManager
+	sourceManager      *runtime.SourceManager
+	knowledgeRepo      repository.IKnowledgeRepository
+	knowledgeItemRepo  repository.IKnowledgeItemRepository
+	knowledgeIndexRepo repository.IKnowledgeIndexRepository
+	batchSize          int
+	logger             *logger.Logger
 }
 
 func NewSyncWorker(
+	txManager repository.ITxManager,
 	sourceManager *runtime.SourceManager,
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
+	knowledgeIndexRepo repository.IKnowledgeIndexRepository,
 	batchSize int,
 	logger *logger.Logger,
 ) *SyncWorker {
 	return &SyncWorker{
-		sourceManager:     sourceManager,
-		knowledgeRepo:     knowledgeRepo,
-		knowledgeItemRepo: knowledgeItemRepo,
-		batchSize:         batchSize,
-		logger:            logger,
+		txManager:          txManager,
+		sourceManager:      sourceManager,
+		knowledgeRepo:      knowledgeRepo,
+		knowledgeItemRepo:  knowledgeItemRepo,
+		knowledgeIndexRepo: knowledgeIndexRepo,
+		batchSize:          batchSize,
+		logger:             logger,
 	}
 }
 
@@ -151,18 +159,12 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 			pendingCreated++
 		}
 
-		kinds, err := util.ToJSONArray(item.Kinds)
-		if err != nil {
-			s.logger.Errorf("failed to convert item kinds to JSON map for knowledge %s: %s", knowledgeID, err.Error())
-			result.Failed++
-			continue
-		}
 		batch = append(batch, model.KnowledgeItem{
 			KnowledgeID:  knowledgeID,
 			ExternalID:   item.ID,
 			Name:         item.Name,
 			Hash:         hash,
-			Kinds:        kinds,
+			Kind:         item.Kind,
 			Metadata:     item.Metadata,
 			LastModified: item.LastModified,
 		})
@@ -190,10 +192,34 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 		result.Deleted = deleted
 	}
 
+	indexed, err := s.knowledgeIndexRepo.FilterInKnowledge(
+		ctx,
+		knowledgeID,
+		filter.Default[model.KnowledgeIndex](),
+	)
+	if err != nil {
+		s.logger.Errorf("failed to get indexed knowledge items for knowledge %s: %s", knowledgeID, err.Error())
+		return err
+	}
+
 	s.logger.Verbosef(
 		"knowledge sync completed for knowledge %s: c=%d, u=%d, d=%d, f=%d",
 		knowledgeID, result.Created, result.Updated, result.Deleted, result.Failed,
 	)
 
-	return nil
+	return s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		var err error
+		for _, index := range indexed.Data {
+			_, err = queue.PushFromContext(
+				ctx,
+				knowledgeindex.SyncIndexArgs{IndexID: index.ID, KnowledgeID: knowledgeID},
+				nil,
+			)
+			if err != nil {
+				s.logger.Errorf("failed to push sync index job for index %s: %s", index.ID, err.Error())
+				break
+			}
+		}
+		return err
+	})
 }
