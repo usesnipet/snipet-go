@@ -1,0 +1,79 @@
+<script lang="ts" generics="T">
+	import * as defaults from '$lib/sjsf/defaults';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import {
+		Content,
+		Form,
+		createForm,
+		setFormContext,
+		type FormOptions
+	} from '@sjsf/form';
+	import type { Snippet } from 'svelte';
+
+	type FormConfig = Pick<
+		FormOptions<T>,
+		'schema' | 'uiSchema' | 'initialValue' | 'fieldsValidationMode'
+	>;
+
+	let {
+		title,
+		description,
+		formConfig,
+		onSubmit,
+		trigger,
+		open = $bindable(false)
+	}: {
+		title: string;
+		description?: string;
+		formConfig: FormConfig;
+		onSubmit?: (value: T) => void;
+		trigger?: Snippet;
+		open?: boolean;
+	} = $props();
+
+	const form = createForm<T>({
+		...defaults,
+		...formConfig,
+		onSubmit(value) {
+			onSubmit?.(value);
+			open = false;
+			form.reset();
+		}
+	});
+
+	setFormContext(form);
+
+	function handleCancel() {
+		form.reset();
+		open = false;
+	}
+</script>
+
+<Dialog.Root bind:open>
+	<Dialog.Trigger class={buttonVariants({ variant: 'outline' })}>
+		{#if trigger}
+			{@render trigger()}
+		{:else}
+			Open form
+		{/if}
+	</Dialog.Trigger>
+
+	<Dialog.Content class="sm:max-w-lg">
+		<Dialog.Header>
+			<Dialog.Title>{title}</Dialog.Title>
+			{#if description}
+				<Dialog.Description>{description}</Dialog.Description>
+			{/if}
+		</Dialog.Header>
+
+		<Form attributes={{ novalidate: true }}>
+			<Content />
+
+			<Dialog.Footer>
+				<Button variant="outline" type="button" onclick={handleCancel}>Cancel</Button>
+				<Button type="submit">Save</Button>
+			</Dialog.Footer>
+		</Form>
+	</Dialog.Content>
+</Dialog.Root>

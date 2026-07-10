@@ -47,9 +47,6 @@
 
 <div class="flex items-center gap-2" {@attach attach}>
 	{#if value}
-		<span class="min-w-0 flex-1 truncate">
-			<TableField {value} {truncate} />
-		</span>
 		<button
 			type="button"
 			class={buttonVariants({ variant: "outline", size: "icon", class: "relative z-10 shrink-0" })}
@@ -58,6 +55,9 @@
 		>
 			<CopyIcon class="size-4" />
 		</button>
+		<span class="min-w-0 flex-1 truncate">
+			<TableField {value} {truncate} />
+		</span>
 	{:else}
 		<TableField value="N/A" />
 	{/if}

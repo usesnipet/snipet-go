@@ -64,7 +64,7 @@ export const knowledgeItemSchema = z.object({
   name: z.string(),
   hash: z.string(),
   metadata: z.json(),
-  kinds: z.array(knowledgeItemKindSchema),
+  kind: knowledgeItemKindSchema,
   last_modified: z.coerce.date().nullable().optional(),
   knowledge_id: z.uuid(),
 });

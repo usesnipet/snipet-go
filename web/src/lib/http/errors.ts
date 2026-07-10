@@ -66,10 +66,11 @@ export async function parseApiErrorResponse(
   return fallbackApiError(response);
 }
 
-export function parseZodErrors(error: z.ZodError): ApiError {
+export function parseZodErrors(error: z.ZodError, message?: string): ApiError {
   const errors = z.treeifyError(error).errors;
+
   return new ApiError({
-    message: errors[0],
+    message: message ?? errors[0],
     details: { errors },
   });
 }

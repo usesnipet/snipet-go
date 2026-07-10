@@ -5,8 +5,8 @@
 	import { renderComponent } from "$lib/components/ui/data-table";
 	import TableField from "$lib/components/flex-table/table-field.svelte";
 	import TableExternalId from "./table-external-id.svelte";
-	import TableKinds from "./table-kinds.svelte";
 	import TableTimeField from "$lib/components/flex-table/table-time-field.svelte";
+	import TableBadgeField from "$lib/components/flex-table/table-badge-field.svelte";
 
   type Props = {
 		items: KnowledgeItem[]
@@ -27,7 +27,7 @@
     },
     {
       header: "Kinds",
-      cell: ({ row }) => renderComponent(TableKinds, { kinds: row.original.kinds })
+      cell: ({ row }) => renderComponent(TableBadgeField, { value: row.original.kind })
     },
     {
       header: "Last Modified At",

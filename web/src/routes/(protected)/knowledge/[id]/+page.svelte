@@ -25,7 +25,7 @@
 </script>
 
 <PageLayout
-	title={knowledgeQuery.data?.name ?? "Knowledge"}
+	title={`Knowledge • ${knowledgeQuery.data?.name}`}
 	description="View knowledge details and stored items."
 >
 	{#snippet actionsLeft()}

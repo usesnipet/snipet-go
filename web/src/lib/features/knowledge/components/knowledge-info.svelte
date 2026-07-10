@@ -4,6 +4,7 @@
 	import TableBadgeField from "$lib/components/flex-table/table-badge-field.svelte";
 	import TableTimeField from "$lib/components/flex-table/table-time-field.svelte";
 	import type { BadgeVariant } from "$lib/components/ui/badge";
+	import { JsonConfigCard } from "$lib/components/json-config";
 	import type { Knowledge, KnowledgeSyncStatus } from "../schemas";
 
 	type Props = {
@@ -43,6 +44,14 @@
 				<Skeleton class="h-4 w-1/2" />
 			{:else}
 				<p class="text-sm font-medium">{knowledge?.driver}</p>
+			{/if}
+		</div>
+		<div class="flex flex-col gap-1">
+			<p class="text-muted-foreground text-sm">Driver Configuration</p>
+			{#if isLoading}
+				<Skeleton class="h-16 w-full" />
+			{:else}
+				<JsonConfigCard data={knowledge?.configuration} />
 			{/if}
 		</div>
 

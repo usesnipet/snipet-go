@@ -1,3 +1,4 @@
+import { logger } from "$lib/logger.js";
 import z from "zod";
 
 import { handleApiError, parseZodErrors } from "./errors.js";
@@ -101,8 +102,10 @@ export async function http<TResponse = unknown, TBody = unknown>(
   const json = await response.json();
   if (schemas?.response) {
     const parsed = schemas.response.safeParse(json);
+
     if (parsed.success) return parsed.data;
-    throw parseZodErrors(parsed.error);
+    logger.warn("Invalid response", parsed.error);
+    throw parseZodErrors(parsed.error, "Invalid response");
   }
   return json as TResponse;
 }
