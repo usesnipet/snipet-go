@@ -1,16 +1,22 @@
 package runtime
 
+import "io"
+
 type IContent interface {
 	Kind() SourceItemKind
 }
 
-type DocumentContent struct{}
+type DocumentContent struct {
+	Doc io.ReadCloser
+}
 
 func (d *DocumentContent) Kind() SourceItemKind {
 	return SourceItemKindDocument
 }
 
-type TextContent struct{}
+type TextContent struct {
+	Text string
+}
 
 func (t *TextContent) Kind() SourceItemKind {
 	return SourceItemKindText

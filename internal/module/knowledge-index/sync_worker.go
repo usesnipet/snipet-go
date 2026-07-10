@@ -189,7 +189,7 @@ func (s *SyncIndexWorker) indexItem(
 	}
 
 	if deleteBeforeIndex {
-		err := writer.Delete(ctx, item.ID)
+		err := writer.DeleteMany(ctx, []string{item.ID})
 		if err != nil {
 			errMessage := fmt.Sprintf("failed to delete item before indexing %s: %v", item.ID, err)
 			return updateStatus(model.IndexedStatusError, nil, &errMessage)
