@@ -1,4 +1,4 @@
-<script lang="ts" generics="T">
+<script lang="ts" generics="T extends Record<string, unknown> = Record<string, unknown>">
 	import * as defaults from '$lib/sjsf/defaults';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -11,11 +11,10 @@
 	} from '@sjsf/form';
 	import type { Snippet } from 'svelte';
 
-	type FormConfig = Pick<
+	type JsonSchemaFormConfig = Pick<
 		FormOptions<T>,
 		'schema' | 'uiSchema' | 'initialValue' | 'fieldsValidationMode'
 	>;
-
 	let {
 		title,
 		description,
@@ -26,13 +25,13 @@
 	}: {
 		title: string;
 		description?: string;
-		formConfig: FormConfig;
+		formConfig: JsonSchemaFormConfig;
 		onSubmit?: (value: T) => void;
 		trigger?: Snippet;
 		open?: boolean;
 	} = $props();
 
-	const form = createForm<T>({
+	const form = $derived.by(() => createForm<T>({
 		...defaults,
 		...formConfig,
 		onSubmit(value) {
@@ -40,7 +39,7 @@
 			open = false;
 			form.reset();
 		}
-	});
+	}));
 
 	setFormContext(form);
 

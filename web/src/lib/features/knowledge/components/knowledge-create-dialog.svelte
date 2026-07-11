@@ -5,27 +5,68 @@
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import { defaults, superForm } from "sveltekit-superforms";
 	import { zod4, zod4Client } from "sveltekit-superforms/adapters";
-	import { createKnowledgeSchema } from "../schemas";
+	import { createKnowledgeSchema, type CreateKnowledge } from "../schemas";
 	import { FieldGroup } from "$lib/components/ui/field";
 	import FormInput from "$lib/components/form/form-input.svelte";
 	import FormTextarea from "$lib/components/form/form-textarea.svelte";
 	import FormError from "$lib/components/form/form-error.svelte";
+	import FormSelect from "$lib/components/form/form-select.svelte";
+	import JsonSchemaFormDialog from "$lib/sjsf/json-schema-form-dialog.svelte";
+	import { ON_INPUT, ON_CHANGE } from "@sjsf/form";
+	import type { FormOptions, Schema } from "@sjsf/form";
 
 	const driversQuery = knowledgeService.listDrivers();
 
 	const createKnowledgeMutation = knowledgeService.create();
 	const form = superForm(
-    defaults(zod4(createKnowledgeSchema)),
-    {
-      SPA: true,
-      validators: zod4Client(createKnowledgeSchema),
-      async onUpdate({ form }) {
-        if (!form.valid) return;
-        createKnowledgeMutation.mutate(form.data);
-      },
-    },
-  );
-  const { enhance } = form;
+		defaults({ configuration: {} }, zod4(createKnowledgeSchema)),
+		{
+			SPA: true,
+			dataType: "json",
+			validators: zod4Client(createKnowledgeSchema),
+			onChange(event) {
+				if (event.paths.includes("driver")) {
+					event.set("configuration", {});
+				}
+			},
+			async onUpdate({ form }) {
+				if (!form.valid) return;
+				createKnowledgeMutation.mutate(form.data);
+			},
+		},
+	);
+	const { form: formStore, enhance } = form;
+
+	type DriverFormConfig = Pick<
+		FormOptions<Record<string, unknown>>,
+		"schema" | "uiSchema" | "initialValue" | "fieldsValidationMode"
+	>;
+
+	const drivers = $derived(driversQuery.data?.source_drivers ?? []);
+	const selectedDriver = $derived(drivers.find((driver) => driver.name === $formStore.driver));
+	const driverFormConfig = $derived.by((): DriverFormConfig | null => {
+		if (!selectedDriver) return null;
+
+		const configuration = $formStore.configuration;
+		const initialValue =
+			typeof configuration === "object" && configuration !== null && !Array.isArray(configuration)
+				? configuration
+				: {};
+
+		return {
+			schema: selectedDriver.configuration_schema as Schema,
+			uiSchema: {},
+			initialValue,
+			fieldsValidationMode: ON_INPUT | ON_CHANGE,
+		};
+	});
+
+	let configureDialogKey = $state(0);
+
+	function handleConfigurationSave(value: CreateKnowledge["configuration"]) {
+		formStore.update((data) => ({ ...data, configuration: value }));
+		configureDialogKey++;
+	}
 </script>
 
 <Dialog.Root>
@@ -54,18 +95,34 @@
 					label="Description"
 					placeholder="Optional"
 				/>
-				<FormInput
+				<FormSelect
 				  {form}
 					field="driver"
 					label="Driver"
-					placeholder="e.g. s3, notion, github"
+					options={
+						(driversQuery.data?.source_drivers ?? []).map(driver => ({
+							label: driver.name,
+							value: driver.name,
+						}))
+					}
 				/>
-				<FormTextarea
-				  {form}
-					field="configuration"
-					label="Configuration (JSON)"
-					placeholder='Type your configuration here...'
-				/>
+				{#if driverFormConfig}
+					{#key `${$formStore.driver}-${configureDialogKey}`}
+						<JsonSchemaFormDialog
+							title="Configure Driver"
+							description="Configure the driver to use for this knowledge source."
+							formConfig={driverFormConfig}
+							onSubmit={(value) =>
+								handleConfigurationSave(value as CreateKnowledge["configuration"])}
+						>
+							{#snippet trigger()}
+								Configure
+							{/snippet}
+						</JsonSchemaFormDialog>
+					{/key}
+				{:else}
+					<Button variant="outline" disabled>Configure</Button>
+				{/if}
 				<FormError {form} />
 				<Dialog.Footer>
 					<Button variant="outline" type="button" onclick={() => form.reset()}>
