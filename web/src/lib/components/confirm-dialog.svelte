@@ -15,7 +15,16 @@
 
   }
 
-  let { title, description, onConfirm, onCancel, trigger, open, danger }: Props = $props();
+  let {
+    title,
+    description,
+    onConfirm,
+    onCancel,
+    trigger,
+    open = $bindable(false),
+    danger
+  }: Props = $props();
+
 
   function handleCancel() {
     onCancel?.();

@@ -44,6 +44,7 @@
 
   const handleDelete = () => {
     deleteMutation.mutate(deleteConfirmDialogId!);
+    deleteConfirmDialogId = null;
   }
 
   const columns: ColumnDef<Knowledge>[] = [
@@ -101,13 +102,12 @@
 />
 
 <ConfirmDialog
-  open={deleteConfirmDialogOpen}
+  bind:open={deleteConfirmDialogOpen}
   title="Delete Knowledge"
   danger
   description="Are you sure you want to delete this knowledge? This action cannot be undone."
   onConfirm={handleDelete}
   onCancel={() => {
-    deleteConfirmDialogOpen = false;
     deleteConfirmDialogId = null;
   }}
 />
