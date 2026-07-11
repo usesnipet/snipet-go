@@ -90,6 +90,7 @@ export const knowledgeService = {
     onSuccess: (_, { id }) => {
       toast.success("Knowledge updated.");
       queryClient.invalidateQueries({ queryKey: findByIdQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: listQueryKey() });
     },
     onError: (error) => {
       toast.error(error.message);

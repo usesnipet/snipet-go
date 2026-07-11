@@ -15,6 +15,8 @@
   import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
 	import { knowledgeService } from "../../service";
 	import ConfirmDialog from "$lib/components/confirm-dialog.svelte";
+	import { PencilIcon } from "@lucide/svelte";
+	import KnowledgeUpdateDialog from "../knowledge-update-dialog.svelte";
 
   type Props = {
 		knowledges: Knowledge[]
@@ -25,9 +27,16 @@
   let props: Props = $props();
   let deleteConfirmDialogOpen = $state(false);
   let deleteConfirmDialogId = $state<string | null>(null);
+  let updateDialogOpen = $state(false);
+  let updateDialogKnowledge: Knowledge | null = $state(null);
 
   const syncMutation = $derived(knowledgeService.sync());
   const deleteMutation = $derived(knowledgeService.delete());
+
+  const handleOpenUpdateDialog = (knowledge: Knowledge) => {
+    updateDialogKnowledge = knowledge;
+    updateDialogOpen = true;
+  }
 
 	function handleOpenKnowledge(id: string) {
 		goto(resolve("/(protected)/knowledge/[id]", { id }));
@@ -72,8 +81,14 @@
       cell: ({ row }) => renderComponent(TableActionsField, {
         actions: [
           {
+            key: "update",
+            icon: PencilIcon,
+            onClick: () => handleOpenUpdateDialog(row.original)
+          },
+          {
             key: "view",
             icon: ArrowRightIcon,
+            variant: "secondary",
             onClick: () => handleOpenKnowledge(row.original.id)
           },
           {
@@ -110,4 +125,8 @@
   onCancel={() => {
     deleteConfirmDialogId = null;
   }}
+/>
+<KnowledgeUpdateDialog
+  bind:open={updateDialogOpen}
+  knowledge={updateDialogKnowledge ?? undefined}
 />
