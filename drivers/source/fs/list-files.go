@@ -5,12 +5,28 @@ import (
 	"path/filepath"
 )
 
-func listFiles(basePath string) ([]string, error) {
+func listFiles(cfg Config) ([]string, error) {
 	var files []string
 
-	err := filepath.WalkDir(basePath, func(path string, d fs.DirEntry, err error) error {
+	matcher := NewMatcher(cfg.Ignore)
+
+	err := filepath.WalkDir(cfg.BasePath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
+		}
+
+		rel, err := filepath.Rel(cfg.BasePath, path)
+		if err != nil {
+			return err
+		}
+
+		rel = filepath.ToSlash(rel)
+
+		if matcher.Match(rel) {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		if d.IsDir() {

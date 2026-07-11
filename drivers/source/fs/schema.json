@@ -4,9 +4,16 @@
   "properties": {
     "basePath": {
       "type": "string"
+    },
+    "ignore": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
-    "basePath"
+    "basePath",
+    "ignore"
   ]
 }

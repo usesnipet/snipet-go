@@ -55,7 +55,7 @@ func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISo
 		return nil, err
 	}
 
-	files, err := listFiles(cfg.BasePath)
+	files, err := listFiles(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -63,5 +63,5 @@ func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISo
 }
 
 func (d *Driver) GetContent(ctx context.Context, id string) (runtime.IContent, error) {
-
+	return nil, fmt.Errorf("not implemented")
 }
