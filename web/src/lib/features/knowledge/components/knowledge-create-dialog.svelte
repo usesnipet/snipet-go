@@ -2,7 +2,6 @@
 	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import * as Dialog from "$lib/components/ui/dialog";
 	import { knowledgeService } from "../service";
-	import PlusIcon from "@lucide/svelte/icons/plus";
 	import { defaults, superForm } from "sveltekit-superforms";
 	import { zod4, zod4Client } from "sveltekit-superforms/adapters";
 	import { createKnowledgeSchema, type CreateKnowledge } from "../schemas";
@@ -14,6 +13,13 @@
 	import JsonSchemaFormDialog from "$lib/sjsf/json-schema-form-dialog.svelte";
 	import { ON_INPUT, ON_CHANGE } from "@sjsf/form";
 	import type { FormOptions, Schema } from "@sjsf/form";
+	import type { Snippet } from "svelte";
+
+	type Props = {
+		open?: boolean;
+		trigger?: Snippet;
+	}
+	let { open = $bindable(false), trigger }: Props = $props();
 
 	const driversQuery = knowledgeService.listDrivers();
 
@@ -67,13 +73,19 @@
 		formStore.update((data) => ({ ...data, configuration: value }));
 		configureDialogKey++;
 	}
+
+	function handleCancel() {
+		form.reset();
+		open = false;
+	}
 </script>
 
-<Dialog.Root>
-  <Dialog.Trigger class={buttonVariants({ variant: "outline" })}>
-		<PlusIcon />
-		Create knowledge
-	</Dialog.Trigger>
+<Dialog.Root bind:open>
+  {#if trigger}
+		<Dialog.Trigger class={buttonVariants({ variant: "outline" })}>
+		  {@render trigger()}
+		</Dialog.Trigger>
+	{/if}
 
 	<Dialog.Content>
 		<Dialog.Header>
@@ -125,7 +137,7 @@
 				{/if}
 				<FormError {form} />
 				<Dialog.Footer>
-					<Button variant="outline" type="button" onclick={() => form.reset()}>
+					<Button variant="outline" type="button" onclick={handleCancel}>
 						Cancel
 					</Button>
 					<Button disabled={createKnowledgeMutation.isPending} type="submit">

@@ -27,7 +27,7 @@
     },
     {
       header: "Kinds",
-      cell: ({ row }) => renderComponent(TableBadgeField, { value: row.original.kind })
+      cell: ({ row }) => renderComponent(TableBadgeField, { value: row.original.kind, variant: "outline" })
     },
     {
       header: "Last Modified At",
