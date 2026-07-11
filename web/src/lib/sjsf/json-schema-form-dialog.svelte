@@ -10,6 +10,7 @@
 		type FormOptions
 	} from '@sjsf/form';
 	import type { Snippet } from 'svelte';
+	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
 
 	type JsonSchemaFormConfig = Pick<
 		FormOptions<T>,
@@ -67,7 +68,11 @@
 		</Dialog.Header>
 
 		<Form attributes={{ novalidate: true }}>
-			<Content />
+		  <ScrollArea class="max-h-[80vh] pr-4">
+				<Content />
+			</ScrollArea>
+
+
 
 			<Dialog.Footer>
 				<Button variant="outline" type="button" onclick={handleCancel}>Cancel</Button>

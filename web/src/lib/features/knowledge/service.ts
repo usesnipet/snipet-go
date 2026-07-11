@@ -34,7 +34,7 @@ const listItemsQueryKey = (knowledgeId: string, filter?: FilterKnowledgeItem) =>
 const findByIdQueryKey = (id: string) => [BASE_URL, id];
 const listDriversQueryKey = () => [BASE_URL, "drivers"];
 const listIndexDriversQueryKey = () => [BASE_URL, "index", "drivers"];
-const listIndexesQueryKey = (knowledgeId: string, filter?: FilterKnowledgeIndex) => [BASE_URL, knowledgeId, "indexes", filter];
+const listIndexesQueryKey = (knowledgeId?: string, filter?: FilterKnowledgeIndex) => [BASE_URL, knowledgeId, "indexes", filter];
 export const knowledgeService = {
   queryKeys: {
     listQueryKey,
@@ -153,7 +153,7 @@ export const knowledgeService = {
       schemas: { response: sourceDriversSchema },
     }),
   })),
-  listIndexes: (knowledgeId: string, filter?: FilterKnowledgeIndex) => createQuery(() => ({
+  listIndexes: (knowledgeId?: string, filter?: FilterKnowledgeIndex) => createQuery(() => ({
     queryKey: listIndexesQueryKey(knowledgeId, filter),
     queryFn: async () => {
       const res = await authenticatedClient().get<KnowledgeIndexPaginated>({
@@ -163,6 +163,7 @@ export const knowledgeService = {
       })
       return res.data;
     },
+    enabled: !!knowledgeId,
   })),
   createIndex: () => createMutation(() => ({
     mutationFn: (

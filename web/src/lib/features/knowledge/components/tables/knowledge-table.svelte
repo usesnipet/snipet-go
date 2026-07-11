@@ -3,7 +3,7 @@
 	import { resolve } from "$app/paths";
 	import FlexTable from "$lib/components/flex-table/flex-table.svelte";
 	import type { ColumnDef } from "@tanstack/table-core";
-	import type { Knowledge } from "../../schemas";
+	import type { Knowledge, KnowledgeSyncStatus } from "../../schemas";
 	import { renderComponent } from "$lib/components/ui/data-table";
 	import TableTimeField from "$lib/components/flex-table/table-time-field.svelte";
 	import TableBadgeField from "$lib/components/flex-table/table-badge-field.svelte";
@@ -17,6 +17,7 @@
 	import ConfirmDialog from "$lib/components/confirm-dialog.svelte";
 	import { PencilIcon } from "@lucide/svelte";
 	import KnowledgeUpdateDialog from "../knowledge-update-dialog.svelte";
+	import type { BadgeVariant } from "$lib/components/ui/badge";
 
   type Props = {
 		knowledges: Knowledge[]
@@ -55,6 +56,11 @@
     deleteMutation.mutate(deleteConfirmDialogId!);
     deleteConfirmDialogId = null;
   }
+  const syncStatusVariant = (status: KnowledgeSyncStatus | null): BadgeVariant => {
+    if (status === "success") return "success";
+    if (status === "failed") return "destructive";
+    return "secondary";
+  }
 
   const columns: ColumnDef<Knowledge>[] = [
     {
@@ -73,7 +79,7 @@
       header: "Sync Status",
       cell: ({ row }) => renderComponent(TableBadgeField, {
         value: row.original.sync_status,
-        variant: row.original.sync_status === "success" ? "default" : "destructive"
+        variant: syncStatusVariant(row.original.sync_status)
       }),
     },
     {
