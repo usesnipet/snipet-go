@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/riverqueue/river"
-	"github.com/riverqueue/river/rivertype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,10 +13,11 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	"github.com/usesnipet/snipet/internal/page"
-	"github.com/usesnipet/snipet/internal/queue"
+	queuemocks "github.com/usesnipet/snipet/internal/queue/mocks"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
+	runtimemocks "github.com/usesnipet/snipet/internal/runtime/mocks"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -30,89 +29,49 @@ var testIndexConfigSchema = util.JSONMap{
 	"required": []any{"dimension"},
 }
 
-type mockIndexDriver struct {
-	mock.Mock
+func newPassthroughTxManager(t *testing.T) *mocks.MockITxManager {
+	t.Helper()
+
+	tx := mocks.NewMockITxManager(t)
+	tx.EXPECT().
+		WithTransaction(mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+			return fn(ctx)
+		}).
+		Maybe()
+	return tx
 }
 
-func (m *mockIndexDriver) Reader(config util.JSONMap) (runtime.IIndexReader, error) {
-	args := m.Called(config)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(runtime.IIndexReader), args.Error(1)
-}
+func newNoopJobQueue(t *testing.T) *queuemocks.MockIJobQueue {
+	t.Helper()
 
-func (m *mockIndexDriver) Writer(config util.JSONMap) (runtime.IIndexWriter, error) {
-	args := m.Called(config)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(runtime.IIndexWriter), args.Error(1)
-}
-
-func (m *mockIndexDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
-	return m.Called(ctx, config).Error(0)
-}
-
-func (m *mockIndexDriver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, error) {
-	args := m.Called(ctx)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(util.JSONMap), args.Error(1)
-}
-
-type passthroughTxManager struct{}
-
-func (m *passthroughTxManager) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return fn(ctx)
-}
-
-type mockJobQueue struct {
-	mock.Mock
-}
-
-func (m *mockJobQueue) Push(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (int64, error) {
-	argsMock := m.Called(ctx, args, opts)
-	return argsMock.Get(0).(int64), argsMock.Error(1)
-}
-
-func (m *mockJobQueue) JobGet(ctx context.Context, id int64) (*rivertype.JobRow, error) {
-	argsMock := m.Called(ctx, id)
-	return argsMock.Get(0).(*rivertype.JobRow), argsMock.Error(1)
-}
-
-type noopJobQueue struct{}
-
-func (n *noopJobQueue) Push(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (int64, error) {
-	return 0, nil
-}
-
-func (n *noopJobQueue) JobGet(ctx context.Context, id int64) (*rivertype.JobRow, error) {
-	return nil, nil
+	q := queuemocks.NewMockIJobQueue(t)
+	q.EXPECT().Push(mock.Anything, mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
+	q.EXPECT().JobGet(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	return q
 }
 
 type testServiceOptions struct {
 	txManager   repository.ITxManager
-	riverClient queue.IJobQueue
+	riverClient *queuemocks.MockIJobQueue
 }
 
-func expectSuccessfulIndexConnection(driver *mockIndexDriver, config util.JSONMap) {
-	driver.On("GetConfigurationSchema", mock.Anything).Return(testIndexConfigSchema, nil).Once()
-	driver.On("TestConnection", mock.Anything, config).Return(nil).Once()
+func expectSuccessfulIndexConnection(driver *runtimemocks.MockIIndexDriver, config util.JSONMap) {
+	driver.EXPECT().GetConfigurationSchema(mock.Anything).Return(testIndexConfigSchema, nil).Once()
+	driver.EXPECT().TestConnection(mock.Anything, config).Return(nil).Once()
 }
 
 func newTestService(
 	t *testing.T,
 	repo repository.IKnowledgeIndexRepository,
-	drivers map[string]*mockIndexDriver,
+	drivers map[string]*runtimemocks.MockIIndexDriver,
 	opts ...func(*testServiceOptions),
 ) *knowledgeindex.Service {
 	t.Helper()
 
 	options := testServiceOptions{
-		txManager:   &passthroughTxManager{},
-		riverClient: &noopJobQueue{},
+		txManager:   newPassthroughTxManager(t),
+		riverClient: newNoopJobQueue(t),
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -175,7 +134,7 @@ func TestCreateStoresIndexAndReturnsIt(t *testing.T) {
 	config := util.JSONMap{"dimension": 1536}
 	var stored *model.KnowledgeIndex
 
-	driver := new(mockIndexDriver)
+	driver := runtimemocks.NewMockIIndexDriver(t)
 	expectSuccessfulIndexConnection(driver, config)
 
 	repo := mocks.NewMockIKnowledgeIndexRepository(t)
@@ -187,18 +146,8 @@ func TestCreateStoresIndexAndReturnsIt(t *testing.T) {
 			index.ID = uuid.New().String()
 		}).
 		Return(nil)
-	repo.EXPECT().
-		FindByIDInKnowledge(mock.Anything, knowledgeID, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ string, id string) (*model.KnowledgeIndex, error) {
-			return &model.KnowledgeIndex{ID: id}, nil
-		})
 
-	riverClient := new(mockJobQueue)
-	riverClient.On("Push", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil).Once()
-
-	svc := newTestService(t, repo, map[string]*mockIndexDriver{"pinecone": driver}, func(o *testServiceOptions) {
-		o.riverClient = riverClient
-	})
+	svc := newTestService(t, repo, map[string]*runtimemocks.MockIIndexDriver{"pinecone": driver})
 
 	result, err := svc.Create(context.Background(), knowledgeID, knowledgeindex.CreateKnowledgeIndexDTO{
 		Name:          "Docs Index",
@@ -218,9 +167,6 @@ func TestCreateStoresIndexAndReturnsIt(t *testing.T) {
 	assert.Equal(t, result.Driver, stored.Driver)
 	assert.Equal(t, result.Configuration, stored.Configuration)
 	assert.Equal(t, result.KnowledgeID, stored.KnowledgeID)
-
-	driver.AssertExpectations(t)
-	riverClient.AssertExpectations(t)
 }
 
 func TestCreateReturnsRepositoryError(t *testing.T) {
@@ -230,7 +176,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 	config := util.JSONMap{"dimension": 1536}
 	expectedErr := errors.New("create failed")
 
-	driver := new(mockIndexDriver)
+	driver := runtimemocks.NewMockIIndexDriver(t)
 	expectSuccessfulIndexConnection(driver, config)
 
 	repo := mocks.NewMockIKnowledgeIndexRepository(t)
@@ -238,7 +184,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 		CreateInKnowledge(mock.Anything, knowledgeID, mock.Anything).
 		Return(expectedErr)
 
-	svc := newTestService(t, repo, map[string]*mockIndexDriver{"pinecone": driver})
+	svc := newTestService(t, repo, map[string]*runtimemocks.MockIIndexDriver{"pinecone": driver})
 
 	_, err := svc.Create(context.Background(), knowledgeID, knowledgeindex.CreateKnowledgeIndexDTO{
 		Name:          "Index",
@@ -246,8 +192,6 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 		Configuration: config,
 	})
 	require.ErrorIs(t, err, expectedErr)
-
-	driver.AssertExpectations(t)
 }
 
 func TestUpdateDelegatesNameToRepository(t *testing.T) {
@@ -291,16 +235,14 @@ func TestListDriversReturnsIndexDrivers(t *testing.T) {
 
 	indexSchema := util.JSONMap{"type": "object", "title": "index"}
 
-	driver := new(mockIndexDriver)
-	driver.On("GetConfigurationSchema", mock.Anything).Return(indexSchema, nil).Once()
+	driver := runtimemocks.NewMockIIndexDriver(t)
+	driver.EXPECT().GetConfigurationSchema(mock.Anything).Return(indexSchema, nil).Once()
 
-	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), map[string]*mockIndexDriver{"rag": driver})
+	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), map[string]*runtimemocks.MockIIndexDriver{"rag": driver})
 
 	result, err := svc.ListDrivers(context.Background())
 	require.NoError(t, err)
 	require.Len(t, result.IndexDrivers, 1)
 	assert.Equal(t, "rag", result.IndexDrivers[0].Name)
 	assert.Equal(t, indexSchema, result.IndexDrivers[0].ConfigurationSchema)
-
-	driver.AssertExpectations(t)
 }

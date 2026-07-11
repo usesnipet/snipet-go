@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/riverqueue/river"
-	"github.com/riverqueue/river/rivertype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,10 +15,11 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 	knowledge "github.com/usesnipet/snipet/internal/module/knowledge"
 	"github.com/usesnipet/snipet/internal/page"
-	"github.com/usesnipet/snipet/internal/queue"
+	queuemocks "github.com/usesnipet/snipet/internal/queue/mocks"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
+	runtimemocks "github.com/usesnipet/snipet/internal/runtime/mocks"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -32,71 +31,39 @@ var testConfigSchema = util.JSONMap{
 	"required": []any{"index"},
 }
 
-type mockSourceDriver struct {
-	mock.Mock
+func newPassthroughTxManager(t *testing.T) *mocks.MockITxManager {
+	t.Helper()
+
+	tx := mocks.NewMockITxManager(t)
+	tx.EXPECT().
+		WithTransaction(mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+			return fn(ctx)
+		}).
+		Maybe()
+	return tx
 }
 
-func (m *mockSourceDriver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISourceIterator, error) {
-	args := m.Called(ctx, config)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(runtime.ISourceIterator), args.Error(1)
-}
+func newNoopJobQueue(t *testing.T) *queuemocks.MockIJobQueue {
+	t.Helper()
 
-func (m *mockSourceDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
-	return m.Called(ctx, config).Error(0)
-}
-
-func (m *mockSourceDriver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, error) {
-	args := m.Called(ctx)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(util.JSONMap), args.Error(1)
-}
-
-type passthroughTxManager struct{}
-
-func (m *passthroughTxManager) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return fn(ctx)
-}
-
-type mockJobQueue struct {
-	mock.Mock
-}
-
-func (m *mockJobQueue) Push(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (int64, error) {
-	argsMock := m.Called(ctx, args, opts)
-	return argsMock.Get(0).(int64), argsMock.Error(1)
-}
-
-func (m *mockJobQueue) JobGet(ctx context.Context, id int64) (*rivertype.JobRow, error) {
-	argsMock := m.Called(ctx, id)
-	return argsMock.Get(0).(*rivertype.JobRow), argsMock.Error(1)
-}
-
-type noopJobQueue struct{}
-
-func (n *noopJobQueue) Push(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (int64, error) {
-	return 0, nil
-}
-
-func (n *noopJobQueue) JobGet(ctx context.Context, id int64) (*rivertype.JobRow, error) {
-	return nil, nil
+	q := queuemocks.NewMockIJobQueue(t)
+	q.EXPECT().Push(mock.Anything, mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
+	q.EXPECT().JobGet(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	return q
 }
 
 func newTestService(
 	t *testing.T,
 	repo repository.IKnowledgeRepository,
-	drivers map[string]*mockSourceDriver,
+	drivers map[string]*runtimemocks.MockISourceDriver,
 	opts ...func(*testServiceOptions),
 ) *knowledge.Service {
 	t.Helper()
 
 	options := testServiceOptions{
-		txManager:   &passthroughTxManager{},
-		riverClient: &noopJobQueue{},
+		txManager:   newPassthroughTxManager(t),
+		riverClient: newNoopJobQueue(t),
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -118,12 +85,12 @@ func newTestService(
 
 type testServiceOptions struct {
 	txManager   repository.ITxManager
-	riverClient queue.IJobQueue
+	riverClient *queuemocks.MockIJobQueue
 }
 
-func expectSuccessfulConnection(driver *mockSourceDriver, config util.JSONMap) {
-	driver.On("GetConfigurationSchema", mock.Anything).Return(testConfigSchema, nil).Once()
-	driver.On("TestConnection", mock.Anything, config).Return(nil).Once()
+func expectSuccessfulConnection(driver *runtimemocks.MockISourceDriver, config util.JSONMap) {
+	driver.EXPECT().GetConfigurationSchema(mock.Anything).Return(testConfigSchema, nil).Once()
+	driver.EXPECT().TestConnection(mock.Anything, config).Return(nil).Once()
 }
 
 func assertAppError(t *testing.T, err error, statusCode int, message string) {
@@ -174,7 +141,7 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	var stored *model.Knowledge
 
-	driver := new(mockSourceDriver)
+	driver := runtimemocks.NewMockISourceDriver(t)
 	expectSuccessfulConnection(driver, config)
 
 	repo := mocks.NewMockIKnowledgeRepository(t)
@@ -191,10 +158,10 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 			return &model.Knowledge{ID: id}, nil
 		})
 
-	riverClient := new(mockJobQueue)
-	riverClient.On("Push", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil).Once()
+	riverClient := queuemocks.NewMockIJobQueue(t)
+	riverClient.EXPECT().Push(mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil).Once()
 
-	svc := newTestService(t, repo, map[string]*mockSourceDriver{"pinecone": driver}, func(o *testServiceOptions) {
+	svc := newTestService(t, repo, map[string]*runtimemocks.MockISourceDriver{"pinecone": driver}, func(o *testServiceOptions) {
 		o.riverClient = riverClient
 	})
 
@@ -217,9 +184,6 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 	assert.Equal(t, result.Description, stored.Description)
 	assert.Equal(t, result.Driver, stored.Driver)
 	assert.Equal(t, result.Configuration, stored.Configuration)
-
-	driver.AssertExpectations(t)
-	riverClient.AssertExpectations(t)
 }
 
 func TestCreateReturnsRepositoryError(t *testing.T) {
@@ -228,7 +192,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	expectedErr := errors.New("create failed")
 
-	driver := new(mockSourceDriver)
+	driver := runtimemocks.NewMockISourceDriver(t)
 	expectSuccessfulConnection(driver, config)
 
 	repo := mocks.NewMockIKnowledgeRepository(t)
@@ -236,7 +200,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 		Create(mock.Anything, mock.Anything).
 		Return(expectedErr)
 
-	svc := newTestService(t, repo, map[string]*mockSourceDriver{"pinecone": driver})
+	svc := newTestService(t, repo, map[string]*runtimemocks.MockISourceDriver{"pinecone": driver})
 
 	_, _, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
 		Name:          "Knowledge",
@@ -244,8 +208,6 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 		Configuration: config,
 	})
 	require.ErrorIs(t, err, expectedErr)
-
-	driver.AssertExpectations(t)
 }
 
 func TestCreateReturnsBadRequestWhenConnectionFails(t *testing.T) {
@@ -254,13 +216,13 @@ func TestCreateReturnsBadRequestWhenConnectionFails(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	connectionErr := errors.New("connection refused")
 
-	driver := new(mockSourceDriver)
-	driver.On("GetConfigurationSchema", mock.Anything).Return(testConfigSchema, nil).Once()
-	driver.On("TestConnection", mock.Anything, config).Return(connectionErr).Once()
+	driver := runtimemocks.NewMockISourceDriver(t)
+	driver.EXPECT().GetConfigurationSchema(mock.Anything).Return(testConfigSchema, nil).Once()
+	driver.EXPECT().TestConnection(mock.Anything, config).Return(connectionErr).Once()
 
 	repo := mocks.NewMockIKnowledgeRepository(t)
 
-	svc := newTestService(t, repo, map[string]*mockSourceDriver{"pinecone": driver})
+	svc := newTestService(t, repo, map[string]*runtimemocks.MockISourceDriver{"pinecone": driver})
 
 	_, _, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
 		Name:          "Knowledge",
@@ -268,8 +230,6 @@ func TestCreateReturnsBadRequestWhenConnectionFails(t *testing.T) {
 		Configuration: config,
 	})
 	assertAppError(t, err, http.StatusBadRequest, "bad request: "+runtime.ErrConnectionFailed.Error())
-
-	driver.AssertExpectations(t)
 }
 
 func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
@@ -344,15 +304,13 @@ func TestTestConnectionSucceedsWhenDriverValidatesAndConnects(t *testing.T) {
 
 	config := util.JSONMap{"index": "docs"}
 
-	driver := new(mockSourceDriver)
+	driver := runtimemocks.NewMockISourceDriver(t)
 	expectSuccessfulConnection(driver, config)
 
-	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]*mockSourceDriver{"pinecone": driver})
+	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]*runtimemocks.MockISourceDriver{"pinecone": driver})
 
 	err := svc.TestConnection(context.Background(), "pinecone", config)
 	require.NoError(t, err)
-
-	driver.AssertExpectations(t)
 }
 
 func TestTestConnectionReturnsNotFoundForUnknownDriver(t *testing.T) {
@@ -370,29 +328,25 @@ func TestTestConnectionReturnsBadRequestWhenSchemaFetchFails(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	schemaErr := errors.New("schema unavailable")
 
-	driver := new(mockSourceDriver)
-	driver.On("GetConfigurationSchema", mock.Anything).Return(nil, schemaErr).Once()
+	driver := runtimemocks.NewMockISourceDriver(t)
+	driver.EXPECT().GetConfigurationSchema(mock.Anything).Return(nil, schemaErr).Once()
 
-	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]*mockSourceDriver{"pinecone": driver})
+	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]*runtimemocks.MockISourceDriver{"pinecone": driver})
 
 	err := svc.TestConnection(context.Background(), "pinecone", config)
 	assertAppError(t, err, http.StatusBadRequest, schemaErr.Error())
-
-	driver.AssertExpectations(t)
 }
 
 func TestTestConnectionReturnsBadRequestWhenConfigurationInvalid(t *testing.T) {
 	t.Parallel()
 
-	driver := new(mockSourceDriver)
-	driver.On("GetConfigurationSchema", mock.Anything).Return(testConfigSchema, nil).Once()
+	driver := runtimemocks.NewMockISourceDriver(t)
+	driver.EXPECT().GetConfigurationSchema(mock.Anything).Return(testConfigSchema, nil).Once()
 
-	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]*mockSourceDriver{"pinecone": driver})
+	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]*runtimemocks.MockISourceDriver{"pinecone": driver})
 
 	err := svc.TestConnection(context.Background(), "pinecone", util.JSONMap{})
 	assertAppError(t, err, http.StatusBadRequest, runtime.ErrInvalidConfiguration.Error())
-
-	driver.AssertExpectations(t)
 }
 
 func TestTestConnectionReturnsDriverConnectionError(t *testing.T) {
@@ -401,16 +355,14 @@ func TestTestConnectionReturnsDriverConnectionError(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	connectionErr := errors.New("connection refused")
 
-	driver := new(mockSourceDriver)
-	driver.On("GetConfigurationSchema", mock.Anything).Return(testConfigSchema, nil).Once()
-	driver.On("TestConnection", mock.Anything, config).Return(connectionErr).Once()
+	driver := runtimemocks.NewMockISourceDriver(t)
+	driver.EXPECT().GetConfigurationSchema(mock.Anything).Return(testConfigSchema, nil).Once()
+	driver.EXPECT().TestConnection(mock.Anything, config).Return(connectionErr).Once()
 
-	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]*mockSourceDriver{"pinecone": driver})
+	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]*runtimemocks.MockISourceDriver{"pinecone": driver})
 
 	err := svc.TestConnection(context.Background(), "pinecone", config)
 	assertAppError(t, err, http.StatusBadRequest, runtime.ErrConnectionFailed.Error())
-
-	driver.AssertExpectations(t)
 }
 
 func TestListDriversReturnsSourceDrivers(t *testing.T) {
@@ -418,13 +370,13 @@ func TestListDriversReturnsSourceDrivers(t *testing.T) {
 
 	sourceSchema := util.JSONMap{"type": "object"}
 
-	sourceDriver := new(mockSourceDriver)
-	sourceDriver.On("GetConfigurationSchema", mock.Anything).Return(sourceSchema, nil).Once()
+	sourceDriver := runtimemocks.NewMockISourceDriver(t)
+	sourceDriver.EXPECT().GetConfigurationSchema(mock.Anything).Return(sourceSchema, nil).Once()
 
 	svc := newTestService(
 		t,
 		mocks.NewMockIKnowledgeRepository(t),
-		map[string]*mockSourceDriver{"fs": sourceDriver},
+		map[string]*runtimemocks.MockISourceDriver{"fs": sourceDriver},
 	)
 
 	result, err := svc.ListDrivers(context.Background())
@@ -432,6 +384,4 @@ func TestListDriversReturnsSourceDrivers(t *testing.T) {
 	require.Len(t, result.SourceDrivers, 1)
 	assert.Equal(t, "fs", result.SourceDrivers[0].Name)
 	assert.Equal(t, sourceSchema, result.SourceDrivers[0].ConfigurationSchema)
-
-	sourceDriver.AssertExpectations(t)
 }

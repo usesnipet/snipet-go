@@ -11,7 +11,7 @@ type IIndexReader interface {
 }
 
 type IIndexWriter interface {
-	Index(ctx context.Context, content IContent) error
+	Index(ctx context.Context, content IContent, metadata map[string]any) error
 	DeleteMany(ctx context.Context, itemIds []string) error
 	SupportedKinds() []SourceItemKind
 }
