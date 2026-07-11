@@ -13,7 +13,6 @@
     }
   },
   "required": [
-    "basePath",
-    "ignore"
+    "basePath"
   ]
 }
