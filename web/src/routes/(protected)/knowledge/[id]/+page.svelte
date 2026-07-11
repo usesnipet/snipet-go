@@ -5,23 +5,12 @@
 	import KnowledgeItemTable from "$lib/features/knowledge/components/tables/knowledge-item-table.svelte";
 	import { knowledgeService } from "$lib/features/knowledge/service";
 	import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
-	import Loader2Icon from "@lucide/svelte/icons/loader-2";
-	import RefreshCwIcon from "@lucide/svelte/icons/refresh-cw";
 	import type { PageProps } from "./$types";
 
 	let { params }: PageProps = $props();
 
 	const knowledgeQuery = $derived(knowledgeService.findById(params.id));
 	const knowledgeItemsQuery = $derived(knowledgeService.listItems(params.id));
-	const syncMutation = $derived(knowledgeService.sync());
-
-	const isSyncing = $derived(
-		syncMutation.isPending || knowledgeQuery.data?.sync_status === "in_progress",
-	);
-
-	function handleSync() {
-		syncMutation.mutate({ id: params.id });
-	}
 </script>
 
 <PageLayout
@@ -31,17 +20,6 @@
 	{#snippet actionsLeft()}
 		<Button variant="outline" size="icon" href="/(protected)/knowledge" aria-label="Back to knowledge list">
 			<ArrowLeftIcon />
-		</Button>
-	{/snippet}
-
-	{#snippet actionsRight()}
-		<Button onclick={handleSync} disabled={isSyncing}>
-			{#if isSyncing}
-				<Loader2Icon class="animate-spin" />
-			{:else}
-				<RefreshCwIcon />
-			{/if}
-			Sync
 		</Button>
 	{/snippet}
 

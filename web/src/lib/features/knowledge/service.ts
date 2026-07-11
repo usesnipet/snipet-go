@@ -4,9 +4,10 @@ import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { toast } from "svelte-sonner";
 
 import {
-  createKnowledgeSchema, driversSchema, filterKnowledgeItemSchema, filterKnowledgeSchema,
-  knowledgeItemPaginatedSchema, knowledgePaginatedSchema, knowledgeSchema, syncKnowledgeQuerySchema,
-  testConnectionSchema, updateKnowledgeSchema
+  createKnowledgeIndexSchema, createKnowledgeSchema, filterKnowledgeIndexSchema, filterKnowledgeItemSchema,
+  filterKnowledgeSchema, indexDriversSchema, knowledgeIndexPaginatedSchema, knowledgeIndexSchema,
+  knowledgeItemPaginatedSchema, knowledgePaginatedSchema, knowledgeSchema, sourceDriversSchema,
+  syncKnowledgeQuerySchema, testConnectionSchema, updateKnowledgeIndexSchema, updateKnowledgeSchema
 } from "./schemas";
 
 import type {
@@ -19,7 +20,12 @@ import type {
   SyncKnowledgeQuery,
   TestConnection,
   UpdateKnowledge,
-  Drivers,
+  SourceDrivers,
+  FilterKnowledgeIndex,
+  KnowledgeIndexPaginated,
+  CreateKnowledgeIndex,
+  UpdateKnowledgeIndex,
+  IndexDrivers,
 } from "./schemas";
 const BASE_URL = "/api/knowledge";
 
@@ -27,6 +33,8 @@ const listQueryKey = (filter?: FilterKnowledge) => [BASE_URL, "list", filter];
 const listItemsQueryKey = (knowledgeId: string, filter?: FilterKnowledgeItem) => [BASE_URL, knowledgeId, "items", filter];
 const findByIdQueryKey = (id: string) => [BASE_URL, id];
 const listDriversQueryKey = () => [BASE_URL, "drivers"];
+const listIndexDriversQueryKey = () => [BASE_URL, "index", "drivers"];
+const listIndexesQueryKey = (knowledgeId: string, filter?: FilterKnowledgeIndex) => [BASE_URL, knowledgeId, "indexes", filter];
 export const knowledgeService = {
   queryKeys: {
     listQueryKey,
@@ -140,9 +148,77 @@ export const knowledgeService = {
   })),
   listDrivers: () => createQuery(() => ({
     queryKey: listDriversQueryKey(),
-    queryFn: () => authenticatedClient().get<Drivers>({
+    queryFn: () => authenticatedClient().get<SourceDrivers>({
       url: `${BASE_URL}/drivers`,
-      schemas: { response: driversSchema },
+      schemas: { response: sourceDriversSchema },
+    }),
+  })),
+  listIndexes: (knowledgeId: string, filter?: FilterKnowledgeIndex) => createQuery(() => ({
+    queryKey: listIndexesQueryKey(knowledgeId, filter),
+    queryFn: async () => {
+      const res = await authenticatedClient().get<KnowledgeIndexPaginated>({
+        url: `${BASE_URL}/${knowledgeId}/index`,
+        searchParams: filter,
+        schemas: { response: knowledgeIndexPaginatedSchema, searchParams: filterKnowledgeIndexSchema },
+      })
+      return res.data;
+    },
+  })),
+  createIndex: () => createMutation(() => ({
+    mutationFn: (
+      { data, knowledgeId }: { knowledgeId: string, data: CreateKnowledgeIndex }
+    ) => authenticatedClient().post({
+      url: `${BASE_URL}/${knowledgeId}/index`,
+      body: data,
+      schemas: { body: createKnowledgeIndexSchema, response: knowledgeIndexSchema },
+    }),
+    onSuccess: (_, { knowledgeId }) => {
+      toast.success("Index created.");
+      queryClient.invalidateQueries({ queryKey: listIndexesQueryKey(knowledgeId) });
+      queryClient.invalidateQueries({ queryKey: listQueryKey() });
+      queryClient.invalidateQueries({ queryKey: findByIdQueryKey(knowledgeId) });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  })),
+  updateIndex: () => createMutation(() => ({
+    mutationFn: (
+      { data, knowledgeId, id }: { knowledgeId: string, id: string, data: UpdateKnowledgeIndex }
+    ) => authenticatedClient().put({
+      url: `${BASE_URL}/${knowledgeId}/index/${id}`,
+      body: data,
+      schemas: { body: updateKnowledgeIndexSchema, response: knowledgeIndexSchema },
+    }),
+    onSuccess: (_, { knowledgeId }) => {
+      toast.success("Index updated.");
+      queryClient.invalidateQueries({ queryKey: listIndexesQueryKey(knowledgeId) });
+      queryClient.invalidateQueries({ queryKey: listQueryKey() });
+      queryClient.invalidateQueries({ queryKey: findByIdQueryKey(knowledgeId) });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  })),
+  deleteIndex: () => createMutation(() => ({
+    mutationFn: ({ knowledgeId, id }: { knowledgeId: string, id: string }) => authenticatedClient().delete({
+      url: `${BASE_URL}/${knowledgeId}/index/${id}`,
+    }),
+    onSuccess: (_, { knowledgeId }) => {
+      toast.success("Index deleted.");
+      queryClient.invalidateQueries({ queryKey: listIndexesQueryKey(knowledgeId) });
+      queryClient.invalidateQueries({ queryKey: listQueryKey() });
+      queryClient.invalidateQueries({ queryKey: findByIdQueryKey(knowledgeId) });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  })),
+  listIndexDrivers: () => createQuery(() => ({
+    queryKey: listIndexDriversQueryKey(),
+    queryFn: () => authenticatedClient().get<IndexDrivers>({
+      url: `${BASE_URL}/index/drivers`,
+      schemas: { response: indexDriversSchema },
     }),
   })),
 };

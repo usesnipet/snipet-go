@@ -82,10 +82,50 @@ export const filterKnowledgeItemSchema = filterKnowledgeSchema;
 export type FilterKnowledgeItem = z.infer<typeof filterKnowledgeItemSchema>;
 
 
-export const driversSchema = z.object({
+export const sourceDriversSchema = z.object({
   source_drivers: z.array(z.object({
     name: z.string(),
     configuration_schema: z.json(),
   })),
 });
-export type Drivers = z.infer<typeof driversSchema>;
+export type SourceDrivers = z.infer<typeof sourceDriversSchema>;
+
+export const knowledgeIndexSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  driver: z.string(),
+  configuration: z.json(),
+  knowledge_id: z.uuid()
+});
+export type KnowledgeIndex = z.infer<typeof knowledgeIndexSchema>;
+
+export const createKnowledgeIndexSchema = knowledgeIndexSchema.pick({
+  name: true,
+  driver: true,
+  configuration: true,
+});
+export type CreateKnowledgeIndex = z.infer<typeof createKnowledgeIndexSchema>;
+
+export const updateKnowledgeIndexSchema = knowledgeIndexSchema.pick({
+  name: true,
+});
+export type UpdateKnowledgeIndex = z.infer<typeof updateKnowledgeIndexSchema>;
+
+export const knowledgeIndexPaginatedSchema = z.object({
+  data: knowledgeIndexSchema.array(),
+  total: z.number(),
+  take: z.number(),
+  skip: z.number(),
+});
+export type KnowledgeIndexPaginated = z.infer<typeof knowledgeIndexPaginatedSchema>;
+
+export const filterKnowledgeIndexSchema = filterKnowledgeSchema;
+export type FilterKnowledgeIndex = z.infer<typeof filterKnowledgeIndexSchema>;
+
+export const indexDriversSchema = z.object({
+  index_drivers: z.array(z.object({
+    name: z.string(),
+    configuration_schema: z.json(),
+  })),
+});
+export type IndexDrivers = z.infer<typeof indexDriversSchema>;

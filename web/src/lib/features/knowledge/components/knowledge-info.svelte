@@ -1,11 +1,15 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card";
 	import { Skeleton } from "$lib/components/ui/skeleton";
-	import TableBadgeField from "$lib/components/flex-table/table-badge-field.svelte";
 	import TableTimeField from "$lib/components/flex-table/table-time-field.svelte";
-	import type { BadgeVariant } from "$lib/components/ui/badge";
+	import { Badge, type BadgeVariant } from "$lib/components/ui/badge";
 	import { JsonConfigCard } from "$lib/components/json-config";
 	import type { Knowledge, KnowledgeSyncStatus } from "../schemas";
+	import Button from "$lib/components/ui/button/button.svelte";
+	import { LoaderIcon, PencilIcon, RefreshCwIcon } from "@lucide/svelte";
+	import KnowledgeUpdateDialog from "./knowledge-update-dialog.svelte";
+	import { knowledgeService } from "../service";
+	import { logger } from "$lib/logger";
 
 	type Props = {
 		knowledge?: Knowledge;
@@ -14,27 +18,64 @@
 
 	let { knowledge, isLoading = false }: Props = $props();
 
+	let updateKnowledgeDialogOpen = $state(false);
+
 	function syncStatusVariant(status: KnowledgeSyncStatus | null | undefined): BadgeVariant {
 		if (status === "success") return "default";
 		if (status === "in_progress") return "secondary";
 		return "destructive";
 	}
+
+	function handleUpdateKnowledge() {
+		updateKnowledgeDialogOpen = true;
+	}
+
+	const syncMutation = knowledgeService.sync();
+
+	const isSyncing = $derived(
+		syncMutation.isPending || knowledge?.sync_status === "in_progress",
+	);
+
+	function handleSync() {
+		if (!knowledge) {
+			logger.warn("Knowledge not found when syncing on knowledge info");
+			return;
+		}
+
+		syncMutation.mutate({ id: knowledge.id });
+	}
 </script>
 
 <Card.Root class="h-full w-full min-w-0">
-	<Card.Header>
-		<Card.Title>
+	<Card.Header class="flex justify-between items-center">
+		<div>
+			<Card.Title>
+				{#if isLoading}
+					<Skeleton class="h-6 w-3/4" />
+				{:else}
+					{knowledge?.name}
+				{/if}
+			</Card.Title>
 			{#if isLoading}
-				<Skeleton class="h-6 w-3/4" />
-			{:else}
-				{knowledge?.name}
+				<Skeleton class="h-4 w-full" />
+			{:else if knowledge?.description}
+				<Card.Description>{knowledge.description}</Card.Description>
 			{/if}
-		</Card.Title>
-		{#if isLoading}
-			<Skeleton class="h-4 w-full" />
-		{:else if knowledge?.description}
-			<Card.Description>{knowledge.description}</Card.Description>
-		{/if}
+		</div>
+		<div>
+			<Button size="sm" onclick={handleUpdateKnowledge}>
+				<PencilIcon />
+				Edit
+			</Button>
+			<Button size="sm" onclick={handleSync} disabled={isSyncing}>
+				{#if isSyncing}
+					<LoaderIcon class="animate-spin" />
+				{:else}
+					<RefreshCwIcon />
+				{/if}
+				Sync
+			</Button>
+		</div>
 	</Card.Header>
 
 	<Card.Content class="space-y-4">
@@ -73,10 +114,7 @@
 			{#if isLoading}
 				<Skeleton class="h-5 w-24" />
 			{:else if knowledge?.sync_status}
-				<TableBadgeField
-					value={knowledge.sync_status}
-					variant={syncStatusVariant(knowledge.sync_status)}
-				/>
+				<Badge variant={syncStatusVariant(knowledge.sync_status)}>{knowledge.sync_status}</Badge>
 			{:else}
 				<p class="text-muted-foreground text-sm">—</p>
 			{/if}
@@ -90,3 +128,8 @@
 		{/if}
 	</Card.Content>
 </Card.Root>
+
+<KnowledgeUpdateDialog
+  bind:open={updateKnowledgeDialogOpen}
+	knowledge={knowledge}
+/>
