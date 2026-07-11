@@ -35,6 +35,7 @@ const findByIdQueryKey = (id: string) => [BASE_URL, id];
 const listDriversQueryKey = () => [BASE_URL, "drivers"];
 const listIndexDriversQueryKey = () => [BASE_URL, "index", "drivers"];
 const listIndexesQueryKey = (knowledgeId?: string, filter?: FilterKnowledgeIndex) => [BASE_URL, knowledgeId, "indexes", filter];
+
 export const knowledgeService = {
   queryKeys: {
     listQueryKey,
@@ -72,7 +73,10 @@ export const knowledgeService = {
     }),
     refetchInterval: (query) => {
       const knowledge = query.state.data;
-      return knowledge?.sync_status === "in_progress" ? 2000 : false;
+      const inProgress = knowledge?.sync_status === "in_progress";
+      if (inProgress) return 2000;
+      queryClient.invalidateQueries({ queryKey: listItemsQueryKey(id) });
+      return false;
     },
   })),
   create: () => createMutation(() => ({
