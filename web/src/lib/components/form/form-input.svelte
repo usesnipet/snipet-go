@@ -6,7 +6,7 @@
     FieldError,
 	FieldDescription,
   } from "$lib/components/ui/field/index.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import type { HTMLAttributes, HTMLInputTypeAttribute } from "svelte/elements";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
   type Props = {
@@ -14,9 +14,10 @@
     field: FormPathLeaves<T>;
     label?: string;
     description?: string;
-  } & HTMLAttributes<HTMLInputElement>;
+    type?: Exclude<HTMLInputTypeAttribute, "file">;
+  } & Omit<HTMLAttributes<HTMLInputElement>, "type">;
 
-  let { form, field, label, description, ...rest }: Props = $props();
+  let { form, field, label, description, type, ...rest }: Props = $props();
   const { value, constraints, errors } = $derived.by(() => formFieldProxy(form, field));
   const fieldErrors = $derived.by(() => {
     const list = $errors;
@@ -31,6 +32,7 @@
   </div>
   <Input
     id={field}
+    {type}
     bind:value={$value}
     {...$constraints}
     {...rest}
