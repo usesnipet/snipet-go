@@ -65,7 +65,8 @@ func (s *Service) Create(ctx context.Context, knowledgeID string, dto CreateKnow
 		if err := s.repo.CreateInKnowledge(ctx, knowledgeID, index); err != nil {
 			return err
 		}
-		return s.Sync(ctx, knowledgeID, index.ID)
+		return nil
+		// return s.Sync(ctx, knowledgeID, index.ID)
 	})
 	return index, err
 }

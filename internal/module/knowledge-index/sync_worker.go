@@ -35,6 +35,7 @@ type SyncIndexWorker struct {
 	sourceManager            *runtime.SourceManager
 	indexManager             *runtime.IndexManager
 	knowledgeRepo            repository.IKnowledgeRepository
+	knowledgeItemRepo        repository.IKnowledgeItemRepository
 	indexRepo                repository.IKnowledgeIndexRepository
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository
 	logger                   *logger.Logger
@@ -44,6 +45,7 @@ func NewSyncIndexWorker(
 	indexManager *runtime.IndexManager,
 	sourceManager *runtime.SourceManager,
 	knowledgeRepo repository.IKnowledgeRepository,
+	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	indexRepo repository.IKnowledgeIndexRepository,
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository,
 	logger *logger.Logger,
@@ -52,6 +54,7 @@ func NewSyncIndexWorker(
 		indexManager:             indexManager,
 		sourceManager:            sourceManager,
 		knowledgeRepo:            knowledgeRepo,
+		knowledgeItemRepo:        knowledgeItemRepo,
 		indexRepo:                indexRepo,
 		indexedKnowledgeItemRepo: indexedKnowledgeItemRepo,
 		logger:                   logger,
@@ -83,6 +86,7 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 	if err != nil {
 		return err
 	}
+	defer writer.Close()
 
 	toCreate, err := s.indexedKnowledgeItemRepo.FindToCreateInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID)
 	if err != nil {
@@ -107,8 +111,10 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 			Status:          model.IndexedStatusPending,
 		})
 	}
-	if err := s.indexedKnowledgeItemRepo.CreateManyInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID, indexedToCreate); err != nil {
-		return err
+	if len(indexedToCreate) > 0 {
+		if err := s.indexedKnowledgeItemRepo.CreateManyInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID, indexedToCreate); err != nil {
+			return err
+		}
 	}
 
 	toUpdateIDs := util.Map(toUpdate, func(item model.IndexedKnowledgeItem) string {
@@ -117,44 +123,41 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 	toDeleteIDs := util.Map(toDelete, func(item model.IndexedKnowledgeItem) string {
 		return item.ID
 	})
-	err = s.indexedKnowledgeItemRepo.UpdateStatusesByIDsInIndex(
-		ctx,
-		job.Args.KnowledgeID,
-		job.Args.IndexID,
-		append(toUpdateIDs, toDeleteIDs...),
-		model.IndexedStatusPending,
-	)
-	if err != nil {
-		return err
+	pendingIDs := append(toUpdateIDs, toDeleteIDs...)
+	if len(pendingIDs) > 0 {
+		err = s.indexedKnowledgeItemRepo.UpdateStatusesByIDsInIndex(
+			ctx,
+			job.Args.KnowledgeID,
+			job.Args.IndexID,
+			pendingIDs,
+			model.IndexedStatusPending,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = writer.DeleteMany(ctx, toDeleteIDs)
-	if err != nil {
-		return err
+	if len(toDeleteIDs) > 0 {
+		if err := writer.DeleteMany(ctx, toDeleteIDs); err != nil {
+			return err
+		}
+		for _, id := range toDeleteIDs {
+			if err := s.indexedKnowledgeItemRepo.DeleteInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID, id); err != nil {
+				return err
+			}
+		}
 	}
 
 	for _, item := range indexedToCreate {
-		s.indexItem(
-			ctx,
-			job.Args.KnowledgeID,
-			job.Args.IndexID,
-			writer,
-			sourceDriver,
-			*item,
-			false,
-		)
+		if err := s.indexItem(ctx, knowledge, index, writer, sourceDriver, *item); err != nil {
+			s.logger.Errorf("failed to index item %s: %v", item.ID, err)
+		}
 	}
 
 	for _, item := range toUpdate {
-		s.indexItem(
-			ctx,
-			job.Args.KnowledgeID,
-			job.Args.IndexID,
-			writer,
-			sourceDriver,
-			item,
-			true,
-		)
+		if err := s.indexItem(ctx, knowledge, index, writer, sourceDriver, item); err != nil {
+			s.logger.Errorf("failed to reindex item %s: %v", item.ID, err)
+		}
 	}
 
 	return nil
@@ -162,56 +165,67 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 
 func (s *SyncIndexWorker) indexItem(
 	ctx context.Context,
-	knowledgeID string,
-	indexID string,
+	knowledge *model.Knowledge,
+	index *model.KnowledgeIndex,
 	writer runtime.IIndexWriter,
 	sourceDriver runtime.ISourceDriver,
 	item model.IndexedKnowledgeItem,
-	deleteBeforeIndex bool,
 ) error {
-	updateStatus := func(status model.IndexStatus, reason *string, errMessage *string) error {
+	updateStatus := func(status model.IndexStatus, hash string, reason *string, errMessage *string) error {
+		update := &model.IndexedKnowledgeItem{
+			Status:    status,
+			Reason:    reason,
+			LastError: errMessage,
+		}
+		if hash != "" {
+			update.Hash = hash
+		}
 		return s.indexedKnowledgeItemRepo.UpdateInIndex(
 			ctx,
-			knowledgeID,
-			indexID,
+			knowledge.ID,
+			index.ID,
 			item.ID,
-			&model.IndexedKnowledgeItem{
-				Status:    status,
-				Reason:    reason,
-				LastError: errMessage,
-			},
+			update,
 		)
 	}
 
-	err := updateStatus(model.IndexedStatusSyncing, nil, nil)
+	if item.KnowledgeItemID == nil {
+		reason := "knowledge item reference is missing"
+		return updateStatus(model.IndexedStatusError, "", &reason, nil)
+	}
+
+	knowledgeItem, err := s.knowledgeItemRepo.FindByIDInKnowledge(ctx, knowledge.ID, *item.KnowledgeItemID)
 	if err != nil {
+		errMessage := fmt.Sprintf("failed to load knowledge item: %v", err)
+		return updateStatus(model.IndexedStatusError, "", nil, &errMessage)
+	}
+
+	if err := updateStatus(model.IndexedStatusSyncing, "", nil, nil); err != nil {
 		return err
 	}
 
-	if deleteBeforeIndex {
-		err := writer.DeleteMany(ctx, []string{item.ID})
-		if err != nil {
-			errMessage := fmt.Sprintf("failed to delete item before indexing %s: %v", item.ID, err)
-			return updateStatus(model.IndexedStatusError, nil, &errMessage)
-		}
-	}
-
-	content, err := sourceDriver.GetContent(ctx, *item.KnowledgeItemID)
+	reader, err := sourceDriver.Reader(ctx, knowledge.Configuration, knowledgeItem.ExternalID)
 	if err != nil {
 		errMessage := fmt.Sprintf("failed to get content: %v", err)
-		return updateStatus(model.IndexedStatusError, nil, &errMessage)
+		return updateStatus(model.IndexedStatusError, "", nil, &errMessage)
+	}
+	defer reader.Close()
+
+	if !slices.Contains(writer.SupportedKinds(), reader.Kind()) {
+		reason := fmt.Sprintf("item kind (%s) is not supported by index", reader.Kind())
+		return updateStatus(model.IndexedStatusSkipped, "", &reason, nil)
 	}
 
-	if !slices.Contains(writer.SupportedKinds(), content.Kind()) {
-		reason := fmt.Sprintf("item kind (%s) is not supported by index", content.Kind())
-		return updateStatus(model.IndexedStatusSkipped, &reason, nil)
-	}
-
-	err = writer.Index(ctx, content)
+	content, err := reader.Open(ctx)
 	if err != nil {
-		errMessage := fmt.Sprintf("failed to index item %s: %v", item.ID, err)
-		return updateStatus(model.IndexedStatusError, nil, &errMessage)
+		errMessage := fmt.Sprintf("failed to open content: %v", err)
+		return updateStatus(model.IndexedStatusError, "", nil, &errMessage)
 	}
 
-	return updateStatus(model.IndexedStatusIndexed, nil, nil)
+	if err := writer.Index(ctx, item.ID, reader.Kind(), content, reader.Attributes()); err != nil {
+		errMessage := fmt.Sprintf("failed to index item %s: %v", item.ID, err)
+		return updateStatus(model.IndexedStatusError, "", nil, &errMessage)
+	}
+
+	return updateStatus(model.IndexedStatusIndexed, knowledgeItem.Hash, nil, nil)
 }

@@ -6,14 +6,21 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 )
 
+type IndexRecord struct {
+	Content  any
+	Metadata util.JSONMap
+}
+
 type IIndexReader interface {
-	Read(ctx context.Context, query string) ([]SourceItem, error)
+	Read(ctx context.Context, query string, limit int) ([]IndexRecord, error)
+	Close() error
 }
 
 type IIndexWriter interface {
-	Index(ctx context.Context, content IContent, metadata map[string]any) error
-	DeleteMany(ctx context.Context, itemIds []string) error
+	Index(ctx context.Context, itemID string, kind SourceItemKind, content any, attributes any) error
+	DeleteMany(ctx context.Context, itemIDs []string) error
 	SupportedKinds() []SourceItemKind
+	Close() error
 }
 
 type IIndexDriver interface {

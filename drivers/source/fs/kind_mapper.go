@@ -1,55 +1,14 @@
 package fs
 
 import (
-	"mime"
-	"net/http"
-	"os"
-	"path"
-
 	"github.com/usesnipet/snipet/internal/runtime"
 )
 
-func detectByContent(item os.FileInfo) (*string, bool) {
-	file, err := os.Open(item.Name())
-	if err != nil {
-		return nil, false
+func mapKind(filePath string) runtime.SourceItemKind {
+	normalized := detectMediaType(filePath)
+	if normalized == "" {
+		return runtime.SourceItemKindUnknown
 	}
-	defer file.Close()
-
-	buffer := make([]byte, 512)
-	n, err := file.Read(buffer)
-	if err != nil {
-		return nil, false
-	}
-
-	mimeType := http.DetectContentType(buffer[:n])
-	return &mimeType, true
-}
-
-func detectByExtension(item os.FileInfo) (*string, bool) {
-	extension := path.Ext(item.Name())
-	mimeType := mime.TypeByExtension(extension)
-	return &mimeType, true
-}
-
-func normalizeMimeType(contentType string) string {
-	mediaType, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		return contentType
-	}
-	return mediaType
-}
-
-func mapKind(item os.FileInfo) runtime.SourceItemKind {
-	mimeType, ok := detectByContent(item)
-	if !ok {
-		mimeType, ok = detectByExtension(item)
-		if !ok {
-			return runtime.SourceItemKindUnknown
-		}
-	}
-
-	normalized := normalizeMimeType(*mimeType)
 
 	switch normalized {
 	case "text/plain":

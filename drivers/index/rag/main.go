@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/usesnipet/snipet/drivers/index/rag/store"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
 )
@@ -13,8 +14,7 @@ import (
 //go:embed schema.json
 var schemaJSON []byte
 
-type Driver struct {
-}
+type Driver struct{}
 
 func NewDriver() runtime.IIndexDriver {
 	return &Driver{}
@@ -23,18 +23,29 @@ func NewDriver() runtime.IIndexDriver {
 func (d *Driver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, error) {
 	var schema util.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
-		return nil, fmt.Errorf("fs: parse schema: %w", err)
+		return nil, fmt.Errorf("rag: parse schema: %w", err)
 	}
 	return schema, nil
 }
 
 func (d *Driver) TestConnection(ctx context.Context, configJson util.JSONMap) error {
-	_, err := util.ParseJSONMap[Config](configJson)
+	cfg, err := util.ParseJSONMap[Config](configJson)
 	if err != nil {
 		return err
 	}
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
 
-	return nil
+	s, err := store.NewStore(cfg.StoreConfig())
+	if err != nil {
+		return err
+	}
+	if err := s.Start(ctx); err != nil {
+		return err
+	}
+	defer s.Close()
+	return s.Ping(ctx)
 }
 
 func (d *Driver) Reader(config util.JSONMap) (runtime.IIndexReader, error) {
@@ -42,7 +53,7 @@ func (d *Driver) Reader(config util.JSONMap) (runtime.IIndexReader, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewReader(cfg), nil
+	return NewReader(context.Background(), cfg)
 }
 
 func (d *Driver) Writer(config util.JSONMap) (runtime.IIndexWriter, error) {
@@ -50,5 +61,5 @@ func (d *Driver) Writer(config util.JSONMap) (runtime.IIndexWriter, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewWriter(cfg)
+	return NewWriter(context.Background(), cfg)
 }

@@ -18,7 +18,7 @@ func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handl
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/knowledge", func(r chi.Router) {
-		r.Use(h.apiKeyMiddleware)
+		// r.Use(h.apiKeyMiddleware)
 		r.Get("/", serve(h.filter))
 		r.Get("/drivers", serve(h.listDrivers))
 		r.Get("/{id}/items", serve(h.filterItems))

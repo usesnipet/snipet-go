@@ -25,7 +25,7 @@ build:
 	$(GO) build -o ./tmp/api ./cmd/api
 
 build-prod:
-	$(GO) build -ldflags "-s -w" -o ./out/api-prod ./cmd/api
+	cd web && pnpm build && cd .. && $(GO) build -ldflags "-s -w" -o ./out/api-prod ./cmd/api
 
 db-generate:
 	@set -a && [ -f .env ] && . ./.env; set +a; \

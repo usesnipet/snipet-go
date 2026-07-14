@@ -2,7 +2,6 @@ package fs
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/usesnipet/snipet/internal/runtime"
@@ -50,32 +49,12 @@ func (it *Iterator) Next(ctx context.Context) bool {
 
 	path := it.files[it.index]
 
-	info, err := os.Stat(path)
+	sourceItem, hash, err := sourceItemFromFile(path)
 	if err != nil {
 		it.err = err
 		return false
 	}
-
-	hash, err := fileHash(path)
-	if err != nil {
-		it.err = err
-		return false
-	}
-
-	lastModified := info.ModTime()
-	it.current = &runtime.SourceItem{
-		ID:           path,
-		Name:         info.Name(),
-		Kind:         mapKind(info),
-		LastModified: &lastModified,
-		Metadata: util.JSONMap{
-			"size":          info.Size(),
-			"last_modified": lastModified,
-			"path":          path,
-			"name":          info.Name(),
-		},
-	}
-
+	it.current = sourceItem
 	it.hash = hash
 
 	return true

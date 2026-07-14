@@ -1,17 +1,21 @@
 package chunker
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 
+	"github.com/ledongthuc/pdf"
 	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/util"
 )
 
 type Chunk struct {
-	SeqID   int
-	Content string
-	Start   int
-	End     int
+	SeqID    int
+	Content  string
+	Start    int
+	End      int
+	Metadata map[string]any
 }
 
 type Chunker struct {
@@ -25,8 +29,8 @@ func New(cfg Config) (*Chunker, error) {
 	return &Chunker{cfg: cfg}, nil
 }
 
-func (c *Chunker) Chunk(content runtime.IContent) ([]Chunk, error) {
-	text, err := extractText(content)
+func (c *Chunker) Chunk(kind runtime.SourceItemKind, content, attributes any, metadata map[string]any) ([]Chunk, error) {
+	text, err := extractText(kind, content, attributes)
 	if err != nil {
 		return nil, err
 	}
@@ -35,30 +39,101 @@ func (c *Chunker) Chunk(content runtime.IContent) ([]Chunk, error) {
 	chunks := make([]Chunk, len(parts))
 	for i, part := range parts {
 		chunks[i] = Chunk{
-			SeqID:   i,
-			Content: part.Content,
-			Start:   part.Start,
-			End:     part.End,
+			SeqID:    i,
+			Content:  part.Content,
+			Start:    part.Start,
+			End:      part.End,
+			Metadata: metadata,
 		}
 	}
 
 	return chunks, nil
 }
 
-func extractText(content runtime.IContent) (string, error) {
-	switch value := content.(type) {
-	case *runtime.TextContent:
-		return value.Text, nil
-	case *runtime.DocumentContent:
-		if value.Doc == nil {
-			return "", fmt.Errorf("chunker: document content has no reader")
+func extractText(kind runtime.SourceItemKind, content, attributes any) (string, error) {
+	switch kind {
+	case runtime.SourceItemKindText:
+		text, ok := content.(string)
+		if !ok {
+			return "", fmt.Errorf("chunker: text content must be a string, got %T", content)
 		}
-		data, err := io.ReadAll(value.Doc)
+		return text, nil
+	case runtime.SourceItemKindDocument:
+		mediaType, err := documentMediaType(attributes)
 		if err != nil {
-			return "", fmt.Errorf("chunker: read document: %w", err)
+			return "", err
 		}
-		return string(data), nil
+		if mediaType != "application/pdf" {
+			return "", fmt.Errorf("chunker: unsupported document media type %q", mediaType)
+		}
+		return extractPDFText(content)
 	default:
-		return "", fmt.Errorf("chunker: unsupported content kind %q", content.Kind())
+		return "", fmt.Errorf("chunker: unsupported content kind %q", kind)
+	}
+}
+
+func documentMediaType(attributes any) (string, error) {
+	switch v := attributes.(type) {
+	case runtime.DocumentAttributes:
+		return v.MediaType, nil
+	case *runtime.DocumentAttributes:
+		if v == nil {
+			return "", fmt.Errorf("chunker: document attributes are nil")
+		}
+		return v.MediaType, nil
+	case util.JSONMap:
+		attrs, err := util.ParseJSONMap[runtime.DocumentAttributes](v)
+		if err != nil {
+			return "", fmt.Errorf("chunker: parse document attributes: %w", err)
+		}
+		return attrs.MediaType, nil
+	case map[string]any:
+		attrs, err := util.ParseJSONMap[runtime.DocumentAttributes](util.JSONMap(v))
+		if err != nil {
+			return "", fmt.Errorf("chunker: parse document attributes: %w", err)
+		}
+		return attrs.MediaType, nil
+	default:
+		return "", fmt.Errorf("chunker: unexpected document attributes type %T", attributes)
+	}
+}
+
+func extractPDFText(content any) (string, error) {
+	data, err := readContentBytes(content)
+	if err != nil {
+		return "", err
+	}
+
+	reader, err := pdf.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return "", fmt.Errorf("chunker: open pdf: %w", err)
+	}
+
+	plain, err := reader.GetPlainText()
+	if err != nil {
+		return "", fmt.Errorf("chunker: extract pdf text: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(plain); err != nil {
+		return "", fmt.Errorf("chunker: read pdf text: %w", err)
+	}
+	return buf.String(), nil
+}
+
+func readContentBytes(content any) ([]byte, error) {
+	switch v := content.(type) {
+	case []byte:
+		return v, nil
+	case string:
+		return []byte(v), nil
+	case io.Reader:
+		data, err := io.ReadAll(v)
+		if err != nil {
+			return nil, fmt.Errorf("chunker: read content: %w", err)
+		}
+		return data, nil
+	default:
+		return nil, fmt.Errorf("chunker: pdf content must be []byte or io.Reader, got %T", content)
 	}
 }

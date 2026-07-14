@@ -62,6 +62,6 @@ func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISo
 	return NewIterator(files), nil
 }
 
-func (d *Driver) GetContent(ctx context.Context, id string) (runtime.IContent, error) {
-	return nil, fmt.Errorf("not implemented")
+func (d *Driver) Reader(ctx context.Context, config util.JSONMap, itemID string) (runtime.ISourceReader, error) {
+	return NewReader(config, itemID)
 }

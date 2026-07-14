@@ -165,6 +165,7 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 			Name:         item.Name,
 			Hash:         hash,
 			Kind:         item.Kind,
+			Attributes:   item.Attributes,
 			Metadata:     item.Metadata,
 			LastModified: item.LastModified,
 		})

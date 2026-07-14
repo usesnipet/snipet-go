@@ -14,6 +14,7 @@ type KnowledgeItem struct {
 	Name         string                 `gorm:"type:text" json:"name"`
 	Hash         string                 `gorm:"type:varchar(128);index" json:"hash"`
 	Metadata     util.JSONMap           `gorm:"type:jsonb" json:"metadata"`
+	Attributes   util.JSONMap           `gorm:"type:jsonb" json:"attributes"`
 	Kind         runtime.SourceItemKind `gorm:"type:varchar(255)" json:"kind"`
 	LastModified *time.Time             `json:"last_modified,omitempty"`
 

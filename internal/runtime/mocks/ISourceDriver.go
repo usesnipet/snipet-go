@@ -102,74 +102,6 @@ func (_c *MockISourceDriver_GetConfigurationSchema_Call) RunAndReturn(run func(c
 	return _c
 }
 
-// GetContent provides a mock function for the type MockISourceDriver
-func (_mock *MockISourceDriver) GetContent(ctx context.Context, itemID string) (runtime.IContent, error) {
-	ret := _mock.Called(ctx, itemID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetContent")
-	}
-
-	var r0 runtime.IContent
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (runtime.IContent, error)); ok {
-		return returnFunc(ctx, itemID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) runtime.IContent); ok {
-		r0 = returnFunc(ctx, itemID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(runtime.IContent)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, itemID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockISourceDriver_GetContent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetContent'
-type MockISourceDriver_GetContent_Call struct {
-	*mock.Call
-}
-
-// GetContent is a helper method to define mock.On call
-//   - ctx context.Context
-//   - itemID string
-func (_e *MockISourceDriver_Expecter) GetContent(ctx any, itemID any) *MockISourceDriver_GetContent_Call {
-	return &MockISourceDriver_GetContent_Call{Call: _e.mock.On("GetContent", ctx, itemID)}
-}
-
-func (_c *MockISourceDriver_GetContent_Call) Run(run func(ctx context.Context, itemID string)) *MockISourceDriver_GetContent_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockISourceDriver_GetContent_Call) Return(iContent runtime.IContent, err error) *MockISourceDriver_GetContent_Call {
-	_c.Call.Return(iContent, err)
-	return _c
-}
-
-func (_c *MockISourceDriver_GetContent_Call) RunAndReturn(run func(ctx context.Context, itemID string) (runtime.IContent, error)) *MockISourceDriver_GetContent_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Iterator provides a mock function for the type MockISourceDriver
 func (_mock *MockISourceDriver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISourceIterator, error) {
 	ret := _mock.Called(ctx, config)
@@ -234,6 +166,80 @@ func (_c *MockISourceDriver_Iterator_Call) Return(iSourceIterator runtime.ISourc
 }
 
 func (_c *MockISourceDriver_Iterator_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap) (runtime.ISourceIterator, error)) *MockISourceDriver_Iterator_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Reader provides a mock function for the type MockISourceDriver
+func (_mock *MockISourceDriver) Reader(ctx context.Context, config util.JSONMap, itemID string) (runtime.ISourceReader, error) {
+	ret := _mock.Called(ctx, config, itemID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Reader")
+	}
+
+	var r0 runtime.ISourceReader
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, string) (runtime.ISourceReader, error)); ok {
+		return returnFunc(ctx, config, itemID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, string) runtime.ISourceReader); ok {
+		r0 = returnFunc(ctx, config, itemID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(runtime.ISourceReader)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap, string) error); ok {
+		r1 = returnFunc(ctx, config, itemID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockISourceDriver_Reader_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Reader'
+type MockISourceDriver_Reader_Call struct {
+	*mock.Call
+}
+
+// Reader is a helper method to define mock.On call
+//   - ctx context.Context
+//   - config util.JSONMap
+//   - itemID string
+func (_e *MockISourceDriver_Expecter) Reader(ctx any, config any, itemID any) *MockISourceDriver_Reader_Call {
+	return &MockISourceDriver_Reader_Call{Call: _e.mock.On("Reader", ctx, config, itemID)}
+}
+
+func (_c *MockISourceDriver_Reader_Call) Run(run func(ctx context.Context, config util.JSONMap, itemID string)) *MockISourceDriver_Reader_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 util.JSONMap
+		if args[1] != nil {
+			arg1 = args[1].(util.JSONMap)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISourceDriver_Reader_Call) Return(iSourceReader runtime.ISourceReader, err error) *MockISourceDriver_Reader_Call {
+	_c.Call.Return(iSourceReader, err)
+	return _c
+}
+
+func (_c *MockISourceDriver_Reader_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap, itemID string) (runtime.ISourceReader, error)) *MockISourceDriver_Reader_Call {
 	_c.Call.Return(run)
 	return _c
 }
