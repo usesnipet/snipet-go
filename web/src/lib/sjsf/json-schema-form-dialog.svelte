@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends Record<string, unknown> = Record<string, unknown>">
-	import * as defaults from '$lib/sjsf/defaults';
+	import * as defaults from './defaults';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import {
@@ -42,7 +42,9 @@
 		}
 	}));
 
-	setFormContext(form);
+	$effect(() => {
+		setFormContext(form);
+	});
 
 	function handleCancel() {
 		form.reset();
