@@ -17,6 +17,10 @@
       url: "/(protected)",
     },
     {
+      title: "Agents",
+      url: "/(protected)/agent",
+    },
+    {
       title: "Knowledge",
       url: "/(protected)/knowledge",
     },
@@ -54,6 +58,9 @@
   function isActive(url: RouteId) {
     if (url === "/(protected)/knowledge") {
       return page.route.id?.startsWith("/(protected)/knowledge") ?? false;
+    }
+    if (url === "/(protected)/agent") {
+      return page.route.id?.startsWith("/(protected)/agent") ?? false;
     }
     return page.route.id === url;
   }
