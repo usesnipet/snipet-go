@@ -36,7 +36,7 @@ Represents a conversation.
 A session contains:
 
 - Current conversation state
-- Associated bot
+- Associated agent
 - Participants (users)
 - Messages
 
@@ -44,11 +44,11 @@ The session itself does **not** contain business logic.
 
 ---
 
-## Bot
+## Agent
 
 Defines the AI behavior.
 
-A bot contains:
+An agent contains:
 
 - Prompt / Persona
 - Available models
@@ -56,7 +56,7 @@ A bot contains:
 - Knowledge sources
 - Planner configuration
 
-Bots do not own conversation history.
+Agents do not own conversation history.
 
 ---
 
@@ -75,10 +75,10 @@ Examples:
 - FAQ
 - Company data
 
-A bot may have multiple knowledge sources.
+An agent may have multiple knowledge sources.
 
 ```text
-Bot
+Agent
  ├── Company Docs
  ├── FAQ
  ├── PostgreSQL

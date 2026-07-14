@@ -1,14 +1,14 @@
 # Snipet
 
-Go backend for orchestrating AI bots with multi-client support, conversation sessions, knowledge bases, and a configurable runtime.
+Go backend for orchestrating AI agents with multi-client support, conversation sessions, knowledge bases, and a configurable runtime.
 
-Snipet exposes a REST API that lets external applications (websites, mobile apps, Discord, WhatsApp, etc.) integrate with bots featuring personas, language models, tools, and knowledge sources.
+Snipet exposes a REST API that lets external applications (websites, mobile apps, Discord, WhatsApp, etc.) integrate with agents featuring personas, language models, tools, and knowledge sources.
 
 ## Features
 
 - **Multi-tenant by client** — each client has its own users, sessions, and configuration
 - **Flexible authentication** — JWT, webhook, and anonymous users via configurable providers
-- **Configurable bots** — persona, LLM models, tools, and knowledge base bindings
+- **Configurable agents** — persona, LLM models, tools, and knowledge base bindings
 - **Knowledge** — management of static or semi-static data sources (documents, RAG, vector stores, etc.)
 - **Sessions** — conversation history and dynamic state
 - **API Keys** — authentication for internal services and integrations
@@ -141,7 +141,7 @@ All routes are prefixed with `/api`.
 |----------|------------|------|
 | Clients | `/client` | API Key |
 | Users | `/client/{client_code}/user` | API Key / JWT |
-| Bots | `/bot` | API Key |
+| Agents | `/agent` | API Key |
 | Sessions | `/client/{client_code}/session` | JWT / API Key |
 | API Keys | `/api-key` | API Key |
 | Knowledge | `/knowledge` | API Key |

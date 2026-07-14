@@ -11,7 +11,7 @@ type SendMessageDTO struct {
 }
 
 type CreateSessionDTO struct {
-	BotID    string       `json:"bot_id" validate:"required,uuid"`
+	AgentID  string       `json:"agent_id" validate:"required,uuid"`
 	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
 }
 

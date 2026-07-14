@@ -1,4 +1,4 @@
-package bot
+package agent
 
 import (
 	"net/http"
@@ -23,7 +23,7 @@ func NewHandler(
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/bot", func(r chi.Router) {
+	r.Route("/agent", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
 			r.Get("/", serve(h.filter))
@@ -52,7 +52,7 @@ func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
-	var dto CreateBotDTO
+	var dto CreateAgentDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
-	var dto UpdateBotDTO
+	var dto UpdateAgentDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}

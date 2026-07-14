@@ -1,4 +1,4 @@
-package bot_test
+package agent_test
 
 import (
 	"context"
@@ -12,16 +12,16 @@ import (
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	bot "github.com/usesnipet/snipet/internal/module/bot"
+	agent "github.com/usesnipet/snipet/internal/module/agent"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 )
 
 func newTestService(
-	botRepo repository.IBotRepository,
-) *bot.Service {
-	return bot.NewService(botRepo)
+	agentRepo repository.IAgentRepository,
+) *agent.Service {
+	return agent.NewService(agentRepo)
 }
 
 func assertAppError(t *testing.T, err error, statusCode int, message string) {
@@ -35,16 +35,16 @@ func assertAppError(t *testing.T, err error, statusCode int, message string) {
 func TestFilterDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
-	expected := page.NewPaginated([]model.Bot{{Name: "Bot A"}}, 1, 0, 10)
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
+	expected := page.NewPaginated([]model.Agent{{Name: "Agent A"}}, 1, 0, 10)
+	agentRepo := mocks.NewMockIAgentRepository(t)
+	agentRepo.EXPECT().
 		Filter(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, opts *filter.Options[model.Bot]) {
-			assert.Equal(t, filter.Default[model.Bot]().Take, opts.Take)
+		Run(func(_ context.Context, opts *filter.Options[model.Agent]) {
+			assert.Equal(t, filter.Default[model.Agent]().Take, opts.Take)
 		}).
 		Return(expected, nil)
 
-	svc := newTestService(botRepo)
+	svc := newTestService(agentRepo)
 
 	result, err := svc.Filter(context.Background())
 	require.NoError(t, err)
@@ -55,45 +55,45 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	expected := &model.Bot{ID: id, Name: "Found"}
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
+	expected := &model.Agent{ID: id, Name: "Found"}
+	agentRepo := mocks.NewMockIAgentRepository(t)
+	agentRepo.EXPECT().
 		FindByID(mock.Anything, id).
 		Return(expected, nil)
 
-	svc := newTestService(botRepo)
+	svc := newTestService(agentRepo)
 
 	result, err := svc.FindByID(context.Background(), id)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
 
-func TestCreateStoresBotAndReturnsIt(t *testing.T) {
+func TestCreateStoresAgentAndReturnsIt(t *testing.T) {
 	t.Parallel()
 
-	config := model.BotConfiguration{LLMs: []any{"gpt-4"}}
-	var stored *model.Bot
+	config := model.AgentConfiguration{LLMs: []any{"gpt-4"}}
+	var stored *model.Agent
 
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
+	agentRepo := mocks.NewMockIAgentRepository(t)
+	agentRepo.EXPECT().
 		Create(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, b *model.Bot) {
-			stored = b
-			b.ID = uuid.New().String()
+		Run(func(_ context.Context, a *model.Agent) {
+			stored = a
+			a.ID = uuid.New().String()
 		}).
 		Return(nil)
 
-	svc := newTestService(botRepo)
+	svc := newTestService(agentRepo)
 
-	result, err := svc.Create(context.Background(), bot.CreateBotDTO{
-		Name:          "Support Bot",
+	result, err := svc.Create(context.Background(), agent.CreateAgentDTO{
+		Name:          "Support Agent",
 		Description:   "Handles support tickets",
 		Configuration: config,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	assert.Equal(t, "Support Bot", result.Name)
+	assert.Equal(t, "Support Agent", result.Name)
 	assert.Equal(t, "Handles support tickets", result.Description)
 	assert.Equal(t, config, result.Configuration)
 
@@ -107,16 +107,16 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 	t.Parallel()
 
 	expectedErr := errors.New("create failed")
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
+	agentRepo := mocks.NewMockIAgentRepository(t)
+	agentRepo.EXPECT().
 		Create(mock.Anything, mock.Anything).
 		Return(expectedErr)
 
-	svc := newTestService(botRepo)
+	svc := newTestService(agentRepo)
 
-	_, err := svc.Create(context.Background(), bot.CreateBotDTO{
-		Name:          "Bot",
-		Configuration: model.BotConfiguration{},
+	_, err := svc.Create(context.Background(), agent.CreateAgentDTO{
+		Name:          "Agent",
+		Configuration: model.AgentConfiguration{},
 	})
 	require.ErrorIs(t, err, expectedErr)
 }
@@ -128,10 +128,10 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 	newName := "Updated Name"
 	newDescription := "Updated description"
 
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
+	agentRepo := mocks.NewMockIAgentRepository(t)
+	agentRepo.EXPECT().
 		UpdateByID(mock.Anything, id, mock.Anything).
-		Run(func(_ context.Context, gotID string, updates *model.Bot) {
+		Run(func(_ context.Context, gotID string, updates *model.Agent) {
 			assert.Equal(t, id, gotID)
 			assert.Equal(t, newName, updates.Name)
 			assert.Equal(t, newDescription, updates.Description)
@@ -139,9 +139,9 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(botRepo)
+	svc := newTestService(agentRepo)
 
-	err := svc.Update(context.Background(), id, bot.UpdateBotDTO{
+	err := svc.Update(context.Background(), id, agent.UpdateAgentDTO{
 		Name:        &newName,
 		Description: &newDescription,
 	})
@@ -152,19 +152,19 @@ func TestUpdateDelegatesConfigurationToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	config := model.BotConfiguration{LLMs: []any{"claude"}}
+	config := model.AgentConfiguration{LLMs: []any{"claude"}}
 
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
+	agentRepo := mocks.NewMockIAgentRepository(t)
+	agentRepo.EXPECT().
 		UpdateByID(mock.Anything, id, mock.Anything).
-		Run(func(_ context.Context, _ string, updates *model.Bot) {
+		Run(func(_ context.Context, _ string, updates *model.Agent) {
 			assert.Equal(t, config, updates.Configuration)
 		}).
 		Return(nil)
 
-	svc := newTestService(botRepo)
+	svc := newTestService(agentRepo)
 
-	err := svc.Update(context.Background(), id, bot.UpdateBotDTO{
+	err := svc.Update(context.Background(), id, agent.UpdateAgentDTO{
 		Configuration: &config,
 	})
 	require.NoError(t, err)
@@ -174,12 +174,12 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	botRepo := mocks.NewMockIBotRepository(t)
-	botRepo.EXPECT().
+	agentRepo := mocks.NewMockIAgentRepository(t)
+	agentRepo.EXPECT().
 		DeleteByID(mock.Anything, id).
 		Return(nil)
 
-	svc := newTestService(botRepo)
+	svc := newTestService(agentRepo)
 
 	err := svc.DeleteByID(context.Background(), id)
 	require.NoError(t, err)

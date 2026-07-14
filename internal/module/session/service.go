@@ -89,7 +89,7 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 	}
 
 	session := &model.Session{
-		BotID:    dto.BotID,
+		AgentID:  dto.AgentID,
 		Metadata: dto.Metadata,
 		ClientID: client.ID,
 	}

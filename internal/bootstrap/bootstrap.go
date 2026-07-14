@@ -20,7 +20,7 @@ import (
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	auth_module "github.com/usesnipet/snipet/internal/module/auth"
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
-	"github.com/usesnipet/snipet/internal/module/bot"
+	"github.com/usesnipet/snipet/internal/module/agent"
 	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
@@ -43,7 +43,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// repositories
 	txManager := repository.NewTxManager(db)
 	apiKeyRepo := repository.NewApiKeyRepository(db)
-	botRepo := repository.NewBotRepository(db)
+	agentRepo := repository.NewAgentRepository(db)
 	clientRepo := repository.NewClientRepository(db)
 	sessionRepo := repository.NewSessionRepository(db, clientRepo)
 	sessionMessageRepo := repository.NewSessionMessageRepository(db, clientRepo)
@@ -87,7 +87,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	clientService := client.NewService(clientRepo)
 
-	botService := bot.NewService(botRepo)
+	agentService := agent.NewService(agentRepo)
 
 	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, knowledgeItemRepo, sourceManager, riverClient)
 	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo, indexedKnowledgeItemRepo, indexManager, riverClient, txManager)
@@ -107,7 +107,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// handlers
 	authHandler := auth_module.NewHandler(authService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
-	botHandler := bot.NewHandler(botService, apiKeyMiddleware)
+	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
 	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
 	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware, jwtAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
@@ -120,7 +120,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
 		authHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
-		botHandler.RegisterRoutes(r, api.Serve)
+		agentHandler.RegisterRoutes(r, api.Serve)
 		clientHandler.RegisterRoutes(r, api.Serve)
 		sessionHandler.RegisterRoutes(r, api.Serve)
 		knowledgeHandler.RegisterRoutes(r, api.Serve)
