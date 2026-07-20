@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/internal/api"
+	"github.com/usesnipet/snipet/internal/runtime"
 )
 
 type Handler struct {
@@ -31,6 +32,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 			r.Get("/{id}", serve(h.findByID))
 			r.Put("/{id}", serve(h.update))
 			r.Delete("/{id}", serve(h.deleteByID))
+			r.Post("/{id}/run", serve(h.run))
 		})
 	})
 }
@@ -80,4 +82,49 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteNoContent(w)
+}
+
+func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
+	var dto RunAgentDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+
+	var sse *api.SSEWriter
+	ensureSSE := func() error {
+		if sse != nil {
+			return nil
+		}
+		var err error
+		sse, err = api.NewSSEWriter(w)
+		return err
+	}
+
+	err := h.service.Run(r.Context(), chi.URLParam(r, "id"), dto, func(event runtime.IEvent) error {
+		if err := ensureSSE(); err != nil {
+			return err
+		}
+		switch event := event.(type) {
+		case runtime.ExecutionUpdatedEvent:
+			return sse.Write("execution.updated", event)
+		case runtime.ExecutionMessageAddedEvent:
+			return sse.Write("execution.message_added", event)
+		case runtime.ExecutionErrorEvent:
+			return sse.Write("execution.error", event)
+		default:
+			return nil
+		}
+	})
+	if err != nil {
+		if sse == nil {
+			return err
+		}
+		_ = sse.Write("error", map[string]string{"message": err.Error()})
+		return nil
+	}
+
+	if err := ensureSSE(); err != nil {
+		return err
+	}
+	return sse.Write("close", map[string]string{"status": "done"})
 }

@@ -12,7 +12,7 @@ import (
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/driver"
 )
 
 type SyncKnowledgeArgs struct {
@@ -35,7 +35,7 @@ type SyncWorker struct {
 	river.WorkerDefaults[SyncKnowledgeArgs]
 
 	txManager          repository.ITxManager
-	sourceManager      *runtime.SourceManager
+	sourceManager      *driver.Manager[driver.IKnowledgeSource]
 	knowledgeRepo      repository.IKnowledgeRepository
 	knowledgeItemRepo  repository.IKnowledgeItemRepository
 	knowledgeIndexRepo repository.IKnowledgeIndexRepository
@@ -45,7 +45,7 @@ type SyncWorker struct {
 
 func NewSyncWorker(
 	txManager repository.ITxManager,
-	sourceManager *runtime.SourceManager,
+	sourceManager *driver.Manager[driver.IKnowledgeSource],
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	knowledgeIndexRepo repository.IKnowledgeIndexRepository,

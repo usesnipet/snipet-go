@@ -3,7 +3,8 @@ package runtime
 import "errors"
 
 var (
-	ErrDriverNotFound       = errors.New("driver not found")
-	ErrInvalidConfiguration = errors.New("invalid configuration")
-	ErrConnectionFailed     = errors.New("connection failed")
+	ErrNoLLMConfigured     = errors.New("no llm configured")
+	ErrLLMGenerationFailed = errors.New("llm generation failed")
+
+	ErrToolNotFound = errors.New("tool not found")
 )

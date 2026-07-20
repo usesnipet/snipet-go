@@ -44,7 +44,7 @@ func TestFilterDelegatesToRepository(t *testing.T) {
 		}).
 		Return(expected, nil)
 
-	svc := newTestService(agentRepo)
+	svc := newTestService(agentRepo, nil)
 
 	result, err := svc.Filter(context.Background())
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 		FindByID(mock.Anything, id).
 		Return(expected, nil)
 
-	svc := newTestService(agentRepo)
+	svc := newTestService(agentRepo, nil)
 
 	result, err := svc.FindByID(context.Background(), id)
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 func TestCreateStoresAgentAndReturnsIt(t *testing.T) {
 	t.Parallel()
 
-	config := model.AgentConfiguration{LLMs: []any{"gpt-4"}}
+	config := model.AgentConfiguration{LLM: model.LLMConfig{Key: "gpt-4"}}
 	var stored *model.Agent
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
@@ -83,7 +83,7 @@ func TestCreateStoresAgentAndReturnsIt(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(agentRepo)
+	svc := newTestService(agentRepo, nil)
 
 	result, err := svc.Create(context.Background(), agent.CreateAgentDTO{
 		Name:          "Support Agent",
@@ -112,7 +112,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 		Create(mock.Anything, mock.Anything).
 		Return(expectedErr)
 
-	svc := newTestService(agentRepo)
+	svc := newTestService(agentRepo, nil)
 
 	_, err := svc.Create(context.Background(), agent.CreateAgentDTO{
 		Name:          "Agent",
@@ -135,11 +135,11 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 			assert.Equal(t, id, gotID)
 			assert.Equal(t, newName, updates.Name)
 			assert.Equal(t, newDescription, updates.Description)
-			assert.Empty(t, updates.Configuration.LLMs)
+			assert.Empty(t, updates.Configuration.LLM)
 		}).
 		Return(nil)
 
-	svc := newTestService(agentRepo)
+	svc := newTestService(agentRepo, nil)
 
 	err := svc.Update(context.Background(), id, agent.UpdateAgentDTO{
 		Name:        &newName,
@@ -152,7 +152,7 @@ func TestUpdateDelegatesConfigurationToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	config := model.AgentConfiguration{LLMs: []any{"claude"}}
+	config := model.AgentConfiguration{LLM: model.LLMConfig{Key: "claude"}}
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	agentRepo.EXPECT().
@@ -162,7 +162,7 @@ func TestUpdateDelegatesConfigurationToRepository(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(agentRepo)
+	svc := newTestService(agentRepo, nil)
 
 	err := svc.Update(context.Background(), id, agent.UpdateAgentDTO{
 		Configuration: &config,
@@ -179,7 +179,7 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 		DeleteByID(mock.Anything, id).
 		Return(nil)
 
-	svc := newTestService(agentRepo)
+	svc := newTestService(agentRepo, nil)
 
 	err := svc.DeleteByID(context.Background(), id)
 	require.NoError(t, err)

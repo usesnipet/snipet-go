@@ -9,7 +9,7 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -32,8 +32,8 @@ type SyncIndexResult struct {
 type SyncIndexWorker struct {
 	river.WorkerDefaults[SyncIndexArgs]
 
-	sourceManager            *runtime.SourceManager
-	indexManager             *runtime.IndexManager
+	sourceManager            *driver.Manager[driver.IKnowledgeSource]
+	indexManager             *driver.Manager[driver.IKnowledgeIndex]
 	knowledgeRepo            repository.IKnowledgeRepository
 	knowledgeItemRepo        repository.IKnowledgeItemRepository
 	indexRepo                repository.IKnowledgeIndexRepository
@@ -42,8 +42,8 @@ type SyncIndexWorker struct {
 }
 
 func NewSyncIndexWorker(
-	indexManager *runtime.IndexManager,
-	sourceManager *runtime.SourceManager,
+	indexManager *driver.Manager[driver.IKnowledgeIndex],
+	sourceManager *driver.Manager[driver.IKnowledgeSource],
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	indexRepo repository.IKnowledgeIndexRepository,
@@ -167,8 +167,8 @@ func (s *SyncIndexWorker) indexItem(
 	ctx context.Context,
 	knowledge *model.Knowledge,
 	index *model.KnowledgeIndex,
-	writer runtime.IIndexWriter,
-	sourceDriver runtime.ISourceDriver,
+	writer driver.IKnowledgeIndexWriter,
+	sourceDriver driver.IKnowledgeSource,
 	item model.IndexedKnowledgeItem,
 ) error {
 	updateStatus := func(status model.IndexStatus, hash string, reason *string, errMessage *string) error {

@@ -110,10 +110,7 @@ func (r *KnowledgeItemRepository) CreateInKnowledge(
 	item *model.KnowledgeItem,
 ) error {
 	item.KnowledgeID = knowledgeID
-	if err := r.Create(ctx, item); err != nil {
-		return err
-	}
-	return nil
+	return r.Create(ctx, item)
 }
 
 func (r *KnowledgeItemRepository) UpsertMany(ctx context.Context, items []model.KnowledgeItem, batchSize int) error {

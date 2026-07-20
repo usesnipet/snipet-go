@@ -1,12 +1,12 @@
 package model
 
 import (
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/internal/runtime"
 )
 
 type AgentConfiguration struct {
-	util.JSONMap
-	LLMs []any `json:"llms"`
+	LLMs  []runtime.LLMConfig `json:"llms"`
+	Tools runtime.ToolConfig  `json:"tools"`
 }
 
 type Agent struct {
@@ -14,9 +14,20 @@ type Agent struct {
 
 	Name          string             `gorm:"type:varchar(255);not null" json:"name"`
 	Description   string             `gorm:"type:text;not null" json:"description"`
+	Instructions  string             `gorm:"type:text;not null" json:"instructions"`
 	Configuration AgentConfiguration `gorm:"type:jsonb;not null;serializer:json" json:"configuration"`
 
 	AgentToKnowledge []AgentToKnowledge `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+}
+
+func (a Agent) ToRuntimeAgent() runtime.Agent {
+	return runtime.NewAgent(
+		a.Name,
+		a.Description,
+		a.Instructions,
+		a.Configuration.Tools,
+		a.Configuration.LLMs,
+	)
 }
 
 type AgentToKnowledge struct {

@@ -9,18 +9,20 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/riverqueue/river"
 	"github.com/usesnipet/snipet/config"
-	"github.com/usesnipet/snipet/drivers/index/rag"
-	fsdriver "github.com/usesnipet/snipet/drivers/source/fs"
+	"github.com/usesnipet/snipet/drivers/index"
+	"github.com/usesnipet/snipet/drivers/llm"
+	"github.com/usesnipet/snipet/drivers/source"
+	"github.com/usesnipet/snipet/drivers/tool"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/middleware"
+	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	auth_module "github.com/usesnipet/snipet/internal/module/auth"
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
-	"github.com/usesnipet/snipet/internal/module/agent"
 	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
@@ -29,6 +31,7 @@ import (
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/web"
 )
 
@@ -52,15 +55,27 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeItemRepo := repository.NewKnowledgeItemRepository(db)
 	indexedKnowledgeItemRepo := repository.NewIndexedKnowledgeItemRepository(db)
 	userRepo := repository.NewUserRepository(db, clientRepo)
+	executionRepo := repository.NewExecutionRepository(db)
+	messageRepo := repository.NewExecutionMessageRepository(db)
 
 	// runtime
-	sourceRegistry := runtime.NewRegistry[runtime.ISourceDriver]()
-	sourceRegistry.MustRegister("fs", fsdriver.NewDriver())
-	sourceManager := runtime.NewSourceManager(sourceRegistry)
+	sourceRegistry := source.Registry()
+	sourceManager := driver.NewManager(sourceRegistry)
 
-	indexRegistry := runtime.NewRegistry[runtime.IIndexDriver]()
-	indexRegistry.MustRegister("rag", rag.NewDriver())
-	indexManager := runtime.NewIndexManager(indexRegistry)
+	indexRegistry := index.Registry()
+	indexManager := driver.NewManager(indexRegistry)
+
+	llmRegistry := llm.Registry()
+	llmManager := driver.NewManager(llmRegistry)
+
+	toolRegistry := tool.Registry()
+	toolManager := driver.NewManager(toolRegistry)
+
+	engine := runtime.NewEngine(
+		toolManager,
+		llmManager,
+		logger,
+	)
 
 	workers := river.NewWorkers()
 	river.AddWorker(
@@ -87,7 +102,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	clientService := client.NewService(clientRepo)
 
-	agentService := agent.NewService(agentRepo)
+	agentService := agent.NewService(agentRepo, engine, llmManager, toolManager, executionRepo, messageRepo, logger)
 
 	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, knowledgeItemRepo, sourceManager, riverClient)
 	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo, indexedKnowledgeItemRepo, indexManager, riverClient, txManager)

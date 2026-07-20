@@ -10,14 +10,14 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
 type Service struct {
 	repo                     repository.IKnowledgeIndexRepository
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository
-	indexManager             *runtime.IndexManager
+	indexManager             *driver.Manager[driver.IKnowledgeIndex]
 	riverClient              queue.IJobQueue
 	txManager                repository.ITxManager
 }
@@ -25,7 +25,7 @@ type Service struct {
 func NewService(
 	repo repository.IKnowledgeIndexRepository,
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository,
-	indexManager *runtime.IndexManager,
+	indexManager *driver.Manager[driver.IKnowledgeIndex],
 	riverClient queue.IJobQueue,
 	txManager repository.ITxManager,
 ) *Service {
@@ -93,10 +93,10 @@ func (s *Service) ListDrivers(ctx context.Context) (*DriversDTO, error) {
 	}, nil
 }
 
-func (s *Service) TestConnection(ctx context.Context, driver string, config util.JSONMap) error {
-	_, err := s.indexManager.Prepare(ctx, driver, config)
+func (s *Service) TestConnection(ctx context.Context, key string, config util.JSONMap) error {
+	_, err := s.indexManager.Prepare(ctx, key, config)
 	if err != nil {
-		if errors.Is(err, runtime.ErrDriverNotFound) {
+		if errors.Is(err, driver.ErrDriverNotFound) {
 			return apperr.NotFound(err.Error())
 		}
 		return apperr.BadRequest(err.Error())
