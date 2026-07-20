@@ -29,8 +29,8 @@ func (r *ExecutionMessageRepository) CountByExecutionID(ctx context.Context, exe
 }
 
 func (r *ExecutionMessageRepository) CreateInExecution(ctx context.Context, executionID string, messages []model.ExecutionMessage) error {
-	for _, message := range messages {
-		message.ExecutionID = executionID
+	for i := range messages {
+		messages[i].ExecutionID = executionID
 	}
 	return gorm.G[model.ExecutionMessage](r.db(ctx)).CreateInBatches(ctx, &messages, 100)
 }

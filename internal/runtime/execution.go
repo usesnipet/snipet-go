@@ -2,7 +2,8 @@ package runtime
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/usesnipet/snipet/internal/runtime/transport"
+	"github.com/google/uuid"
+	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -13,10 +14,10 @@ type ExecutionStatus string
 const (
 	ExecutionStatusPending   ExecutionStatus = "pending"   // the execution is pending to start
 	ExecutionStatusRunning   ExecutionStatus = "running"   // the execution is running
-	ExecutionStatusPaused    ExecutionStatus = "paused"    // the execution is paused
 	ExecutionStatusCompleted ExecutionStatus = "completed" // the execution is completed
 	ExecutionStatusFailed    ExecutionStatus = "failed"    // the execution is failed
 	ExecutionStatusMaxTurns  ExecutionStatus = "max_turns" // the execution has reached the maximum number of turns
+	ExecutionStatusCancelled ExecutionStatus = "cancelled" // the execution was cancelled via context
 )
 
 type ExecutionConfig struct {
@@ -25,11 +26,11 @@ type ExecutionConfig struct {
 }
 
 type Execution struct {
-	ErrorMessage string              `json:"error_message" validate:"omitempty"`
-	Config       ExecutionConfig     `json:"config" validate:"required"`
-	Status       ExecutionStatus     `json:"status" validate:"required"`
-	Messages     []transport.Message `json:"messages" validate:"required,min=1"`
-	Turns        int                 `json:"turns" validate:"min=0"`
+	ErrorMessage string            `json:"error_message" validate:"omitempty"`
+	Config       ExecutionConfig   `json:"config" validate:"required"`
+	Status       ExecutionStatus   `json:"status" validate:"required"`
+	Messages     []message.Message `json:"messages" validate:"required,min=1"`
+	Turns        int               `json:"turns" validate:"min=0"`
 }
 
 func NewExecution(options ...ExecutionOption) (Execution, error) {
@@ -39,12 +40,19 @@ func NewExecution(options ...ExecutionOption) (Execution, error) {
 			Metadata: util.JSONMap{},
 		},
 		Status:   ExecutionStatusPending,
-		Messages: []transport.Message{},
+		Messages: []message.Message{},
 		Turns:    0,
 	}
 
 	for _, option := range options {
 		option(&execution)
+	}
+
+	for i := range execution.Messages {
+		if execution.Messages[i].ID == "" {
+			execution.Messages[i].ID = uuid.NewString()
+		}
+		execution.Messages[i].Sequence = i
 	}
 
 	if err := validate.Struct(&execution); err != nil {
@@ -54,6 +62,11 @@ func NewExecution(options ...ExecutionOption) (Execution, error) {
 	return execution, nil
 }
 
-func (e *Execution) AddMessage(message transport.Message) {
-	e.Messages = append(e.Messages, message)
+func (e *Execution) AddMessage(msg message.Message) message.Message {
+	if msg.ID == "" {
+		msg.ID = uuid.NewString()
+	}
+	msg.Sequence = len(e.Messages)
+	e.Messages = append(e.Messages, msg)
+	return msg
 }

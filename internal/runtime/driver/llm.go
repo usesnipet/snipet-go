@@ -3,7 +3,7 @@ package driver
 import (
 	"context"
 
-	"github.com/usesnipet/snipet/internal/runtime/transport"
+	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -14,6 +14,6 @@ type ILLM interface {
 		ctx context.Context,
 		config util.JSONMap,
 		instructions string,
-		messages []transport.Message,
-	) (transport.Message, error)
+		messages []message.Message,
+	) (message.Message, error)
 }

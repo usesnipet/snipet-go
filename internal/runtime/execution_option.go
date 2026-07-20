@@ -1,8 +1,6 @@
 package runtime
 
-import (
-	"github.com/usesnipet/snipet/internal/runtime/transport"
-)
+import "github.com/usesnipet/snipet/internal/runtime/message"
 
 type ExecutionOption func(execution *Execution)
 
@@ -18,24 +16,24 @@ func WithMetadata(key string, value any) ExecutionOption {
 	}
 }
 
-func WithInitialMessages(message transport.Message, messages ...transport.Message) ExecutionOption {
+func WithInitialMessages(msg message.Message, messages ...message.Message) ExecutionOption {
 	return func(execution *Execution) {
-		execution.Messages = append(execution.Messages, message)
+		execution.Messages = append(execution.Messages, msg)
 		execution.Messages = append(execution.Messages, messages...)
 	}
 }
 
-func WithMessage(message transport.Message) ExecutionOption {
+func WithMessage(msg message.Message) ExecutionOption {
 	return func(execution *Execution) {
-		execution.Messages = append(execution.Messages, message)
+		execution.Messages = append(execution.Messages, msg)
 	}
 }
 
-func WithMessageFromUser(content string, options ...transport.MessageOption) ExecutionOption {
+func WithMessageFromUser(content string, options ...message.MessageOption) ExecutionOption {
 	return func(execution *Execution) {
 		execution.Messages = append(
 			execution.Messages,
-			transport.NewMessage(transport.MessageRoleUser, content, options...),
+			message.NewMessage(message.MessageRoleUser, content, options...),
 		)
 	}
 }

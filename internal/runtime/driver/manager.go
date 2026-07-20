@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/usesnipet/snipet/internal/registry"
+	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
 	jsonschema "github.com/usesnipet/snipet/internal/util/json_schema"
 )

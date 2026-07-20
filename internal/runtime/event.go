@@ -1,27 +1,25 @@
 package runtime
 
-import "github.com/usesnipet/snipet/internal/runtime/transport"
+import "github.com/usesnipet/snipet/internal/runtime/message"
+
+type EventListener func(event IEvent) error
 
 type IEvent interface {
 	isEvent()
 }
 
-type ExecutionUpdatedEvent struct {
-	Execution Execution
+// ExecutionStatusChangedEvent is emitted whenever execution status (and related fields) change.
+type ExecutionStatusChangedEvent struct {
+	Status       ExecutionStatus `json:"status"`
+	ErrorMessage string          `json:"error_message,omitempty"`
+	Turns        int             `json:"turns"`
 }
 
-func (e ExecutionUpdatedEvent) isEvent() {}
+func (e ExecutionStatusChangedEvent) isEvent() {}
 
+// ExecutionMessageAddedEvent is emitted when one or more messages are appended.
 type ExecutionMessageAddedEvent struct {
-	Execution Execution
-	Messages  []transport.Message
+	Messages []message.Message `json:"messages"`
 }
 
 func (e ExecutionMessageAddedEvent) isEvent() {}
-
-type ExecutionErrorEvent struct {
-	Execution    Execution
-	ErrorMessage string
-}
-
-func (e ExecutionErrorEvent) isEvent() {}

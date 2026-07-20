@@ -1,7 +1,7 @@
 package index
 
 import (
-	"github.com/usesnipet/snipet/internal/registry"
+	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/runtime/driver"
 )
 

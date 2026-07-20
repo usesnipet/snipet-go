@@ -7,8 +7,8 @@ import (
 
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/runtime/driver"
+	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/runtime/tool"
-	"github.com/usesnipet/snipet/internal/runtime/transport"
 )
 
 type Engine struct {
@@ -48,11 +48,32 @@ func (e *Engine) validateAgent(agent Agent) error {
 
 type StartOptions struct {
 	ExecutionOptions []ExecutionOption
-	OnEvent          func(event IEvent) error
+	OnEvent          EventListener
 	Agent            Agent
 }
 
-func (e *Engine) Start(ctx context.Context, options StartOptions) {
+func (e *Engine) emit(onEvent EventListener, event IEvent) error {
+	return onEvent(event)
+}
+
+func statusChanged(execution Execution) ExecutionStatusChangedEvent {
+	return ExecutionStatusChangedEvent{
+		Status:       execution.Status,
+		ErrorMessage: execution.ErrorMessage,
+		Turns:        execution.Turns,
+	}
+}
+
+func (e *Engine) fail(execution *Execution, onEvent EventListener, err error) error {
+	execution.ErrorMessage = err.Error()
+	execution.Status = ExecutionStatusFailed
+	if emitErr := e.emit(onEvent, statusChanged(*execution)); emitErr != nil {
+		return emitErr
+	}
+	return err
+}
+
+func (e *Engine) Start(ctx context.Context, options StartOptions) error {
 	if options.OnEvent == nil {
 		options.OnEvent = func(event IEvent) error {
 			return nil
@@ -61,92 +82,120 @@ func (e *Engine) Start(ctx context.Context, options StartOptions) {
 
 	execution, err := NewExecution(options.ExecutionOptions...)
 	if err != nil {
-		execution.ErrorMessage = err.Error()
-		execution.Status = ExecutionStatusFailed
-		options.OnEvent(ExecutionErrorEvent{Execution: execution, ErrorMessage: err.Error()})
-		return
+		return e.fail(&execution, options.OnEvent, err)
 	}
 
 	if err := e.validateAgent(options.Agent); err != nil {
-		execution.ErrorMessage = err.Error()
-		execution.Status = ExecutionStatusFailed
-		options.OnEvent(ExecutionErrorEvent{Execution: execution, ErrorMessage: err.Error()})
-		return
+		return e.fail(&execution, options.OnEvent, err)
 	}
 
-	e.run(ctx, options, execution)
+	return e.run(ctx, options, execution)
 }
 
-func (e *Engine) run(ctx context.Context, options StartOptions, execution Execution) {
+func (e *Engine) run(ctx context.Context, options StartOptions, execution Execution) error {
 	execution.Status = ExecutionStatusRunning
-	options.OnEvent(ExecutionUpdatedEvent{Execution: execution})
-	options.OnEvent(ExecutionMessageAddedEvent{Execution: execution, Messages: execution.Messages})
+	if err := e.emit(options.OnEvent, statusChanged(execution)); err != nil {
+		return err
+	}
+	if err := e.emit(options.OnEvent, ExecutionMessageAddedEvent{Messages: execution.Messages}); err != nil {
+		return err
+	}
 
 	for {
+		if err := ctx.Err(); err != nil {
+			execution.Status = ExecutionStatusCancelled
+			execution.ErrorMessage = err.Error()
+			if emitErr := e.emit(options.OnEvent, statusChanged(execution)); emitErr != nil {
+				return emitErr
+			}
+			return err
+		}
+
 		if execution.Config.MaxTurns > 0 && execution.Turns >= execution.Config.MaxTurns {
 			execution.Status = ExecutionStatusMaxTurns
 			execution.ErrorMessage = "Max turns reached"
-			options.OnEvent(ExecutionUpdatedEvent{Execution: execution})
-			return
+			if err := e.emit(options.OnEvent, statusChanged(execution)); err != nil {
+				return err
+			}
+			return nil
 		}
 
-		message, err := e.runLLM(ctx, options.Agent, execution.Messages)
+		msg, err := e.runLLM(ctx, options.Agent, execution.Messages)
 		if err != nil {
-			execution.Status = ExecutionStatusFailed
-			execution.ErrorMessage = err.Error()
-			options.OnEvent(ExecutionUpdatedEvent{Execution: execution})
-			return
+			return e.fail(&execution, options.OnEvent, err)
 		}
 
-		execution.AddMessage(message)
-		options.OnEvent(ExecutionMessageAddedEvent{Execution: execution, Messages: []transport.Message{message}})
+		msg = execution.AddMessage(msg)
+		if err := e.emit(options.OnEvent, ExecutionMessageAddedEvent{
+			Messages: []message.Message{msg},
+		}); err != nil {
+			return err
+		}
 
-		if message.Role == transport.MessageRoleFinal || len(message.ToolCalls) == 0 {
+		if msg.Role == message.MessageRoleFinal || len(msg.ToolCalls) == 0 {
 			execution.Status = ExecutionStatusCompleted
-			options.OnEvent(ExecutionUpdatedEvent{Execution: execution})
-			return
+			if err := e.emit(options.OnEvent, statusChanged(execution)); err != nil {
+				return err
+			}
+			return nil
 		}
 		execution.Turns++
 
-		for _, call := range message.ToolCalls {
+		for _, call := range msg.ToolCalls {
 			result := e.executeTool(ctx, options.Agent, call)
-			toolMsg := transport.Message{
-				Role:       transport.MessageRoleTool,
+			toolMsg := message.Message{
+				Role:       message.MessageRoleTool,
 				ToolResult: &result,
+				Content:    toolMessageContent(result),
 				Timestamp:  time.Now(),
 			}
-			if result.Output != nil {
-				toolMsg.Content = fmt.Sprint(result.Output)
-			} else if result.Error != nil {
-				toolMsg.Content = result.Error.Error()
+			toolMsg = execution.AddMessage(toolMsg)
+			if err := e.emit(options.OnEvent, ExecutionMessageAddedEvent{
+				Messages: []message.Message{toolMsg},
+			}); err != nil {
+				return err
 			}
-			execution.AddMessage(toolMsg)
-			options.OnEvent(ExecutionMessageAddedEvent{Execution: execution, Messages: []transport.Message{toolMsg}})
 		}
 	}
+}
+
+func toolMessageContent(result tool.Result) string {
+	if result.Output != nil {
+		return fmt.Sprint(result.Output)
+	}
+	if result.Error != nil {
+		return result.Error.Error()
+	}
+	return ""
 }
 
 func (e *Engine) runLLM(
 	ctx context.Context,
 	agent Agent,
-	messages []transport.Message,
-) (message transport.Message, err error) {
+	messages []message.Message,
+) (msg message.Message, err error) {
 	if len(agent.LLMs) == 0 {
-		return message, ErrNoLLMConfigured
+		return msg, ErrNoLLMConfigured
 	}
+	var lastErr error
 	for _, llm := range agent.LLMs {
-		llmInstance, err := e.LLMs.GetDriver(llm.Key)
-		if err != nil {
+		llmInstance, getErr := e.LLMs.GetDriver(llm.Key)
+		if getErr != nil {
+			lastErr = getErr
 			continue
 		}
-		message, err = llmInstance.Generate(ctx, llm.Config, agent.Instructions, messages)
-		if err != nil {
-			e.logger.Error(err)
+		msg, genErr := llmInstance.Generate(ctx, llm.Config, agent.Instructions, messages)
+		if genErr != nil {
+			e.logger.Error(genErr)
+			lastErr = genErr
 			continue
 		}
-		return message, nil
+		return msg, nil
 	}
-	return message, ErrLLMGenerationFailed
+	if lastErr != nil {
+		return msg, fmt.Errorf("%w: %v", ErrLLMGenerationFailed, lastErr)
+	}
+	return msg, ErrLLMGenerationFailed
 }
 
 func (e *Engine) executeTool(ctx context.Context, agent Agent, call tool.Call) tool.Result {

@@ -16,7 +16,7 @@ import (
 	knowledge "github.com/usesnipet/snipet/internal/module/knowledge"
 	"github.com/usesnipet/snipet/internal/page"
 	queuemocks "github.com/usesnipet/snipet/internal/queue/mocks"
-	"github.com/usesnipet/snipet/internal/registry"
+	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"

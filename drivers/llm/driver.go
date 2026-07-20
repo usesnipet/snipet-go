@@ -2,8 +2,8 @@ package llm
 
 import (
 	"github.com/usesnipet/snipet/drivers/llm/gemini"
-	"github.com/usesnipet/snipet/internal/registry"
 	"github.com/usesnipet/snipet/internal/runtime/driver"
+	"github.com/usesnipet/snipet/internal/runtime/registry"
 )
 
 func Registry() *registry.R[driver.ILLM] {

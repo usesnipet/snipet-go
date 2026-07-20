@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/usesnipet/snipet/internal/runtime/driver"
+	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/runtime/tool"
-	"github.com/usesnipet/snipet/internal/runtime/transport"
 	"github.com/usesnipet/snipet/internal/util"
 	jsonschema "github.com/usesnipet/snipet/internal/util/json_schema"
 	"google.golang.org/genai"
@@ -63,11 +63,11 @@ func (g *Gemini) Generate(
 	ctx context.Context,
 	config util.JSONMap,
 	instructions string,
-	messages []transport.Message,
-) (message transport.Message, err error) {
+	messages []message.Message,
+) (msg message.Message, err error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
-		return message, fmt.Errorf("failed to parse config: %w", err)
+		return msg, fmt.Errorf("failed to parse config: %w", err)
 	}
 
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
@@ -75,12 +75,12 @@ func (g *Gemini) Generate(
 		Backend: genai.BackendGeminiAPI,
 	})
 	if err != nil {
-		return message, fmt.Errorf("failed to create client: %w", err)
+		return msg, fmt.Errorf("failed to create client: %w", err)
 	}
 
 	contents, err := buildContents(messages)
 	if err != nil {
-		return message, fmt.Errorf("gemini: build contents: %w", err)
+		return msg, fmt.Errorf("gemini: build contents: %w", err)
 	}
 
 	genCfg := &genai.GenerateContentConfig{
@@ -102,26 +102,26 @@ func (g *Gemini) Generate(
 	}
 	result, err := client.Models.GenerateContent(ctx, cfg.Model, contents, genCfg)
 	if err != nil {
-		return message, fmt.Errorf("gemini: generate response: %w", err)
+		return msg, fmt.Errorf("gemini: generate response: %w", err)
 	}
 
 	text := result.Text()
 	if text == "" {
-		return message, fmt.Errorf("gemini: empty response")
+		return msg, fmt.Errorf("gemini: empty response")
 	}
 
 	var out Message
 	if err := json.Unmarshal([]byte(text), &out); err != nil {
-		return message, fmt.Errorf("gemini: parse structured output: %w", err)
+		return msg, fmt.Errorf("gemini: parse structured output: %w", err)
 	}
 
 	return toAgentMessage(out), nil
 }
 
-func buildContents(messages []transport.Message) ([]*genai.Content, error) {
+func buildContents(messages []message.Message) ([]*genai.Content, error) {
 	out := make([]*genai.Content, 0, len(messages))
-	for _, message := range messages {
-		item, ok, err := toContent(message)
+	for _, msg := range messages {
+		item, ok, err := toContent(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -132,18 +132,18 @@ func buildContents(messages []transport.Message) ([]*genai.Content, error) {
 	return out, nil
 }
 
-func toContent(message transport.Message) (*genai.Content, bool, error) {
-	switch message.Role {
-	case transport.MessageRoleUser:
-		return genai.NewContentFromText(message.Content, genai.RoleUser), true, nil
-	case transport.MessageRoleSystem:
-		return genai.NewContentFromText(message.Content, genai.RoleUser), true, nil
-	case transport.MessageRoleAssistant, transport.MessageRoleFinal:
-		content := message.Content
-		if len(message.ToolCalls) > 0 {
+func toContent(msg message.Message) (*genai.Content, bool, error) {
+	switch msg.Role {
+	case message.MessageRoleUser:
+		return genai.NewContentFromText(msg.Content, genai.RoleUser), true, nil
+	case message.MessageRoleSystem:
+		return genai.NewContentFromText(msg.Content, genai.RoleUser), true, nil
+	case message.MessageRoleAssistant, message.MessageRoleFinal:
+		content := msg.Content
+		if len(msg.ToolCalls) > 0 {
 			raw, err := json.Marshal(Message{
-				Content:   message.Content,
-				ToolCalls: util.Map(message.ToolCalls, fromAgentToolCall),
+				Content:   msg.Content,
+				ToolCalls: util.Map(msg.ToolCalls, fromAgentToolCall),
 			})
 			if err != nil {
 				return nil, false, fmt.Errorf("marshal assistant message: %w", err)
@@ -151,13 +151,13 @@ func toContent(message transport.Message) (*genai.Content, bool, error) {
 			content = string(raw)
 		}
 		return genai.NewContentFromText(content, genai.RoleModel), true, nil
-	case transport.MessageRoleTool:
-		content := message.Content
-		if message.ToolResult != nil {
+	case message.MessageRoleTool:
+		content := msg.Content
+		if msg.ToolResult != nil {
 			content = fmt.Sprintf(
 				"Tool %q result: %s",
-				message.ToolResult.Key,
-				message.Content,
+				msg.ToolResult.Key,
+				msg.Content,
 			)
 		}
 		return genai.NewContentFromText(content, genai.RoleUser), true, nil
@@ -166,18 +166,18 @@ func toContent(message transport.Message) (*genai.Content, bool, error) {
 	}
 }
 
-func toAgentMessage(out Message) transport.Message {
+func toAgentMessage(out Message) message.Message {
 	toolCalls := make([]tool.Call, 0, len(out.ToolCalls))
 	for _, call := range out.ToolCalls {
 		toolCalls = append(toolCalls, toAgentToolCall(call))
 	}
 
-	role := transport.MessageRoleFinal
+	role := message.MessageRoleFinal
 	if len(toolCalls) > 0 {
-		role = transport.MessageRoleAssistant
+		role = message.MessageRoleAssistant
 	}
 
-	return transport.Message{
+	return message.Message{
 		Role:      role,
 		Content:   out.Content,
 		ToolCalls: toolCalls,

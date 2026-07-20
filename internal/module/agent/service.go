@@ -11,7 +11,7 @@ import (
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/driver"
-	"github.com/usesnipet/snipet/internal/runtime/transport"
+	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -140,14 +140,13 @@ func (s *Service) Run(ctx context.Context, id string, dto RunAgentDTO, onEvent E
 	if onEvent == nil {
 		onEvent = func(runtime.IEvent) error { return nil }
 	}
-
-	s.engine.Start(
+	return s.engine.Start(
 		ctx,
 		runtime.StartOptions{
 			Agent: agent.ToRuntimeAgent(),
 			ExecutionOptions: []runtime.ExecutionOption{
 				runtime.WithInitialMessages(
-					transport.NewMessage(transport.MessageRoleUser, dto.Message),
+					message.NewMessage(message.MessageRoleUser, dto.Message),
 				),
 			},
 			OnEvent: func(event runtime.IEvent) error {
@@ -158,35 +157,21 @@ func (s *Service) Run(ctx context.Context, id string, dto RunAgentDTO, onEvent E
 			},
 		},
 	)
-	return nil
 }
 
 func (s *Service) handleExecutionEvent(ctx context.Context, execution *model.Execution, event runtime.IEvent) error {
 	switch event := event.(type) {
-	case runtime.ExecutionErrorEvent:
-		return s.executionRepo.UpdateByID(
-			ctx,
-			execution.ID,
-			execution.FromRuntimeExecution(event.Execution),
-		)
-	case runtime.ExecutionUpdatedEvent:
-		return s.executionRepo.UpdateByID(
-			ctx,
-			execution.ID,
-			execution.FromRuntimeExecution(event.Execution),
-		)
+	case runtime.ExecutionStatusChangedEvent:
+		execution.Status = event.Status
+		execution.ErrorMessage = event.ErrorMessage
+		execution.Turns = event.Turns
+		return s.executionRepo.UpdateByID(ctx, execution.ID, execution)
 	case runtime.ExecutionMessageAddedEvent:
 		return s.executionMessageRepo.CreateInExecution(
 			ctx,
 			execution.ID,
-			util.Map(event.Messages, func(message transport.Message) model.ExecutionMessage {
-				return model.ExecutionMessage{
-					ExecutionID: execution.ID,
-					Role:        message.Role,
-					Content:     message.Content,
-					ToolResult:  message.ToolResult,
-					Sequence:    message.Sequence,
-				}
+			util.Map(event.Messages, func(msg message.Message) model.ExecutionMessage {
+				return *(&model.ExecutionMessage{}).FromRuntimeExecutionMessage(msg)
 			}),
 		)
 	}

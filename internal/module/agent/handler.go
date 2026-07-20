@@ -105,12 +105,10 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 		switch event := event.(type) {
-		case runtime.ExecutionUpdatedEvent:
-			return sse.Write("execution.updated", event)
+		case runtime.ExecutionStatusChangedEvent:
+			return sse.Write("execution.status_changed", event)
 		case runtime.ExecutionMessageAddedEvent:
 			return sse.Write("execution.message_added", event)
-		case runtime.ExecutionErrorEvent:
-			return sse.Write("execution.error", event)
 		default:
 			return nil
 		}
