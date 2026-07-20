@@ -9,27 +9,54 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	agent "github.com/usesnipet/snipet/internal/module/agent"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
+	"github.com/usesnipet/snipet/internal/runtime/driver"
+	"github.com/usesnipet/snipet/internal/runtime/message"
+	"github.com/usesnipet/snipet/internal/runtime/registry"
+	"github.com/usesnipet/snipet/internal/util"
 )
+
+type stubLLM struct {
+	info driver.Info
+}
+
+func (s *stubLLM) Info() driver.Info { return s.info }
+func (s *stubLLM) TestConnection(context.Context, util.JSONMap) error {
+	return nil
+}
+func (s *stubLLM) Generate(
+	context.Context,
+	util.JSONMap,
+	string,
+	[]message.Message,
+) (message.Message, error) {
+	return message.Message{}, nil
+}
 
 func newTestService(
 	agentRepo repository.IAgentRepository,
+	llms map[string]driver.ILLM,
 ) *agent.Service {
-	return agent.NewService(agentRepo)
-}
+	llmReg := registry.New[driver.ILLM]()
+	for name, llm := range llms {
+		llmReg.MustRegister(name, llm)
+	}
 
-func assertAppError(t *testing.T, err error, statusCode int, message string) {
-	t.Helper()
-	var appErr *apperr.Error
-	require.ErrorAs(t, err, &appErr)
-	assert.Equal(t, statusCode, appErr.StatusCode)
-	assert.Equal(t, message, appErr.Message)
+	return agent.NewService(
+		agentRepo,
+		nil,
+		driver.NewManager(llmReg),
+		driver.NewManager(registry.New[driver.ITool]()),
+		nil,
+		nil,
+		logger.NewLogger(logger.LevelError),
+	)
 }
 
 func TestFilterDelegatesToRepository(t *testing.T) {
@@ -71,7 +98,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 func TestCreateStoresAgentAndReturnsIt(t *testing.T) {
 	t.Parallel()
 
-	config := model.AgentConfiguration{LLM: model.LLMConfig{Key: "gpt-4"}}
+	llms := []agent.LLMConfigDTO{{Key: "gpt-4", Config: util.JSONMap{}}}
 	var stored *model.Agent
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
@@ -83,23 +110,33 @@ func TestCreateStoresAgentAndReturnsIt(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(agentRepo, nil)
+	svc := newTestService(agentRepo, map[string]driver.ILLM{
+		"gpt-4": &stubLLM{info: driver.Info{
+			Name:                "gpt-4",
+			Description:         "test",
+			ConfigurationSchema: util.JSONMap{"type": "object"},
+		}},
+	})
 
 	result, err := svc.Create(context.Background(), agent.CreateAgentDTO{
-		Name:          "Support Agent",
-		Description:   "Handles support tickets",
-		Configuration: config,
+		Name:         "Support Agent",
+		Description:  "Handles support tickets",
+		Instructions: "Be helpful",
+		LLMs:         llms,
+		Tools:        agent.ToolConfigDTO{},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
 	assert.Equal(t, "Support Agent", result.Name)
 	assert.Equal(t, "Handles support tickets", result.Description)
-	assert.Equal(t, config, result.Configuration)
+	assert.Equal(t, "Be helpful", result.Instructions)
+	assert.Equal(t, "gpt-4", result.Configuration.LLMs[0].Key)
 
 	require.NotNil(t, stored)
 	assert.Equal(t, result.Name, stored.Name)
 	assert.Equal(t, result.Description, stored.Description)
+	assert.Equal(t, result.Instructions, stored.Instructions)
 	assert.Equal(t, result.Configuration, stored.Configuration)
 }
 
@@ -115,8 +152,9 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 	svc := newTestService(agentRepo, nil)
 
 	_, err := svc.Create(context.Background(), agent.CreateAgentDTO{
-		Name:          "Agent",
-		Configuration: model.AgentConfiguration{},
+		Name:  "Agent",
+		LLMs:  nil,
+		Tools: agent.ToolConfigDTO{},
 	})
 	require.ErrorIs(t, err, expectedErr)
 }
@@ -135,7 +173,8 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 			assert.Equal(t, id, gotID)
 			assert.Equal(t, newName, updates.Name)
 			assert.Equal(t, newDescription, updates.Description)
-			assert.Empty(t, updates.Configuration.LLM)
+			assert.Empty(t, updates.Configuration.LLMs)
+			assert.Empty(t, updates.Configuration.Tools)
 		}).
 		Return(nil)
 
@@ -148,24 +187,32 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUpdateDelegatesConfigurationToRepository(t *testing.T) {
+func TestUpdateDelegatesLLMsToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	config := model.AgentConfiguration{LLM: model.LLMConfig{Key: "claude"}}
+	llms := []agent.LLMConfigDTO{{Key: "claude", Config: util.JSONMap{"model": "sonnet"}}}
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	agentRepo.EXPECT().
 		UpdateByID(mock.Anything, id, mock.Anything).
 		Run(func(_ context.Context, _ string, updates *model.Agent) {
-			assert.Equal(t, config, updates.Configuration)
+			require.Len(t, updates.Configuration.LLMs, 1)
+			assert.Equal(t, "claude", updates.Configuration.LLMs[0].Key)
+			assert.Equal(t, util.JSONMap{"model": "sonnet"}, updates.Configuration.LLMs[0].Config)
 		}).
 		Return(nil)
 
-	svc := newTestService(agentRepo, nil)
+	svc := newTestService(agentRepo, map[string]driver.ILLM{
+		"claude": &stubLLM{info: driver.Info{
+			Name:                "claude",
+			Description:         "test",
+			ConfigurationSchema: util.JSONMap{"type": "object"},
+		}},
+	})
 
 	err := svc.Update(context.Background(), id, agent.UpdateAgentDTO{
-		Configuration: &config,
+		LLMs: llms,
 	})
 	require.NoError(t, err)
 }

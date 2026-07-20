@@ -20,10 +20,10 @@ packages:
     config:
       include-interface-regex: '^I([A-Z].*Repository|TxManager)$'
       exclude-interface-regex: '^I(Filterable|Findable|Creatable|Updatable|Deletable)Repository$|^IRepository$'
-  github.com/usesnipet/snipet/internal/runtime:
+  github.com/usesnipet/snipet/internal/runtime/driver:
     config:
-      dir: internal/runtime/mocks
-      include-interface-regex: '^I(SourceDriver|IndexDriver)$'
+      dir: internal/runtime/driver/mocks
+      include-interface-regex: '^I(KnowledgeSource|KnowledgeIndex|LLM|Tool)$'
   github.com/usesnipet/snipet/internal/queue:
     config:
       dir: internal/queue/mocks
