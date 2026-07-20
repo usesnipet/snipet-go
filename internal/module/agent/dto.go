@@ -35,3 +35,11 @@ type LinkClientToAgentDTO struct {
 type RunAgentDTO struct {
 	Message string `json:"message" validate:"required"`
 }
+
+// RunInput is the internal input for starting an agent execution.
+// SessionID nil means playground run (no session history).
+type RunInput struct {
+	AgentID   string
+	SessionID *string
+	Message   string
+}

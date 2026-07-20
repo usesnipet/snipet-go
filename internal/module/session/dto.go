@@ -6,7 +6,7 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 )
 
-type SendMessageDTO struct {
+type RunSessionDTO struct {
 	Message string `json:"message" validate:"required"`
 }
 
@@ -33,9 +33,9 @@ type MessagesFilterDTO struct {
 	Skip *int                   `form:"skip" validate:"omitempty,min=0"`
 }
 
-func (dto *MessagesFilterDTO) ToFilter() *filter.Options[model.SessionMessage] {
-	return filter.New[model.SessionMessage](
-		filter.PtrOrderBy("created_at", dto.Sort),
+func (dto *MessagesFilterDTO) ToFilter() *filter.Options[model.ExecutionMessage] {
+	return filter.New[model.ExecutionMessage](
+		filter.PtrOrderBy("execution_messages.created_at", dto.Sort),
 		filter.PtrTake(dto.Take),
 		filter.PtrSkip(dto.Skip),
 	)

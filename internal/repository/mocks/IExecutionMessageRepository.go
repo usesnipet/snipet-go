@@ -9,7 +9,9 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
 )
 
 // NewMockIExecutionMessageRepository creates a new instance of MockIExecutionMessageRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -105,44 +107,192 @@ func (_c *MockIExecutionMessageRepository_CountByExecutionID_Call) RunAndReturn(
 	return _c
 }
 
-// Create provides a mock function for the type MockIExecutionMessageRepository
-func (_mock *MockIExecutionMessageRepository) Create(ctx context.Context, model1 *model.ExecutionMessage) error {
-	ret := _mock.Called(ctx, model1)
+// CreateInExecution provides a mock function for the type MockIExecutionMessageRepository
+func (_mock *MockIExecutionMessageRepository) CreateInExecution(ctx context.Context, executionID string, messages []model.ExecutionMessage) error {
+	ret := _mock.Called(ctx, executionID, messages)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Create")
+		panic("no return value specified for CreateInExecution")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.ExecutionMessage) error); ok {
-		r0 = returnFunc(ctx, model1)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []model.ExecutionMessage) error); ok {
+		r0 = returnFunc(ctx, executionID, messages)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// MockIExecutionMessageRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
-type MockIExecutionMessageRepository_Create_Call struct {
+// MockIExecutionMessageRepository_CreateInExecution_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInExecution'
+type MockIExecutionMessageRepository_CreateInExecution_Call struct {
 	*mock.Call
 }
 
-// Create is a helper method to define mock.On call
+// CreateInExecution is a helper method to define mock.On call
 //   - ctx context.Context
-//   - model1 *model.ExecutionMessage
-func (_e *MockIExecutionMessageRepository_Expecter) Create(ctx any, model1 any) *MockIExecutionMessageRepository_Create_Call {
-	return &MockIExecutionMessageRepository_Create_Call{Call: _e.mock.On("Create", ctx, model1)}
+//   - executionID string
+//   - messages []model.ExecutionMessage
+func (_e *MockIExecutionMessageRepository_Expecter) CreateInExecution(ctx any, executionID any, messages any) *MockIExecutionMessageRepository_CreateInExecution_Call {
+	return &MockIExecutionMessageRepository_CreateInExecution_Call{Call: _e.mock.On("CreateInExecution", ctx, executionID, messages)}
 }
 
-func (_c *MockIExecutionMessageRepository_Create_Call) Run(run func(ctx context.Context, model1 *model.ExecutionMessage)) *MockIExecutionMessageRepository_Create_Call {
+func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) Run(run func(ctx context.Context, executionID string, messages []model.ExecutionMessage)) *MockIExecutionMessageRepository_CreateInExecution_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *model.ExecutionMessage
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*model.ExecutionMessage)
+			arg1 = args[1].(string)
+		}
+		var arg2 []model.ExecutionMessage
+		if args[2] != nil {
+			arg2 = args[2].([]model.ExecutionMessage)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) Return(err error) *MockIExecutionMessageRepository_CreateInExecution_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) RunAndReturn(run func(ctx context.Context, executionID string, messages []model.ExecutionMessage) error) *MockIExecutionMessageRepository_CreateInExecution_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FilterInSession provides a mock function for the type MockIExecutionMessageRepository
+func (_mock *MockIExecutionMessageRepository) FilterInSession(ctx context.Context, sessionID string, filter1 *filter.Options[model.ExecutionMessage]) (*page.Paginated[model.ExecutionMessage], error) {
+	ret := _mock.Called(ctx, sessionID, filter1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FilterInSession")
+	}
+
+	var r0 *page.Paginated[model.ExecutionMessage]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *filter.Options[model.ExecutionMessage]) (*page.Paginated[model.ExecutionMessage], error)); ok {
+		return returnFunc(ctx, sessionID, filter1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *filter.Options[model.ExecutionMessage]) *page.Paginated[model.ExecutionMessage]); ok {
+		r0 = returnFunc(ctx, sessionID, filter1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*page.Paginated[model.ExecutionMessage])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *filter.Options[model.ExecutionMessage]) error); ok {
+		r1 = returnFunc(ctx, sessionID, filter1)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIExecutionMessageRepository_FilterInSession_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FilterInSession'
+type MockIExecutionMessageRepository_FilterInSession_Call struct {
+	*mock.Call
+}
+
+// FilterInSession is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionID string
+//   - filter1 *filter.Options[model.ExecutionMessage]
+func (_e *MockIExecutionMessageRepository_Expecter) FilterInSession(ctx any, sessionID any, filter1 any) *MockIExecutionMessageRepository_FilterInSession_Call {
+	return &MockIExecutionMessageRepository_FilterInSession_Call{Call: _e.mock.On("FilterInSession", ctx, sessionID, filter1)}
+}
+
+func (_c *MockIExecutionMessageRepository_FilterInSession_Call) Run(run func(ctx context.Context, sessionID string, filter1 *filter.Options[model.ExecutionMessage])) *MockIExecutionMessageRepository_FilterInSession_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 *filter.Options[model.ExecutionMessage]
+		if args[2] != nil {
+			arg2 = args[2].(*filter.Options[model.ExecutionMessage])
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIExecutionMessageRepository_FilterInSession_Call) Return(paginated *page.Paginated[model.ExecutionMessage], err error) *MockIExecutionMessageRepository_FilterInSession_Call {
+	_c.Call.Return(paginated, err)
+	return _c
+}
+
+func (_c *MockIExecutionMessageRepository_FilterInSession_Call) RunAndReturn(run func(ctx context.Context, sessionID string, filter1 *filter.Options[model.ExecutionMessage]) (*page.Paginated[model.ExecutionMessage], error)) *MockIExecutionMessageRepository_FilterInSession_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListBySessionID provides a mock function for the type MockIExecutionMessageRepository
+func (_mock *MockIExecutionMessageRepository) ListBySessionID(ctx context.Context, sessionID string) ([]model.ExecutionMessage, error) {
+	ret := _mock.Called(ctx, sessionID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListBySessionID")
+	}
+
+	var r0 []model.ExecutionMessage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]model.ExecutionMessage, error)); ok {
+		return returnFunc(ctx, sessionID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []model.ExecutionMessage); ok {
+		r0 = returnFunc(ctx, sessionID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.ExecutionMessage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, sessionID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIExecutionMessageRepository_ListBySessionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListBySessionID'
+type MockIExecutionMessageRepository_ListBySessionID_Call struct {
+	*mock.Call
+}
+
+// ListBySessionID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionID string
+func (_e *MockIExecutionMessageRepository_Expecter) ListBySessionID(ctx any, sessionID any) *MockIExecutionMessageRepository_ListBySessionID_Call {
+	return &MockIExecutionMessageRepository_ListBySessionID_Call{Call: _e.mock.On("ListBySessionID", ctx, sessionID)}
+}
+
+func (_c *MockIExecutionMessageRepository_ListBySessionID_Call) Run(run func(ctx context.Context, sessionID string)) *MockIExecutionMessageRepository_ListBySessionID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
@@ -152,12 +302,12 @@ func (_c *MockIExecutionMessageRepository_Create_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockIExecutionMessageRepository_Create_Call) Return(err error) *MockIExecutionMessageRepository_Create_Call {
-	_c.Call.Return(err)
+func (_c *MockIExecutionMessageRepository_ListBySessionID_Call) Return(executionMessages []model.ExecutionMessage, err error) *MockIExecutionMessageRepository_ListBySessionID_Call {
+	_c.Call.Return(executionMessages, err)
 	return _c
 }
 
-func (_c *MockIExecutionMessageRepository_Create_Call) RunAndReturn(run func(ctx context.Context, model1 *model.ExecutionMessage) error) *MockIExecutionMessageRepository_Create_Call {
+func (_c *MockIExecutionMessageRepository_ListBySessionID_Call) RunAndReturn(run func(ctx context.Context, sessionID string) ([]model.ExecutionMessage, error)) *MockIExecutionMessageRepository_ListBySessionID_Call {
 	_c.Call.Return(run)
 	return _c
 }

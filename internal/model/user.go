@@ -12,9 +12,8 @@ type User struct {
 	Email    *string      `gorm:"type:text" json:"email"`
 	Metadata util.JSONMap `gorm:"type:jsonb;not null" json:"metadata"`
 
-	SessionMessages []SessionMessage `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	UserToSessions  []UserToSession  `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientToUsers   []ClientToUser   `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	UserToSessions []UserToSession `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ClientToUsers  []ClientToUser  `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 type ClientToUser struct {

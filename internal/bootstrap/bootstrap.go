@@ -49,7 +49,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	agentRepo := repository.NewAgentRepository(db)
 	clientRepo := repository.NewClientRepository(db)
 	sessionRepo := repository.NewSessionRepository(db, clientRepo)
-	sessionMessageRepo := repository.NewSessionMessageRepository(db, clientRepo)
 	knowledgeRepo := repository.NewKnowledgeRepository(db)
 	knowledgeIndexRepo := repository.NewKnowledgeIndexRepository(db)
 	knowledgeItemRepo := repository.NewKnowledgeItemRepository(db)
@@ -107,7 +106,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, knowledgeItemRepo, sourceManager, riverClient)
 	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo, indexedKnowledgeItemRepo, indexManager, riverClient, txManager)
 
-	sessionService := session.NewService(sessionRepo, sessionMessageRepo, clientService)
+	sessionService := session.NewService(sessionRepo, messageRepo, clientService, agentService)
 
 	userService := user.NewService(userRepo)
 
@@ -116,7 +115,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	// middlewares
 	apiKeyMiddleware := middleware.APIKeyMiddleware(apiKeyService, apiKeyCache)
-	jwtAuthMiddleware := middleware.JWT(jwtService)
 	anyAuthMiddleware := middleware.AnyAuth(jwtService, apiKeyService, apiKeyCache)
 
 	// handlers
@@ -124,7 +122,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
 	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
-	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware, jwtAuthMiddleware)
+	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
 	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware)

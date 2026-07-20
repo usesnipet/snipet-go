@@ -120,13 +120,34 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 
 type EventHandler func(event runtime.IEvent) error
 
-func (s *Service) Run(ctx context.Context, id string, dto RunAgentDTO, onEvent EventHandler) error {
-	agent, err := s.agentRepo.FindByID(ctx, id)
+func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler) error {
+	agent, err := s.agentRepo.FindByID(ctx, input.AgentID)
 	if err != nil {
 		return err
 	}
 
+	historyIDs := map[string]struct{}{}
+	initialMessages := make([]message.Message, 0)
+
+	if input.SessionID != nil {
+		history, err := s.executionMessageRepo.ListBySessionID(ctx, *input.SessionID)
+		if err != nil {
+			return err
+		}
+		for _, em := range history {
+			msg := em.ToRuntimeExecutionMessage()
+			historyIDs[msg.ID] = struct{}{}
+			initialMessages = append(initialMessages, *msg)
+		}
+	}
+
+	initialMessages = append(
+		initialMessages,
+		message.NewMessage(message.MessageRoleUser, input.Message),
+	)
+
 	execution := &model.Execution{
+		SessionID:    input.SessionID,
 		AgentID:      agent.ID,
 		Status:       runtime.ExecutionStatusRunning,
 		ErrorMessage: "",
@@ -140,42 +161,69 @@ func (s *Service) Run(ctx context.Context, id string, dto RunAgentDTO, onEvent E
 	if onEvent == nil {
 		onEvent = func(runtime.IEvent) error { return nil }
 	}
+
 	return s.engine.Start(
 		ctx,
 		runtime.StartOptions{
 			Agent: agent.ToRuntimeAgent(),
 			ExecutionOptions: []runtime.ExecutionOption{
-				runtime.WithInitialMessages(
-					message.NewMessage(message.MessageRoleUser, dto.Message),
-				),
+				runtime.WithInitialMessages(initialMessages[0], initialMessages[1:]...),
 			},
 			OnEvent: func(event runtime.IEvent) error {
-				if err := s.handleExecutionEvent(ctx, execution, event); err != nil {
+				forward, err := s.handleExecutionEvent(ctx, execution, historyIDs, event)
+				if err != nil {
 					return err
 				}
-				return onEvent(event)
+				if forward == nil {
+					return nil
+				}
+				return onEvent(forward)
 			},
 		},
 	)
 }
 
-func (s *Service) handleExecutionEvent(ctx context.Context, execution *model.Execution, event runtime.IEvent) error {
+// handleExecutionEvent persists execution updates and returns the event to forward to
+// callers. History messages re-emitted as initial context are skipped so they are not
+// duplicated in the new execution or streamed again to the client.
+func (s *Service) handleExecutionEvent(
+	ctx context.Context,
+	execution *model.Execution,
+	historyIDs map[string]struct{},
+	event runtime.IEvent,
+) (runtime.IEvent, error) {
 	switch event := event.(type) {
 	case runtime.ExecutionStatusChangedEvent:
 		execution.Status = event.Status
 		execution.ErrorMessage = event.ErrorMessage
 		execution.Turns = event.Turns
-		return s.executionRepo.UpdateByID(ctx, execution.ID, execution)
+		if err := s.executionRepo.UpdateByID(ctx, execution.ID, execution); err != nil {
+			return nil, err
+		}
+		return event, nil
 	case runtime.ExecutionMessageAddedEvent:
-		return s.executionMessageRepo.CreateInExecution(
+		newMessages := make([]message.Message, 0, len(event.Messages))
+		for _, msg := range event.Messages {
+			if _, isHistory := historyIDs[msg.ID]; isHistory {
+				continue
+			}
+			newMessages = append(newMessages, msg)
+		}
+		if len(newMessages) == 0 {
+			return nil, nil
+		}
+		if err := s.executionMessageRepo.CreateInExecution(
 			ctx,
 			execution.ID,
-			util.Map(event.Messages, func(msg message.Message) model.ExecutionMessage {
+			util.Map(newMessages, func(msg message.Message) model.ExecutionMessage {
 				return *(&model.ExecutionMessage{}).FromRuntimeExecutionMessage(msg)
 			}),
-		)
+		); err != nil {
+			return nil, err
+		}
+		return runtime.ExecutionMessageAddedEvent{Messages: newMessages}, nil
 	}
-	return nil
+	return event, nil
 }
 
 func (s *Service) validateLLMs(ctx context.Context, llms []runtime.LLMConfig) error {

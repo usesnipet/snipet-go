@@ -36,6 +36,9 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		})
 	})
 }
+func (h *Handler) agentID(r *http.Request) string {
+	return chi.URLParam(r, "id")
+}
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 	data, err := h.service.Filter(r.Context())
@@ -46,7 +49,7 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FindByID(r.Context(), chi.URLParam(r, "id"))
+	data, err := h.service.FindByID(r.Context(), h.agentID(r))
 	if err != nil {
 		return err
 	}
@@ -70,7 +73,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	err := h.service.Update(r.Context(), chi.URLParam(r, "id"), dto)
+	err := h.service.Update(r.Context(), h.agentID(r), dto)
 	if err != nil {
 		return err
 	}
@@ -78,7 +81,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
-	if err := h.service.DeleteByID(r.Context(), chi.URLParam(r, "id")); err != nil {
+	if err := h.service.DeleteByID(r.Context(), h.agentID(r)); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
@@ -100,15 +103,18 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	err := h.service.Run(r.Context(), chi.URLParam(r, "id"), dto, func(event runtime.IEvent) error {
+	err := h.service.Run(r.Context(), RunInput{
+		AgentID: h.agentID(r),
+		Message: dto.Message,
+	}, func(event runtime.IEvent) error {
 		if err := ensureSSE(); err != nil {
 			return err
 		}
 		switch event := event.(type) {
 		case runtime.ExecutionStatusChangedEvent:
-			return sse.Write("execution.status_changed", event)
+			return sse.Write("status_changed", event)
 		case runtime.ExecutionMessageAddedEvent:
-			return sse.Write("execution.message_added", event)
+			return sse.Write("message_added", event)
 		default:
 			return nil
 		}
