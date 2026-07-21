@@ -17,7 +17,9 @@ func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handl
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/client", func(r chi.Router) {
+	// Use /clients (plural) so CRUD does not conflict with /client/{client_code}/...
+	// routes used by auth, session, and user modules.
+	r.Route("/clients", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
 			r.Get("/", serve(h.filter))

@@ -21,6 +21,10 @@
       url: "/(protected)/agent",
     },
     {
+      title: "Clients",
+      url: "/(protected)/client",
+    },
+    {
       title: "Knowledge",
       url: "/(protected)/knowledge",
     },
@@ -61,6 +65,9 @@
     }
     if (url === "/(protected)/agent") {
       return page.route.id?.startsWith("/(protected)/agent") ?? false;
+    }
+    if (url === "/(protected)/client") {
+      return page.route.id?.startsWith("/(protected)/client") ?? false;
     }
     return page.route.id === url;
   }
