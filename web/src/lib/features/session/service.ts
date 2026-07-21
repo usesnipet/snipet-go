@@ -4,27 +4,27 @@ import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { toast } from "svelte-sonner";
 
 import {
-	createSessionSchema,
-	filterSessionSchema,
-	sessionPaginatedSchema,
-	sessionSchema,
+  createSessionSchema, filterSessionByIDSchema, filterSessionSchema, sessionPaginatedSchema, sessionSchema
 } from "./schemas";
 
 import type {
 	CreateSession,
 	FilterSession,
+	FilterSessionByID,
 	Session,
 	SessionPaginated,
 } from "./schemas";
 
 const baseUrl = (clientCode: string) => `/api/client/${clientCode}/session`;
 
-const listQueryKey = (clientCode: string, filter?: FilterSession) => [
+const listQueryKey = (clientCode: string) => [
 	baseUrl(clientCode),
 	"list",
-	filter,
 ];
-const findByIdQueryKey = (clientCode: string, id: string) => [baseUrl(clientCode), id];
+const findByIdQueryKey = (clientCode: string, id: string) => [
+	baseUrl(clientCode),
+	id,
+];
 
 export const sessionService = {
 	queryKeys: {
@@ -33,7 +33,7 @@ export const sessionService = {
 	},
 	list: (clientCode: string, filter?: FilterSession) =>
 		createQuery(() => ({
-			queryKey: listQueryKey(clientCode, filter),
+			queryKey: listQueryKey(clientCode),
 			queryFn: async () => {
 				const res = await authenticatedClient().get<SessionPaginated>({
 					url: baseUrl(clientCode),
@@ -46,13 +46,14 @@ export const sessionService = {
 				return res.data;
 			},
 		})),
-	findById: (clientCode: string, id: string) =>
+	findById: (clientCode: string, id: string, filter?: FilterSessionByID) =>
 		createQuery(() => ({
 			queryKey: findByIdQueryKey(clientCode, id),
 			queryFn: () =>
 				authenticatedClient().get<Session>({
 					url: `${baseUrl(clientCode)}/${id}`,
-					schemas: { response: sessionSchema },
+					searchParams: filter,
+					schemas: { response: sessionSchema, searchParams: filterSessionByIDSchema },
 				}),
 		})),
 	create: (clientCode: string) =>

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
@@ -29,6 +30,8 @@ func (r *Repository[T]) Filter(ctx context.Context, filterOptions *filter.Option
 	if err != nil {
 		return nil, err
 	}
+
+	log.Println("filterOptions", filterOptions)
 
 	chain, err := filterOptions.ToGorm(gorm.G[T](r.db(ctx)))
 	if err != nil {

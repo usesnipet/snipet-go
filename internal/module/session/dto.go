@@ -1,6 +1,8 @@
 package session
 
 import (
+	"log"
+
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/util"
@@ -16,15 +18,38 @@ type CreateSessionDTO struct {
 }
 
 type SessionsFilterDTO struct {
-	Take *int `form:"take" validate:"omitempty,min=1"`
-	Skip *int `form:"skip" validate:"omitempty,min=0"`
+	Take    *int     `form:"take" validate:"omitempty,min=1"`
+	Skip    *int     `form:"skip" validate:"omitempty,min=0"`
+	Include []string `form:"include" validate:"omitempty,dive,oneof=agent"`
 }
 
 func (dto *SessionsFilterDTO) ToFilter() *filter.Options[model.Session] {
-	return filter.New[model.Session](
+	opts := []filter.Option{
 		filter.PtrTake(dto.Take),
 		filter.PtrSkip(dto.Skip),
-	)
+	}
+	opts = append(opts, sessionIncludeOptions(dto.Include)...)
+	return filter.New[model.Session](opts...)
+}
+
+type SessionIncludeDTO struct {
+	Include []string `form:"include" validate:"omitempty,dive,oneof=agent"`
+}
+
+func (dto *SessionIncludeDTO) ToFilter() *filter.Options[model.Session] {
+	return filter.New[model.Session](sessionIncludeOptions(dto.Include)...)
+}
+
+func sessionIncludeOptions(includes []string) []filter.Option {
+	opts := make([]filter.Option, 0, len(includes))
+	for _, include := range includes {
+		switch include {
+		case "agent":
+			opts = append(opts, filter.Include("Agent"))
+		}
+	}
+	log.Println("opts", opts)
+	return opts
 }
 
 type MessagesFilterDTO struct {

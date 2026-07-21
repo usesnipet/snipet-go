@@ -50,6 +50,9 @@ func (f *Options[T]) ToGorm(gormInterface gorm.Interface[T]) (gorm.ChainInterfac
 			chain = chain.Where(field + " IS NOT NULL")
 		}
 	}
+	for _, path := range f.Include {
+		chain = chain.Preload(path, nil)
+	}
 
 	return chain, nil
 }
@@ -99,6 +102,9 @@ func (f *Options[T]) ToGormTx(tx *gorm.DB) (*gorm.DB, error) {
 		case WhereOperatorIsNotNull:
 			chain = chain.Where(field + " IS NOT NULL")
 		}
+	}
+	for _, path := range f.Include {
+		chain = chain.Preload(path)
 	}
 
 	return chain, nil

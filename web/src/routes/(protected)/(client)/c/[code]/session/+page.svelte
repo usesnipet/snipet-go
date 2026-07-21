@@ -9,7 +9,7 @@
 
 	let { params } = $props();
 
-	const listQuery = $derived(sessionService.list(params.code));
+	const listQuery = $derived(sessionService.list(params.code, { include: [ "agent" ] }));
 	const sessions = $derived(listQuery.data ?? []);
 
 	let selectedId = $state<string | null>(null);

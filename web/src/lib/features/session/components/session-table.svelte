@@ -41,9 +41,14 @@
 				renderComponent(TableField, { value: row.original.id, truncate: 8 }),
 		},
 		{
-			header: "Agent ID",
+			header: "Name",
 			cell: ({ row }) =>
-				renderComponent(TableField, { value: row.original.agent_id, truncate: 8 }),
+				renderComponent(TableField, { value: row.original.metadata.name, truncate: 40 }),
+		},
+		{
+			header: "Agent",
+			cell: ({ row }) =>
+				renderComponent(TableField, { value: row.original.agent?.name ?? "Unknown", truncate: 40 }),
 		},
 		{
 			header: "Actions",

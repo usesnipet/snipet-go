@@ -82,7 +82,12 @@ func (s *Service) Filter(ctx context.Context, clientCode string, filter *filter.
 	)
 }
 
-func (s *Service) FindByID(ctx context.Context, clientCode string, id string) (*model.Session, error) {
+func (s *Service) FindByID(
+	ctx context.Context,
+	clientCode string,
+	id string,
+	opts *filter.Options[model.Session],
+) (*model.Session, error) {
 	clientID, err := s.resolveClientID(ctx, clientCode)
 	if err != nil {
 		return nil, err
@@ -91,7 +96,7 @@ func (s *Service) FindByID(ctx context.Context, clientCode string, id string) (*
 		return nil, err
 	}
 
-	return s.sessionRepo.FindByIDInClient(ctx, clientID, id)
+	return s.sessionRepo.FindByIDInClient(ctx, clientID, id, opts)
 }
 
 func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessionDTO) (*model.Session, error) {
@@ -146,7 +151,7 @@ func (s *Service) FindMessages(
 	if err := s.ensureSessionUserAccess(ctx, clientID, sessionID); err != nil {
 		return nil, err
 	}
-	if _, err := s.sessionRepo.FindByIDInClient(ctx, clientID, sessionID); err != nil {
+	if _, err := s.sessionRepo.FindByIDInClient(ctx, clientID, sessionID, nil); err != nil {
 		return nil, err
 	}
 
@@ -168,7 +173,7 @@ func (s *Service) Run(
 		return err
 	}
 
-	session, err := s.sessionRepo.FindByIDInClient(ctx, clientID, sessionID)
+	session, err := s.sessionRepo.FindByIDInClient(ctx, clientID, sessionID, nil)
 	if err != nil {
 		return err
 	}

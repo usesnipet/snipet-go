@@ -99,7 +99,7 @@ func TestFindMessagesReturnsExecutionMessages(t *testing.T) {
 
 	sessionRepo := mocks.NewMockISessionRepository(t)
 	sessionRepo.EXPECT().
-		FindByIDInClient(mock.Anything, clientID, sessionID).
+		FindByIDInClient(mock.Anything, clientID, sessionID, mock.Anything).
 		Return(&model.Session{ID: sessionID, ClientID: clientID}, nil)
 
 	messageRepo := mocks.NewMockIExecutionMessageRepository(t)
@@ -154,7 +154,7 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 
 	sessionRepo := mocks.NewMockISessionRepository(t)
 	sessionRepo.EXPECT().
-		FindByIDInClient(mock.Anything, clientID, sessionID).
+		FindByIDInClient(mock.Anything, clientID, sessionID, mock.Anything).
 		Return(&model.Session{ID: sessionID, ClientID: clientID, AgentID: agentID}, nil)
 
 	agentRepo := mocks.NewMockIAgentRepository(t)

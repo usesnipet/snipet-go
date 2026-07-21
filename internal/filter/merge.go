@@ -21,11 +21,13 @@ func From[T any](opts *Options[T]) Option {
 
 		maps.Copy(s.order.Fields, opts.Order.Fields)
 		maps.Copy(s.where.Fields, opts.Where.Fields)
+		s.include = appendUnique(s.include, opts.Include...)
 	}
 }
 
 // Merge combines multiple filters into one. Order and Where fields are merged;
 // when the same key appears in multiple filters, the last one wins.
+// Include paths are unioned and deduplicated.
 func Merge[T any](filters ...*Options[T]) *Options[T] {
 	opts := make([]Option, 0, len(filters))
 	for _, f := range filters {

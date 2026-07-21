@@ -587,8 +587,8 @@ func (_c *MockISessionRepository_FindByID_Call) RunAndReturn(run func(ctx contex
 }
 
 // FindByIDInClient provides a mock function for the type MockISessionRepository
-func (_mock *MockISessionRepository) FindByIDInClient(ctx context.Context, clientID string, id string) (*model.Session, error) {
-	ret := _mock.Called(ctx, clientID, id)
+func (_mock *MockISessionRepository) FindByIDInClient(ctx context.Context, clientID string, id string, opts *filter.Options[model.Session]) (*model.Session, error) {
+	ret := _mock.Called(ctx, clientID, id, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindByIDInClient")
@@ -596,18 +596,18 @@ func (_mock *MockISessionRepository) FindByIDInClient(ctx context.Context, clien
 
 	var r0 *model.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*model.Session, error)); ok {
-		return returnFunc(ctx, clientID, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *filter.Options[model.Session]) (*model.Session, error)); ok {
+		return returnFunc(ctx, clientID, id, opts)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *model.Session); ok {
-		r0 = returnFunc(ctx, clientID, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *filter.Options[model.Session]) *model.Session); ok {
+		r0 = returnFunc(ctx, clientID, id, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, clientID, id)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *filter.Options[model.Session]) error); ok {
+		r1 = returnFunc(ctx, clientID, id, opts)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -623,11 +623,12 @@ type MockISessionRepository_FindByIDInClient_Call struct {
 //   - ctx context.Context
 //   - clientID string
 //   - id string
-func (_e *MockISessionRepository_Expecter) FindByIDInClient(ctx any, clientID any, id any) *MockISessionRepository_FindByIDInClient_Call {
-	return &MockISessionRepository_FindByIDInClient_Call{Call: _e.mock.On("FindByIDInClient", ctx, clientID, id)}
+//   - opts *filter.Options[model.Session]
+func (_e *MockISessionRepository_Expecter) FindByIDInClient(ctx any, clientID any, id any, opts any) *MockISessionRepository_FindByIDInClient_Call {
+	return &MockISessionRepository_FindByIDInClient_Call{Call: _e.mock.On("FindByIDInClient", ctx, clientID, id, opts)}
 }
 
-func (_c *MockISessionRepository_FindByIDInClient_Call) Run(run func(ctx context.Context, clientID string, id string)) *MockISessionRepository_FindByIDInClient_Call {
+func (_c *MockISessionRepository_FindByIDInClient_Call) Run(run func(ctx context.Context, clientID string, id string, opts *filter.Options[model.Session])) *MockISessionRepository_FindByIDInClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -641,10 +642,15 @@ func (_c *MockISessionRepository_FindByIDInClient_Call) Run(run func(ctx context
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
+		var arg3 *filter.Options[model.Session]
+		if args[3] != nil {
+			arg3 = args[3].(*filter.Options[model.Session])
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -655,7 +661,7 @@ func (_c *MockISessionRepository_FindByIDInClient_Call) Return(session *model.Se
 	return _c
 }
 
-func (_c *MockISessionRepository_FindByIDInClient_Call) RunAndReturn(run func(ctx context.Context, clientID string, id string) (*model.Session, error)) *MockISessionRepository_FindByIDInClient_Call {
+func (_c *MockISessionRepository_FindByIDInClient_Call) RunAndReturn(run func(ctx context.Context, clientID string, id string, opts *filter.Options[model.Session]) (*model.Session, error)) *MockISessionRepository_FindByIDInClient_Call {
 	_c.Call.Return(run)
 	return _c
 }

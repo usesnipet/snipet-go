@@ -107,7 +107,11 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FindByID(r.Context(), h.clientCode(r), h.sessionID(r))
+	var query SessionIncludeDTO
+	if err := api.ParseQuery(r, &query); err != nil {
+		return err
+	}
+	data, err := h.service.FindByID(r.Context(), h.clientCode(r), h.sessionID(r), query.ToFilter())
 	if err != nil {
 		return err
 	}

@@ -84,8 +84,9 @@ type WhereOptions struct {
 }
 
 type Options[T any] struct {
-	Take  int
-	Skip  int
-	Order OrderOptions
-	Where WhereOptions
+	Take    int
+	Skip    int
+	Order   OrderOptions
+	Where   WhereOptions
+	Include []string
 }

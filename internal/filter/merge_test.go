@@ -54,6 +54,16 @@ func TestMergeEmptyReturnsDefaultState(t *testing.T) {
 	assert.Equal(t, 0, merged.Skip)
 	assert.Empty(t, merged.Order.Fields)
 	assert.Empty(t, merged.Where.Fields)
+	assert.Empty(t, merged.Include)
+}
+
+func TestMergeUnionsIncludes(t *testing.T) {
+	first := filter.New[Author](filter.Include("Profile"))
+	second := filter.New[Author](filter.Include("Posts", "Profile"))
+
+	merged := filter.Merge(first, second)
+
+	assert.Equal(t, []string{"Profile", "Posts"}, merged.Include)
 }
 
 func TestFromInsideNew(t *testing.T) {

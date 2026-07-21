@@ -6,7 +6,7 @@ import { handleApiError, parseZodErrors } from "./errors.js";
 export type ApiMethod = "GET" | "POST" | "PUT" | "DELETE";
 export type SearchParamsRecord = Record<
   string,
-  string | number | boolean | undefined | null
+  string | number | boolean | string[] | number[] | boolean[] | undefined | null
 >;
 
 export type PathParamsRecord = Record<string, string | number | boolean>;
