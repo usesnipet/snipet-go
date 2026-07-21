@@ -5,7 +5,6 @@
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { XIcon } from "@lucide/svelte";
 	import { agentService } from "$lib/features/agent/service";
-	import { truncate } from "$lib/utils";
 	import type { Session } from "../schemas";
 
 	type Props = {
@@ -20,9 +19,7 @@
 		session?.agent_id ? agentService.findById(session.agent_id) : undefined,
 	);
 	const agent = $derived(agentQuery?.data);
-	const title = $derived(
-		session?.id ? truncate(session.id, 8) : "Session",
-	);
+	const title = $derived(session?.metadata.name ? session.metadata.name : "Session");
 </script>
 
 <Card.Root class="h-full w-full min-w-0">
