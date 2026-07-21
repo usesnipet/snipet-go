@@ -60,16 +60,7 @@
   let collapsibleOpen = $state<Record<string, boolean>>({});
 
   function isActive(url: RouteId) {
-    if (url === "/(protected)/knowledge") {
-      return page.route.id?.startsWith("/(protected)/knowledge") ?? false;
-    }
-    if (url === "/(protected)/agent") {
-      return page.route.id?.startsWith("/(protected)/agent") ?? false;
-    }
-    if (url === "/(protected)/client") {
-      return page.route.id?.startsWith("/(protected)/client") ?? false;
-    }
-    return page.route.id === url;
+    return (page.route.id && page.route.id === url) ?? false;
   }
 
   function isGroupActive(group: NavGroup) {
