@@ -8,8 +8,9 @@
 	import TrashIcon from "@lucide/svelte/icons/trash";
 	import { cn } from "$lib/utils";
 	import type { Client } from "../schemas";
-	import { CopyIcon } from "@lucide/svelte";
-	import { toast } from "svelte-sonner";
+	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
+	import ClientCode from "./client-code.svelte";
 
 	type Props = {
 		client: Client;
@@ -22,13 +23,12 @@
 
 	let menuOpen = $state(false);
 
-	function handleCopyCode() {
-		navigator.clipboard.writeText(client.code);
-		toast.success("Client code copied.");
+	function handleClick() {
+		goto(resolve("/(protected)/(client)/c/[code]", { code: client.code }));
 	}
 </script>
 
-<Card.Root class={cn("group", className)}>
+<Card.Root class={cn("group cursor-pointer", className)} onclick={handleClick}>
 	<Card.Header class="grid-cols-1">
 		<div class="flex items-start justify-between gap-2">
 			<div class="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
@@ -67,16 +67,7 @@
 		</div>
 		<Card.Title class="truncate">{client.name}</Card.Title>
 		<Card.Description class="truncate font-mono text-xs flex items-center gap-2">
-			{client.code}
-			<Button
-			  variant="outline"
-				size="icon-sm"
-				class="opacity-0 group-hover:opacity-100 transition-opacity"
-				onclick={handleCopyCode}
-				aria-label="Copy client code"
-			>
-				<CopyIcon class="size-3" />
-			</Button>
+			<ClientCode code={client.code} class="opacity-0 group-hover:opacity-100 transition-opacity"/>
 		</Card.Description>
 	</Card.Header>
 </Card.Root>
