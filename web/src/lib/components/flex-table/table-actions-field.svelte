@@ -19,7 +19,10 @@
   {#each actions as action (action.key)}
     {@const Icon = action.icon}
     <Button
-      onclick={action.onClick}
+      onclick={(e) => {
+        e.stopPropagation();
+        action.onClick();
+      }}
       variant={action.variant}
       size={action.label ? "default" : "icon"}
     >
