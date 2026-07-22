@@ -68,3 +68,16 @@
 		{/if}
 	</FieldGroup>
 </FieldSet>
+
+<FieldSeparator />
+
+<FieldSet>
+	<FieldGroup>
+		<FormSwitch
+			{form}
+			field="config.anonymous.enabled"
+			label="Enabled Anonymous"
+			description="Allow users to authenticate anonymously."
+		/>
+	</FieldGroup>
+</FieldSet>

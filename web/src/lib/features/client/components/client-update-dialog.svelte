@@ -55,6 +55,9 @@
 						enabled: client.config.webhook.enabled,
 						url: client.config.webhook.url,
 					},
+					anonymous: {
+						enabled: client.config.anonymous.enabled,
+					},
 				},
 			});
 		}

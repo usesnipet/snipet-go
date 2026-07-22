@@ -14,6 +14,11 @@ export const clientConfigSchema = z.object({
 			url: z.string().default(""),
 		})
 		.default({ enabled: false, url: "" }),
+	anonymous: z
+		.object({
+			enabled: z.boolean().default(false),
+		})
+		.default({ enabled: false }),
 });
 
 export type ClientConfig = z.infer<typeof clientConfigSchema>;
@@ -47,6 +52,7 @@ export const createClientSchema = z.object({
 	config: clientConfigSchema.default({
 		oidc: { enabled: false, issuer: "", audience: "" },
 		webhook: { enabled: false, url: "" },
+		anonymous: { enabled: false },
 	}),
 });
 export type CreateClient = z.infer<typeof createClientSchema>;
