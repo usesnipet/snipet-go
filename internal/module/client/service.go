@@ -34,6 +34,18 @@ func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, e
 	return paginated.First(), nil
 }
 
+func (s *Service) FindPublicByCode(ctx context.Context, code string) (*ClientPublicDTO, error) {
+	client, err := s.FindByCode(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+	return &ClientPublicDTO{
+		Code:           client.Code,
+		Name:           client.Name,
+		AllowAnonymous: client.Config.Anonymous.Enabled,
+	}, nil
+}
+
 func (s *Service) GenerateCode(ctx context.Context) (string, error) {
 	randomBytes := make([]byte, 8)
 	if _, err := rand.Read(randomBytes); err != nil {

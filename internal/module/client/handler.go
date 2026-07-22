@@ -20,6 +20,8 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	// Use /clients (plural) so CRUD does not conflict with /client/{client_code}/...
 	// routes used by auth, session, and user modules.
 	r.Route("/clients", func(r chi.Router) {
+		r.Get("/{code}/public", serve(h.findPublicByCode))
+
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
 			r.Get("/", serve(h.filter))
@@ -47,6 +49,14 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) findByCode(w http.ResponseWriter, r *http.Request) error {
 	data, err := h.service.FindByCode(r.Context(), chi.URLParam(r, "code"))
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
+}
+
+func (h *Handler) findPublicByCode(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.FindPublicByCode(r.Context(), chi.URLParam(r, "code"))
 	if err != nil {
 		return err
 	}

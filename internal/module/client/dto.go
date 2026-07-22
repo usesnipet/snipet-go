@@ -20,6 +20,12 @@ type FindClientsFilterDTO struct {
 	Skip *int `form:"skip" validate:"omitempty,min=0"`
 }
 
+type ClientPublicDTO struct {
+	Code           string `json:"code"`
+	Name           string `json:"name"`
+	AllowAnonymous bool   `json:"allow_anonymous"`
+}
+
 func (dto *FindClientsFilterDTO) ToFilter() *filter.Options[model.Client] {
 	return filter.New[model.Client](
 		filter.PtrTake(dto.Take),
