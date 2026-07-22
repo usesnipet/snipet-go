@@ -11,6 +11,11 @@ export default defineConfig({
 			css: 'injected',
 		},
 	})],
+	resolve: {
+		alias: {
+			$lib: resolve(__dirname, 'src/lib'),
+		},
+	},
 	esbuild: {
 		legalComments: 'none',
 	},

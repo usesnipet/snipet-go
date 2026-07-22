@@ -13,6 +13,11 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "$lib": ["./src/lib"],
+      "$lib/*": ["./src/lib/*"]
+    },
 
     // Strict
     "strict": true,
