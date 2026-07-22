@@ -3,7 +3,7 @@ import { auth } from "../features/auth/stores/auth.svelte";
 import { ApiError, HttpClient } from "./http";
 
 export const authenticatedClient = (): HttpClient => {
-  const token = auth.token;
+  const token = auth.accessToken;
   if (!token) {
     throw new ApiError({
       message: "Unauthorized",
