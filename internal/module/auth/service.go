@@ -2,38 +2,82 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/usesnipet/snipet/config"
+	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/model"
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/repository"
+	"github.com/usesnipet/snipet/internal/util"
+	"gorm.io/gorm"
 )
 
 type Service struct {
-	registry   *auth_provider.Registry
-	clientRepo repository.IClientRepository
-	userRepo   repository.IUserRepository
-	jwtService *auth.JWTService
+	registry         *auth_provider.Registry
+	clientRepo       repository.IClientRepository
+	userRepo         repository.IUserRepository
+	refreshTokenRepo repository.IRefreshTokenRepository
+	jwtService       *auth.JWTService
+	authConfig       config.AuthConfig
 }
 
 func NewService(
 	registry *auth_provider.Registry,
 	clientRepo repository.IClientRepository,
 	userRepo repository.IUserRepository,
+	refreshTokenRepo repository.IRefreshTokenRepository,
 	jwtService *auth.JWTService,
+	authConfig config.AuthConfig,
 ) *Service {
-	return &Service{registry: registry, clientRepo: clientRepo, userRepo: userRepo, jwtService: jwtService}
+	return &Service{
+		registry:         registry,
+		clientRepo:       clientRepo,
+		userRepo:         userRepo,
+		refreshTokenRepo: refreshTokenRepo,
+		jwtService:       jwtService,
+		authConfig:       authConfig,
+	}
 }
 
-func (s *Service) generateToken(ctx context.Context, clientCode string, user *model.User) (*AuthenticateResponse, error) {
-	token, _, err := s.jwtService.GenerateToken(clientCode, user)
-	return &AuthenticateResponse{Token: token}, err
+func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.User, metadata util.JSONMap) (*AuthenticateResponse, error) {
+	accessToken, _, err := s.jwtService.GenerateToken(clientCode, user)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := auth.GenerateRefreshToken()
+	if err != nil {
+		return nil, err
+	}
+
+	if metadata == nil {
+		metadata = util.JSONMap{}
+	}
+
+	record := &model.RefreshToken{
+		Hash:      auth.HashRefreshToken(refreshToken),
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(s.authConfig.RefreshTokenExpiration),
+		Metadata:  metadata,
+	}
+	if err := s.refreshTokenRepo.Create(ctx, record); err != nil {
+		return nil, err
+	}
+
+	return &AuthenticateResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         *user,
+	}, nil
 }
 
-func (s *Service) Authenticate(ctx context.Context, clientCode string, providerName auth_provider.ProviderName, req *http.Request) (*AuthenticateResponse, error) {
+func (s *Service) Authenticate(ctx context.Context, clientCode string, providerName auth_provider.ProviderName, req *http.Request, refreshMetadata util.JSONMap) (*AuthenticateResponse, error) {
 	client, err := s.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return nil, err
@@ -52,26 +96,62 @@ func (s *Service) Authenticate(ctx context.Context, clientCode string, providerN
 	if err != nil {
 		return nil, err
 	}
-	return s.generateToken(ctx, client.Code, user)
+	return s.issueTokens(ctx, client.Code, user, refreshMetadata)
 }
 
 func (s *Service) generateAnonymousName() string {
 	return fmt.Sprintf("Anonymous %s", uuid.New().String()[:8])
 }
 
-func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, dto AuthenticateAnonymousDTO) (*AuthenticateResponse, error) {
+func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, dto AuthenticateAnonymousDTO, refreshMetadata util.JSONMap) (*AuthenticateResponse, error) {
 	name := s.generateAnonymousName()
 	if dto.Name != nil {
 		name = *dto.Name
+	}
+	metadata := dto.Metadata
+	if metadata == nil {
+		metadata = util.JSONMap{}
 	}
 	user := &model.User{
 		Name:     name,
 		Picture:  dto.Picture,
 		Email:    dto.Email,
-		Metadata: dto.Metadata,
+		Metadata: metadata,
 	}
 	if err := s.userRepo.CreateInClient(ctx, clientCode, user, nil); err != nil {
 		return nil, err
 	}
-	return s.generateToken(ctx, clientCode, user)
+	return s.issueTokens(ctx, clientCode, user, refreshMetadata)
+}
+
+func (s *Service) Refresh(ctx context.Context, clientCode string, dto RefreshDTO, refreshMetadata util.JSONMap) (*AuthenticateResponse, error) {
+	hash := auth.HashRefreshToken(dto.RefreshToken)
+	token, err := s.refreshTokenRepo.FindByHash(ctx, hash)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperr.Unauthorized("invalid refresh token")
+		}
+		return nil, err
+	}
+	if token.RevokedAt != nil {
+		return nil, apperr.Unauthorized("refresh token revoked")
+	}
+	if token.ExpiresAt.Before(time.Now()) {
+		return nil, apperr.Unauthorized("refresh token expired")
+	}
+
+	user, err := s.userRepo.FindByIDInClient(ctx, clientCode, token.UserID)
+	if err != nil {
+		var appErr *apperr.Error
+		if errors.As(err, &appErr) && appErr.StatusCode == http.StatusNotFound {
+			return nil, apperr.Unauthorized("invalid refresh token")
+		}
+		return nil, err
+	}
+
+	if err := s.refreshTokenRepo.RevokeByID(ctx, token.ID); err != nil {
+		return nil, err
+	}
+
+	return s.issueTokens(ctx, clientCode, user, refreshMetadata)
 }

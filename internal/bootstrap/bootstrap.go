@@ -54,6 +54,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeItemRepo := repository.NewKnowledgeItemRepository(db)
 	indexedKnowledgeItemRepo := repository.NewIndexedKnowledgeItemRepository(db)
 	userRepo := repository.NewUserRepository(db, clientRepo)
+	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
 	executionRepo := repository.NewExecutionRepository(db)
 	messageRepo := repository.NewExecutionMessageRepository(db)
 
@@ -94,7 +95,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	authRegistry := auth_provider.NewRegistry()
 
-	authService := auth_module.NewService(authRegistry, clientRepo, userRepo, jwtService)
+	authService := auth_module.NewService(authRegistry, clientRepo, userRepo, refreshTokenRepo, jwtService, cfg.Auth)
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 	apiKeyService.Init(context.Background())

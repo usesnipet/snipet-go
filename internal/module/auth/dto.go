@@ -1,9 +1,14 @@
 package auth
 
-import "github.com/usesnipet/snipet/internal/util"
+import (
+	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/util"
+)
 
 type AuthenticateResponse struct {
-	Token string `json:"token"`
+	AccessToken  string     `json:"access_token"`
+	RefreshToken string     `json:"refresh_token"`
+	User         model.User `json:"user"`
 }
 
 type AuthenticateAnonymousDTO struct {
@@ -11,4 +16,8 @@ type AuthenticateAnonymousDTO struct {
 	Picture  *string      `json:"picture" validate:"omitempty,url"`
 	Email    *string      `json:"email" validate:"omitempty,email"`
 	Metadata util.JSONMap `json:"metadata"`
+}
+
+type RefreshDTO struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
 }

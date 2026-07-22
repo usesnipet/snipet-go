@@ -42,6 +42,8 @@ func (s *Service) CreateAuthenticated(ctx context.Context, clientCode string, dt
 	user := &model.User{
 		Name:     dto.Name,
 		Metadata: dto.Metadata,
+		Email:    &dto.Email,
+		Picture:  dto.Picture,
 	}
 	if err := s.userRepo.CreateInClient(ctx, clientCode, user, &dto.ExternalID); err != nil {
 		return err

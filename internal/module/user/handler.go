@@ -19,9 +19,10 @@ func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc, anyAuthMi
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/client/{client_code}/user", func(r chi.Router) {
+		r.Post("/anonymous", serve(h.createAnonymous))
+
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
-			r.Post("/anonymous", serve(h.createAnonymous))
 			r.Post("/authenticated", serve(h.createAuthenticated))
 		})
 

@@ -1,4 +1,5 @@
-h1:PEhTWbsCrI9WNuI3CXAqk1NJ3S0dRhbvyeWVgNhdwn8=
+h1:OvPsX6L3PdtVuM5HR+7SKhAWudWJAroehMEJatBTOrw=
 20260716181040_initial.up.sql h1:hxbax4Yc8GH0cBil2OKNyNMxjVf7KdQ2x+DPk+CKgcc=
 20260718024811_add_error_message_on_execution_table.up.sql h1:wA3ZNAx9FqHasr0/TUKGBO6aC2yZ2Hi4SQEf6+dsMuc=
 20260720211500_drop_session_messages.up.sql h1:gHWR1ttErC7ozc8w0FRuT+faRZzpHUwSiTnoRJMpnNs=
+20260722102828_add_refresh_tokens.up.sql h1:8Zuz9MFHRkq9RC3YqFq7eWWBsNesK3FnPQif+mNLT14=
