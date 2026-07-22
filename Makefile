@@ -1,8 +1,9 @@
-.PHONY: test install dev-app build-app build-prod-app db-generate db-hash mocks fix
+.PHONY: test install dev dev-api dev-web build build-prod db-generate db-hash mocks fix
 
 GO ?= go
 ATLAS ?= atlas
 ATLAS_ENV ?= local
+PNPM ?= pnpm
 
 MIGRATION_NAME ?= $(strip $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS)))
 RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -19,7 +20,13 @@ mocks:
 	$(GO) tool mockery
 
 dev:
+	$(MAKE) -j2 dev-api dev-web
+
+dev-api:
 	air
+
+dev-web:
+	cd web && $(PNPM) dev
 
 build:
 	$(GO) build -o ./tmp/api ./cmd/api
