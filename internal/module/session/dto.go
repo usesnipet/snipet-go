@@ -17,6 +17,11 @@ type CreateSessionDTO struct {
 	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
+type UpdateSessionDTO struct {
+	AgentID  *string      `json:"agent_id" validate:"omitempty,uuid"`
+	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
+}
+
 type SessionsFilterDTO struct {
 	Take    *int     `form:"take" validate:"omitempty,min=1"`
 	Skip    *int     `form:"skip" validate:"omitempty,min=0"`

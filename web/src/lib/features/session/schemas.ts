@@ -38,3 +38,6 @@ export const createSessionSchema = z.object({
 	metadata: z.record(z.string(), z.string()).optional().default({}),
 });
 export type CreateSession = z.infer<typeof createSessionSchema>;
+
+export const updateSessionSchema = createSessionSchema.partial();
+export type UpdateSession = z.infer<typeof updateSessionSchema>;

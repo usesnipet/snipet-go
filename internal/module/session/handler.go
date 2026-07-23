@@ -24,6 +24,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 			r.Get("/", serve(h.filter))
 			r.Post("/", serve(h.create))
 			r.Get("/{id}", serve(h.findByID))
+			r.Put("/{id}", serve(h.updateByID))
 			r.Delete("/{id}", serve(h.deleteByID))
 			r.Get("/{id}/messages", serve(h.findMessages))
 			r.Post("/{id}/run", serve(h.run))
@@ -128,6 +129,17 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteJSON(w, http.StatusCreated, data)
+}
+
+func (h *Handler) updateByID(w http.ResponseWriter, r *http.Request) error {
+	var dto UpdateSessionDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+	if err := h.service.UpdateByID(r.Context(), h.clientCode(r), h.sessionID(r), dto); err != nil {
+		return err
+	}
+	return api.WriteNoContent(w)
 }
 
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {

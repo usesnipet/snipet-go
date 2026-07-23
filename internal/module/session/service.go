@@ -138,6 +138,28 @@ func (s *Service) DeleteByID(ctx context.Context, clientCode string, id string) 
 	return s.sessionRepo.DeleteInClient(ctx, clientID, id)
 }
 
+func (s *Service) UpdateByID(ctx context.Context, clientCode string, id string, dto UpdateSessionDTO) error {
+	clientID, err := s.resolveClientID(ctx, clientCode)
+	if err != nil {
+		return err
+	}
+	if err := s.ensureSessionUserAccess(ctx, clientID, id); err != nil {
+		return err
+	}
+	if _, err := s.sessionRepo.FindByIDInClient(ctx, clientID, id, nil); err != nil {
+		return err
+	}
+
+	updates := &model.Session{}
+	if dto.AgentID != nil {
+		updates.AgentID = *dto.AgentID
+	}
+	if dto.Metadata != nil {
+		updates.Metadata = dto.Metadata
+	}
+	return s.sessionRepo.UpdateByID(ctx, id, updates)
+}
+
 func (s *Service) FindMessages(
 	ctx context.Context,
 	clientCode string,

@@ -4,7 +4,7 @@ import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { toast } from "svelte-sonner";
 
 import {
-  createSessionSchema, filterSessionByIDSchema, filterSessionSchema, sessionPaginatedSchema, sessionSchema
+  createSessionSchema, filterSessionByIDSchema, filterSessionSchema, sessionPaginatedSchema, sessionSchema, updateSessionSchema
 } from "./schemas";
 
 import type {
@@ -13,6 +13,7 @@ import type {
 	FilterSessionByID,
 	Session,
 	SessionPaginated,
+	UpdateSession,
 } from "./schemas";
 
 const baseUrl = (clientCode: string) => `/api/client/${clientCode}/session`;
@@ -66,6 +67,23 @@ export const sessionService = {
 				}),
 			onSuccess: () => {
 				toast.success("Session created.");
+				queryClient.invalidateQueries({ queryKey: listQueryKey(clientCode) });
+			},
+			onError: (error) => {
+				toast.error(error.message);
+			},
+		})),
+	update: (clientCode: string) =>
+		createMutation(() => ({
+			mutationFn: ({ id, data }: { id: string; data: UpdateSession }) =>
+				authenticatedClient().put({
+					url: `${baseUrl(clientCode)}/${id}`,
+					body: data,
+					schemas: { body: updateSessionSchema },
+				}),
+			onSuccess: (_, { id }) => {
+				toast.success("Session updated.");
+				queryClient.invalidateQueries({ queryKey: findByIdQueryKey(clientCode, id) });
 				queryClient.invalidateQueries({ queryKey: listQueryKey(clientCode) });
 			},
 			onError: (error) => {
