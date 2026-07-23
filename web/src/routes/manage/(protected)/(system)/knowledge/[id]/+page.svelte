@@ -18,7 +18,7 @@
 	description="View knowledge details and stored items."
 >
 	{#snippet actionsLeft()}
-		<Button variant="outline" size="icon" href="/(protected)/knowledge" aria-label="Back to knowledge list">
+		<Button variant="outline" size="icon" href="/manage/(protected)/(system)/knowledge" aria-label="Back to knowledge list">
 			<ArrowLeftIcon />
 		</Button>
 	{/snippet}

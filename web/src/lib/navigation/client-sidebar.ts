@@ -7,13 +7,13 @@ export function createClientSidebarSections(clientCode: string): SidebarNavSecti
 			items: [
 				{
 					title: "Home",
-					route: "/(protected)/(client)/c/[code]",
+					route: "/manage/(protected)/(client)/c/[code]",
 					params: { code: clientCode },
 					exact: true,
 				},
 				{
 					title: "Sessions",
-					route: "/(protected)/(client)/c/[code]/session",
+					route: "/manage/(protected)/(client)/c/[code]/session",
 					params: { code: clientCode },
 				},
 			],

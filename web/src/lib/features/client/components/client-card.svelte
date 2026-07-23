@@ -24,7 +24,7 @@
 	let menuOpen = $state(false);
 
 	function handleClick() {
-		goto(resolve("/(protected)/(client)/c/[code]", { code: client.code }));
+		goto(resolve("/manage/(protected)/(client)/c/[code]", { code: client.code }));
 	}
 </script>
 

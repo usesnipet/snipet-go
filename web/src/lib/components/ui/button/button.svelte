@@ -40,8 +40,11 @@
 		WithElementRef<HTMLAnchorAttributes> & {
 			variant?: ButtonVariant;
 			size?: ButtonSize;
-			href?: RouteId;
+			href?: RouteId | (string & {}) | null;
 		};
+
+	/** `resolve` overloads don't accept a `RouteId` union. */
+	const resolveHref = resolve as (route: string) => string;
 </script>
 
 <script lang="ts">
@@ -63,7 +66,7 @@
 		bind:this={ref}
 		data-slot="button"
 		class={cn(buttonVariants({ variant, size }), className)}
-		href={disabled ? undefined : resolve(href)}
+		href={disabled ? undefined : resolveHref(href)}
 		aria-disabled={disabled}
 		role={disabled ? "link" : undefined}
 		tabindex={disabled ? -1 : undefined}

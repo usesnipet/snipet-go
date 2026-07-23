@@ -40,7 +40,7 @@
   }
 
 	function handleOpenKnowledge(id: string) {
-		goto(resolve("/(protected)/knowledge/[id]", { id }));
+		goto(resolve("/manage/(protected)/(system)/knowledge/[id]", { id }));
 	}
 
   const handleSync = (id: string) => {

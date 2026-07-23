@@ -3,11 +3,14 @@ import { resolve } from "$app/paths";
 import type { RouteId, RouteParams } from "$app/types";
 
 export type SidebarNavLink = {
-	title: string;
-	route: RouteId;
-	exact?: boolean;
-	params?: RouteParams<RouteId>;
-};
+	[R in RouteId]: {
+		title: string;
+		route: R;
+		exact?: boolean;
+	} & (RouteParams<R> extends Record<string, never>
+		? { params?: undefined }
+		: { params: RouteParams<R> });
+}[RouteId];
 
 export type SidebarNavGroup = {
 	title: string;
@@ -25,10 +28,13 @@ export function isSidebarNavGroup(entry: SidebarNavEntry): entry is SidebarNavGr
 	return "items" in entry;
 }
 
+/** `resolve` overloads don't accept a `RouteId` union; widen for dynamic nav links. */
+const resolveRoute = resolve as (route: RouteId, params?: Record<string, string>) => string;
+
 export function resolveNavLink(link: SidebarNavLink): string {
-	if ("params" in link && link.params) {
-		return resolve(link.route, link.params);
+	if (link.params) {
+		return resolveRoute(link.route, link.params);
 	}
 
-	return resolve(link.route);
+	return resolveRoute(link.route);
 }
