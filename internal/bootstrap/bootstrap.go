@@ -21,6 +21,7 @@ import (
 	"github.com/usesnipet/snipet/internal/middleware"
 	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
+	app_module "github.com/usesnipet/snipet/internal/module/app"
 	auth_module "github.com/usesnipet/snipet/internal/module/auth"
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/client"
@@ -110,6 +111,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sessionService := session.NewService(sessionRepo, messageRepo, clientService, agentService)
 
 	userService := user.NewService(userRepo)
+	appService := app_module.NewService(&cfg.App)
 
 	// cache
 	apiKeyCache := cache.NewMemoryCache(1000, 1*time.Hour)
@@ -120,6 +122,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	// handlers
 	authHandler := auth_module.NewHandler(authService)
+	appHandler := app_module.NewHandler(appService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
 	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
@@ -133,6 +136,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	api.Router.Handle("/*", web.Handler())
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
 		authHandler.RegisterRoutes(r, api.Serve)
+		appHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
 		agentHandler.RegisterRoutes(r, api.Serve)
 		clientHandler.RegisterRoutes(r, api.Serve)
