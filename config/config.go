@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	App      AppConfig      `env:", prefix=APP_"`
 	Server   ServerConfig   `env:", prefix=SERVER_"`
 	Database DatabaseConfig `env:", prefix=DB_"`
 	Log      LogConfig      `env:", prefix=LOG_"`
