@@ -12,6 +12,8 @@ func NewService(cfg *config.AppConfig) *Service {
 
 func (s *Service) Config() *AppConfigDTO {
 	return &AppConfigDTO{
-		InheritClient: s.cfg.InheritClient,
+		InheritClient:     s.cfg.InheritClient,
+		InheritClientCode: s.cfg.InheritClientCode,
+		InheritClientName: s.cfg.InheritClientName,
 	}
 }

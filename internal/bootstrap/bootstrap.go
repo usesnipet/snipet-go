@@ -101,7 +101,11 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 	apiKeyService.Init(context.Background())
 
-	clientService := client.NewService(clientRepo)
+	clientService := client.NewService(clientRepo, logger)
+	if err := clientService.Init(context.Background(), &cfg.App); err != nil {
+		logger.Errorf("failed to init client service: %v", err)
+		return err
+	}
 
 	agentService := agent.NewService(agentRepo, engine, llmManager, toolManager, executionRepo, messageRepo, logger)
 
