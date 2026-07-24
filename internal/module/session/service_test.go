@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -74,7 +74,7 @@ func newSessionService(
 	return session.NewService(
 		sessionRepo,
 		messageRepo,
-		client.NewService(clientRepo),
+		client.NewService(clientRepo, logger.NewLogger(logger.LevelError)),
 		agentSvc,
 	)
 }
