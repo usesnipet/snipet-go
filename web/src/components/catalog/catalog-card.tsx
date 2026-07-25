@@ -43,13 +43,13 @@ export function CatalogCard({
         {renderIcon()}
         <div className="flex min-w-0 flex-1 items-center justify-between space-y-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h2 className="truncate text-base font-semibold leading-tight">{title}</h2>
             {badge ? (
               <Badge variant="secondary" className="shrink-0 font-normal">
                 {badge}
               </Badge>
             ) : null}
             {extraBadges}
-            <h2 className="truncate text-base font-semibold leading-tight">{title}</h2>
           </div>
           <div>
             {

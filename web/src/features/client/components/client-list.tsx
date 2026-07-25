@@ -1,16 +1,18 @@
-import { CatalogCard, CatalogList } from "@/components/catalog";
+import { CatalogList } from "@/components/catalog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useDialog } from "@/lib/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
 
 import { useListClient } from "../hooks";
 
+import { ClientCode } from "./client-code";
 import { DeleteClientDialog } from "./delete-client-dialog";
 import { UpdateClientDialog } from "./update-client-dialog";
 
 import type { Client } from "../schemas";
-
 function AuthBadges({ client }: { client: Client }) {
   const methods: string[] = [];
   if (client.config.oidc.enabled) methods.push("OIDC");
@@ -27,11 +29,14 @@ function AuthBadges({ client }: { client: Client }) {
 
   return (
     <>
-      {methods.map((method) => (
-        <Badge key={method} variant="outline" className="shrink-0 font-normal">
-          {method}
+      <Badge key={methods[0]} variant="outline" className="shrink-0 font-normal">
+        {methods[0]}
+      </Badge>
+      {methods.length > 1 && (
+        <Badge variant="outline" className="shrink-0 font-normal">
+          +{methods.length - 1}
         </Badge>
-      ))}
+      )}
     </>
   );
 }
@@ -67,23 +72,38 @@ export function ClientList() {
       items={data?.data ?? []}
       emptyMessage="No clients yet."
       renderItem={(client) => (
-        <CatalogCard
-          title={client.name}
-          badge={client.code}
-          extraBadges={<AuthBadges client={client} />}
-          actions={[
-            {
-              label: "Edit client",
-              icon: <Pencil />,
-              onClick: () => openEdit(client),
-            },
-            {
-              label: "Delete client",
-              icon: <Trash2 />,
-              onClick: () => openDelete(client),
-            },
-          ]}
-        />
+        <Card className="flex h-full flex-col">
+          <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-3">
+            <BotIcon className="size-8 text-muted-foreground border border-border rounded-full p-1.5" />
+            <div className="flex min-w-0 flex-1 items-center justify-between space-y-1">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <h2 className="truncate text-base font-semibold leading-tight">{client.name}</h2>
+                <AuthBadges client={client} />
+              </div>
+              <div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Edit client"
+                  onClick={() => openEdit(client)}
+                >
+                  <PencilIcon className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Delete client"
+                  onClick={() => openDelete(client)}
+                >
+                  <TrashIcon className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col gap-3 pt-0">
+            <ClientCode client={client} />
+          </CardContent>
+        </Card>
       )}
     />
   );
