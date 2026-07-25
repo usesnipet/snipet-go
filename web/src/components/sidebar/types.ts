@@ -1,4 +1,3 @@
-import type { ROUTES } from "@/routes"
 import type { LucideIcon } from "lucide-react"
 
 export type NavSubItem = {
@@ -10,7 +9,7 @@ export type NavSubItem = {
 
 export type NavItem = {
   title: string
-  href: (typeof ROUTES)[keyof typeof ROUTES]
+  href: string
   icon: LucideIcon
   exact?: boolean
 }

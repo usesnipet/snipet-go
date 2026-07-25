@@ -7,7 +7,9 @@ import type { Client } from "../schemas";
 export function ClientCode({ client }: { client: Client }) {
   const { copy } = useClipboard();
 
-  const handleCopy = () => {
+  const handleCopy = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     copy(client.code, {
       successTitle: `Client code copied to clipboard`,
       successDescription: "The code has been copied to your clipboard.",

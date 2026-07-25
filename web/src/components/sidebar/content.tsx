@@ -6,26 +6,54 @@ import {
   SidebarContent as SidebarContentBase, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton,
   SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem
 } from "@/components/ui/sidebar";
+import { applyPathParams } from "@/lib/http";
 import { ChevronRight } from "lucide-react";
-import { useLocation } from "react-router";
+import { useCallback, useMemo } from "react";
+import { useLocation, useParams } from "react-router";
 
 import { isNavActive, isNavGroupActive, isNavItemWithChildren } from "./utils";
 
 import type { NavEntry } from "./types";
-
 type Props = {
   navItems: NavEntry[]
 }
 
 export function SidebarContent({ navItems }: Props) {
   const { pathname } = useLocation();
+  const params = useParams();
+
+  const buildPath = useCallback((path: string) => {
+    const pathParams = Object.fromEntries(
+      Object.entries(params).filter((entry): entry is [string, string] => entry[1] != null),
+    );
+    return applyPathParams(path, pathParams);
+  }, [params])
+
+  const transformedNavItems = useMemo(() => {
+    const transform = (item: NavEntry): NavEntry => {
+      if (isNavItemWithChildren(item)) {
+        return {
+          ...item,
+          items: item.items.map(sub => ({
+            ...sub,
+            href: buildPath(sub.href),
+          })),
+        }
+      }
+      return {
+        ...item,
+        href: buildPath(item.href),
+      }
+    }
+    return navItems.map((item) => transform(item))
+  }, [navItems, buildPath]);
 
   return (
     <SidebarContentBase>
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            {navItems.map((item) =>
+            {transformedNavItems.map((item) =>
               isNavItemWithChildren(item) ? (
                 <Collapsible
                   key={item.title}

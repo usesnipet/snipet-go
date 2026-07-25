@@ -1,7 +1,4 @@
 export const ROUTES = {
-  // chat routes
-  chat: "/chat",
-
   // auth routes
   authApiKey: "/auth/api-key",
 
@@ -13,4 +10,10 @@ export const ROUTES = {
   adminApiKeys: "/admin/api-keys",
   adminSettings: "/admin/settings",
   adminClients: "/admin/clients",
+
+  // client routes
+  client: "/client/{clientCode}",
+  clientUsers: "/client/{clientCode}/users",
+  clientSessions: "/client/{clientCode}/sessions",
+  clientSettings: "/client/{clientCode}/settings",
 } as const;

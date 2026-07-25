@@ -3,10 +3,10 @@ import { FormSwitch } from "@/components/form/switch";
 import { FieldGroup, FieldLegend, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { useFormContext } from "react-hook-form";
 
-import type { ClientFormValues } from "./client-form";
+import type { CreateClient, UpdateClient } from "../schemas";
 
 export function ClientFormFields() {
-  const form = useFormContext<ClientFormValues>();
+  const form = useFormContext<CreateClient | UpdateClient>();
   const oidcEnabled = form.watch("config.oidc.enabled");
   const webhookEnabled = form.watch("config.webhook.enabled");
 
