@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const paginatedSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
+export const paginatedSchema = <T extends z.ZodType>(dataSchema: T) =>
   z.object({
     data: z.array(dataSchema),
     total: z.number(),

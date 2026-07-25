@@ -166,3 +166,10 @@ func (s *Service) UpdateExpiration(ctx context.Context, id string, dto UpdateExp
 func (s *Service) ToggleActive(ctx context.Context, id string, active bool) error {
 	return s.repository.ToggleActive(ctx, id, active)
 }
+
+func (s *Service) Delete(ctx context.Context, id string) error {
+	if _, err := s.repository.FindByID(ctx, id); err != nil {
+		return err
+	}
+	return s.repository.DeleteByID(ctx, id)
+}

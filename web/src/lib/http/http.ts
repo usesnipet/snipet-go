@@ -1,6 +1,6 @@
 import { useApiKeyStore } from "@/features/api-key/store";
 import { jwtStore } from "@/features/auth/store";
-import z from "zod";
+import { z, type ZodType } from "zod";
 
 import { logger } from "../logger";
 
@@ -23,11 +23,11 @@ export type ApiRequestOptions<TBody = unknown, TResponse = unknown> = {
   params?: PathParamsRecord;
   searchParams?: SearchParamsRecord;
   schemas?: {
-    body?: z.ZodSchema<TBody>;
-    response?: z.ZodSchema<TResponse>;
-    searchParams?: z.ZodSchema<SearchParamsRecord>;
-    pathParams?: z.ZodSchema<PathParamsRecord>;
-    headers?: z.ZodSchema<Record<string, string>>;
+    body?: ZodType<TBody>;
+    response?: ZodType<TResponse>;
+    searchParams?: ZodType<SearchParamsRecord>;
+    pathParams?: ZodType<PathParamsRecord>;
+    headers?: ZodType<Record<string, string>>;
   }
 };
 

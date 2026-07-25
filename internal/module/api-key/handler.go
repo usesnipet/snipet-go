@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Put("/{id}/expiration", serve(h.updateExpiration))
 		r.Put("/{id}/active", serve(h.toggleActive))
 		r.Put("/{id}/disabled", serve(h.toggleDisabled))
+		r.Delete("/{id}", serve(h.delete))
 	})
 }
 
@@ -94,6 +95,13 @@ func (h *Handler) toggleActive(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) toggleDisabled(w http.ResponseWriter, r *http.Request) error {
 	if err := h.service.ToggleActive(r.Context(), chi.URLParam(r, "id"), false); err != nil {
+		return err
+	}
+	return api.WriteNoContent(w)
+}
+
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) error {
+	if err := h.service.Delete(r.Context(), chi.URLParam(r, "id")); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
