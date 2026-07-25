@@ -1,8 +1,9 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-import type { Key, ReactNode } from "react"
+import { Loading } from "./ui/loading";
 
+import type { Key, ReactNode } from "react"
 export type DataTableColumn<T> = {
   id: string
   header: ReactNode
@@ -17,6 +18,7 @@ export type DataTableProps<T> = {
   getRowKey?: (row: T, index: number) => Key
   emptyMessage?: ReactNode
   className?: string
+  loading?: boolean
 }
 
 export function DataTable<T>({
@@ -25,6 +27,7 @@ export function DataTable<T>({
   getRowKey,
   emptyMessage = "No results.",
   className,
+  loading = false,
 }: DataTableProps<T>) {
   return (
     <div className={cn("rounded-lg border bg-card", className)}>
@@ -42,7 +45,13 @@ export function DataTable<T>({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.length === 0 ? (
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                <Loading />
+              </TableCell>
+            </TableRow>
+          ) : data.length === 0 ? (
             <TableRow>
               <TableCell
                 colSpan={columns.length}

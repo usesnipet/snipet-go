@@ -5,24 +5,55 @@ import { DateFormat } from "@/components/ui/date";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { useDialog } from "@/lib/dialog";
 import { CalendarClock, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 
+import { useListApiKey } from "../hooks";
+
+import { ApiKeySecretDialog } from "./api-key-secret-dialog";
+import { DeleteApiKeyDialog } from "./delete-api-key-dialog";
+import { RollApiKeyDialog } from "./roll-api-key-dialog";
+import { UpdateApiKeyExpirationDialog } from "./update-api-key-expiration-dialog";
+
 import type { DataTableColumn } from "@/components/data-table";
-import type { ApiKey } from "../schemas";
+import type { ApiKey, ApiKeyWithSecret } from "../schemas";
 
-type ApiKeyTableProps = {
-  data: ApiKey[]
-  onUpdateExpiration: (apiKey: ApiKey) => void
-  onRoll: (apiKey: ApiKey) => void
-  onDelete: (apiKey: ApiKey) => void
-}
+export function ApiKeyTable() {
+  const { data, isLoading } = useListApiKey();
+  const { openDialog } = useDialog();
 
-export function ApiKeyTable({
-  data,
-  onUpdateExpiration,
-  onRoll,
-  onDelete,
-}: ApiKeyTableProps) {
+  const showSecret = (apiKey: ApiKeyWithSecret) => {
+    openDialog({
+      component: ApiKeySecretDialog,
+      props: {
+        secret: apiKey.key,
+        title: "API Key rolled",
+        description: "Copy this key now. You will not be able to see it again.",
+      },
+    });
+  };
+
+  const openExpiration = (apiKey: ApiKey) => {
+    openDialog({
+      component: UpdateApiKeyExpirationDialog,
+      props: { apiKey },
+    });
+  };
+
+  const openRoll = (apiKey: ApiKey) => {
+    openDialog({
+      component: RollApiKeyDialog,
+      props: { apiKey, onRolled: (rolled) => showSecret(rolled) },
+    });
+  };
+
+  const openDelete = (apiKey: ApiKey) => {
+    openDialog({
+      component: DeleteApiKeyDialog,
+      props: { apiKey },
+    });
+  };
+
   const columns: DataTableColumn<ApiKey>[] = [
     {
       id: "name",
@@ -71,18 +102,18 @@ export function ApiKeyTable({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onUpdateExpiration(row)}>
+            <DropdownMenuItem onClick={() => openExpiration(row)}>
               <CalendarClock />
               Update expiration
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onRoll(row)}>
+            <DropdownMenuItem onClick={() => openRoll(row)}>
               <RefreshCw />
               Roll key
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onClick={() => onDelete(row)}
+              onClick={() => openDelete(row)}
             >
               <Trash2 />
               Delete
@@ -95,8 +126,9 @@ export function ApiKeyTable({
 
   return (
     <DataTable
+      loading={isLoading}
       columns={columns}
-      data={data}
+      data={data?.data ?? []}
       getRowKey={(row) => row.id}
       emptyMessage="No API keys yet."
     />
