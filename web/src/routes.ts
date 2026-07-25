@@ -13,6 +13,7 @@ export const ROUTES = {
 
   // client routes
   client: "/client/{clientCode}",
+  clientChat: "/client/{clientCode}/chat",
   clientUsers: "/client/{clientCode}/users",
   clientSessions: "/client/{clientCode}/sessions",
   clientSettings: "/client/{clientCode}/settings",

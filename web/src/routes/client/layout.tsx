@@ -1,8 +1,8 @@
 "use client"
 
 import { AnimatedOutlet } from "@/components/animated-outlet";
-import { ClientSidebar } from "@/components/sidebar/client";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { ClientSidebar } from "@/features/client/components/sidebar";
 
 export function ClientLayout() {
   return (

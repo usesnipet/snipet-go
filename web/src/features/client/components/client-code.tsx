@@ -2,15 +2,13 @@ import { Button } from "@/components/ui/button";
 import { useClipboard } from "@/hooks/use-clipboard";
 import { CopyIcon } from "lucide-react";
 
-import type { Client } from "../schemas";
-
-export function ClientCode({ client }: { client: Client }) {
+export function ClientCode({ code }: { code: string }) {
   const { copy } = useClipboard();
 
   const handleCopy = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    copy(client.code, {
+    copy(code, {
       successTitle: `Client code copied to clipboard`,
       successDescription: "The code has been copied to your clipboard.",
       errorTitle: "Failed to copy to clipboard",
@@ -20,7 +18,7 @@ export function ClientCode({ client }: { client: Client }) {
 
   return (
     <div className="flex flex-row items-center gap-2">
-      <span className="text-sm text-muted-foreground">{client.code}</span>
+      <span className="text-sm text-muted-foreground">{code}</span>
       <Button variant="outline" size="icon-xs" aria-label="Copy code" onClick={handleCopy}>
         <CopyIcon className="size-3" />
       </Button>

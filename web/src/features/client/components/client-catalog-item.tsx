@@ -91,7 +91,7 @@ export function ClientCatalogItem({ client }: { client: Client }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3 pt-0">
-        <ClientCode client={client} />
+        <ClientCode code={client.code} />
       </CardContent>
     </Card>
   )

@@ -1,19 +1,20 @@
+import { SidebarContent } from "@/components/sidebar/content";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/components/ui/link";
+import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ToggleTheme } from "@/components/ui/toggle-theme";
 import { useApiKeyStore } from "@/features/api-key/store";
-import { useGetSystemInfo } from "@/features/app/hooks";
 import { useNavigate } from "@/hooks/use-navigate";
 import { ROUTES } from "@/routes";
 import { Home, LogOutIcon, MessagesSquare, Settings, Users } from "lucide-react";
+import { useParams } from "react-router";
 
-import { Button } from "../ui/button";
-import { Link } from "../ui/link";
-import { Sidebar, SidebarFooter, SidebarHeader } from "../ui/sidebar";
-import { Skeleton } from "../ui/skeleton";
-import { ToggleTheme } from "../ui/toggle-theme";
+import { useFindByCodeClient } from "../hooks";
 
-import { SidebarContent } from "./content";
+import { ClientCode } from "./client-code";
 
-import type { NavEntry } from "./types";
-
+import type { NavEntry } from "@/components/sidebar/types";
 const navItems: NavEntry[] = [
   {
     title: "Overview",
@@ -39,9 +40,10 @@ const navItems: NavEntry[] = [
 ]
 
 export function ClientSidebar() {
-  const { data: systemInfo, isLoading } = useGetSystemInfo();
   const navigate = useNavigate();
   const clearApiKey = useApiKeyStore(state => state.clear);
+  const { clientCode } = useParams<{ clientCode: string }>();
+  const { data: client, isLoading } = useFindByCodeClient(clientCode);
 
   const handleLogout = () => {
     clearApiKey()
@@ -57,11 +59,8 @@ export function ClientSidebar() {
         >
           <img src="/favicon.svg" alt="Snipet" className="size-7 shrink-0" />
           <div>
-            <p className="text-sm font-semibold">Snipet</p>
-            <span className="inline-flex gap-1 text-xs text-muted-foreground">
-              <strong>Version:</strong>
-              {isLoading ? <Skeleton className="w-20 h-4" /> : <p>{systemInfo.version}</p>}
-            </span>
+            {isLoading ? <Skeleton className="w-20 h-4" /> : <p className="text-sm font-semibold">{client?.name}</p>}
+            <ClientCode code={clientCode} />
           </div>
         </Link>
         <ToggleTheme />
