@@ -1,14 +1,16 @@
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
+const urlSchema = z.preprocess((value) => value === "" ? undefined : value, z.url().optional());
+
 export const clientConfigSchema = z.object({
   oidc: z.object({
-    issuer: z.url(),
-    audience: z.url(),
+    issuer: urlSchema,
+    audience: urlSchema,
     enabled: z.boolean(),
   }).strict(),
   webhook: z.object({
-    url: z.url(),
+    url: urlSchema,
     enabled: z.boolean(),
   }).strict(),
   anonymous: z.object({
