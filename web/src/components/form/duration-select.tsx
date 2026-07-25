@@ -1,12 +1,7 @@
-import { DurationSelect } from "@/components/duration-select";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
+
+import { DurationSelect } from "../duration-select";
 
 import type { DurationSelectOption, DurationSelectProps } from "@/components/duration-select";
 

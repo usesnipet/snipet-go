@@ -1,4 +1,5 @@
-import { FormInput } from "@/components/form/input";
+import { resolveDurationExpiresAt } from "@/components/duration-select";
+import { FormDurationSelect } from "@/components/form/duration-select";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
@@ -14,7 +15,6 @@ import { useUpdateExpirationApiKey } from "../hooks";
 
 import type { ApiKey } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
-
 const formSchema = z.object({
   expires_at: z.string().optional(),
 });
@@ -40,10 +40,12 @@ export function UpdateApiKeyExpirationDialog({ apiKey, close }: UpdateApiKeyExpi
   const { mutateAsync, isPending } = useUpdateExpirationApiKey();
 
   const onSubmit = form.handleSubmit(async (values) => {
+    const expiresAt = resolveDurationExpiresAt(values.expires_at);
+
     await mutateAsync({
       id: apiKey.id,
       data: {
-        expires_at: values.expires_at ? new Date(values.expires_at) : undefined,
+        expires_at: expiresAt ? new Date(expiresAt) : undefined,
       },
     });
     close();
@@ -62,10 +64,10 @@ export function UpdateApiKeyExpirationDialog({ apiKey, close }: UpdateApiKeyExpi
       <Form {...form}>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <FieldGroup>
-            <FormInput
+            <FormDurationSelect
               name="expires_at"
               label="Expiration"
-              type="datetime-local"
+              placeholder="Select duration"
             />
           </FieldGroup>
           <DialogFooter>

@@ -29,6 +29,7 @@ type NavItem = {
   title: string
   href: (typeof ROUTES)[keyof typeof ROUTES]
   icon: LucideIcon
+  exact?: boolean
 }
 
 type NavItemWithChildren = {
@@ -44,6 +45,7 @@ const navItems: NavEntry[] = [
     title: "Admin",
     href: ROUTES.admin,
     icon: Shield,
+    exact: true,
   },
   {
     title: "Clients",
@@ -160,7 +162,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
-                      isActive={isNavActive(pathname, item.href)}
+                      isActive={isNavActive(pathname, item.href, item.exact)}
                       tooltip={item.title}
                     >
                       <Link href={item.href}>

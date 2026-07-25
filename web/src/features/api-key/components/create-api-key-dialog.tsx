@@ -1,3 +1,5 @@
+import { resolveDurationExpiresAt } from "@/components/duration-select";
+import { FormDurationSelect } from "@/components/form/duration-select";
 import { FormInput } from "@/components/form/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +16,6 @@ import { useCreateApiKey } from "../hooks";
 
 import type { ApiKeyWithSecret } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
-
 const formSchema = z.object({
   name: z.string().min(1).max(255),
   expires_at: z.string().optional(),
@@ -35,9 +36,11 @@ export function CreateApiKeyDialog({ onCreated, close }: CreateApiKeyDialogProps
   const { mutateAsync, isPending } = useCreateApiKey();
 
   const onSubmit = form.handleSubmit(async (values) => {
+    const expiresAt = resolveDurationExpiresAt(values.expires_at);
+
     const result = await mutateAsync({
       name: values.name,
-      expires_at: values.expires_at ? new Date(values.expires_at) : undefined,
+      expires_at: expiresAt ? new Date(expiresAt) : undefined,
     });
     form.reset();
     onCreated(result);
@@ -61,11 +64,10 @@ export function CreateApiKeyDialog({ onCreated, close }: CreateApiKeyDialogProps
               placeholder="Production"
               required
             />
-            <FormInput
+            <FormDurationSelect
               name="expires_at"
               label="Expiration"
-              type="datetime-local"
-              description="Optional. Leave empty for no expiration."
+              placeholder="Select duration"
             />
           </FieldGroup>
           <DialogFooter>
