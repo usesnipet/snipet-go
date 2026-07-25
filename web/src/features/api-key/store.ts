@@ -8,6 +8,7 @@ const KEY = "snipet@api-key";
 type ApiKeyStore = {
   key: string | null;
   set: (key: string | null) => void;
+  clear: () => void;
 };
 
 export const useApiKeyStore = create<ApiKeyStore>((set) => ({
@@ -29,5 +30,9 @@ export const useApiKeyStore = create<ApiKeyStore>((set) => ({
     }
 
     set({ key });
+  },
+  clear: () => {
+    sessionStorage.removeItem(KEY);
+    set({ key: null });
   },
 }));

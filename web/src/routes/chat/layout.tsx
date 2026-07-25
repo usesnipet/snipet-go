@@ -1,13 +1,13 @@
 "use client"
 
 import { AnimatedOutlet } from "@/components/animated-outlet";
-import { AdminSidebar } from "@/components/sidebar/admin";
+import { ChatSidebar } from "@/components/sidebar/chat";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-export function AdminLayout() {
+export function ChatLayout() {
   return (
     <SidebarProvider>
-      <AdminSidebar />
+      <ChatSidebar />
       <SidebarInset className="min-h-dvh bg-sidebar p-4">
         <div className="border-border bg-background flex min-h-0 flex-1 overflow-hidden rounded-xl border shadow-sm">
           <AnimatedOutlet />

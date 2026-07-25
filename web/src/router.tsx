@@ -7,13 +7,16 @@ import { AdminClientsPage } from "./routes/admin/clients/page";
 import { AdminLayout } from "./routes/admin/layout";
 import { AdminPage } from "./routes/admin/page";
 import { ApiKeyLoginPage } from "./routes/auth/api-key/page";
-import { HomePage } from "./routes/page";
+import { ChatLayout } from "./routes/chat/layout";
+import { ChatPage } from "./routes/chat/page";
 
 export const Router = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path={ROUTES.home} element={<HomePage />} />
+        <Route element={<ChatLayout />}>
+          <Route path={ROUTES.chat} element={<ChatPage />} />
+        </Route>
         <Route element={<ApiKeyGuard />}>
           <Route element={<AdminLayout />}>
             <Route path={ROUTES.admin} element={<AdminPage />} />

@@ -1,6 +1,10 @@
 export const ROUTES = {
-  home: "/",
+  // chat routes
+  chat: "/chat",
+
+  // auth routes
   authApiKey: "/auth/api-key",
+
   // admin routes
   admin: "/admin",
   adminKnowledgeIndex: "/admin/knowledge/index",
