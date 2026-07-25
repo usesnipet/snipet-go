@@ -1,9 +1,9 @@
-import { useAppGetSystemInfoSuspense } from "@/__generated__/api";
+import { useGetSystemInfo } from "@/features/app/hooks";
 
 import { Loading } from "./ui/loading";
 
 export const Version = () => {
-  const { data, error, isLoading } = useAppGetSystemInfoSuspense()
+  const { data, error, isLoading } = useGetSystemInfo()
 
   if (error) {
     return <span className="text-destructive text-sm">Error</span>

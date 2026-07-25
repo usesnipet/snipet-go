@@ -25,7 +25,7 @@ export function Page({ title, description, documentTitle, children, actions }: P
 
   return (
     <PageActionsContext.Provider value={setSlotActions}>
-        <div className="flex flex-1 flex-col gap-4 px-4 py-8 sm:px-6 lg:px-10 h-full">
+        <div className="flex flex-1 flex-col gap-4 px-4 py-4 h-full">
           <div className="flex flex-col gap-2 divide-y h-full">
             <header className="pb-2 flex items-center justify-between">
               <div>

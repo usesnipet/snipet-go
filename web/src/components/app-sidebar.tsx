@@ -1,6 +1,5 @@
 "use client"
 
-import { useAuthLogout } from "@/__generated__/api";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Link } from "@/components/ui/link";
 import {
@@ -9,8 +8,9 @@ import {
   SidebarMenuSubItem
 } from "@/components/ui/sidebar";
 import { useTheme } from "@/context/theme-provider";
+import { ROUTES } from "@/routes";
 import {
-  BookOpen, Bot, ChevronRight, ChevronsUpDown, GitBranch, Key, LogOut, Moon, Settings, Sun
+  BookOpen, Bot, ChevronRight, ChevronsUpDown, Key, LogOut, Moon, Settings, Shield, Sun, Users
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 
@@ -27,7 +27,7 @@ type NavSubItem = {
 
 type NavItem = {
   title: string
-  href: string
+  href: (typeof ROUTES)[keyof typeof ROUTES]
   icon: LucideIcon
 }
 
@@ -41,37 +41,42 @@ type NavEntry = NavItem | NavItemWithChildren
 
 const navItems: NavEntry[] = [
   {
+    title: "Admin",
+    href: ROUTES.admin,
+    icon: Shield,
+  },
+  {
+    title: "Clients",
+    href: ROUTES.adminClients,
+    icon: Users,
+  },
+  {
+    title: "Agent",
+    href: ROUTES.adminAgent,
+    icon: Bot,
+  },
+  {
     title: "Knowledge",
     icon: BookOpen,
     items: [
-      { title: "Index", href: "/knowledge/index" },
-      { title: "Source", href: "/knowledge/source" },
-    ],
-  },
-  {
-    title: "LLM",
-    icon: Bot,
-    items: [
-      { title: "Connections", href: "/llm/connection" },
-      { title: "Playground", href: "/llm/playground" },
-    ],
-  },
-  {
-    title: "Pipelines",
-    icon: GitBranch,
-    items: [
-      { title: "Pipelines", href: "/pipelines", exact: true },
-      { title: "Playground", href: "/pipelines/playground" },
-    ],
+      {
+        href: ROUTES.adminKnowledgeIndex,
+        title: "Index",
+      },
+      {
+        href: ROUTES.adminKnowledgeSource,
+        title: "Source",
+      }
+    ]
   },
   {
     title: "API Keys",
-    href: "/api-keys",
+    href: ROUTES.adminApiKeys,
     icon: Key,
   },
   {
     title: "Settings",
-    href: "/settings",
+    href: ROUTES.adminSettings,
     icon: Settings,
   },
 ]
@@ -94,9 +99,8 @@ export function AppSidebar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { setTheme, theme } = useTheme();
-  const { mutate: logout } = useAuthLogout();
   const handleLogout = () => {
-    logout();
+    // logout();
     navigate("/login", { replace: true });
   };
 

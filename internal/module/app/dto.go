@@ -5,3 +5,7 @@ type AppConfigDTO struct {
 	InheritClientCode string `json:"inherit_client_code"`
 	InheritClientName string `json:"inherit_client_name"`
 }
+
+type SystemInfoDTO struct {
+	Version string `json:"version"`
+}
