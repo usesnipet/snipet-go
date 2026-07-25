@@ -43,7 +43,6 @@ export function AdminApiKeysPage() {
           Create API Key
         </Button>
       </PageActions>
-
       <ApiKeyTable />
     </Page>
   )
