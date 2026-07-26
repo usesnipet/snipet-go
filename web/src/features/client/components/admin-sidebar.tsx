@@ -7,7 +7,7 @@ import { ToggleTheme } from "@/components/ui/toggle-theme";
 import { useApiKeyStore } from "@/features/api-key/store";
 import { useNavigate } from "@/hooks/use-navigate";
 import { ROUTES } from "@/routes";
-import { Home, LogOutIcon, MessagesSquare, Settings, Users } from "lucide-react";
+import { Boxes, Home, LogOutIcon, MessagesSquare, Settings, Users } from "lucide-react";
 import { useParams } from "react-router";
 
 import { useFindByCodeClient } from "../hooks";
@@ -23,6 +23,11 @@ const navItems: NavEntry[] = [
     exact: true,
   },
   {
+    title: "Chat",
+    href: ROUTES.clientChat,
+    icon: MessagesSquare,
+  },
+  {
     title: "Users",
     href: ROUTES.clientUsers,
     icon: Users,
@@ -30,7 +35,7 @@ const navItems: NavEntry[] = [
   {
     title: "Sessions",
     href: ROUTES.clientSessions,
-    icon: MessagesSquare,
+    icon: Boxes,
   },
   {
     title: "Settings",
@@ -39,7 +44,7 @@ const navItems: NavEntry[] = [
   }
 ]
 
-export function ClientSidebar() {
+export function ClientAdminSidebar() {
   const navigate = useNavigate();
   const clearApiKey = useApiKeyStore(state => state.clear);
   const { clientCode } = useParams<{ clientCode: string }>();

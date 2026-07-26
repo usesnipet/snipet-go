@@ -7,13 +7,17 @@ import { AdminClientsPage } from "./routes/admin/clients/page";
 import { AdminLayout } from "./routes/admin/layout";
 import { AdminPage } from "./routes/admin/page";
 import { ApiKeyLoginPage } from "./routes/auth/api-key/page";
-import { ClientLayout } from "./routes/client/layout";
-import { ClientPage } from "./routes/client/page";
-import { ClientSessionsPage } from "./routes/client/sessions/page";
-import { ClientSettingsPage } from "./routes/client/settings/page";
-import { ClientUsersPage } from "./routes/client/users/page";
+import { ClientAdminLayout } from "./routes/client/(private)/layout";
+import { ClientPage } from "./routes/client/(private)/page";
+import { ClientSessionsPage } from "./routes/client/(private)/sessions/page";
+import { ClientSettingsPage } from "./routes/client/(private)/settings/page";
+import { ClientUsersPage } from "./routes/client/(private)/users/page";
+import { ClientChatLayout } from "./routes/client/chat/layout";
+import { ClientChatPage } from "./routes/client/chat/page";
 
-const toReactRouterPath = (path: (typeof ROUTES)[keyof typeof ROUTES]) => {
+import type { RoutePath } from "./routes";
+
+const toReactRouterPath = (path: RoutePath) => {
   return path.replaceAll(/{([^}]+)}/g, (_, p1) => `:${p1}`);
 }
 
@@ -21,20 +25,23 @@ export const Router = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route element={<ClientChatLayout />}>
+          <Route path={toReactRouterPath(ROUTES.clientChat)} element={<ClientChatPage />} />
+        </Route>
         <Route element={<ApiKeyGuard />}>
-          <Route element={<ClientLayout />}>
+          <Route element={<ClientAdminLayout />}>
             <Route path={toReactRouterPath(ROUTES.client)} element={<ClientPage />} />
             <Route path={toReactRouterPath(ROUTES.clientUsers)} element={<ClientUsersPage />} />
             <Route path={toReactRouterPath(ROUTES.clientSessions)} element={<ClientSessionsPage />} />
             <Route path={toReactRouterPath(ROUTES.clientSettings)} element={<ClientSettingsPage />} />
           </Route>
           <Route element={<AdminLayout />}>
-            <Route path={ROUTES.admin} element={<AdminPage />} />
-            <Route path={ROUTES.adminClients} element={<AdminClientsPage />} />
-            <Route path={ROUTES.adminApiKeys} element={<AdminApiKeysPage />} />
+            <Route path={toReactRouterPath(ROUTES.admin)} element={<AdminPage />} />
+            <Route path={toReactRouterPath(ROUTES.adminClients)} element={<AdminClientsPage />} />
+            <Route path={toReactRouterPath(ROUTES.adminApiKeys)} element={<AdminApiKeysPage />} />
           </Route>
         </Route>
-        <Route path={ROUTES.authApiKey} element={<ApiKeyLoginPage />} />
+        <Route path={toReactRouterPath(ROUTES.authApiKey)} element={<ApiKeyLoginPage />} />
       </Routes>
     </BrowserRouter>
   )

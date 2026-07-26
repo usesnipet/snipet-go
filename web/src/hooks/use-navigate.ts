@@ -1,7 +1,7 @@
 import { applyPathParams } from "@/lib/http";
 import { useNavigate as useNavigateReactRouter } from "react-router";
 
-import type { ROUTES } from "@/routes";
+import type { RoutePath } from "@/routes";
 import type { NavigateOptions } from "react-router";
 
 type Options = NavigateOptions & {
@@ -10,7 +10,7 @@ type Options = NavigateOptions & {
 
 export const useNavigate = () => {
   const navigate = useNavigateReactRouter();
-  return (path: (typeof ROUTES)[keyof typeof ROUTES], options?: Options) => {
+  return (path: RoutePath, options?: Options) => {
     const {params, ...rest} = options ?? {};
     const pathWithParams = applyPathParams(path, params ?? {});
     navigate(pathWithParams, rest)
