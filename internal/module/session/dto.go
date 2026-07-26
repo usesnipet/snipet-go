@@ -1,8 +1,6 @@
 package session
 
 import (
-	"log"
-
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/util"
@@ -53,7 +51,6 @@ func sessionIncludeOptions(includes []string) []filter.Option {
 			opts = append(opts, filter.Include("Agent"))
 		}
 	}
-	log.Println("opts", opts)
 	return opts
 }
 
