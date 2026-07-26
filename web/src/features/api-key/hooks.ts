@@ -13,6 +13,7 @@ import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import type { RoutePath } from "@/routes";
 
 const BASE_QUERY_KEY = "api-key";
 
@@ -157,6 +158,7 @@ export const useDeleteApiKey = (
 
 export const apiKeyLoginQueryKey = () => [BASE_QUERY_KEY, "login"];
 export const useApiKeyLogin = (
+  redirect?: RoutePath,
   opts?: ServiceGetOptions<ApiKey>
 ): UseMutationResult<ApiKey, Error, ApiKeyKey> => {
   const navigate = useNavigate();
@@ -177,7 +179,7 @@ export const useApiKeyLogin = (
         title: "API Key logged in successfully",
         description: "The API key has been logged in successfully",
       });
-      navigate("/admin");
+      navigate(redirect ?? "/admin");
     },
     onError: () => {
       toast({

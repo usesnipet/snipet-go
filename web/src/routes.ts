@@ -18,3 +18,5 @@ export const ROUTES = {
   clientSessions: "/client/{clientCode}/sessions",
   clientSettings: "/client/{clientCode}/settings",
 } as const;
+
+export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];

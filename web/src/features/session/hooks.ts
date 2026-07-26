@@ -19,7 +19,7 @@ export const listSessionQueryKey = (clientCode: string) =>
   [BASE_QUERY_KEY, clientCode] as const;
 export const useListSession = (
   clientCode: string,
-  opts?: ServiceGetOptions<PaginatedSession> & { searchParams?: ListSessionSearchParams },
+  opts?: Partial<ServiceGetOptions<PaginatedSession, ListSessionSearchParams>>,
 ): UseQueryResult<PaginatedSession, Error> => {
   return useQuery({
     queryKey: [...listSessionQueryKey(clientCode), opts?.searchParams],
@@ -34,7 +34,7 @@ export const findByIdSessionQueryKey = (clientCode: string, id: string) =>
 export const useFindByIdSession = (
   clientCode: string,
   id: string,
-  opts?: ServiceGetOptions<Session> & { searchParams?: FindSessionSearchParams },
+  opts?: Partial<ServiceGetOptions<Session, FindSessionSearchParams>>,
 ): UseQueryResult<Session, Error> => {
   return useQuery({
     queryKey: [...findByIdSessionQueryKey(clientCode, id), opts?.searchParams],
@@ -49,9 +49,7 @@ export const findMessagesSessionQueryKey = (clientCode: string, id: string) =>
 export const useFindMessagesSession = (
   clientCode: string,
   id: string,
-  opts?: ServiceGetOptions<PaginatedExecutionMessage> & {
-    searchParams?: ListMessagesSearchParams
-  },
+  opts?: ServiceGetOptions<PaginatedExecutionMessage, ListMessagesSearchParams>,
 ): UseQueryResult<PaginatedExecutionMessage, Error> => {
   return useQuery({
     queryKey: [...findMessagesSessionQueryKey(clientCode, id), opts?.searchParams],

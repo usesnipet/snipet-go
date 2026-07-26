@@ -6,22 +6,26 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GalleryVerticalEnd } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "react-router";
 import z from "zod";
 
 import { useApiKeyLogin } from "../hooks";
 import { apiKeyKeySchema } from "../schemas";
 
+import type { RoutePath } from "@/routes";
+
 export function ApiKeyLoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect") as RoutePath;
   const form = useForm({
     resolver: zodResolver(z.object({ apiKey: apiKeyKeySchema })),
     defaultValues: { apiKey: "" },
   })
 
-  const { mutate } = useApiKeyLogin();
+  const { mutate } = useApiKeyLogin(redirect);
   const onSubmit = form.handleSubmit((data) => {
     mutate(data.apiKey);
   })

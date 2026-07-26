@@ -18,7 +18,7 @@ const sessionUrl = (clientCode: string) => `/api/client/${clientCode}/session`;
 
 const list = async (
   clientCode: string,
-  opts: ServiceGetOptions<PaginatedSession> & { searchParams?: ListSessionSearchParams },
+  opts: ServiceGetOptions<PaginatedSession, ListSessionSearchParams>,
 ): Promise<PaginatedSession> => {
   const { searchParams, ...rest } = opts;
   return http.get({
@@ -51,7 +51,7 @@ const create = async (
 const findById = async (
   clientCode: string,
   id: string,
-  opts: ServiceGetOptions<Session> & { searchParams?: FindSessionSearchParams },
+  opts: ServiceGetOptions<Session, FindSessionSearchParams>,
 ): Promise<Session> => {
   const { searchParams, ...rest } = opts;
   return http.get({
@@ -98,9 +98,7 @@ const remove = async (
 const findMessages = async (
   clientCode: string,
   id: string,
-  opts: ServiceGetOptions<PaginatedExecutionMessage> & {
-    searchParams?: ListMessagesSearchParams
-  },
+  opts: ServiceGetOptions<PaginatedExecutionMessage, ListMessagesSearchParams>,
 ): Promise<PaginatedExecutionMessage> => {
   const { searchParams, ...rest } = opts;
   return http.get({
