@@ -1,3 +1,4 @@
+import { driverInfoSchema } from "@/schemas/driver";
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
@@ -54,3 +55,6 @@ export type CreateAgent = z.infer<typeof createAgentSchema>;
 export const updateAgentSchema = createAgentSchema.partial().strict();
 
 export type UpdateAgent = z.infer<typeof updateAgentSchema>;
+
+export const listDriversSchema = z.array(driverInfoSchema);
+export type ListDrivers = z.infer<typeof listDriversSchema>;

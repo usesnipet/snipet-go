@@ -226,6 +226,10 @@ func (s *Service) handleExecutionEvent(
 	return event, nil
 }
 
+func (s *Service) ListDrivers(ctx context.Context) ([]driver.Info, error) {
+	return s.llmManager.ListDrivers(ctx)
+}
+
 func (s *Service) validateLLMs(ctx context.Context, llms []runtime.LLMConfig) error {
 	return s.llmManager.ValidateMultipleConfigurationsByKey(util.Map(llms, func(cfg runtime.LLMConfig) driver.Configuration {
 		return driver.Configuration(cfg)

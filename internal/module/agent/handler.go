@@ -28,6 +28,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
 			r.Get("/", serve(h.filter))
+			r.Get("/llms", serve(h.listDrivers))
 			r.Post("/", serve(h.create))
 			r.Get("/{id}", serve(h.findByID))
 			r.Put("/{id}", serve(h.update))
@@ -36,6 +37,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		})
 	})
 }
+
 func (h *Handler) agentID(r *http.Request) string {
 	return chi.URLParam(r, "id")
 }
@@ -131,4 +133,12 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return sse.Write("close", map[string]string{"status": "done"})
+}
+
+func (h *Handler) listDrivers(w http.ResponseWriter, r *http.Request) error {
+	drivers, err := h.service.ListDrivers(r.Context())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, drivers)
 }

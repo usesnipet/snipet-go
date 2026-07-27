@@ -4,9 +4,14 @@ import { FormSlider } from "@/components/form/slider";
 import { FormTextarea } from "@/components/form/textarea";
 import { FieldGroup, FieldLegend, FieldSeparator, FieldSet } from "@/components/ui/field";
 
-const LLM_OPTIONS = [{ label: "Gemini", value: "gemini" }];
+import { useListLLMDrivers } from "../hooks";
 
 export function AgentFormFields() {
+  const { data: llmDrivers } = useListLLMDrivers();
+  const LLM_OPTIONS = (llmDrivers ?? []).map((driver) => ({
+    label: driver.name,
+    value: driver.name,
+  }));
 
   return (
     <FieldGroup>
