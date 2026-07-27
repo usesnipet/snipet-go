@@ -55,8 +55,8 @@ func (m *Manager[T]) ValidateConfigurationsByKey(key string, configs ...util.JSO
 }
 
 type Configuration struct {
-	Key    string
-	Config util.JSONMap
+	Key    string       `json:"key"`
+	Config util.JSONMap `json:"config"`
 }
 
 func (m *Manager[T]) ValidateMultipleConfigurationsByKey(configs ...Configuration) error {

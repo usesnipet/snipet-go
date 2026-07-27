@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 
 import { ApiKeyGuard } from "./features/api-key/components/api-key-guard";
 import { ROUTES } from "./routes";
+import { AdminAgentsPage } from "./routes/admin/agents/page";
 import { AdminApiKeysPage } from "./routes/admin/api-keys/page";
 import { AdminClientsPage } from "./routes/admin/clients/page";
 import { AdminLayout } from "./routes/admin/layout";
@@ -38,6 +39,7 @@ export const Router = () => {
           <Route element={<AdminLayout />}>
             <Route path={toReactRouterPath(ROUTES.admin)} element={<AdminPage />} />
             <Route path={toReactRouterPath(ROUTES.adminClients)} element={<AdminClientsPage />} />
+            <Route path={toReactRouterPath(ROUTES.adminAgent)} element={<AdminAgentsPage />} />
             <Route path={toReactRouterPath(ROUTES.adminApiKeys)} element={<AdminApiKeysPage />} />
           </Route>
         </Route>
