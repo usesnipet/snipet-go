@@ -1,7 +1,12 @@
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
-const urlSchema = z.preprocess((value) => value === "" ? undefined : value, z.url().optional());
+/** Accepts "" from form inputs and coerces to undefined; input/output stay `string | undefined`. */
+const urlSchema = z.union([
+  z.url(),
+  z.literal("").transform(() => undefined),
+  z.undefined(),
+]);
 
 export const clientConfigSchema = z.object({
   oidc: z.object({

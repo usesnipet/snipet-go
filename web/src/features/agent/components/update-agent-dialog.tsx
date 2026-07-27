@@ -26,8 +26,8 @@ export function UpdateAgentDialog({ agent, close }: UpdateAgentDialogProps) {
       name: agent.name,
       description: agent.description,
       instructions: agent.instructions,
-      llms: agent.configuration.llms,
-      tools: agent.configuration.tools,
+      llms: agent.configuration.llms ?? [],
+      tools: agent.configuration.tools ?? {},
     },
   });
 

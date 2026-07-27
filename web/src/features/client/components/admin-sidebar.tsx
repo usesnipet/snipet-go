@@ -47,7 +47,7 @@ const navItems: NavEntry[] = [
 export function ClientAdminSidebar() {
   const navigate = useNavigate();
   const clearApiKey = useApiKeyStore(state => state.clear);
-  const { clientCode } = useParams<{ clientCode: string }>();
+  const { clientCode = "" } = useParams<{ clientCode: string }>();
   const { data: client, isLoading } = useFindByCodeClient(clientCode);
 
   const handleLogout = () => {

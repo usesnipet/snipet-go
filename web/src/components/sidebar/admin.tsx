@@ -78,7 +78,7 @@ export function AdminSidebar() {
             <p className="text-sm font-semibold">Snipet</p>
             <span className="inline-flex gap-1 text-xs text-muted-foreground">
               <strong>Version:</strong>
-              {isLoading ? <Skeleton className="w-20 h-4" /> : <p>{systemInfo.version}</p>}
+              {isLoading ? <Skeleton className="w-20 h-4" /> : <p>{systemInfo?.version}</p>}
             </span>
           </div>
         </Link>

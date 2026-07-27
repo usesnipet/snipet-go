@@ -17,7 +17,7 @@ export const Version = () => {
         isLoading ? (
           <Loading variant="skeleton" count={1} width="w-10" height="h-4" className="m-0" />
         ) : (
-          <span className="text-sm text-muted-foreground font-medium tabular-nums">{data.version}</span>
+          <span className="text-sm text-muted-foreground font-medium tabular-nums">{data?.version}</span>
         )
       }
     </div>
