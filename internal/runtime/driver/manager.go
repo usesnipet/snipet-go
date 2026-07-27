@@ -92,7 +92,9 @@ func (m *Manager[T]) ListDrivers(ctx context.Context) ([]Info, error) {
 		if err != nil {
 			return nil, err
 		}
-		drivers = append(drivers, driver.Info())
+		info := driver.Info()
+		info.Key = name
+		drivers = append(drivers, info)
 	}
 
 	return drivers, nil

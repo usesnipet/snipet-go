@@ -7,6 +7,7 @@ import (
 )
 
 type Info struct {
+	Key                 string       `json:"key,omitempty"`
 	Name                string       `json:"name" validate:"required"`
 	Description         string       `json:"description" validate:"required"`
 	Icon                string       `json:"icon" validate:"omitempty"`

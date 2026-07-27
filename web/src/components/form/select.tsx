@@ -30,20 +30,19 @@ export const FormSelect = (props: Props) => {
 
   const ActionButton = () => {
     if (!props.action) return null;
+    const { icon, label, size, variant, type, ...actionProps } = props.action;
     return (
       <Button
-        type="button"
-        disabled={props.action.disabled ?? false}
-        size={props.action.size ?? 'default'}
-        variant={props.action.variant ?? 'outline'}
-        onClick={props.action.onClick}
+        type={type ?? "button"}
+        size={size ?? "default"}
+        variant={variant ?? "outline"}
+        {...actionProps}
       >
-        {props.action.icon}
-        {props.action.label}
+        {icon}
+        {label}
       </Button>
-    )
-
-  }
+    );
+  };
 
   return (
     <FormField
