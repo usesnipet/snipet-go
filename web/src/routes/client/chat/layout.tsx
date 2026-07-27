@@ -2,7 +2,7 @@
 
 import { AnimatedOutlet } from "@/components/animated-outlet";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { ClientChatSidebar } from "@/features/client/components/chat-sidebar";
+import { ClientChatSidebar } from "@/features/chat/components/sidebar";
 
 export function ClientChatLayout() {
   return (
