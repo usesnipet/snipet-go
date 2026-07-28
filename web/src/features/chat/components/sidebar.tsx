@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleTheme } from "@/components/ui/toggle-theme";
 import { useAuthStore } from "@/features/auth/store";
 import { useListSession } from "@/features/session/hooks";
+import { useMeUser } from "@/features/user/hooks";
 import { useNavigate } from "@/hooks/use-navigate";
 import { applyPathParams } from "@/lib/http";
 import { ROUTES } from "@/routes";
@@ -29,6 +30,7 @@ export function ClientChatSidebar() {
   const { data: sessions, isLoading: isLoadingSessions, error: errorSessions } = useListSession(
     clientCode, { auth: "jwt" }
   )
+  const { data: user, isLoading: isLoadingUser } = useMeUser(clientCode)
 
   const handleLogout = () => {
     clearAccessToken();
@@ -75,10 +77,18 @@ export function ClientChatSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <Card className="flex items-center gap-3 p-2">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
-            <UserIcon className="size-4" />
+          <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
+            {user?.picture ? (
+              <img src={user.picture} alt="" className="size-full object-cover" />
+            ) : (
+              <UserIcon className="size-4" />
+            )}
           </div>
-          <p className="min-w-0 flex-1 truncate text-sm font-medium">Jhon Doe</p>
+          {isLoadingUser ? (
+            <Skeleton className="h-4 min-w-0 flex-1" />
+          ) : (
+            <p className="min-w-0 flex-1 truncate text-sm font-medium">{user?.name}</p>
+          )}
           <Button
             variant="ghost"
             size="icon"

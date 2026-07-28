@@ -1,8 +1,8 @@
 import { http } from "@/lib/http";
 
-import { listUserSearchParamsSchema, paginatedUserSchema } from "./schemas";
+import { listUserSearchParamsSchema, paginatedUserSchema, userSchema } from "./schemas";
 
-import type { ListUserSearchParams, PaginatedUser } from "./schemas";
+import type { ListUserSearchParams, PaginatedUser, User } from "./schemas";
 import type { ServiceGetOptions } from "@/lib/services";
 
 const userUrl = (clientCode: string) => `/api/client/${clientCode}/user`;
@@ -23,6 +23,18 @@ const list = async (
   })
 }
 
+const me = async (
+  clientCode: string,
+  opts?: ServiceGetOptions<User>,
+): Promise<User> => {
+  return http.get({
+    url: `${userUrl(clientCode)}/me`,
+    schemas: { response: userSchema },
+    ...opts,
+  })
+}
+
 export const userService = {
   list,
+  me,
 }

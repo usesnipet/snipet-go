@@ -133,6 +133,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// middlewares
 	apiKeyMiddleware := middleware.APIKeyMiddleware(apiKeyService, apiKeyCache)
 	anyAuthMiddleware := middleware.AnyAuth(jwtService, apiKeyService, apiKeyCache)
+	jwtMiddleware := middleware.JWT(jwtService)
 
 	// handlers
 	authHandler := auth_module.NewHandler(authService)
@@ -143,7 +144,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
-	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware)
+	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware, jwtMiddleware)
 
 	// register routes
 	api := api.New()

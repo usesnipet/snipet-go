@@ -11,10 +11,21 @@ type Handler struct {
 	service           *Service
 	apiKeyMiddleware  api.MiddlewareFunc
 	anyAuthMiddleware api.MiddlewareFunc
+	jwtMiddleware     api.MiddlewareFunc
 }
 
-func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc, anyAuthMiddleware api.MiddlewareFunc) api.Handler {
-	return &Handler{service: service, apiKeyMiddleware: apiKeyMiddleware, anyAuthMiddleware: anyAuthMiddleware}
+func NewHandler(
+	service *Service,
+	apiKeyMiddleware api.MiddlewareFunc,
+	anyAuthMiddleware api.MiddlewareFunc,
+	jwtMiddleware api.MiddlewareFunc,
+) api.Handler {
+	return &Handler{
+		service:           service,
+		apiKeyMiddleware:  apiKeyMiddleware,
+		anyAuthMiddleware: anyAuthMiddleware,
+		jwtMiddleware:     jwtMiddleware,
+	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
@@ -27,6 +38,11 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		})
 
 		r.Group(func(r chi.Router) {
+			r.Use(h.jwtMiddleware)
+			r.Get("/me", serve(h.me))
+		})
+
+		r.Group(func(r chi.Router) {
 			r.Use(h.anyAuthMiddleware)
 			r.Get("/", serve(h.filterBy))
 		})
@@ -35,6 +51,14 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 
 func (h *Handler) clientCode(r *http.Request) string {
 	return chi.URLParam(r, "client_code")
+}
+
+func (h *Handler) me(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.Me(r.Context(), h.clientCode(r))
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
 }
 
 func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {

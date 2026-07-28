@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	apperr "github.com/usesnipet/snipet/internal/app-err"
+	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
@@ -53,4 +55,16 @@ func (s *Service) CreateAuthenticated(ctx context.Context, clientCode string, dt
 
 func (s *Service) FilterInClient(ctx context.Context, clientCode string, filter *filter.Options[model.User]) (*page.Paginated[model.User], error) {
 	return s.userRepo.FilterInClient(ctx, clientCode, filter)
+}
+
+func (s *Service) Me(ctx context.Context, clientCode string) (*model.User, error) {
+	principal, ok := auth.GetPrincipal(ctx)
+	if !ok || principal.GetType() != auth.PrincipalTypeJWT || principal.GetJWTClaims() == nil {
+		return nil, apperr.Unauthorized("unauthorized")
+	}
+	claims := principal.GetJWTClaims()
+	if claims.ClientCode != clientCode {
+		return nil, apperr.Forbidden("client code mismatch")
+	}
+	return s.userRepo.FindByIDInClient(ctx, clientCode, claims.Subject)
 }

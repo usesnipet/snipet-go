@@ -1,10 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
-
-
 import { userService } from "./service";
 
-import type { ListUserSearchParams, PaginatedUser } from "./schemas";
+import type { ListUserSearchParams, PaginatedUser, User } from "./schemas";
 import type { ServiceGetOptions } from "@/lib/services";
 import type { UseQueryResult } from "@tanstack/react-query";
 
@@ -25,3 +23,14 @@ export const useListUser = (
   })
 }
 
+export const meUserQueryKey = (clientCode: string) => [BASE_QUERY_KEY, clientCode, "me"] as const;
+export const useMeUser = (
+  clientCode: string,
+  opts?: ServiceGetOptions<User>,
+): UseQueryResult<User, Error> => {
+  return useQuery({
+    queryKey: meUserQueryKey(clientCode),
+    queryFn: () => userService.me(clientCode, { ...opts, auth: "jwt" }),
+    enabled: !!clientCode,
+  })
+}
