@@ -1,18 +1,19 @@
-import { http } from "@/lib/http";
+import { http, httpSse } from "@/lib/http";
 
 import {
   createSessionSchema, findSessionSearchParamsSchema, listMessagesSearchParamsSchema,
-  listSessionSearchParamsSchema, paginatedExecutionMessageSchema, paginatedSessionSchema, sessionSchema,
-  updateSessionSchema
+  listSessionSearchParamsSchema, paginatedExecutionMessageSchema, paginatedSessionSchema, runSessionSchema,
+  sessionSchema, updateSessionSchema
 } from "./schemas";
 
 import type {
   CreateSession, FindSessionSearchParams, ListMessagesSearchParams, ListSessionSearchParams,
-  PaginatedExecutionMessage, PaginatedSession, Session, UpdateSession
+  PaginatedExecutionMessage, PaginatedSession, RunSession, Session, UpdateSession
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
+import type { AuthMode, SseEventHandler } from "@/lib/http";
 
 const sessionUrl = (clientCode: string) => `/api/client/${clientCode}/session`;
 
@@ -113,6 +114,33 @@ const findMessages = async (
   })
 }
 
+export type RunSessionOptions = {
+  auth?: AuthMode;
+  signal?: AbortSignal;
+  onEvent: SseEventHandler;
+};
+
+const run = async (
+  clientCode: string,
+  id: string,
+  body: RunSession,
+  opts: RunSessionOptions,
+): Promise<void> => {
+  const { onEvent, signal, auth = false } = opts;
+  return httpSse({
+    url: `${sessionUrl(clientCode)}/{id}/run`,
+    params: { id },
+    method: "POST",
+    body,
+    auth,
+    signal,
+    schemas: {
+      body: runSessionSchema,
+    },
+    onEvent,
+  });
+};
+
 export const sessionService = {
   list,
   create,
@@ -120,4 +148,5 @@ export const sessionService = {
   update,
   delete: remove,
   findMessages,
+  run,
 }

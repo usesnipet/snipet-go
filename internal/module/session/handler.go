@@ -84,7 +84,7 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
-	query := &MessagesFilterDTO{}
+	var query MessagesFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}

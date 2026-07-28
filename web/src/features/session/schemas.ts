@@ -117,3 +117,64 @@ export const listMessagesSearchParamsSchema = z
   .strict();
 
 export type ListMessagesSearchParams = z.infer<typeof listMessagesSearchParamsSchema>;
+
+export const executionStatusSchema = z.enum([
+  "pending",
+  "running",
+  "completed",
+  "failed",
+  "max_turns",
+  "cancelled",
+]);
+
+export type ExecutionStatus = z.infer<typeof executionStatusSchema>;
+
+export const statusChangedEventSchema = z
+  .object({
+    status: executionStatusSchema,
+    error_message: z.string().optional(),
+    turns: z.number(),
+  })
+  .strict();
+
+export type StatusChangedEvent = z.infer<typeof statusChangedEventSchema>;
+
+/** Runtime message from SSE `message_added` (PascalCase — no JSON tags on Go struct). */
+export const runtimeMessageSchema = z
+  .object({
+    id: z.string(),
+    role: messageRoleSchema,
+    sequence: z.number(),
+    content: z.string(),
+    tool_calls: z.array(z.unknown()).optional(),
+    tool_result: z.unknown().nullable().optional(),
+    timestamp: z.coerce.date(),
+  })
+  .loose();
+
+export type RuntimeMessage = z.infer<typeof runtimeMessageSchema>;
+
+export const messageAddedEventSchema = z
+  .object({
+    messages: z.array(runtimeMessageSchema),
+  })
+  .strict();
+
+export type MessageAddedEvent = z.infer<typeof messageAddedEventSchema>;
+
+export const sseErrorEventSchema = z
+  .object({
+    message: z.string(),
+  })
+  .strict();
+
+export type SseErrorEvent = z.infer<typeof sseErrorEventSchema>;
+
+export const sseCloseEventSchema = z
+  .object({
+    status: z.string(),
+  })
+  .strict();
+
+export type SseCloseEvent = z.infer<typeof sseCloseEventSchema>;
+

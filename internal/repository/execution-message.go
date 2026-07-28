@@ -54,15 +54,14 @@ func (r *ExecutionMessageRepository) FilterInSession(
 	if len(filterOptions.Order.Fields) == 0 {
 		filterOptions = filter.Merge(
 			filterOptions,
-			filter.New[model.ExecutionMessage](filter.OrderAsc("execution_messages.created_at")),
+			filter.New[model.ExecutionMessage](filter.OrderAsc("created_at")),
 		)
 	}
 
+	sessionExecutions := r.db(ctx).Table("executions").Select("id").Where("session_id = ?", sessionID)
 	base := func(tx *gorm.DB) *gorm.DB {
-		return tx.Table("execution_messages").
-			Select("execution_messages.*").
-			Joins("INNER JOIN executions ON executions.id = execution_messages.execution_id").
-			Where("executions.session_id = ?", sessionID)
+		return tx.Model(&model.ExecutionMessage{}).
+			Where("execution_id IN (?)", sessionExecutions)
 	}
 
 	var total int64

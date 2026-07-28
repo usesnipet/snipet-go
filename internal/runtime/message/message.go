@@ -18,13 +18,13 @@ const (
 )
 
 type Message struct {
-	ID         string
-	Role       MessageRole
-	Sequence   int
-	Content    string
-	ToolCalls  []tool.Call
-	ToolResult *tool.Result
-	Timestamp  time.Time
+	ID         string       `json:"id"`
+	Role       MessageRole  `json:"role"`
+	Sequence   int          `json:"sequence"`
+	Content    string       `json:"content"`
+	ToolCalls  []tool.Call  `json:"toolCalls"`
+	ToolResult *tool.Result `json:"toolResult"`
+	Timestamp  time.Time    `json:"timestamp"`
 }
 
 func NewMessage(role MessageRole, content string, options ...MessageOption) Message {

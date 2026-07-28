@@ -29,7 +29,8 @@ export function NewChat() {
           params: {
             clientCode,
             sessionId: createdSession.id,
-          }
+          },
+          state: { initialMessage: message },
         })
       }
     });
