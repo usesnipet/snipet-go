@@ -19,11 +19,12 @@ import (
 
 type Service struct {
 	clientRepo repository.IClientRepository
+	agentRepo  repository.IAgentRepository
 	logger     *logger.Logger
 }
 
-func NewService(clientRepo repository.IClientRepository, logger *logger.Logger) *Service {
-	return &Service{clientRepo: clientRepo, logger: logger}
+func NewService(clientRepo repository.IClientRepository, agentRepo repository.IAgentRepository, logger *logger.Logger) *Service {
+	return &Service{clientRepo: clientRepo, agentRepo: agentRepo, logger: logger}
 }
 
 func (s *Service) Init(ctx context.Context, cfg *config.AppConfig) error {
@@ -144,4 +145,12 @@ func (s *Service) UpdateByCode(ctx context.Context, code string, dto UpdateClien
 
 func (s *Service) DeleteByCode(ctx context.Context, code string) error {
 	return s.clientRepo.DeleteByCode(ctx, code)
+}
+
+func (s *Service) GetAgents(
+	ctx context.Context,
+	clientCode string,
+	filter *filter.Options[model.Agent],
+) (*page.Paginated[model.Agent], error) {
+	return s.agentRepo.Filter(ctx, filter)
 }

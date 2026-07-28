@@ -19,12 +19,13 @@ import (
 )
 
 type Service struct {
-	registry         *auth_provider.Registry
-	clientRepo       repository.IClientRepository
-	userRepo         repository.IUserRepository
-	refreshTokenRepo repository.IRefreshTokenRepository
-	jwtService       *auth.JWTService
-	authConfig       config.AuthConfig
+	registry            *auth_provider.Registry
+	clientRepo          repository.IClientRepository
+	userRepo            repository.IUserRepository
+	refreshTokenRepo    repository.IRefreshTokenRepository
+	jwtService          *auth.JWTService
+	refreshTokenService *auth.RefreshTokenService
+	authConfig          config.AuthConfig
 }
 
 func NewService(
@@ -33,25 +34,27 @@ func NewService(
 	userRepo repository.IUserRepository,
 	refreshTokenRepo repository.IRefreshTokenRepository,
 	jwtService *auth.JWTService,
+	refreshTokenService *auth.RefreshTokenService,
 	authConfig config.AuthConfig,
 ) *Service {
 	return &Service{
-		registry:         registry,
-		clientRepo:       clientRepo,
-		userRepo:         userRepo,
-		refreshTokenRepo: refreshTokenRepo,
-		jwtService:       jwtService,
-		authConfig:       authConfig,
+		registry:            registry,
+		clientRepo:          clientRepo,
+		userRepo:            userRepo,
+		refreshTokenRepo:    refreshTokenRepo,
+		jwtService:          jwtService,
+		refreshTokenService: refreshTokenService,
+		authConfig:          authConfig,
 	}
 }
 
 func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.User, metadata util.JSONMap) (*AuthenticateResponse, error) {
-	accessToken, _, err := s.jwtService.GenerateToken(clientCode, user)
+	accessToken, accessTokenExpiresAt, _, err := s.jwtService.GenerateToken(clientCode, user)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := auth.GenerateRefreshToken()
+	refreshToken, refreshTokenExpiresAt, err := s.refreshTokenService.GenerateRefreshToken()
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +64,9 @@ func (s *Service) issueTokens(ctx context.Context, clientCode string, user *mode
 	}
 
 	record := &model.RefreshToken{
-		Hash:      auth.HashRefreshToken(refreshToken),
+		Hash:      s.refreshTokenService.HashRefreshToken(refreshToken),
 		UserID:    user.ID,
-		ExpiresAt: time.Now().Add(s.authConfig.RefreshTokenExpiration),
+		ExpiresAt: refreshTokenExpiresAt,
 		Metadata:  metadata,
 	}
 	if err := s.refreshTokenRepo.Create(ctx, record); err != nil {
@@ -71,9 +74,11 @@ func (s *Service) issueTokens(ctx context.Context, clientCode string, user *mode
 	}
 
 	return &AuthenticateResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		User:         *user,
+		AccessToken:           accessToken,
+		AccessTokenExpiresAt:  accessTokenExpiresAt,
+		RefreshToken:          refreshToken,
+		RefreshTokenExpiresAt: refreshTokenExpiresAt,
+		User:                  *user,
 	}, nil
 }
 
@@ -104,6 +109,14 @@ func (s *Service) generateAnonymousName() string {
 }
 
 func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, dto AuthenticateAnonymousDTO, refreshMetadata util.JSONMap) (*AuthenticateResponse, error) {
+	client, err := s.clientRepo.FindByCode(ctx, clientCode)
+	if err != nil {
+		return nil, err
+	}
+	if !client.Config.Anonymous.Enabled {
+		return nil, apperr.Unauthorized("anonymous authentication is not enabled for this client")
+	}
+
 	name := s.generateAnonymousName()
 	if dto.Name != nil {
 		name = *dto.Name
@@ -125,7 +138,7 @@ func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, 
 }
 
 func (s *Service) Refresh(ctx context.Context, clientCode string, dto RefreshDTO, refreshMetadata util.JSONMap) (*AuthenticateResponse, error) {
-	hash := auth.HashRefreshToken(dto.RefreshToken)
+	hash := s.refreshTokenService.HashRefreshToken(dto.RefreshToken)
 	token, err := s.refreshTokenRepo.FindByHash(ctx, hash)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

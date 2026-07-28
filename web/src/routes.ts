@@ -1,4 +1,6 @@
 export const ROUTES = {
+
+  home: "/",
   // auth routes
   authApiKey: "/auth/api-key",
 
@@ -14,6 +16,8 @@ export const ROUTES = {
   // client routes
   client: "/client/{clientCode}",
   clientChat: "/client/{clientCode}/chat",
+  clientChatSession: "/client/{clientCode}/chat/session/{sessionId}",
+  clientChatLoginAnonymous: "/client/{clientCode}/chat/login-anonymous",
   clientUsers: "/client/{clientCode}/users",
   clientSessions: "/client/{clientCode}/sessions",
   clientSettings: "/client/{clientCode}/settings",

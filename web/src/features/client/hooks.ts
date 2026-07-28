@@ -11,6 +11,7 @@ import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import type { PaginatedAgent } from "../agent/schemas";
 
 const BASE_QUERY_KEY = "client";
 
@@ -21,6 +22,18 @@ export const useListClient = (
   return useQuery({
     queryKey: listClientQueryKey(),
     queryFn: () => clientService.list({ ...opts, auth: "api-key" }),
+  })
+}
+
+export const listClientAgentsQueryKey = (code: string) => [BASE_QUERY_KEY, "agents", code] as const;
+export const useListClientAgents = (
+  code: string,
+  opts?: ServiceGetOptions<PaginatedAgent>
+): UseQueryResult<PaginatedAgent, Error> => {
+  return useQuery({
+    queryKey: listClientAgentsQueryKey(code),
+    queryFn: () => clientService.listAgents(code, { auth: "jwt", ...opts }),
+    enabled: !!code,
   })
 }
 

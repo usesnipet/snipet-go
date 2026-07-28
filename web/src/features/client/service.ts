@@ -1,17 +1,18 @@
 import { http } from "@/lib/http";
 
+import { paginatedAgentSchema } from "../agent/schemas";
+
 import {
-  clientPublicSchema, clientSchema, createClientSchema, paginatedClientSchema,
-  updateClientSchema
+  clientPublicSchema, clientSchema, createClientSchema, paginatedClientSchema, updateClientSchema
 } from "./schemas";
 
+import type { PaginatedAgent } from "../agent/schemas";
 import type {
   Client, ClientPublic, CreateClient, PaginatedClient, UpdateClient
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
-
 const CLIENTS_URL = "/api/clients";
 
 const list = async (opts: ServiceGetOptions<PaginatedClient>): Promise<PaginatedClient> => {
@@ -19,6 +20,16 @@ const list = async (opts: ServiceGetOptions<PaginatedClient>): Promise<Paginated
     url: CLIENTS_URL,
     schemas: {
       response: paginatedClientSchema,
+    },
+    ...opts,
+  })
+}
+const listAgents = async (code: string, opts: ServiceGetOptions<PaginatedAgent>): Promise<PaginatedAgent> => {
+  return http.get({
+    url: `${CLIENTS_URL}/{code}/agents`,
+    params: { code },
+    schemas: {
+      response: paginatedAgentSchema,
     },
     ...opts,
   })
@@ -86,6 +97,7 @@ const remove = async (code: string, opts: ServiceDeleteOptions<void>): Promise<v
 
 export const clientService = {
   list,
+  listAgents,
   create,
   findByCode,
   findPublicByCode,

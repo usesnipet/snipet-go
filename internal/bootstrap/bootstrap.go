@@ -94,14 +94,24 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyHasher := auth.NewKeyHasher()
 	jwtService := auth.NewJWTService(cfg.Auth)
 
+	refreshTokenService := auth.NewRefreshTokenService(cfg.Auth)
+
 	authRegistry := auth_provider.NewRegistry()
 
-	authService := auth_module.NewService(authRegistry, clientRepo, userRepo, refreshTokenRepo, jwtService, cfg.Auth)
+	authService := auth_module.NewService(
+		authRegistry,
+		clientRepo,
+		userRepo,
+		refreshTokenRepo,
+		jwtService,
+		refreshTokenService,
+		cfg.Auth,
+	)
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 	apiKeyService.Init(context.Background())
 
-	clientService := client.NewService(clientRepo, logger)
+	clientService := client.NewService(clientRepo, agentRepo, logger)
 	if err := clientService.Init(context.Background(), &cfg.App); err != nil {
 		logger.Errorf("failed to init client service: %v", err)
 		return err
@@ -129,7 +139,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	appHandler := app_module.NewHandler(appService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
-	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
+	clientHandler := client.NewHandler(clientService, apiKeyMiddleware, anyAuthMiddleware)
 	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)

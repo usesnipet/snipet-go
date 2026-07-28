@@ -1,5 +1,5 @@
 import { useApiKeyStore } from "@/features/api-key/store";
-import { jwtStore } from "@/features/auth/store";
+import { useAuthStore } from "@/features/auth/store";
 import { z, ZodType } from "zod";
 
 import { logger } from "../logger";
@@ -77,19 +77,27 @@ export async function httpx<TResponse = unknown, TBody = unknown, TSearchParams 
   let { body, headers, params, searchParams } = options;
   const pathUrl = params ? applyPathParams(url, params as PathParamsRecord) : url;
 
+  const apiKey = useApiKeyStore.getState().key;
+  const accessToken = useAuthStore.getState().accessToken;
+
   switch (auth) {
     case "api-key":
+      if (!apiKey) logger.warn("You are using the api-key auth mode without setting an api key");
+
       headers = {
         ...(headers as Record<string, string | null | undefined> | undefined),
-        "X-API-Key": useApiKeyStore.getState().key,
+        "X-API-Key": apiKey,
       } as THeaders;
       break;
-    case "jwt":
+    case "jwt": {
+      if (!accessToken) logger.warn("You are using the jwt auth mode without setting an access token");
+
       headers = {
         ...(headers as Record<string, string | null | undefined> | undefined),
-        Authorization: jwtStore.getState().token,
+        ...(accessToken ? { Authorization: accessToken } : {}),
       } as THeaders;
       break;
+    }
   }
 
   try {

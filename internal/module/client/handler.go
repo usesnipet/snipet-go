@@ -8,12 +8,13 @@ import (
 )
 
 type Handler struct {
-	service          *Service
-	apiKeyMiddleware api.MiddlewareFunc
+	service           *Service
+	apiKeyMiddleware  api.MiddlewareFunc
+	anyAuthMiddleware api.MiddlewareFunc
 }
 
-func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handler {
-	return &Handler{service: service, apiKeyMiddleware: apiKeyMiddleware}
+func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc, anyAuthMiddleware api.MiddlewareFunc) api.Handler {
+	return &Handler{service: service, apiKeyMiddleware: apiKeyMiddleware, anyAuthMiddleware: anyAuthMiddleware}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
@@ -29,6 +30,12 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 			r.Get("/{code}", serve(h.findByCode))
 			r.Put("/{code}", serve(h.update))
 			r.Delete("/{code}", serve(h.delete))
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(h.anyAuthMiddleware)
+
+			r.Get("/{code}/agents", serve(h.getAgents))
 		})
 	})
 }
@@ -92,4 +99,16 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteNoContent(w)
+}
+
+func (h *Handler) getAgents(w http.ResponseWriter, r *http.Request) error {
+	var query FindClientAgentsFilterDTO
+	if err := api.ParseQuery(r, &query); err != nil {
+		return err
+	}
+	agents, err := h.service.GetAgents(r.Context(), chi.URLParam(r, "code"), query.ToFilter())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, agents)
 }

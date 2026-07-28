@@ -24,7 +24,8 @@ func NewJWTService(config config.AuthConfig) *JWTService {
 	return &JWTService{config: config}
 }
 
-func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string, UserClaims, error) {
+func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string, time.Time, UserClaims, error) {
+	expiresAt := time.Now().Add(s.config.JWTExpiration)
 	claims := UserClaims{
 		ClientCode: clientCode,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -33,7 +34,7 @@ func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string,
 			Audience:  jwt.ClaimStrings{s.config.JWTAudience},
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.JWTExpiration)),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 		},
 	}
 
@@ -41,10 +42,10 @@ func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string,
 
 	tokenString, err := token.SignedString([]byte(s.config.JWTSecret))
 	if err != nil {
-		return "", UserClaims{}, err
+		return "", time.Time{}, UserClaims{}, err
 	}
 
-	return fmt.Sprintf("Bearer %s", tokenString), claims, nil
+	return fmt.Sprintf("Bearer %s", tokenString), expiresAt, claims, nil
 }
 
 func (s *JWTService) VerifyToken(tokenString string) (*UserClaims, error) {

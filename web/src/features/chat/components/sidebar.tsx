@@ -5,28 +5,34 @@ import { Link } from "@/components/ui/link";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleTheme } from "@/components/ui/toggle-theme";
-import { useApiKeyStore } from "@/features/api-key/store";
-import { SessionList } from "@/features/session/components/session-list";
+import { useAuthStore } from "@/features/auth/store";
+import { useListSession } from "@/features/session/hooks";
 import { useNavigate } from "@/hooks/use-navigate";
+import { applyPathParams } from "@/lib/http";
 import { ROUTES } from "@/routes";
 import { LogOutIcon, MessageSquarePlus, UserIcon } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
 
 import { ClientCode } from "../../client/components/client-code";
-import { useFindByCodeClient } from "../../client/hooks";
+import { useFindPublicByCodeClient } from "../../client/hooks";
+
+import { SessionList } from "./session-list";
 
 export function ClientChatSidebar() {
   const navigate = useNavigate();
-  const clearApiKey = useApiKeyStore(state => state.clear);
+  const clearAccessToken = useAuthStore(state => state.clear);
   const [sessionSearch, setSessionSearch] = useState("");
   const { clientCode: clientCodeParam } = useParams<{ clientCode: string }>();
   const clientCode = clientCodeParam ?? "";
-  const { data: client, isLoading } = useFindByCodeClient(clientCode);
+  const { data: client, isLoading } = useFindPublicByCodeClient(clientCode);
+  const { data: sessions, isLoading: isLoadingSessions, error: errorSessions } = useListSession(
+    clientCode, { auth: "jwt" }
+  )
 
   const handleLogout = () => {
-    clearApiKey();
-    navigate(ROUTES.authApiKey, { replace: true });
+    clearAccessToken();
+    navigate(ROUTES.home, { replace: true });
   }
 
   return (
@@ -51,13 +57,21 @@ export function ClientChatSidebar() {
           placeholder="Search sessions..."
           aria-label="Search sessions"
         />
-        <Button className="w-full">
-          <MessageSquarePlus />
-          New chat
+        <Button className="w-full" asChild>
+          <Link href={applyPathParams(ROUTES.clientChat, { clientCode })}>
+            <MessageSquarePlus />
+            New chat
+          </Link>
         </Button>
       </SidebarHeader>
       <SidebarContent>
-        <SessionList clientCode={clientCode} search={sessionSearch} />
+        <SessionList
+          clientCode={clientCode}
+          search={sessionSearch}
+          data={sessions?.data ?? []}
+          isLoading={isLoadingSessions}
+          error={errorSessions}
+        />
       </SidebarContent>
       <SidebarFooter>
         <Card className="flex items-center gap-3 p-2">

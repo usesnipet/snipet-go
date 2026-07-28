@@ -24,7 +24,7 @@ export const useListSession = (
   return useQuery({
     queryKey: [...listSessionQueryKey(clientCode), opts?.searchParams],
     queryFn: () =>
-      sessionService.list(clientCode, { ...opts, auth: "api-key" }),
+      sessionService.list(clientCode, { auth: "api-key", ...opts }),
     enabled: !!clientCode,
   })
 }
@@ -39,7 +39,7 @@ export const useFindByIdSession = (
   return useQuery({
     queryKey: [...findByIdSessionQueryKey(clientCode, id), opts?.searchParams],
     queryFn: (): Promise<Session> =>
-      sessionService.findById(clientCode, id, { ...opts, auth: "api-key" }),
+      sessionService.findById(clientCode, id, { auth: "api-key", ...opts }),
     enabled: !!clientCode && !!id,
   })
 }
@@ -54,7 +54,7 @@ export const useFindMessagesSession = (
   return useQuery({
     queryKey: [...findMessagesSessionQueryKey(clientCode, id), opts?.searchParams],
     queryFn: (): Promise<PaginatedExecutionMessage> =>
-      sessionService.findMessages(clientCode, id, { ...opts, auth: "api-key" }),
+      sessionService.findMessages(clientCode, id, { auth: "api-key", ...opts }),
     enabled: !!clientCode && !!id,
   })
 }
@@ -70,7 +70,7 @@ export const useCreateSession = (
   return useMutation({
     mutationKey: createSessionQueryKey(),
     mutationFn: ({ clientCode, data }) =>
-      sessionService.create(clientCode, data, { ...opts, auth: "api-key" }),
+      sessionService.create(clientCode, data, { auth: "api-key", ...opts }),
     onSuccess: (_data, { clientCode }) => {
       toast({
         title: "Session created successfully",
@@ -99,7 +99,7 @@ export const useUpdateSession = (
   return useMutation({
     mutationKey: updateSessionQueryKey(),
     mutationFn: ({ clientCode, id, data }) =>
-      sessionService.update(clientCode, id, data, { ...opts, auth: "api-key" }),
+      sessionService.update(clientCode, id, data, { auth: "api-key", ...opts }),
     onSuccess: (_data, { clientCode, id }) => {
       toast({
         title: "Session updated successfully",
@@ -125,7 +125,7 @@ export const useDeleteSession = (
   return useMutation({
     mutationKey: deleteSessionQueryKey(),
     mutationFn: ({ clientCode, id }) =>
-      sessionService.delete(clientCode, id, { ...opts, auth: "api-key" }),
+      sessionService.delete(clientCode, id, { auth: "api-key", ...opts }),
     onSuccess: (_data, { clientCode, id }) => {
       toast({
         title: "Session deleted successfully",

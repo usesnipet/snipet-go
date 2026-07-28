@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 
 import { ApiKeyGuard } from "./features/api-key/components/api-key-guard";
+import { ChatGuard } from "./features/chat/components/chat-guard";
 import { ROUTES } from "./routes";
 import { AdminAgentsPage } from "./routes/admin/agents/page";
 import { AdminApiKeysPage } from "./routes/admin/api-keys/page";
@@ -14,10 +15,12 @@ import { ClientSessionsPage } from "./routes/client/(private)/sessions/page";
 import { ClientSettingsPage } from "./routes/client/(private)/settings/page";
 import { ClientUsersPage } from "./routes/client/(private)/users/page";
 import { ClientChatLayout } from "./routes/client/chat/layout";
+import { ClientChatLoginAnonymousPage } from "./routes/client/chat/login-anonymous/page";
 import { ClientChatPage } from "./routes/client/chat/page";
+import { ClientChatSessionPage } from "./routes/client/chat/session/{sessionId}/page";
+import { HomePage } from "./routes/page";
 
 import type { RoutePath } from "./routes";
-
 const toReactRouterPath = (path: RoutePath) => {
   return path.replaceAll(/{([^}]+)}/g, (_, p1) => `:${p1}`);
 }
@@ -26,8 +29,16 @@ export const Router = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<ClientChatLayout />}>
-          <Route path={toReactRouterPath(ROUTES.clientChat)} element={<ClientChatPage />} />
+        <Route path={toReactRouterPath(ROUTES.home)} element={<HomePage />} />
+        <Route
+          path={toReactRouterPath(ROUTES.clientChatLoginAnonymous)}
+          element={<ClientChatLoginAnonymousPage />}
+        />
+        <Route element={<ChatGuard />}>
+          <Route element={<ClientChatLayout />}>
+            <Route path={toReactRouterPath(ROUTES.clientChat)} element={<ClientChatPage />} />
+            <Route path={toReactRouterPath(ROUTES.clientChatSession)} element={<ClientChatSessionPage />} />
+          </Route>
         </Route>
         <Route element={<ApiKeyGuard />}>
           <Route element={<ClientAdminLayout />}>

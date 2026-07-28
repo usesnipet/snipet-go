@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useListAgent } from "@/features/agent/hooks";
+import { useListClientAgents } from "@/features/client/hooks";
 import { cn } from "@/lib/utils";
 import { Send } from "lucide-react";
 import * as React from "react";
@@ -29,12 +29,14 @@ export type ChatInputSubmit = {
 export type Props = Omit<React.ComponentProps<"textarea">, "onSubmit"> & {
   containerclassname?: string;
   onSubmit?: (value: ChatInputSubmit) => void;
+  clientCode: string;
 };
 
 const ChatInput = React.forwardRef<HTMLTextAreaElement, Props>(
   (
     {
       className,
+      clientCode,
       containerclassname,
       onSubmit,
       onKeyDown,
@@ -48,7 +50,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, Props>(
     const innerRef = React.useRef<HTMLTextAreaElement>(null);
     const scrollAreaRef = React.useRef<HTMLDivElement>(null);
     const [areaHeight, setAreaHeight] = React.useState<number>();
-    const { data: agentsPage, isLoading: isLoadingAgents } = useListAgent();
+    const { data: agentsPage, isLoading: isLoadingAgents } = useListClientAgents(clientCode);
     const agents = agentsPage?.data ?? [];
     const [agentId, setAgentId] = React.useState("");
 

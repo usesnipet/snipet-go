@@ -68,13 +68,14 @@ func newSessionService(
 	sessionRepo *mocks.MockISessionRepository,
 	messageRepo *mocks.MockIExecutionMessageRepository,
 	clientRepo *mocks.MockIClientRepository,
+	agentRepo *mocks.MockIAgentRepository,
 	agentSvc *agent.Service,
 ) *session.Service {
 	t.Helper()
 	return session.NewService(
 		sessionRepo,
 		messageRepo,
-		client.NewService(clientRepo, logger.NewLogger(logger.LevelError)),
+		client.NewService(clientRepo, agentRepo, logger.NewLogger(logger.LevelError)),
 		agentSvc,
 	)
 }
@@ -107,7 +108,9 @@ func TestFindMessagesReturnsExecutionMessages(t *testing.T) {
 		FilterInSession(mock.Anything, sessionID, mock.Anything).
 		Return(expected, nil)
 
-	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, nil)
+	agentRepo := mocks.NewMockIAgentRepository(t)
+
+	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, agentRepo, nil)
 
 	result, err := svc.FindMessages(apiKeyContext(), clientCode, sessionID, filter.Default[model.ExecutionMessage]())
 	require.NoError(t, err)
@@ -131,7 +134,9 @@ func TestFindMessagesForbiddenWithoutAccess(t *testing.T) {
 		Return(false, nil)
 
 	messageRepo := mocks.NewMockIExecutionMessageRepository(t)
-	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, nil)
+	agentRepo := mocks.NewMockIAgentRepository(t)
+
+	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, agentRepo, nil)
 
 	_, err := svc.FindMessages(jwtContext(userID), clientCode, sessionID, filter.Default[model.ExecutionMessage]())
 	var appErr *apperr.Error
@@ -204,7 +209,7 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		logger.NewLogger(logger.LevelError),
 	)
 
-	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, agentSvc)
+	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, agentRepo, agentSvc)
 
 	err := svc.Run(apiKeyContext(), clientCode, sessionID, session.RunSessionDTO{Message: "hi"}, nil)
 	require.NoError(t, err)
@@ -230,7 +235,9 @@ func TestDeleteByIDResolvesClientCode(t *testing.T) {
 		DeleteInClient(mock.Anything, clientID, sessionID).
 		Return(nil)
 
-	svc := newSessionService(t, sessionRepo, mocks.NewMockIExecutionMessageRepository(t), clientRepo, nil)
+	agentRepo := mocks.NewMockIAgentRepository(t)
+
+	svc := newSessionService(t, sessionRepo, mocks.NewMockIExecutionMessageRepository(t), clientRepo, agentRepo, nil)
 
 	err := svc.DeleteByID(apiKeyContext(), clientCode, sessionID)
 	require.NoError(t, err)
