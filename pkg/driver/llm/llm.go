@@ -1,14 +1,15 @@
-package driver
+package llm
 
 import (
 	"context"
 
 	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
 )
 
-type ILLM interface {
-	IDriver
+type Driver interface {
+	driver.IDriver
 
 	Generate(
 		ctx context.Context,

@@ -7,46 +7,46 @@ import (
 	_ "image/png"
 	"os"
 
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
 // mapAttributes builds kind-specific attributes for a local file.
 // Values that require deeper format parsing (language, title, duration, etc.)
 // are left unset when they cannot be derived from the filesystem alone.
-func mapAttributes(kind runtime.SourceItemKind, path string, info os.FileInfo) util.JSONMap {
+func mapAttributes(kind knowledge.SourceItemKind, path string, info os.FileInfo) util.JSONMap {
 	mediaType := detectMediaType(path)
 	size := info.Size()
 
 	var attrs any
 	switch kind {
-	case runtime.SourceItemKindDocument:
-		attrs = runtime.DocumentAttributes{
+	case knowledge.SourceItemKindDocument:
+		attrs = knowledge.DocumentAttributes{
 			MediaType: mediaType,
 			Size:      size,
 		}
-	case runtime.SourceItemKindText:
-		attrs = runtime.TextAttributes{}
-	case runtime.SourceItemKindImage:
+	case knowledge.SourceItemKindText:
+		attrs = knowledge.TextAttributes{}
+	case knowledge.SourceItemKindImage:
 		width, height := imageDimensions(path)
-		attrs = runtime.ImageAttributes{
+		attrs = knowledge.ImageAttributes{
 			MediaType: mediaType,
 			Size:      size,
 			Width:     width,
 			Height:    height,
 		}
-	case runtime.SourceItemKindAudio:
-		attrs = runtime.AudioAttributes{
+	case knowledge.SourceItemKindAudio:
+		attrs = knowledge.AudioAttributes{
 			MediaType: mediaType,
 			Size:      size,
 		}
-	case runtime.SourceItemKindVideo:
-		attrs = runtime.VideoAttributes{
+	case knowledge.SourceItemKindVideo:
+		attrs = knowledge.VideoAttributes{
 			MediaType: mediaType,
 			Size:      size,
 		}
-	case runtime.SourceItemKindStructured:
-		attrs = runtime.StructuredAttributes{
+	case knowledge.SourceItemKindStructured:
+		attrs = knowledge.StructuredAttributes{
 			MediaType: mediaType,
 			Size:      size,
 		}

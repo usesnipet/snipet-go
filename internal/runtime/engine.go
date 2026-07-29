@@ -6,20 +6,20 @@ import (
 	"time"
 
 	"github.com/usesnipet/snipet/internal/logger"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/runtime/message"
-	"github.com/usesnipet/snipet/internal/runtime/tool"
+	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type Engine struct {
-	Tools  *driver.Manager[driver.ITool]
-	LLMs   *driver.Manager[driver.ILLM]
+	Tools  *DriverManager[tool.Driver]
+	LLMs   *DriverManager[llm.Driver]
 	logger *logger.Logger
 }
 
 func NewEngine(
-	tools *driver.Manager[driver.ITool],
-	llms *driver.Manager[driver.ILLM],
+	tools *DriverManager[tool.Driver],
+	llms *DriverManager[llm.Driver],
 	logger *logger.Logger,
 ) *Engine {
 	return &Engine{
@@ -30,18 +30,18 @@ func NewEngine(
 }
 
 func (e *Engine) validateAgent(agent Agent) error {
-	llmConfigs := make([]driver.Configuration, 0, len(agent.LLMs))
+	llmConfigs := make([]Configuration, 0, len(agent.LLMs))
 	for _, cfg := range agent.LLMs {
-		llmConfigs = append(llmConfigs, driver.Configuration(cfg))
+		llmConfigs = append(llmConfigs, Configuration(cfg))
 	}
 	err := e.LLMs.ValidateMultipleConfigurationsByKey(llmConfigs...)
 	if err != nil {
 		return err
 	}
 
-	toolConfigs := make([]driver.Configuration, 0, len(agent.Tools))
+	toolConfigs := make([]Configuration, 0, len(agent.Tools))
 	for key, config := range agent.Tools {
-		toolConfigs = append(toolConfigs, driver.Configuration{Key: key, Config: config})
+		toolConfigs = append(toolConfigs, Configuration{Key: key, Config: config})
 	}
 	return e.Tools.ValidateMultipleConfigurationsByKey(toolConfigs...)
 }

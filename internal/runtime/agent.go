@@ -1,11 +1,10 @@
 package runtime
 
 import (
-	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
-type LLMConfig driver.Configuration
+type LLMConfig Configuration
 
 type ToolConfig map[string]util.JSONMap
 

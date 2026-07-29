@@ -9,8 +9,9 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
+	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
+	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
 
 type SyncIndexArgs struct {
@@ -32,8 +33,8 @@ type SyncIndexResult struct {
 type SyncIndexWorker struct {
 	river.WorkerDefaults[SyncIndexArgs]
 
-	sourceManager            *driver.Manager[driver.IKnowledgeSource]
-	indexManager             *driver.Manager[driver.IKnowledgeIndex]
+	sourceManager            *runtime.DriverManager[kdriver.ISourceDriver]
+	indexManager             *runtime.DriverManager[kdriver.IIndexDriver]
 	knowledgeRepo            repository.IKnowledgeRepository
 	knowledgeItemRepo        repository.IKnowledgeItemRepository
 	indexRepo                repository.IKnowledgeIndexRepository
@@ -42,8 +43,8 @@ type SyncIndexWorker struct {
 }
 
 func NewSyncIndexWorker(
-	indexManager *driver.Manager[driver.IKnowledgeIndex],
-	sourceManager *driver.Manager[driver.IKnowledgeSource],
+	indexManager *runtime.DriverManager[kdriver.IIndexDriver],
+	sourceManager *runtime.DriverManager[kdriver.ISourceDriver],
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	indexRepo repository.IKnowledgeIndexRepository,
@@ -167,8 +168,8 @@ func (s *SyncIndexWorker) indexItem(
 	ctx context.Context,
 	knowledge *model.Knowledge,
 	index *model.KnowledgeIndex,
-	writer driver.IKnowledgeIndexWriter,
-	sourceDriver driver.IKnowledgeSource,
+	writer kdriver.IKnowledgeIndexWriter,
+	sourceDriver kdriver.ISourceDriver,
 	item model.IndexedKnowledgeItem,
 ) error {
 	updateStatus := func(status model.IndexStatus, hash string, reason *string, errMessage *string) error {

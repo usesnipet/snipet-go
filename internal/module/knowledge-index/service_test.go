@@ -16,8 +16,10 @@ import (
 	queuemocks "github.com/usesnipet/snipet/internal/queue/mocks"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
+	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
+	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -43,11 +45,11 @@ func (s *stubIndexDriver) TestConnection(ctx context.Context, config util.JSONMa
 	return nil
 }
 
-func (s *stubIndexDriver) Reader(util.JSONMap) (driver.IKnowledgeIndexReader, error) {
+func (s *stubIndexDriver) Reader(util.JSONMap) (knowledge.IKnowledgeIndexReader, error) {
 	return nil, nil
 }
 
-func (s *stubIndexDriver) Writer(util.JSONMap) (driver.IKnowledgeIndexWriter, error) {
+func (s *stubIndexDriver) Writer(util.JSONMap) (knowledge.IKnowledgeIndexWriter, error) {
 	return nil, nil
 }
 
@@ -92,7 +94,7 @@ func newStubIndex(name string, schema util.JSONMap, testConn func(context.Contex
 func newTestService(
 	t *testing.T,
 	repo repository.IKnowledgeIndexRepository,
-	drivers map[string]driver.IKnowledgeIndex,
+	drivers map[string]knowledge.IIndexDriver,
 	opts ...func(*testServiceOptions),
 ) *knowledgeindex.Service {
 	t.Helper()
@@ -105,11 +107,11 @@ func newTestService(
 		opt(&options)
 	}
 
-	reg := registry.New[driver.IKnowledgeIndex]()
+	reg := registry.New[knowledge.IIndexDriver]()
 	for name, d := range drivers {
 		reg.MustRegister(name, d)
 	}
-	indexManager := driver.NewManager(reg)
+	indexManager := runtime.NewDriverManager(reg)
 	return knowledgeindex.NewService(
 		repo,
 		mocks.NewMockIIndexedKnowledgeItemRepository(t),
@@ -174,7 +176,7 @@ func TestCreateStoresIndexAndReturnsIt(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(t, repo, map[string]driver.IKnowledgeIndex{"pinecone": indexDriver})
+	svc := newTestService(t, repo, map[string]knowledge.IIndexDriver{"pinecone": indexDriver})
 
 	result, err := svc.Create(context.Background(), knowledgeID, knowledgeindex.CreateKnowledgeIndexDTO{
 		Name:          "Docs Index",
@@ -210,7 +212,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 		CreateInKnowledge(mock.Anything, knowledgeID, mock.Anything).
 		Return(expectedErr)
 
-	svc := newTestService(t, repo, map[string]driver.IKnowledgeIndex{"pinecone": indexDriver})
+	svc := newTestService(t, repo, map[string]knowledge.IIndexDriver{"pinecone": indexDriver})
 
 	_, err := svc.Create(context.Background(), knowledgeID, knowledgeindex.CreateKnowledgeIndexDTO{
 		Name:          "Index",
@@ -262,7 +264,7 @@ func TestListDriversReturnsIndexDrivers(t *testing.T) {
 	indexSchema := util.JSONMap{"type": "object", "title": "index"}
 	indexDriver := newStubIndex("rag", indexSchema, nil)
 
-	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), map[string]driver.IKnowledgeIndex{"rag": indexDriver})
+	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), map[string]knowledge.IIndexDriver{"rag": indexDriver})
 
 	result, err := svc.ListDrivers(context.Background())
 	require.NoError(t, err)

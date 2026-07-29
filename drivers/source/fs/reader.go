@@ -6,16 +6,16 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
 type Reader struct {
 	path string
-	item *runtime.SourceItem
+	item *knowledge.SourceItem
 }
 
-func NewReader(config util.JSONMap, itemID string) (runtime.ISourceReader, error) {
+func NewReader(config util.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
@@ -36,19 +36,19 @@ func NewReader(config util.JSONMap, itemID string) (runtime.ISourceReader, error
 	}, nil
 }
 
-func (r *Reader) Kind() runtime.SourceItemKind {
+func (r *Reader) Kind() knowledge.SourceItemKind {
 	return r.item.Kind
 }
 
 func (r *Reader) Open(ctx context.Context) (any, error) {
 	switch r.item.Kind {
-	case runtime.SourceItemKindText:
+	case knowledge.SourceItemKindText:
 		data, err := os.ReadFile(r.path)
 		if err != nil {
 			return nil, fmt.Errorf("fs: read text: %w", err)
 		}
 		return string(data), nil
-	case runtime.SourceItemKindDocument:
+	case knowledge.SourceItemKindDocument:
 		data, err := os.ReadFile(r.path)
 		if err != nil {
 			return nil, fmt.Errorf("fs: read document: %w", err)

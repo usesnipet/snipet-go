@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -16,11 +17,24 @@ var schemaJSON []byte
 
 type Driver struct{}
 
-func NewDriver() runtime.ISourceDriver {
+func NewDriver() knowledge.ISourceDriver {
 	return &Driver{}
 }
 
-func (d *Driver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, error) {
+func (d *Driver) Info() driver.Info {
+	schema, err := d.configurationSchema()
+	if err != nil {
+		panic(err)
+	}
+	return driver.Info{
+		Name:                "Filesystem",
+		Description:         "Reads knowledge items from a local filesystem path.",
+		Tags:                []string{"source", "filesystem"},
+		ConfigurationSchema: schema,
+	}
+}
+
+func (d *Driver) configurationSchema() (util.JSONMap, error) {
 	var schema util.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
 		return nil, fmt.Errorf("fs: parse schema: %w", err)
@@ -49,7 +63,7 @@ func (d *Driver) TestConnection(ctx context.Context, config util.JSONMap) error 
 	return nil
 }
 
-func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISourceIterator, error) {
+func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (knowledge.IKnowledgeIterator, error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
@@ -62,6 +76,6 @@ func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (runtime.ISo
 	return NewIterator(files), nil
 }
 
-func (d *Driver) Reader(ctx context.Context, config util.JSONMap, itemID string) (runtime.ISourceReader, error) {
+func (d *Driver) Reader(ctx context.Context, config util.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
 	return NewReader(config, itemID)
 }

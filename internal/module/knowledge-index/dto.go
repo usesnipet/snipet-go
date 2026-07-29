@@ -3,8 +3,8 @@ package knowledgeindex
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
 )
 
 type CreateKnowledgeIndexDTO struct {

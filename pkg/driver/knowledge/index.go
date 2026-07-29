@@ -1,9 +1,10 @@
-package driver
+package knowledge
 
 import (
 	"context"
 
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
 )
 
 type KnowledgeIndexRecord struct {
@@ -23,8 +24,9 @@ type IKnowledgeIndexWriter interface {
 	Close() error
 }
 
-type IKnowledgeIndex interface {
-	IDriver
+type IIndexDriver interface {
+	driver.IDriver
+
 	Reader(config util.JSONMap) (IKnowledgeIndexReader, error)
 	Writer(config util.JSONMap) (IKnowledgeIndexWriter, error)
 }

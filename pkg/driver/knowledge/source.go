@@ -1,10 +1,11 @@
-package driver
+package knowledge
 
 import (
 	"context"
 	"time"
 
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
 )
 
 type SourceItemKind string
@@ -43,8 +44,9 @@ type IKnowledgeReader interface {
 	Close() error
 }
 
-type IKnowledgeSource interface {
-	IDriver
+type ISourceDriver interface {
+	driver.IDriver
+
 	Iterator(ctx context.Context, config util.JSONMap) (IKnowledgeIterator, error)
 	Reader(ctx context.Context, config util.JSONMap, itemID string) (IKnowledgeReader, error)
 }

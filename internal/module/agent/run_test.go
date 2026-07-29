@@ -13,10 +13,12 @@ import (
 	agent "github.com/usesnipet/snipet/internal/module/agent"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type capturingLLM struct {
@@ -94,7 +96,7 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 		}).
 		Return(nil)
 
-	llmReg := registry.New[driver.ILLM]()
+	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", &capturingLLM{
 		key: "primary",
 		generate: func(_ context.Context, _ []message.Message) (message.Message, error) {
@@ -107,8 +109,8 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
-			driver.NewManager(registry.New[driver.ITool]()),
-			driver.NewManager(llmReg),
+			runtime.NewDriverManager(registry.New[tool.Driver]()),
+			runtime.NewDriverManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),
 		executionRepo,
@@ -126,7 +128,7 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	assert.Nil(t, created.SessionID)
 	assert.Equal(t, agentID, created.AgentID)
 
-	roles := make([]message.MessageRole, 0, len(persisted))
+	roles := make([]message.Role, 0, len(persisted))
 	for _, m := range persisted {
 		roles = append(roles, m.Role)
 	}
@@ -177,7 +179,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 		}).
 		Return(nil)
 
-	llmReg := registry.New[driver.ILLM]()
+	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", &capturingLLM{
 		key: "primary",
 		generate: func(_ context.Context, messages []message.Message) (message.Message, error) {
@@ -191,8 +193,8 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
-			driver.NewManager(registry.New[driver.ITool]()),
-			driver.NewManager(llmReg),
+			runtime.NewDriverManager(registry.New[tool.Driver]()),
+			runtime.NewDriverManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),
 		executionRepo,

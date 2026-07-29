@@ -21,10 +21,12 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type sessionTestLLM struct {
@@ -200,15 +202,15 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		CreateInExecution(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-	llmReg := registry.New[driver.ILLM]()
+	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", &sessionTestLLM{key: "primary"})
 	agentSvc := agent.NewService(
 		agentRepo,
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
-			driver.NewManager(registry.New[driver.ITool]()),
-			driver.NewManager(llmReg),
+			runtime.NewDriverManager(registry.New[tool.Driver]()),
+			runtime.NewDriverManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),
 		executionRepo,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -19,13 +19,13 @@ type Item struct {
 type Iterator struct {
 	files []string
 
-	current *runtime.SourceItem
+	current *knowledge.SourceItem
 	hash    string
 	err     error
 	index   int
 }
 
-func NewIterator(files []string) runtime.ISourceIterator {
+func NewIterator(files []string) knowledge.IKnowledgeIterator {
 	return &Iterator{
 		files:   files,
 		current: nil,
@@ -60,7 +60,7 @@ func (it *Iterator) Next(ctx context.Context) bool {
 	return true
 }
 
-func (i *Iterator) Item() *runtime.SourceItem {
+func (i *Iterator) Item() *knowledge.SourceItem {
 	return i.current
 }
 

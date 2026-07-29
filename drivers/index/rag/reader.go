@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -12,7 +12,7 @@ type Reader struct {
 	*components
 }
 
-func NewReader(ctx context.Context, cfg Config) (runtime.IIndexReader, error) {
+func NewReader(ctx context.Context, cfg Config) (knowledge.IKnowledgeIndexReader, error) {
 	comps, err := newComponents(ctx, cfg)
 	if err != nil {
 		return nil, err
@@ -20,7 +20,7 @@ func NewReader(ctx context.Context, cfg Config) (runtime.IIndexReader, error) {
 	return &Reader{components: comps}, nil
 }
 
-func (r *Reader) Read(ctx context.Context, query string, limit int) ([]runtime.IndexRecord, error) {
+func (r *Reader) Read(ctx context.Context, query string, limit int) ([]knowledge.KnowledgeIndexRecord, error) {
 	if query == "" {
 		return nil, fmt.Errorf("rag: query is required")
 	}
@@ -35,7 +35,7 @@ func (r *Reader) Read(ctx context.Context, query string, limit int) ([]runtime.I
 		return nil, fmt.Errorf("rag: search: %w", err)
 	}
 
-	records := make([]runtime.IndexRecord, 0, len(results))
+	records := make([]knowledge.KnowledgeIndexRecord, 0, len(results))
 	for _, result := range results {
 		metadata := util.JSONMap{
 			"indexed_item_id": result.IndexedItemID,
@@ -47,7 +47,7 @@ func (r *Reader) Read(ctx context.Context, query string, limit int) ([]runtime.I
 		for k, v := range result.Metadata {
 			metadata[k] = v
 		}
-		records = append(records, runtime.IndexRecord{
+		records = append(records, knowledge.KnowledgeIndexRecord{
 			Content:  result.Chunk.Content,
 			Metadata: metadata,
 		})

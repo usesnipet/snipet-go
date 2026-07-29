@@ -8,11 +8,12 @@ import (
 
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/runtime/tool"
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type fakeLLM struct {
@@ -64,21 +65,21 @@ func (f *fakeTool) Execute(ctx context.Context, config util.JSONMap, call tool.C
 func newTestEngine(t *testing.T, llms map[string]*fakeLLM, tools map[string]*fakeTool) *runtime.Engine {
 	t.Helper()
 
-	llmReg := registry.New[driver.ILLM]()
+	llmReg := registry.New[llm.Driver]()
 	for key, llm := range llms {
 		llm.key = key
 		llmReg.MustRegister(key, llm)
 	}
 
-	toolReg := registry.New[driver.ITool]()
+	toolReg := registry.New[tool.Driver]()
 	for key, tl := range tools {
 		tl.key = key
 		toolReg.MustRegister(key, tl)
 	}
 
 	return runtime.NewEngine(
-		driver.NewManager(toolReg),
-		driver.NewManager(llmReg),
+		runtime.NewDriverManager(toolReg),
+		runtime.NewDriverManager(llmReg),
 		logger.NewLogger(logger.LevelError),
 	)
 }

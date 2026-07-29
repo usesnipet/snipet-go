@@ -33,7 +33,6 @@ import (
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/web"
 )
 
@@ -63,16 +62,16 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	// runtime
 	sourceRegistry := source.Registry()
-	sourceManager := driver.NewManager(sourceRegistry)
+	sourceManager := runtime.NewDriverManager(sourceRegistry)
 
 	indexRegistry := index.Registry()
-	indexManager := driver.NewManager(indexRegistry)
+	indexManager := runtime.NewDriverManager(indexRegistry)
 
 	llmRegistry := llm.Registry()
-	llmManager := driver.NewManager(llmRegistry)
+	llmManager := runtime.NewDriverManager(llmRegistry)
 
 	toolRegistry := tool.Registry()
-	toolManager := driver.NewManager(toolRegistry)
+	toolManager := runtime.NewDriverManager(toolRegistry)
 
 	engine := runtime.NewEngine(
 		toolManager,

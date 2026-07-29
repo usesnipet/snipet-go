@@ -4,16 +4,16 @@ import (
 	"time"
 
 	"github.com/usesnipet/snipet/internal/runtime/message"
-	"github.com/usesnipet/snipet/internal/runtime/tool"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type ExecutionMessage struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	ExecutionID string              `gorm:"type:uuid;not null;index" json:"execution_id"`
-	Sequence    int                 `gorm:"type:integer;not null" json:"sequence"`
-	Role        message.MessageRole `gorm:"type:varchar(50);not null" json:"role"`
-	Content     string              `gorm:"type:text" json:"content"`
+	ExecutionID string       `gorm:"type:uuid;not null;index" json:"execution_id"`
+	Sequence    int          `gorm:"type:integer;not null" json:"sequence"`
+	Role        message.Role `gorm:"type:varchar(50);not null" json:"role"`
+	Content     string       `gorm:"type:text" json:"content"`
 
 	ToolCalls  []tool.Call  `gorm:"type:jsonb" json:"tool_calls,omitempty"`
 	ToolResult *tool.Result `gorm:"type:jsonb" json:"tool_result,omitempty"`

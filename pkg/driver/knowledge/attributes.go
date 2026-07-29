@@ -1,4 +1,4 @@
-package driver
+package knowledge
 
 type DocumentAttributes struct {
 	MediaType string  `json:"media_type" validate:"required"`

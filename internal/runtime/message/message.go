@@ -4,22 +4,22 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/usesnipet/snipet/internal/runtime/tool"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
-type MessageRole string
+type Role string
 
 const (
-	MessageRoleSystem    MessageRole = "system"
-	MessageRoleUser      MessageRole = "user"
-	MessageRoleAssistant MessageRole = "assistant"
-	MessageRoleTool      MessageRole = "tool"
-	MessageRoleFinal     MessageRole = "final"
+	MessageRoleSystem    Role = "system"
+	MessageRoleUser      Role = "user"
+	MessageRoleAssistant Role = "assistant"
+	MessageRoleTool      Role = "tool"
+	MessageRoleFinal     Role = "final"
 )
 
 type Message struct {
 	ID         string       `json:"id"`
-	Role       MessageRole  `json:"role"`
+	Role       Role         `json:"role"`
 	Sequence   int          `json:"sequence"`
 	Content    string       `json:"content"`
 	ToolCalls  []tool.Call  `json:"toolCalls"`
@@ -27,7 +27,7 @@ type Message struct {
 	Timestamp  time.Time    `json:"timestamp"`
 }
 
-func NewMessage(role MessageRole, content string, options ...MessageOption) Message {
+func NewMessage(role Role, content string, options ...MessageOption) Message {
 	message := Message{
 		ID:         uuid.NewString(),
 		Role:       role,

@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/ledongthuc/pdf"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -29,7 +29,7 @@ func New(cfg Config) (*Chunker, error) {
 	return &Chunker{cfg: cfg}, nil
 }
 
-func (c *Chunker) Chunk(kind runtime.SourceItemKind, content, attributes any, metadata map[string]any) ([]Chunk, error) {
+func (c *Chunker) Chunk(kind knowledge.SourceItemKind, content, attributes any, metadata map[string]any) ([]Chunk, error) {
 	text, err := extractText(kind, content, attributes)
 	if err != nil {
 		return nil, err
@@ -50,15 +50,15 @@ func (c *Chunker) Chunk(kind runtime.SourceItemKind, content, attributes any, me
 	return chunks, nil
 }
 
-func extractText(kind runtime.SourceItemKind, content, attributes any) (string, error) {
+func extractText(kind knowledge.SourceItemKind, content, attributes any) (string, error) {
 	switch kind {
-	case runtime.SourceItemKindText:
+	case knowledge.SourceItemKindText:
 		text, ok := content.(string)
 		if !ok {
 			return "", fmt.Errorf("chunker: text content must be a string, got %T", content)
 		}
 		return text, nil
-	case runtime.SourceItemKindDocument:
+	case knowledge.SourceItemKindDocument:
 		mediaType, err := documentMediaType(attributes)
 		if err != nil {
 			return "", err
@@ -74,21 +74,21 @@ func extractText(kind runtime.SourceItemKind, content, attributes any) (string, 
 
 func documentMediaType(attributes any) (string, error) {
 	switch v := attributes.(type) {
-	case runtime.DocumentAttributes:
+	case knowledge.DocumentAttributes:
 		return v.MediaType, nil
-	case *runtime.DocumentAttributes:
+	case *knowledge.DocumentAttributes:
 		if v == nil {
 			return "", fmt.Errorf("chunker: document attributes are nil")
 		}
 		return v.MediaType, nil
 	case util.JSONMap:
-		attrs, err := util.ParseJSONMap[runtime.DocumentAttributes](v)
+		attrs, err := util.ParseJSONMap[knowledge.DocumentAttributes](v)
 		if err != nil {
 			return "", fmt.Errorf("chunker: parse document attributes: %w", err)
 		}
 		return attrs.MediaType, nil
 	case map[string]any:
-		attrs, err := util.ParseJSONMap[runtime.DocumentAttributes](util.JSONMap(v))
+		attrs, err := util.ParseJSONMap[knowledge.DocumentAttributes](util.JSONMap(v))
 		if err != nil {
 			return "", fmt.Errorf("chunker: parse document attributes: %w", err)
 		}

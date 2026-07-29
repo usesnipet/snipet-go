@@ -3,7 +3,7 @@ package message
 import (
 	"time"
 
-	"github.com/usesnipet/snipet/internal/runtime/tool"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type MessageOption func(message *Message)
@@ -29,5 +29,11 @@ func WithTimestamp(timestamp time.Time) MessageOption {
 func WithID(id string) MessageOption {
 	return func(message *Message) {
 		message.ID = id
+	}
+}
+
+func WithSequence(sequence int) MessageOption {
+	return func(message *Message) {
+		message.Sequence = sequence
 	}
 }

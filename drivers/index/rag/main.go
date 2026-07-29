@@ -7,7 +7,8 @@ import (
 	"fmt"
 
 	"github.com/usesnipet/snipet/drivers/index/rag/store"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
@@ -16,11 +17,24 @@ var schemaJSON []byte
 
 type Driver struct{}
 
-func NewDriver() runtime.IIndexDriver {
+func NewDriver() knowledge.IIndexDriver {
 	return &Driver{}
 }
 
-func (d *Driver) GetConfigurationSchema(ctx context.Context) (util.JSONMap, error) {
+func (d *Driver) Info() driver.Info {
+	schema, err := d.configurationSchema()
+	if err != nil {
+		panic(err)
+	}
+	return driver.Info{
+		Name:                "RAG",
+		Description:         "Indexes and retrieves knowledge with embeddings.",
+		Tags:                []string{"index", "rag"},
+		ConfigurationSchema: schema,
+	}
+}
+
+func (d *Driver) configurationSchema() (util.JSONMap, error) {
 	var schema util.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
 		return nil, fmt.Errorf("rag: parse schema: %w", err)
@@ -48,7 +62,7 @@ func (d *Driver) TestConnection(ctx context.Context, configJson util.JSONMap) er
 	return s.Ping(ctx)
 }
 
-func (d *Driver) Reader(config util.JSONMap) (runtime.IIndexReader, error) {
+func (d *Driver) Reader(config util.JSONMap) (knowledge.IKnowledgeIndexReader, error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
@@ -56,7 +70,7 @@ func (d *Driver) Reader(config util.JSONMap) (runtime.IIndexReader, error) {
 	return NewReader(context.Background(), cfg)
 }
 
-func (d *Driver) Writer(config util.JSONMap) (runtime.IIndexWriter, error) {
+func (d *Driver) Writer(config util.JSONMap) (knowledge.IKnowledgeIndexWriter, error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err

@@ -2,11 +2,11 @@ package source
 
 import (
 	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
 
-func Registry() *registry.R[driver.IKnowledgeSource] {
-	registry := registry.New[driver.IKnowledgeSource]()
+func Registry() *registry.R[knowledge.ISourceDriver] {
+	registry := registry.New[knowledge.ISourceDriver]()
 	// registry.MustRegister("fs", fs.NewDriver())
 
 	return registry

@@ -8,15 +8,17 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
+	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/driver/llm"
 )
 
 type Service struct {
 	repo       repository.ILLMRepository
-	llmManager *driver.Manager[driver.ILLM]
+	llmManager *runtime.DriverManager[llm.Driver]
 }
 
-func NewService(repo repository.ILLMRepository, llmManager *driver.Manager[driver.ILLM]) *Service {
+func NewService(repo repository.ILLMRepository, llmManager *runtime.DriverManager[llm.Driver]) *Service {
 	return &Service{
 		repo:       repo,
 		llmManager: llmManager,
