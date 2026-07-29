@@ -27,6 +27,7 @@ import (
 	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
+	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
 	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/queue"
@@ -48,6 +49,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	txManager := repository.NewTxManager(db)
 	apiKeyRepo := repository.NewApiKeyRepository(db)
 	agentRepo := repository.NewAgentRepository(db)
+	llmRepo := repository.NewLLMRepository(db)
 	clientRepo := repository.NewClientRepository(db)
 	sessionRepo := repository.NewSessionRepository(db, clientRepo)
 	knowledgeRepo := repository.NewKnowledgeRepository(db)
@@ -117,7 +119,8 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		return err
 	}
 
-	agentService := agent.NewService(agentRepo, engine, llmManager, toolManager, executionRepo, messageRepo, logger)
+	agentService := agent.NewService(agentRepo, llmRepo, txManager, engine, executionRepo, messageRepo, logger)
+	llmService := llmmodule.NewService(llmRepo, llmManager)
 
 	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, knowledgeItemRepo, sourceManager, riverClient)
 	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo, indexedKnowledgeItemRepo, indexManager, riverClient, txManager)
@@ -140,6 +143,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	appHandler := app_module.NewHandler(appService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
+	llmHandler := llmmodule.NewHandler(llmService, apiKeyMiddleware)
 	clientHandler := client.NewHandler(clientService, apiKeyMiddleware, anyAuthMiddleware)
 	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
@@ -154,6 +158,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		appHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
 		agentHandler.RegisterRoutes(r, api.Serve)
+		llmHandler.RegisterRoutes(r, api.Serve)
 		clientHandler.RegisterRoutes(r, api.Serve)
 		sessionHandler.RegisterRoutes(r, api.Serve)
 		knowledgeHandler.RegisterRoutes(r, api.Serve)

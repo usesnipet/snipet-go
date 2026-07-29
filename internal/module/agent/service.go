@@ -10,16 +10,15 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
 	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
 )
 
 type Service struct {
 	agentRepo            repository.IAgentRepository
+	llmRepo              repository.ILLMRepository
+	txManager            repository.ITxManager
 	engine               *runtime.Engine
-	llmManager           *driver.Manager[driver.ILLM]
-	toolManager          *driver.Manager[driver.ITool]
 	executionRepo        repository.IExecutionRepository
 	executionMessageRepo repository.IExecutionMessageRepository
 	logger               *logger.Logger
@@ -27,18 +26,18 @@ type Service struct {
 
 func NewService(
 	agentRepo repository.IAgentRepository,
+	llmRepo repository.ILLMRepository,
+	txManager repository.ITxManager,
 	engine *runtime.Engine,
-	llmManager *driver.Manager[driver.ILLM],
-	toolManager *driver.Manager[driver.ITool],
 	executionRepo repository.IExecutionRepository,
 	executionMessageRepo repository.IExecutionMessageRepository,
 	logger *logger.Logger,
 ) *Service {
 	return &Service{
 		agentRepo:            agentRepo,
+		llmRepo:              llmRepo,
+		txManager:            txManager,
 		engine:               engine,
-		llmManager:           llmManager,
-		toolManager:          toolManager,
 		executionRepo:        executionRepo,
 		executionMessageRepo: executionMessageRepo,
 		logger:               logger,
@@ -54,64 +53,65 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.Agent, error)
 }
 
 func (s *Service) Create(ctx context.Context, dto CreateAgentDTO) (*model.Agent, error) {
+	if err := s.validateLLMIDs(ctx, dto.LLMIDs); err != nil {
+		return nil, err
+	}
+
 	agent := &model.Agent{
 		Name:         dto.Name,
 		Description:  dto.Description,
 		Instructions: dto.Instructions,
-		Configuration: model.AgentConfiguration{
-			LLMs: util.Map(dto.LLMs, func(llm LLMConfigDTO) runtime.LLMConfig {
-				return runtime.LLMConfig{
-					Key:    llm.Key,
-					Config: llm.Config,
-				}
-			}),
-			Tools: runtime.ToolConfig(dto.Tools),
-		},
 	}
 
-	if err := s.validateLLMs(ctx, agent.Configuration.LLMs); err != nil {
-		return nil, apperr.BadRequest(err.Error())
-	}
-	if err := s.validateTools(ctx, agent.Configuration.Tools); err != nil {
-		return nil, apperr.BadRequest(err.Error())
-	}
-
-	if err := s.agentRepo.Create(ctx, agent); err != nil {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		if err := s.agentRepo.Create(ctx, agent); err != nil {
+			return err
+		}
+		return s.agentRepo.ReplaceLLMs(ctx, agent.ID, dto.LLMIDs)
+	})
+	if err != nil {
 		return nil, err
 	}
-	return agent, nil
+
+	return s.agentRepo.FindByID(ctx, agent.ID)
 }
 
 func (s *Service) Update(ctx context.Context, id string, dto UpdateAgentDTO) error {
-	updates := &model.Agent{}
-	if dto.Name != nil {
-		updates.Name = *dto.Name
+	if dto.LLMIDs != nil {
+		if err := s.validateLLMIDs(ctx, dto.LLMIDs); err != nil {
+			return err
+		}
 	}
-	if dto.Description != nil {
-		updates.Description = *dto.Description
-	}
-	if dto.Instructions != nil {
-		updates.Instructions = *dto.Instructions
-	}
-	if len(dto.LLMs) > 0 {
-		updates.Configuration.LLMs = util.Map(dto.LLMs, func(llm LLMConfigDTO) runtime.LLMConfig {
-			return runtime.LLMConfig{
-				Key:    llm.Key,
-				Config: llm.Config,
-			}
-		})
 
-		if err := s.validateLLMs(ctx, updates.Configuration.LLMs); err != nil {
-			return apperr.BadRequest(err.Error())
+	return s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		updates := &model.Agent{}
+		hasScalarUpdates := false
+		if dto.Name != nil {
+			updates.Name = *dto.Name
+			hasScalarUpdates = true
 		}
-	}
-	if dto.Tools != nil {
-		updates.Configuration.Tools = runtime.ToolConfig(dto.Tools)
-		if err := s.validateTools(ctx, updates.Configuration.Tools); err != nil {
-			return apperr.BadRequest(err.Error())
+		if dto.Description != nil {
+			updates.Description = *dto.Description
+			hasScalarUpdates = true
 		}
-	}
-	return s.agentRepo.UpdateByID(ctx, id, updates)
+		if dto.Instructions != nil {
+			updates.Instructions = *dto.Instructions
+			hasScalarUpdates = true
+		}
+
+		if hasScalarUpdates {
+			if err := s.agentRepo.UpdateByID(ctx, id, updates); err != nil {
+				return err
+			}
+		} else if _, err := s.agentRepo.FindByID(ctx, id); err != nil {
+			return err
+		}
+
+		if dto.LLMIDs != nil {
+			return s.agentRepo.ReplaceLLMs(ctx, id, dto.LLMIDs)
+		}
+		return nil
+	})
 }
 
 func (s *Service) DeleteByID(ctx context.Context, id string) error {
@@ -226,20 +226,28 @@ func (s *Service) handleExecutionEvent(
 	return event, nil
 }
 
-func (s *Service) ListDrivers(ctx context.Context) ([]driver.Info, error) {
-	return s.llmManager.ListDrivers(ctx)
-}
-
-func (s *Service) validateLLMs(ctx context.Context, llms []runtime.LLMConfig) error {
-	return s.llmManager.ValidateMultipleConfigurationsByKey(util.Map(llms, func(cfg runtime.LLMConfig) driver.Configuration {
-		return driver.Configuration(cfg)
-	})...)
-}
-
-func (s *Service) validateTools(ctx context.Context, tools runtime.ToolConfig) error {
-	configs := make([]driver.Configuration, 0, len(tools))
-	for key, config := range tools {
-		configs = append(configs, driver.Configuration{Key: key, Config: config})
+func (s *Service) validateLLMIDs(ctx context.Context, llmIDs []string) error {
+	seen := make(map[string]struct{}, len(llmIDs))
+	for _, id := range llmIDs {
+		if _, ok := seen[id]; ok {
+			return apperr.BadRequest("duplicate llm id")
+		}
+		seen[id] = struct{}{}
 	}
-	return s.toolManager.ValidateMultipleConfigurationsByKey(configs...)
+
+	ids := make([]any, len(llmIDs))
+	for i, id := range llmIDs {
+		ids[i] = id
+	}
+	found, err := s.llmRepo.Filter(ctx, filter.New[model.LLM](
+		filter.WhereIn("id", ids...),
+		filter.Take(len(llmIDs)),
+	))
+	if err != nil {
+		return err
+	}
+	if len(found.Data) != len(llmIDs) {
+		return apperr.BadRequest("one or more llm ids were not found")
+	}
+	return nil
 }

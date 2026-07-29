@@ -163,14 +163,21 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		Return(&model.Session{ID: sessionID, ClientID: clientID, AgentID: agentID}, nil)
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
+	llmID := uuid.New().String()
 	agentRepo.EXPECT().
 		FindByID(mock.Anything, agentID).
 		Return(&model.Agent{
 			ID: agentID,
-			Configuration: model.AgentConfiguration{
-				LLMs:  []runtime.LLMConfig{{Key: "primary", Config: util.JSONMap{}}},
-				Tools: runtime.ToolConfig{},
-			},
+			AgentToLLMs: []model.AgentToLLM{{
+				AgentID:  agentID,
+				LLMID:    llmID,
+				Priority: 0,
+				LLM: model.LLM{
+					ID:            llmID,
+					Provider:      "primary",
+					Configuration: util.JSONMap{},
+				},
+			}},
 		}, nil)
 
 	executionRepo := mocks.NewMockIExecutionRepository(t)
@@ -197,13 +204,13 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 	llmReg.MustRegister("primary", &sessionTestLLM{key: "primary"})
 	agentSvc := agent.NewService(
 		agentRepo,
+		mocks.NewMockILLMRepository(t),
+		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
 			driver.NewManager(registry.New[driver.ITool]()),
 			driver.NewManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),
-		driver.NewManager(llmReg),
-		driver.NewManager(registry.New[driver.ITool]()),
 		executionRepo,
 		messageRepo,
 		logger.NewLogger(logger.LevelError),

@@ -5,10 +5,9 @@ import { z, ZodType } from "zod";
 import { logger } from "../logger";
 
 import { handleApiError, parseZodErrors } from "./errors";
-import {
-  ApiMethod, applyPathParams, applySearchParams, AuthMode, PathParamsRecord, SearchParamsRecord
-} from "./http";
+import { applyPathParams, applySearchParams } from "./http";
 
+import type { ApiMethod, AuthMode, PathParamsRecord, SearchParamsRecord } from "./http";
 export type SseEventHandler = (event: string, data: unknown) => void;
 
 export type HttpSseOptions<TBody = unknown> = {

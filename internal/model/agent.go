@@ -1,33 +1,54 @@
 package model
 
 import (
+	"sort"
+
 	"github.com/usesnipet/snipet/internal/runtime"
 )
-
-type AgentConfiguration struct {
-	LLMs  []runtime.LLMConfig `json:"llms"`
-	Tools runtime.ToolConfig  `json:"tools"`
-}
 
 type Agent struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	Name          string             `gorm:"type:varchar(255);not null" json:"name"`
-	Description   string             `gorm:"type:text;not null" json:"description"`
-	Instructions  string             `gorm:"type:text;not null" json:"instructions"`
-	Configuration AgentConfiguration `gorm:"type:jsonb;not null;serializer:json" json:"configuration"`
+	Name         string `gorm:"type:varchar(255);not null" json:"name"`
+	Description  string `gorm:"type:text;not null" json:"description"`
+	Instructions string `gorm:"type:text;not null" json:"instructions"`
 
+	AgentToLLMs      []AgentToLLM      `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"llms"`
 	AgentToKnowledge []AgentToKnowledge `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 func (a Agent) ToRuntimeAgent() runtime.Agent {
+	llms := make([]runtime.LLMConfig, 0, len(a.AgentToLLMs))
+	rels := append([]AgentToLLM(nil), a.AgentToLLMs...)
+	sort.SliceStable(rels, func(i, j int) bool {
+		return rels[i].Priority < rels[j].Priority
+	})
+	for _, rel := range rels {
+		llms = append(llms, runtime.LLMConfig{
+			Key:    rel.LLM.Provider,
+			Config: rel.LLM.Configuration,
+		})
+	}
 	return runtime.NewAgent(
 		a.Name,
 		a.Description,
 		a.Instructions,
-		a.Configuration.Tools,
-		a.Configuration.LLMs,
+		runtime.ToolConfig{},
+		llms,
 	)
+}
+
+type AgentToLLM struct {
+	AgentID  string `gorm:"type:uuid;primaryKey;index:idx_agent_to_llms_agent_priority,priority:1" json:"-"`
+	LLMID    string `gorm:"type:uuid;primaryKey;column:llm_id" json:"llm_id"`
+	Priority int    `gorm:"type:integer;not null;index:idx_agent_to_llms_agent_priority,priority:2" json:"priority"`
+
+	Agent Agent `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	LLM   LLM   `gorm:"foreignKey:LLMID;references:ID;constraint:OnDelete:CASCADE" json:"llm"`
+}
+
+func (AgentToLLM) TableName() string {
+	return "agent_to_llms"
 }
 
 type AgentToKnowledge struct {

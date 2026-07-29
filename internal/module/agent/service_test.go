@@ -16,43 +16,34 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
-	"github.com/usesnipet/snipet/internal/runtime/driver"
-	"github.com/usesnipet/snipet/internal/runtime/message"
-	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/util"
 )
 
-type stubLLM struct {
-	info driver.Info
-}
-
-func (s *stubLLM) Info() driver.Info { return s.info }
-func (s *stubLLM) TestConnection(context.Context, util.JSONMap) error {
-	return nil
-}
-func (s *stubLLM) Generate(
-	context.Context,
-	util.JSONMap,
-	string,
-	[]message.Message,
-) (message.Message, error) {
-	return message.Message{}, nil
-}
-
 func newTestService(
+	t *testing.T,
 	agentRepo repository.IAgentRepository,
-	llms map[string]driver.ILLM,
+	llmRepo repository.ILLMRepository,
+	txManager repository.ITxManager,
 ) *agent.Service {
-	llmReg := registry.New[driver.ILLM]()
-	for name, llm := range llms {
-		llmReg.MustRegister(name, llm)
+	t.Helper()
+	if llmRepo == nil {
+		llmRepo = mocks.NewMockILLMRepository(t)
+	}
+	if txManager == nil {
+		tx := mocks.NewMockITxManager(t)
+		tx.EXPECT().
+			WithTransaction(mock.Anything, mock.Anything).
+			RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+				return fn(ctx)
+			}).
+			Maybe()
+		txManager = tx
 	}
 
 	return agent.NewService(
 		agentRepo,
+		llmRepo,
+		txManager,
 		nil,
-		driver.NewManager(llmReg),
-		driver.NewManager(registry.New[driver.ITool]()),
 		nil,
 		nil,
 		logger.NewLogger(logger.LevelError),
@@ -71,7 +62,7 @@ func TestFilterDelegatesToRepository(t *testing.T) {
 		}).
 		Return(expected, nil)
 
-	svc := newTestService(agentRepo, nil)
+	svc := newTestService(t, agentRepo, nil, nil)
 
 	result, err := svc.Filter(context.Background())
 	require.NoError(t, err)
@@ -88,17 +79,18 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 		FindByID(mock.Anything, id).
 		Return(expected, nil)
 
-	svc := newTestService(agentRepo, nil)
+	svc := newTestService(t, agentRepo, nil, nil)
 
 	result, err := svc.FindByID(context.Background(), id)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
 
-func TestCreateStoresAgentAndReturnsIt(t *testing.T) {
+func TestCreateStoresAgentAndReplacesLLMs(t *testing.T) {
 	t.Parallel()
 
-	llms := []agent.LLMConfigDTO{{Key: "gpt-4", Config: util.JSONMap{}}}
+	llmID := uuid.New().String()
+	agentID := uuid.New().String()
 	var stored *model.Agent
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
@@ -106,55 +98,86 @@ func TestCreateStoresAgentAndReturnsIt(t *testing.T) {
 		Create(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, a *model.Agent) {
 			stored = a
-			a.ID = uuid.New().String()
+			a.ID = agentID
 		}).
 		Return(nil)
+	agentRepo.EXPECT().
+		ReplaceLLMs(mock.Anything, agentID, []string{llmID}).
+		Return(nil)
+	agentRepo.EXPECT().
+		FindByID(mock.Anything, agentID).
+		Return(&model.Agent{
+			ID:   agentID,
+			Name: "Support Agent",
+			AgentToLLMs: []model.AgentToLLM{{
+				AgentID:  agentID,
+				LLMID:    llmID,
+				Priority: 0,
+				LLM:      model.LLM{ID: llmID, Name: "gpt prod", Provider: "gpt-4"},
+			}},
+		}, nil)
 
-	svc := newTestService(agentRepo, map[string]driver.ILLM{
-		"gpt-4": &stubLLM{info: driver.Info{
-			Name:                "gpt-4",
-			Description:         "test",
-			ConfigurationSchema: util.JSONMap{"type": "object"},
-		}},
-	})
+	llmRepo := mocks.NewMockILLMRepository(t)
+	llmRepo.EXPECT().
+		Filter(mock.Anything, mock.Anything).
+		Return(page.NewPaginated([]model.LLM{{ID: llmID}}, 1, 0, 1), nil)
+
+	txManager := mocks.NewMockITxManager(t)
+	txManager.EXPECT().
+		WithTransaction(mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		})
+
+	svc := newTestService(t, agentRepo, llmRepo, txManager)
 
 	result, err := svc.Create(context.Background(), agent.CreateAgentDTO{
 		Name:         "Support Agent",
 		Description:  "Handles support tickets",
 		Instructions: "Be helpful",
-		LLMs:         llms,
-		Tools:        agent.ToolConfigDTO{},
+		LLMIDs:       []string{llmID},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
 	assert.Equal(t, "Support Agent", result.Name)
-	assert.Equal(t, "Handles support tickets", result.Description)
-	assert.Equal(t, "Be helpful", result.Instructions)
-	assert.Equal(t, "gpt-4", result.Configuration.LLMs[0].Key)
+	require.Len(t, result.AgentToLLMs, 1)
+	assert.Equal(t, llmID, result.AgentToLLMs[0].LLMID)
 
 	require.NotNil(t, stored)
-	assert.Equal(t, result.Name, stored.Name)
-	assert.Equal(t, result.Description, stored.Description)
-	assert.Equal(t, result.Instructions, stored.Instructions)
-	assert.Equal(t, result.Configuration, stored.Configuration)
+	assert.Equal(t, "Support Agent", stored.Name)
+	assert.Equal(t, "Handles support tickets", stored.Description)
+	assert.Equal(t, "Be helpful", stored.Instructions)
 }
 
 func TestCreateReturnsRepositoryError(t *testing.T) {
 	t.Parallel()
 
+	llmID := uuid.New().String()
 	expectedErr := errors.New("create failed")
+
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	agentRepo.EXPECT().
 		Create(mock.Anything, mock.Anything).
 		Return(expectedErr)
 
-	svc := newTestService(agentRepo, nil)
+	llmRepo := mocks.NewMockILLMRepository(t)
+	llmRepo.EXPECT().
+		Filter(mock.Anything, mock.Anything).
+		Return(page.NewPaginated([]model.LLM{{ID: llmID}}, 1, 0, 1), nil)
+
+	txManager := mocks.NewMockITxManager(t)
+	txManager.EXPECT().
+		WithTransaction(mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		})
+
+	svc := newTestService(t, agentRepo, llmRepo, txManager)
 
 	_, err := svc.Create(context.Background(), agent.CreateAgentDTO{
-		Name:  "Agent",
-		LLMs:  nil,
-		Tools: agent.ToolConfigDTO{},
+		Name:   "Agent",
+		LLMIDs: []string{llmID},
 	})
 	require.ErrorIs(t, err, expectedErr)
 }
@@ -173,12 +196,17 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 			assert.Equal(t, id, gotID)
 			assert.Equal(t, newName, updates.Name)
 			assert.Equal(t, newDescription, updates.Description)
-			assert.Empty(t, updates.Configuration.LLMs)
-			assert.Empty(t, updates.Configuration.Tools)
 		}).
 		Return(nil)
 
-	svc := newTestService(agentRepo, nil)
+	txManager := mocks.NewMockITxManager(t)
+	txManager.EXPECT().
+		WithTransaction(mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		})
+
+	svc := newTestService(t, agentRepo, nil, txManager)
 
 	err := svc.Update(context.Background(), id, agent.UpdateAgentDTO{
 		Name:        &newName,
@@ -187,32 +215,36 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUpdateDelegatesLLMsToRepository(t *testing.T) {
+func TestUpdateReplacesLLMs(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	llms := []agent.LLMConfigDTO{{Key: "claude", Config: util.JSONMap{"model": "sonnet"}}}
+	llmID := uuid.New().String()
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	agentRepo.EXPECT().
-		UpdateByID(mock.Anything, id, mock.Anything).
-		Run(func(_ context.Context, _ string, updates *model.Agent) {
-			require.Len(t, updates.Configuration.LLMs, 1)
-			assert.Equal(t, "claude", updates.Configuration.LLMs[0].Key)
-			assert.Equal(t, util.JSONMap{"model": "sonnet"}, updates.Configuration.LLMs[0].Config)
-		}).
+		FindByID(mock.Anything, id).
+		Return(&model.Agent{ID: id}, nil)
+	agentRepo.EXPECT().
+		ReplaceLLMs(mock.Anything, id, []string{llmID}).
 		Return(nil)
 
-	svc := newTestService(agentRepo, map[string]driver.ILLM{
-		"claude": &stubLLM{info: driver.Info{
-			Name:                "claude",
-			Description:         "test",
-			ConfigurationSchema: util.JSONMap{"type": "object"},
-		}},
-	})
+	llmRepo := mocks.NewMockILLMRepository(t)
+	llmRepo.EXPECT().
+		Filter(mock.Anything, mock.Anything).
+		Return(page.NewPaginated([]model.LLM{{ID: llmID}}, 1, 0, 1), nil)
+
+	txManager := mocks.NewMockITxManager(t)
+	txManager.EXPECT().
+		WithTransaction(mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		})
+
+	svc := newTestService(t, agentRepo, llmRepo, txManager)
 
 	err := svc.Update(context.Background(), id, agent.UpdateAgentDTO{
-		LLMs: llms,
+		LLMIDs: []string{llmID},
 	})
 	require.NoError(t, err)
 }
@@ -226,7 +258,7 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 		DeleteByID(mock.Anything, id).
 		Return(nil)
 
-	svc := newTestService(agentRepo, nil)
+	svc := newTestService(t, agentRepo, nil, nil)
 
 	err := svc.DeleteByID(context.Background(), id)
 	require.NoError(t, err)

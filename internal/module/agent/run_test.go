@@ -43,6 +43,25 @@ func (f *capturingLLM) Generate(
 	return f.generate(ctx, messages)
 }
 
+func agentWithPrimaryLLM(agentID string) *model.Agent {
+	llmID := uuid.New().String()
+	return &model.Agent{
+		ID:   agentID,
+		Name: "Agent",
+		AgentToLLMs: []model.AgentToLLM{{
+			AgentID:  agentID,
+			LLMID:    llmID,
+			Priority: 0,
+			LLM: model.LLM{
+				ID:            llmID,
+				Name:          "primary",
+				Provider:      "primary",
+				Configuration: util.JSONMap{},
+			},
+		}},
+	}
+}
+
 func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	t.Parallel()
 
@@ -53,14 +72,7 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	agentRepo.EXPECT().
 		FindByID(mock.Anything, agentID).
-		Return(&model.Agent{
-			ID:   agentID,
-			Name: "Agent",
-			Configuration: model.AgentConfiguration{
-				LLMs:  []runtime.LLMConfig{{Key: "primary", Config: util.JSONMap{}}},
-				Tools: runtime.ToolConfig{},
-			},
-		}, nil)
+		Return(agentWithPrimaryLLM(agentID), nil)
 
 	executionRepo := mocks.NewMockIExecutionRepository(t)
 	executionRepo.EXPECT().
@@ -92,13 +104,13 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 
 	svc := agent.NewService(
 		agentRepo,
+		mocks.NewMockILLMRepository(t),
+		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
 			driver.NewManager(registry.New[driver.ITool]()),
 			driver.NewManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),
-		driver.NewManager(llmReg),
-		driver.NewManager(registry.New[driver.ITool]()),
 		executionRepo,
 		messageRepo,
 		logger.NewLogger(logger.LevelError),
@@ -136,14 +148,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	agentRepo.EXPECT().
 		FindByID(mock.Anything, agentID).
-		Return(&model.Agent{
-			ID:   agentID,
-			Name: "Agent",
-			Configuration: model.AgentConfiguration{
-				LLMs:  []runtime.LLMConfig{{Key: "primary", Config: util.JSONMap{}}},
-				Tools: runtime.ToolConfig{},
-			},
-		}, nil)
+		Return(agentWithPrimaryLLM(agentID), nil)
 
 	executionRepo := mocks.NewMockIExecutionRepository(t)
 	executionRepo.EXPECT().
@@ -183,13 +188,13 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 
 	svc := agent.NewService(
 		agentRepo,
+		mocks.NewMockILLMRepository(t),
+		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
 			driver.NewManager(registry.New[driver.ITool]()),
 			driver.NewManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),
-		driver.NewManager(llmReg),
-		driver.NewManager(registry.New[driver.ITool]()),
 		executionRepo,
 		messageRepo,
 		logger.NewLogger(logger.LevelError),
