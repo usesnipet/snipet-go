@@ -9,6 +9,7 @@ export const ROUTES = {
   adminKnowledgeIndex: "/admin/knowledge/index",
   adminKnowledgeSource: "/admin/knowledge/source",
   adminAgent: "/admin/agents",
+  adminLlms: "/admin/llms",
   adminApiKeys: "/admin/api-keys",
   adminSettings: "/admin/settings",
   adminClients: "/admin/clients",

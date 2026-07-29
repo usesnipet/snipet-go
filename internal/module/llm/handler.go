@@ -24,11 +24,11 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
 			r.Get("/", serve(h.filter))
+			r.Get("/drivers", serve(h.listDrivers))
 			r.Post("/", serve(h.create))
 			r.Get("/{id}", serve(h.findByID))
 			r.Put("/{id}", serve(h.update))
 			r.Delete("/{id}", serve(h.deleteByID))
-			r.Get("/drivers", serve(h.listDrivers))
 		})
 	})
 }

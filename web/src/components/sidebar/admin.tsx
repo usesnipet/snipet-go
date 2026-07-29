@@ -2,7 +2,7 @@ import { useApiKeyStore } from "@/features/api-key/store";
 import { useGetSystemInfo } from "@/features/app/hooks";
 import { useNavigate } from "@/hooks/use-navigate";
 import { ROUTES } from "@/routes";
-import { BookOpen, Bot, Key, LogOutIcon, Settings, Shield, Users } from "lucide-react";
+import { BookOpen, Bot, Cpu, Key, LogOutIcon, Settings, Shield, Users } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { Link } from "../ui/link";
@@ -29,6 +29,11 @@ const navItems: NavEntry[] = [
     title: "Agent",
     href: ROUTES.adminAgent,
     icon: Bot,
+  },
+  {
+    title: "LLMs",
+    href: ROUTES.adminLlms,
+    icon: Cpu,
   },
   {
     title: "Knowledge",
