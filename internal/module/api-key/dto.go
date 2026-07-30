@@ -3,6 +3,7 @@ package apikey
 import (
 	"time"
 
+	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 )
 
@@ -18,4 +19,16 @@ type UpdateExpirationDTO struct {
 type APIKeyWithSecret struct {
 	*model.APIKey
 	Key string `json:"key"`
+}
+
+type FindAPIKeysFilterDTO struct {
+	Take *int `form:"take" validate:"omitempty,min=1"`
+	Skip *int `form:"skip" validate:"omitempty,min=0"`
+}
+
+func (dto *FindAPIKeysFilterDTO) ToFilter() *filter.Options[model.APIKey] {
+	return filter.New[model.APIKey](
+		filter.PtrTake(dto.Take),
+		filter.PtrSkip(dto.Skip),
+	)
 }

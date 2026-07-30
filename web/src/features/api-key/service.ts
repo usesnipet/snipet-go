@@ -1,12 +1,13 @@
 import { http } from "@/lib/http";
 
 import {
-  apiKeySchema, apiKeyWithSecretSchema, createApiKeySchema, paginatedApiKeySchema,
-  updateApiKeyExpirationSchema
+  apiKeySchema, apiKeyWithSecretSchema, createApiKeySchema, listApiKeySearchParamsSchema,
+  paginatedApiKeySchema, updateApiKeyExpirationSchema
 } from "./schemas";
 
 import type {
-  ApiKey, ApiKeyWithSecret, CreateApiKey, PaginatedApiKey, UpdateApiKeyExpiration
+  ApiKey, ApiKeyWithSecret, CreateApiKey, ListApiKeySearchParams, PaginatedApiKey,
+  UpdateApiKeyExpiration
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
@@ -14,11 +15,14 @@ import type {
 
 const API_KEYS_URL = "/api/api-key";
 
-const list = async (opts: ServiceGetOptions<PaginatedApiKey>): Promise<PaginatedApiKey> => {
+const list = async (
+  opts: ServiceGetOptions<PaginatedApiKey, ListApiKeySearchParams>,
+): Promise<PaginatedApiKey> => {
   return http.get({
     url: API_KEYS_URL,
     schemas: {
       response: paginatedApiKeySchema,
+      searchParams: listApiKeySearchParamsSchema,
     },
     ...opts,
   })

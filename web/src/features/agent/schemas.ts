@@ -18,7 +18,7 @@ export const agentSchema = z
     name: z.string().min(1).max(255),
     description: z.string().max(1000),
     instructions: z.string().max(1000),
-    llms: z.array(agentToLlmSchema),
+    llms: z.array(agentToLlmSchema).nullable(),
   })
   .strict();
 

@@ -4,7 +4,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { llmService } from "./service";
 
-import type { CreateLlm, ListDrivers, Llm, PaginatedLlm, UpdateLlm } from "./schemas";
+import type {
+  CreateLlm, ListDrivers, ListLlmSearchParams, Llm, PaginatedLlm, UpdateLlm
+} from "./schemas";
 import type {
   ServiceDeleteOptions,
   ServiceGetOptions,
@@ -17,10 +19,10 @@ const BASE_QUERY_KEY = "llm";
 
 export const listLlmQueryKey = () => [BASE_QUERY_KEY] as const;
 export const useListLlm = (
-  opts?: ServiceGetOptions<PaginatedLlm>,
+  opts?: ServiceGetOptions<PaginatedLlm, ListLlmSearchParams>,
 ): UseQueryResult<PaginatedLlm, Error> => {
   return useQuery({
-    queryKey: listLlmQueryKey(),
+    queryKey: [...listLlmQueryKey(), opts?.searchParams],
     queryFn: () => llmService.list({ ...opts, auth: "api-key" }),
   });
 };

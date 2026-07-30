@@ -1,4 +1,4 @@
-import { paginatedSchema } from "@/schemas/paginated";
+import { paginatedSchema, paginationParamsSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
 export const apiKeyKeySchema = z.string().length(46).startsWith("sn_");
@@ -23,6 +23,9 @@ export type ApiKey = z.infer<typeof apiKeySchema>;
 
 export const paginatedApiKeySchema = paginatedSchema(apiKeySchema);
 export type PaginatedApiKey = z.infer<typeof paginatedApiKeySchema>;
+
+export const listApiKeySearchParamsSchema = paginationParamsSchema;
+export type ListApiKeySearchParams = z.infer<typeof listApiKeySearchParamsSchema>;
 
 export const createApiKeySchema = apiKeySchema.pick({
   name: true,

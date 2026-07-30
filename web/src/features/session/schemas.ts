@@ -1,22 +1,13 @@
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
+import { agentSchema } from "../agent/schemas";
+
 export const sessionMetadataSchema = z.object({
   name: z.string().optional(),
 }).catchall(z.unknown());
 
 export type SessionMetadata = z.infer<typeof sessionMetadataSchema>;
-
-/** Nested agent when `include=agent` is requested. */
-export const sessionAgentSchema = z.object({
-  id: z.uuid(),
-  name: z.string(),
-  description: z.string(),
-  instructions: z.string(),
-  configuration: z.unknown(),
-}).loose();
-
-export type SessionAgent = z.infer<typeof sessionAgentSchema>;
 
 export const sessionSchema = z
   .object({
@@ -24,7 +15,7 @@ export const sessionSchema = z
     client_id: z.uuid(),
     agent_id: z.uuid(),
     metadata: sessionMetadataSchema,
-    agent: sessionAgentSchema.optional(),
+    agent: agentSchema.optional(),
   })
   .strict();
 

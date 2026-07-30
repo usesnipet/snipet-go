@@ -25,20 +25,22 @@ export function Page({ title, description, documentTitle, children, actions }: P
 
   return (
     <PageActionsContext.Provider value={setSlotActions}>
-      <div className="flex flex-1 flex-col gap-4 px-4 py-4 h-full">
-        <div className="flex flex-col gap-2 divide-y h-full">
-          <header className="pb-2 flex items-center justify-between">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 divide-y">
+          <header className="flex shrink-0 items-center justify-between pb-2">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
               <p className="text-muted-foreground text-sm">{description}</p>
             </div>
             {headerActions && <div>{headerActions}</div>}
           </header>
-          <ErrorBoundary fallbackRender={({ error }) => <ErrorFallback error={error as Error} />}>
-            <Suspense fallback={<LoadingFallback />}>
-              {children}
-            </Suspense>
-          </ErrorBoundary>
+          <div className="flex min-h-0 flex-1 flex-col pt-2">
+            <ErrorBoundary fallbackRender={({ error }) => <ErrorFallback error={error as Error} />}>
+              <Suspense fallback={<LoadingFallback />}>
+                {children}
+              </Suspense>
+            </ErrorBoundary>
+          </div>
         </div>
       </div>
     </PageActionsContext.Provider>

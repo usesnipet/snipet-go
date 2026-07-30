@@ -81,8 +81,8 @@ func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) (*model.APIKe
 	return key, nil
 }
 
-func (s *Service) Filter(ctx context.Context) (*page.Paginated[model.APIKey], error) {
-	return s.repository.Filter(ctx, filter.Default[model.APIKey]())
+func (s *Service) Filter(ctx context.Context, opts *filter.Options[model.APIKey]) (*page.Paginated[model.APIKey], error) {
+	return s.repository.Filter(ctx, opts)
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.APIKey, error) {

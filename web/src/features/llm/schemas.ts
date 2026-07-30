@@ -1,5 +1,5 @@
 import { driverInfoSchema } from "@/schemas/driver";
-import { paginatedSchema } from "@/schemas/paginated";
+import { paginatedSchema, paginationParamsSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
 export const llmSchema = z
@@ -15,6 +15,9 @@ export type Llm = z.infer<typeof llmSchema>;
 
 export const paginatedLlmSchema = paginatedSchema(llmSchema);
 export type PaginatedLlm = z.infer<typeof paginatedLlmSchema>;
+
+export const listLlmSearchParamsSchema = paginationParamsSchema;
+export type ListLlmSearchParams = z.infer<typeof listLlmSearchParamsSchema>;
 
 export const createLlmSchema = z
   .object({

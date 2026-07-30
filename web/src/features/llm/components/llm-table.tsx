@@ -9,11 +9,14 @@ import { useListLlm } from "../hooks";
 import { DeleteLlmDialog } from "./delete-llm-dialog";
 import { UpdateLlmDialog } from "./update-llm-dialog";
 
-import type { DataTableColumn } from "@/components/data-table";
+import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { Llm } from "../schemas";
 
+function useLlmTableQuery(pagination: DataTablePagination) {
+  return useListLlm({ searchParams: pagination })
+}
+
 export function LlmTable() {
-  const { data, isLoading } = useListLlm();
   const { openDialog } = useDialog();
 
   const openEdit = (llm: Llm) => {
@@ -75,9 +78,8 @@ export function LlmTable() {
 
   return (
     <DataTable
-      loading={isLoading}
       columns={columns}
-      data={data?.data ?? []}
+      useQuery={useLlmTableQuery}
       getRowKey={(row) => row.id}
       emptyMessage="No LLMs yet."
     />

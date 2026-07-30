@@ -7,7 +7,8 @@ import { apiKeyService } from "./service";
 import { useApiKeyStore } from "./store";
 
 import type {
-  ApiKey, ApiKeyKey, ApiKeyWithSecret, CreateApiKey, PaginatedApiKey, UpdateApiKeyExpiration
+  ApiKey, ApiKeyKey, ApiKeyWithSecret, CreateApiKey, ListApiKeySearchParams, PaginatedApiKey,
+  UpdateApiKeyExpiration
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
@@ -19,10 +20,10 @@ const BASE_QUERY_KEY = "api-key";
 
 export const listApiKeyQueryKey = () => [BASE_QUERY_KEY] as const;
 export const useListApiKey = (
-  opts?: ServiceGetOptions<PaginatedApiKey>
+  opts?: ServiceGetOptions<PaginatedApiKey, ListApiKeySearchParams>
 ): UseQueryResult<PaginatedApiKey, Error> => {
   return useQuery({
-    queryKey: listApiKeyQueryKey(),
+    queryKey: [...listApiKeyQueryKey(), opts?.searchParams],
     queryFn: () => apiKeyService.list({ ...opts, auth: "api-key" }),
   })
 }

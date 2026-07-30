@@ -32,7 +32,11 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 }
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.Filter(r.Context())
+	var query FindAPIKeysFilterDTO
+	if err := api.ParseQuery(r, &query); err != nil {
+		return err
+	}
+	data, err := h.service.Filter(r.Context(), query.ToFilter())
 	if err != nil {
 		return err
 	}

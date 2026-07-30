@@ -2,15 +2,17 @@ import { DataTable } from "@/components/data-table";
 import { useListSession } from "@/features/session/hooks";
 import { useParams } from "react-router";
 
-import type { DataTableColumn } from "@/components/data-table";
+import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { Session } from "@/features/session/schemas";
 
-export function ClientSessionsTable() {
+function useClientSessionsTableQuery(pagination: DataTablePagination) {
   const { clientCode = "" } = useParams();
-  const { data, isLoading } = useListSession(clientCode, {
-    searchParams: { include: "agent" },
-  });
+  return useListSession(clientCode, {
+    searchParams: { ...pagination, include: "agent" },
+  })
+}
 
+export function ClientSessionsTable() {
   const columns: DataTableColumn<Session>[] = [
     {
       id: "name",
@@ -41,9 +43,8 @@ export function ClientSessionsTable() {
 
   return (
     <DataTable
-      loading={isLoading}
       columns={columns}
-      data={data?.data ?? []}
+      useQuery={useClientSessionsTableQuery}
       getRowKey={(row) => row.id}
       emptyMessage="No sessions yet."
     />

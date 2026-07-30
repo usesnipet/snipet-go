@@ -38,7 +38,11 @@ func (h *Handler) llmID(r *http.Request) string {
 }
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.Filter(r.Context())
+	var query FindLLMsFilterDTO
+	if err := api.ParseQuery(r, &query); err != nil {
+		return err
+	}
+	data, err := h.service.Filter(r.Context(), query.ToFilter())
 	if err != nil {
 		return err
 	}

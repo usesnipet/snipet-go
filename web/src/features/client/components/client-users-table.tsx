@@ -2,13 +2,15 @@ import { DataTable } from "@/components/data-table";
 import { useListUser } from "@/features/user/hooks";
 import { useParams } from "react-router";
 
-import type { DataTableColumn } from "@/components/data-table";
+import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { User } from "@/features/user/schemas";
 
-export function ClientUsersTable() {
+function useClientUsersTableQuery(pagination: DataTablePagination) {
   const { clientCode = "" } = useParams();
-  const { data, isLoading } = useListUser(clientCode);
+  return useListUser(clientCode, { searchParams: pagination })
+}
 
+export function ClientUsersTable() {
   const columns: DataTableColumn<User>[] = [
     {
       id: "name",
@@ -33,9 +35,8 @@ export function ClientUsersTable() {
 
   return (
     <DataTable
-      loading={isLoading}
       columns={columns}
-      data={data?.data ?? []}
+      useQuery={useClientUsersTableQuery}
       getRowKey={(row) => row.id}
       emptyMessage="No users yet."
     />

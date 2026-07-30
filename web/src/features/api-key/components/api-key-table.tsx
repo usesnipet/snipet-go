@@ -15,11 +15,14 @@ import { DeleteApiKeyDialog } from "./delete-api-key-dialog";
 import { RollApiKeyDialog } from "./roll-api-key-dialog";
 import { UpdateApiKeyExpirationDialog } from "./update-api-key-expiration-dialog";
 
-import type { DataTableColumn } from "@/components/data-table";
+import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { ApiKey, ApiKeyWithSecret } from "../schemas";
 
+function useApiKeyTableQuery(pagination: DataTablePagination) {
+  return useListApiKey({ searchParams: pagination })
+}
+
 export function ApiKeyTable() {
-  const { data, isLoading } = useListApiKey();
   const { openDialog } = useDialog();
 
   const showSecret = (apiKey: ApiKeyWithSecret) => {
@@ -126,9 +129,8 @@ export function ApiKeyTable() {
 
   return (
     <DataTable
-      loading={isLoading}
       columns={columns}
-      data={data?.data ?? []}
+      useQuery={useApiKeyTableQuery}
       getRowKey={(row) => row.id}
       emptyMessage="No API keys yet."
     />

@@ -3,12 +3,15 @@ import { http } from "@/lib/http";
 import {
   createLlmSchema,
   listDriversSchema,
+  listLlmSearchParamsSchema,
   llmSchema,
   paginatedLlmSchema,
   updateLlmSchema,
 } from "./schemas";
 
-import type { CreateLlm, ListDrivers, Llm, PaginatedLlm, UpdateLlm } from "./schemas";
+import type {
+  CreateLlm, ListDrivers, ListLlmSearchParams, Llm, PaginatedLlm, UpdateLlm
+} from "./schemas";
 import type {
   ServiceDeleteOptions,
   ServiceGetOptions,
@@ -18,11 +21,14 @@ import type {
 
 const LLM_URL = "/api/llm";
 
-const list = async (opts?: ServiceGetOptions<PaginatedLlm>): Promise<PaginatedLlm> => {
+const list = async (
+  opts?: ServiceGetOptions<PaginatedLlm, ListLlmSearchParams>,
+): Promise<PaginatedLlm> => {
   return http.get({
     url: LLM_URL,
     schemas: {
       response: paginatedLlmSchema,
+      searchParams: listLlmSearchParamsSchema,
     },
     ...opts,
   });

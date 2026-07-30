@@ -25,8 +25,8 @@ func NewService(repo repository.ILLMRepository, llmManager *runtime.DriverManage
 	}
 }
 
-func (s *Service) Filter(ctx context.Context) (*page.Paginated[model.LLM], error) {
-	return s.repo.Filter(ctx, filter.Default[model.LLM]())
+func (s *Service) Filter(ctx context.Context, opts *filter.Options[model.LLM]) (*page.Paginated[model.LLM], error) {
+	return s.repo.Filter(ctx, opts)
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.LLM, error) {
