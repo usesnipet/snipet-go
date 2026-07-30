@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
-	"github.com/usesnipet/snipet/pkg/driver/tool"
 	"google.golang.org/genai"
 )
 
@@ -47,8 +45,8 @@ func generate(
 	ctx context.Context,
 	config util.JSONMap,
 	instructions string,
-	messages []message.Message,
-) (msg message.Message, err error) {
+	messages []llm.Message,
+) (msg llm.Message, err error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
 		return msg, fmt.Errorf("failed to parse config: %w", err)
@@ -102,7 +100,7 @@ func generate(
 	return toAgentMessage(out), nil
 }
 
-func buildContents(messages []message.Message) ([]*genai.Content, error) {
+func buildContents(messages []llm.Message) ([]*genai.Content, error) {
 	out := make([]*genai.Content, 0, len(messages))
 	for _, msg := range messages {
 		item, ok, err := toContent(msg)
@@ -116,84 +114,26 @@ func buildContents(messages []message.Message) ([]*genai.Content, error) {
 	return out, nil
 }
 
-func toContent(msg message.Message) (*genai.Content, bool, error) {
+func toContent(msg llm.Message) (*genai.Content, bool, error) {
 	switch msg.Role {
-	case message.MessageRoleUser:
+	case llm.MessageRoleUser:
 		return genai.NewContentFromText(msg.Content, genai.RoleUser), true, nil
-	case message.MessageRoleSystem:
+	case llm.MessageRoleSystem:
 		return genai.NewContentFromText(msg.Content, genai.RoleUser), true, nil
-	case message.MessageRoleAssistant, message.MessageRoleFinal:
+	case llm.MessageRoleAssistant:
 		content := msg.Content
-		if len(msg.ToolCalls) > 0 {
-			raw, err := json.Marshal(Message{
-				Content:   msg.Content,
-				ToolCalls: util.Map(msg.ToolCalls, fromAgentToolCall),
-			})
-			if err != nil {
-				return nil, false, fmt.Errorf("marshal assistant message: %w", err)
-			}
-			content = string(raw)
-		}
 		return genai.NewContentFromText(content, genai.RoleModel), true, nil
-	case message.MessageRoleTool:
-		content := msg.Content
-		if msg.ToolResult != nil {
-			content = fmt.Sprintf(
-				"Tool %q result: %s",
-				msg.ToolResult.Key,
-				msg.Content,
-			)
-		}
-		return genai.NewContentFromText(content, genai.RoleUser), true, nil
 	default:
 		return nil, false, nil
 	}
 }
 
-func toAgentMessage(out Message) message.Message {
-	toolCalls := make([]tool.Call, 0, len(out.ToolCalls))
-	for _, call := range out.ToolCalls {
-		toolCalls = append(toolCalls, toAgentToolCall(call))
-	}
+func toAgentMessage(out Message) llm.Message {
+	role := llm.MessageRoleAssistant
 
-	role := message.MessageRoleFinal
-	if len(toolCalls) > 0 {
-		role = message.MessageRoleAssistant
-	}
-
-	return message.Message{
+	return llm.Message{
 		Role:      role,
 		Content:   out.Content,
-		ToolCalls: toolCalls,
 		Timestamp: time.Now(),
-	}
-}
-
-func toAgentToolCall(call ToolCall) tool.Call {
-	var input any
-	if call.Input != "" {
-		if err := json.Unmarshal([]byte(call.Input), &input); err != nil {
-			input = call.Input
-		}
-	}
-
-	return tool.Call{
-		Key:   call.Key,
-		Input: input,
-	}
-}
-
-func fromAgentToolCall(call tool.Call) ToolCall {
-	input := ""
-	if call.Input != nil {
-		if raw, err := json.Marshal(call.Input); err == nil {
-			input = string(raw)
-		} else {
-			input = fmt.Sprint(call.Input)
-		}
-	}
-	return ToolCall{
-		Key:   call.Key,
-		Input: input,
 	}
 }

@@ -3,7 +3,6 @@ package llm
 import (
 	"context"
 
-	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 )
@@ -15,6 +14,6 @@ type Driver interface {
 		ctx context.Context,
 		config util.JSONMap,
 		instructions string,
-		messages []message.Message,
-	) (message.Message, error)
+		messages []Message,
+	) (Message, error)
 }

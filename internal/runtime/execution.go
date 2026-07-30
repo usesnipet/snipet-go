@@ -3,8 +3,8 @@ package runtime
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver/llm"
 )
 
 var validate = validator.New()
@@ -29,7 +29,7 @@ type Execution struct {
 	ErrorMessage string            `json:"error_message" validate:"omitempty"`
 	Config       ExecutionConfig   `json:"config" validate:"required"`
 	Status       ExecutionStatus   `json:"status" validate:"required"`
-	Messages     []message.Message `json:"messages" validate:"required,min=1"`
+	Messages     []llm.Message     `json:"messages" validate:"required,min=1"`
 	Turns        int               `json:"turns" validate:"min=0"`
 }
 
@@ -40,7 +40,7 @@ func NewExecution(options ...ExecutionOption) (Execution, error) {
 			Metadata: util.JSONMap{},
 		},
 		Status:   ExecutionStatusPending,
-		Messages: []message.Message{},
+		Messages: []llm.Message{},
 		Turns:    0,
 	}
 
@@ -62,7 +62,7 @@ func NewExecution(options ...ExecutionOption) (Execution, error) {
 	return execution, nil
 }
 
-func (e *Execution) AddMessage(msg message.Message) message.Message {
+func (e *Execution) AddMessage(msg llm.Message) llm.Message {
 	if msg.ID == "" {
 		msg.ID = uuid.NewString()
 	}

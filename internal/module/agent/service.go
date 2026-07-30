@@ -10,8 +10,8 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver/llm"
 )
 
 type Service struct {
@@ -127,7 +127,7 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 	}
 
 	historyIDs := map[string]struct{}{}
-	initialMessages := make([]message.Message, 0)
+	initialMessages := make([]llm.Message, 0)
 
 	if input.SessionID != nil {
 		history, err := s.executionMessageRepo.ListBySessionID(ctx, *input.SessionID)
@@ -135,7 +135,7 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 			return err
 		}
 		for _, em := range history {
-			msg := em.ToRuntimeExecutionMessage()
+			msg := em.ToRuntimeMessage()
 			historyIDs[msg.ID] = struct{}{}
 			initialMessages = append(initialMessages, *msg)
 		}
@@ -143,7 +143,7 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 
 	initialMessages = append(
 		initialMessages,
-		message.NewMessage(message.MessageRoleUser, input.Message),
+		llm.NewMessage(llm.MessageRoleUser, input.Message),
 	)
 
 	execution := &model.Execution{
@@ -202,7 +202,7 @@ func (s *Service) handleExecutionEvent(
 		}
 		return event, nil
 	case runtime.ExecutionMessageAddedEvent:
-		newMessages := make([]message.Message, 0, len(event.Messages))
+		newMessages := make([]llm.Message, 0, len(event.Messages))
 		for _, msg := range event.Messages {
 			if _, isHistory := historyIDs[msg.ID]; isHistory {
 				continue
@@ -215,8 +215,8 @@ func (s *Service) handleExecutionEvent(
 		if err := s.executionMessageRepo.CreateInExecution(
 			ctx,
 			execution.ID,
-			util.Map(newMessages, func(msg message.Message) model.ExecutionMessage {
-				return *(&model.ExecutionMessage{}).FromRuntimeExecutionMessage(msg)
+			util.Map(newMessages, func(msg llm.Message) model.ExecutionMessage {
+				return *(&model.ExecutionMessage{}).FromRuntimeMessage(msg)
 			}),
 		); err != nil {
 			return nil, err

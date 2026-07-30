@@ -13,17 +13,15 @@ import (
 	agent "github.com/usesnipet/snipet/internal/module/agent"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
-	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type capturingLLM struct {
 	key      string
-	generate func(ctx context.Context, messages []message.Message) (message.Message, error)
+	generate func(ctx context.Context, messages []llm.Message) (llm.Message, error)
 }
 
 func (f *capturingLLM) Info() driver.Info {
@@ -40,8 +38,8 @@ func (f *capturingLLM) Generate(
 	ctx context.Context,
 	_ util.JSONMap,
 	_ string,
-	messages []message.Message,
-) (message.Message, error) {
+	messages []llm.Message,
+) (llm.Message, error) {
 	return f.generate(ctx, messages)
 }
 
@@ -99,8 +97,8 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", &capturingLLM{
 		key: "primary",
-		generate: func(_ context.Context, _ []message.Message) (message.Message, error) {
-			return message.Message{Role: message.MessageRoleFinal, Content: "done"}, nil
+		generate: func(_ context.Context, _ []llm.Message) (llm.Message, error) {
+			return llm.Message{Role: llm.MessageRoleAssistant, Content: "done"}, nil
 		},
 	})
 
@@ -109,7 +107,6 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
-			runtime.NewDriverManager(registry.New[tool.Driver]()),
 			runtime.NewDriverManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),
@@ -128,12 +125,12 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	assert.Nil(t, created.SessionID)
 	assert.Equal(t, agentID, created.AgentID)
 
-	roles := make([]message.Role, 0, len(persisted))
+	roles := make([]llm.MessageRole, 0, len(persisted))
 	for _, m := range persisted {
 		roles = append(roles, m.Role)
 	}
-	assert.Contains(t, roles, message.MessageRoleUser)
-	assert.Contains(t, roles, message.MessageRoleFinal)
+	assert.Contains(t, roles, llm.MessageRoleUser)
+	assert.Contains(t, roles, llm.MessageRoleAssistant)
 }
 
 func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
@@ -145,7 +142,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 
 	var created *model.Execution
 	var persisted []model.ExecutionMessage
-	var llmSaw []message.Message
+	var llmSaw []llm.Message
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	agentRepo.EXPECT().
@@ -169,7 +166,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 		ListBySessionID(mock.Anything, sessionID).
 		Return([]model.ExecutionMessage{{
 			ID:      historyMsgID,
-			Role:    message.MessageRoleUser,
+			Role:    llm.MessageRoleUser,
 			Content: "earlier",
 		}}, nil)
 	messageRepo.EXPECT().
@@ -182,9 +179,9 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", &capturingLLM{
 		key: "primary",
-		generate: func(_ context.Context, messages []message.Message) (message.Message, error) {
-			llmSaw = append([]message.Message{}, messages...)
-			return message.Message{Role: message.MessageRoleFinal, Content: "done"}, nil
+		generate: func(_ context.Context, messages []llm.Message) (llm.Message, error) {
+			llmSaw = append([]llm.Message{}, messages...)
+			return llm.Message{Role: llm.MessageRoleAssistant, Content: "done"}, nil
 		},
 	})
 
@@ -193,7 +190,6 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
-			runtime.NewDriverManager(registry.New[tool.Driver]()),
 			runtime.NewDriverManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),

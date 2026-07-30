@@ -21,12 +21,10 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
-	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
-	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type sessionTestLLM struct {
@@ -45,9 +43,9 @@ func (s *sessionTestLLM) Generate(
 	context.Context,
 	util.JSONMap,
 	string,
-	[]message.Message,
-) (message.Message, error) {
-	return message.Message{Role: message.MessageRoleFinal, Content: "ok"}, nil
+	[]llm.Message,
+) (llm.Message, error) {
+	return llm.Message{Role: llm.MessageRoleAssistant, Content: "ok"}, nil
 }
 
 func apiKeyContext() context.Context {
@@ -209,7 +207,6 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
-			runtime.NewDriverManager(registry.New[tool.Driver]()),
 			runtime.NewDriverManager(llmReg),
 			logger.NewLogger(logger.LevelError),
 		),

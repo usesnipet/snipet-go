@@ -240,7 +240,7 @@ func TestFilterDelegatesToRepository(t *testing.T) {
 
 	svc := newTestService(repo)
 
-	result, err := svc.Filter(context.Background())
+	result, err := svc.Filter(context.Background(), filter.Default[model.APIKey]())
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }

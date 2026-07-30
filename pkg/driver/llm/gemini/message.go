@@ -8,14 +8,7 @@ import (
 
 // Message is the structured output the model must return.
 type Message struct {
-	Content   string     `json:"content" jsonschema_description:"Assistant text content for this turn"`
-	ToolCalls []ToolCall `json:"tool_calls" jsonschema_description:"Tools to execute; empty when the turn is complete"`
-}
-
-// ToolCall is a tool invocation requested by the model.
-type ToolCall struct {
-	Key   string `json:"key" jsonschema_description:"Tool key to execute"`
-	Input string `json:"input" jsonschema_description:"JSON-encoded arguments for the tool"`
+	Content string `json:"content" jsonschema_description:"Assistant text content for this turn"`
 }
 
 func generateSchema[T any]() map[string]any {

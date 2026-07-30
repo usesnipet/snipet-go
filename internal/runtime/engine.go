@@ -3,27 +3,21 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/usesnipet/snipet/internal/logger"
-	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
-	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 type Engine struct {
-	Tools  *DriverManager[tool.Driver]
 	LLMs   *DriverManager[llm.Driver]
 	logger *logger.Logger
 }
 
 func NewEngine(
-	tools *DriverManager[tool.Driver],
 	llms *DriverManager[llm.Driver],
 	logger *logger.Logger,
 ) *Engine {
 	return &Engine{
-		Tools:  tools,
 		LLMs:   llms,
 		logger: logger,
 	}
@@ -34,16 +28,7 @@ func (e *Engine) validateAgent(agent Agent) error {
 	for _, cfg := range agent.LLMs {
 		llmConfigs = append(llmConfigs, Configuration(cfg))
 	}
-	err := e.LLMs.ValidateMultipleConfigurationsByKey(llmConfigs...)
-	if err != nil {
-		return err
-	}
-
-	toolConfigs := make([]Configuration, 0, len(agent.Tools))
-	for key, config := range agent.Tools {
-		toolConfigs = append(toolConfigs, Configuration{Key: key, Config: config})
-	}
-	return e.Tools.ValidateMultipleConfigurationsByKey(toolConfigs...)
+	return e.LLMs.ValidateMultipleConfigurationsByKey(llmConfigs...)
 }
 
 type StartOptions struct {
@@ -127,53 +112,23 @@ func (e *Engine) run(ctx context.Context, options StartOptions, execution Execut
 
 		msg = execution.AddMessage(msg)
 		if err := e.emit(options.OnEvent, ExecutionMessageAddedEvent{
-			Messages: []message.Message{msg},
+			Messages: []llm.Message{msg},
 		}); err != nil {
 			return err
 		}
 
-		if msg.Role == message.MessageRoleFinal || len(msg.ToolCalls) == 0 {
-			execution.Status = ExecutionStatusCompleted
-			if err := e.emit(options.OnEvent, statusChanged(execution)); err != nil {
-				return err
-			}
-			return nil
-		}
-		execution.Turns++
-
-		for _, call := range msg.ToolCalls {
-			result := e.executeTool(ctx, options.Agent, call)
-			toolMsg := message.Message{
-				Role:       message.MessageRoleTool,
-				ToolResult: &result,
-				Content:    toolMessageContent(result),
-				Timestamp:  time.Now(),
-			}
-			toolMsg = execution.AddMessage(toolMsg)
-			if err := e.emit(options.OnEvent, ExecutionMessageAddedEvent{
-				Messages: []message.Message{toolMsg},
-			}); err != nil {
-				return err
-			}
+		execution.Status = ExecutionStatusCompleted
+		if err := e.emit(options.OnEvent, statusChanged(execution)); err != nil {
+			return err
 		}
 	}
-}
-
-func toolMessageContent(result tool.Result) string {
-	if result.Output != nil {
-		return fmt.Sprint(result.Output)
-	}
-	if result.Error != nil {
-		return result.Error.Error()
-	}
-	return ""
 }
 
 func (e *Engine) runLLM(
 	ctx context.Context,
 	agent Agent,
-	messages []message.Message,
-) (msg message.Message, err error) {
+	messages []llm.Message,
+) (msg llm.Message, err error) {
 	if len(agent.LLMs) == 0 {
 		return msg, ErrNoLLMConfigured
 	}
@@ -196,26 +151,4 @@ func (e *Engine) runLLM(
 		return msg, fmt.Errorf("%w: %v", ErrLLMGenerationFailed, lastErr)
 	}
 	return msg, ErrLLMGenerationFailed
-}
-
-func (e *Engine) executeTool(ctx context.Context, agent Agent, call tool.Call) tool.Result {
-	toolInstance, err := e.Tools.GetDriver(call.Key)
-	if err != nil {
-		return tool.Result{
-			Key:     call.Key,
-			Success: false,
-			Error:   err,
-		}
-	}
-
-	toolConfig := agent.Tools[call.Key]
-	if toolConfig == nil {
-		return tool.Result{
-			Key:     call.Key,
-			Success: false,
-			Error:   ErrToolNotFound,
-		}
-	}
-
-	return toolInstance.Execute(ctx, toolConfig, call)
 }

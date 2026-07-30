@@ -9,10 +9,8 @@ import (
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 	"github.com/openai/openai-go/v3/shared"
-	"github.com/usesnipet/snipet/internal/runtime/message"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
-	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
 func New(opts ...Option) llm.API {
@@ -25,7 +23,7 @@ func New(opts ...Option) llm.API {
 		TestConnection: func(ctx context.Context, config util.JSONMap) error {
 			return testConnection(ctx, config, o.baseURL)
 		},
-		Generate: func(ctx context.Context, config util.JSONMap, instructions string, messages []message.Message) (message.Message, error) {
+		Generate: func(ctx context.Context, config util.JSONMap, instructions string, messages []llm.Message) (llm.Message, error) {
 			return generate(ctx, config, instructions, messages, o.baseURL)
 		},
 	}
@@ -63,9 +61,9 @@ func generate(
 	ctx context.Context,
 	config util.JSONMap,
 	instructions string,
-	messages []message.Message,
+	messages []llm.Message,
 	defaultBaseURL string,
-) (msg message.Message, err error) {
+) (msg llm.Message, err error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
 		return msg, fmt.Errorf("failed to parse config: %w", err)
@@ -122,7 +120,7 @@ func generate(
 	return toAgentMessage(out), nil
 }
 
-func buildMessages(instructions string, messages []message.Message) ([]openai.ChatCompletionMessageParamUnion, error) {
+func buildMessages(instructions string, messages []llm.Message) ([]openai.ChatCompletionMessageParamUnion, error) {
 	out := make([]openai.ChatCompletionMessageParamUnion, 0, len(messages)+1)
 	if instructions != "" {
 		out = append(out, openai.SystemMessage(instructions))
@@ -139,84 +137,26 @@ func buildMessages(instructions string, messages []message.Message) ([]openai.Ch
 	return out, nil
 }
 
-func toChatMessage(msg message.Message) (openai.ChatCompletionMessageParamUnion, bool, error) {
+func toChatMessage(msg llm.Message) (openai.ChatCompletionMessageParamUnion, bool, error) {
 	switch msg.Role {
-	case message.MessageRoleUser:
+	case llm.MessageRoleUser:
 		return openai.UserMessage(msg.Content), true, nil
-	case message.MessageRoleSystem:
+	case llm.MessageRoleSystem:
 		return openai.SystemMessage(msg.Content), true, nil
-	case message.MessageRoleAssistant, message.MessageRoleFinal:
+	case llm.MessageRoleAssistant:
 		content := msg.Content
-		if len(msg.ToolCalls) > 0 {
-			raw, err := json.Marshal(Message{
-				Content:   msg.Content,
-				ToolCalls: util.Map(msg.ToolCalls, fromAgentToolCall),
-			})
-			if err != nil {
-				return openai.ChatCompletionMessageParamUnion{}, false, fmt.Errorf("marshal assistant message: %w", err)
-			}
-			content = string(raw)
-		}
 		return openai.AssistantMessage(content), true, nil
-	case message.MessageRoleTool:
-		content := msg.Content
-		if msg.ToolResult != nil {
-			content = fmt.Sprintf(
-				"Tool %q result: %s",
-				msg.ToolResult.Key,
-				msg.Content,
-			)
-		}
-		return openai.UserMessage(content), true, nil
 	default:
 		return openai.ChatCompletionMessageParamUnion{}, false, nil
 	}
 }
 
-func toAgentMessage(out Message) message.Message {
-	toolCalls := make([]tool.Call, 0, len(out.ToolCalls))
-	for _, call := range out.ToolCalls {
-		toolCalls = append(toolCalls, toAgentToolCall(call))
-	}
+func toAgentMessage(out Message) llm.Message {
+	role := llm.MessageRoleAssistant
 
-	role := message.MessageRoleFinal
-	if len(toolCalls) > 0 {
-		role = message.MessageRoleAssistant
-	}
-
-	return message.Message{
+	return llm.Message{
 		Role:      role,
 		Content:   out.Content,
-		ToolCalls: toolCalls,
 		Timestamp: time.Now(),
-	}
-}
-
-func toAgentToolCall(call ToolCall) tool.Call {
-	var input any
-	if call.Input != "" {
-		if err := json.Unmarshal([]byte(call.Input), &input); err != nil {
-			input = call.Input
-		}
-	}
-
-	return tool.Call{
-		Key:   call.Key,
-		Input: input,
-	}
-}
-
-func fromAgentToolCall(call tool.Call) ToolCall {
-	input := ""
-	if call.Input != nil {
-		if raw, err := json.Marshal(call.Input); err == nil {
-			input = string(raw)
-		} else {
-			input = fmt.Sprint(call.Input)
-		}
-	}
-	return ToolCall{
-		Key:   call.Key,
-		Input: input,
 	}
 }

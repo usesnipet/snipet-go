@@ -13,7 +13,7 @@ type Agent struct {
 	Description  string `gorm:"type:text;not null" json:"description"`
 	Instructions string `gorm:"type:text;not null" json:"instructions"`
 
-	AgentToLLMs      []AgentToLLM      `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"llms"`
+	AgentToLLMs      []AgentToLLM       `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"llms"`
 	AgentToKnowledge []AgentToKnowledge `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
