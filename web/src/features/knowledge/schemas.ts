@@ -23,6 +23,42 @@ export type Knowledge = z.infer<typeof knowledgeSchema>;
 export const paginatedKnowledgeSchema = paginatedSchema(knowledgeSchema);
 export type PaginatedKnowledge = z.infer<typeof paginatedKnowledgeSchema>;
 
+export const knowledgeItemKindSchema = z.enum([
+  "text",
+  "document",
+  "image",
+  "audio",
+  "video",
+  "structured",
+  "unknown",
+]);
+export type KnowledgeItemKind = z.infer<typeof knowledgeItemKindSchema>;
+
+export const knowledgeItemSchema = z
+  .object({
+    id: z.uuid(),
+    external_id: z.string(),
+    name: z.string(),
+    hash: z.string(),
+    metadata: z
+      .record(z.string(), z.unknown())
+      .nullish()
+      .transform((value) => value ?? {}),
+    attributes: z
+      .record(z.string(), z.unknown())
+      .nullish()
+      .transform((value) => value ?? {}),
+    kind: knowledgeItemKindSchema,
+    last_modified: z.coerce.date().nullish(),
+    knowledge_id: z.uuid(),
+  })
+  .strict();
+
+export type KnowledgeItem = z.infer<typeof knowledgeItemSchema>;
+
+export const paginatedKnowledgeItemSchema = paginatedSchema(knowledgeItemSchema);
+export type PaginatedKnowledgeItem = z.infer<typeof paginatedKnowledgeItemSchema>;
+
 export const createKnowledgeSchema = z
   .object({
     name: z.string().min(1).max(255),

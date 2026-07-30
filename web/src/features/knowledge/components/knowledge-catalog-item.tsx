@@ -1,5 +1,4 @@
 import { CatalogCard } from "@/components/catalog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,7 +7,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
+import { ROUTES } from "@/routes";
 import {
   BookOpenIcon,
   MoreHorizontal,
@@ -21,38 +22,14 @@ import {
 import { useSyncKnowledge } from "../hooks";
 
 import { DeleteKnowledgeDialog } from "./delete-knowledge-dialog";
+import { SyncStatusBadge } from "./sync-status-badge";
 import { UpdateKnowledgeDialog } from "./update-knowledge-dialog";
 
-import type { Knowledge, SyncStatus } from "../schemas";
-
-const syncStatusLabel: Record<SyncStatus, string> = {
-  pending: "Pending",
-  in_progress: "Syncing",
-  failed: "Failed",
-  success: "Synced",
-};
-
-function SyncStatusBadge({ status }: { status: SyncStatus | null }) {
-  if (!status) {
-    return (
-      <Badge variant="outline" className="shrink-0 font-normal text-muted-foreground">
-        Never synced
-      </Badge>
-    );
-  }
-
-  return (
-    <Badge
-      variant={status === "failed" ? "destructive" : "outline"}
-      className="shrink-0 font-normal"
-    >
-      {syncStatusLabel[status]}
-    </Badge>
-  );
-}
+import type { Knowledge } from "../schemas";
 
 export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
   const { openDialog } = useDialog();
+  const navigate = useNavigate();
   const { mutate: sync, isPending: isSyncing } = useSyncKnowledge();
 
   const isSyncBusy =
@@ -72,22 +49,34 @@ export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
     });
   };
 
+  const goToDetail = () => {
+    navigate(ROUTES.adminKnowledgeDetail, { params: { id: knowledge.id } });
+  };
+
   return (
     <CatalogCard
-      icon={<BookOpenIcon className="size-8 shrink-0 text-muted-foreground border border-border rounded-full p-1.5" />}
+      icon={
+        <BookOpenIcon className="size-8 shrink-0 rounded-full border border-border p-1.5 text-muted-foreground" />
+      }
       title={knowledge.name}
       badge={knowledge.driver}
       description={knowledge.description || undefined}
       updatedAt={knowledge.last_synced_at?.toISOString()}
       extraBadges={<SyncStatusBadge status={knowledge.sync_status} />}
+      onClick={goToDetail}
       headerActions={
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Knowledge actions">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Knowledge actions"
+              onClick={(event) => event.stopPropagation()}
+            >
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
             <DropdownMenuItem
               disabled={isSyncBusy || isSyncing}
               onClick={() => sync({ id: knowledge.id })}

@@ -7,6 +7,7 @@ export const ROUTES = {
   // admin routes
   admin: "/admin",
   adminKnowledge: "/admin/knowledge",
+  adminKnowledgeDetail: "/admin/knowledge/{id}",
   adminAgent: "/admin/agents",
   adminLlms: "/admin/llms",
   adminApiKeys: "/admin/api-keys",

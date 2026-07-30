@@ -10,6 +10,7 @@ import type {
   Knowledge,
   ListKnowledgeDrivers,
   PaginatedKnowledge,
+  PaginatedKnowledgeItem,
   SyncKnowledgeResponse,
   UpdateKnowledge,
 } from "./schemas";
@@ -32,7 +33,7 @@ export const useListKnowledge = (
     queryKey: listKnowledgeQueryKey(),
     queryFn: () => knowledgeService.list({ ...opts, auth: "api-key" }),
     refetchInterval: (query) => {
-      const knowledgeList = query.state.data.data;
+      const knowledgeList = query.state.data?.data ?? [];
       const isPending = knowledgeList.some(k => k.sync_status === "pending");
       if (isPending) return 1000;
       const isSyncing = knowledgeList.some(k => k.sync_status === "in_progress");
@@ -42,17 +43,35 @@ export const useListKnowledge = (
 };
 
 export const knowledgeQueryKey = (id: string) => [BASE_QUERY_KEY, id] as const;
-export const useKnowledge = (id: string, opts?: ServiceGetOptions<Knowledge>): UseQueryResult<Knowledge, Error> => {
+export const useKnowledge = (
+  id: string,
+  opts?: ServiceGetOptions<Knowledge>,
+): UseQueryResult<Knowledge, Error> => {
   return useQuery({
     queryKey: knowledgeQueryKey(id),
     queryFn: () => knowledgeService.findByID(id, { ...opts, auth: "api-key" }),
+    enabled: Boolean(id),
     refetchInterval: (query) => {
       const knowledge = query.state.data;
+      if (!knowledge) return false;
       const isPending = knowledge.sync_status === "pending";
       if (isPending) return 1000;
       const isSyncing = knowledge.sync_status === "in_progress";
       return isSyncing ? 5000 : false;
     },
+  });
+};
+
+export const listKnowledgeItemsQueryKey = (id: string) =>
+  [BASE_QUERY_KEY, id, "items"] as const;
+export const useListKnowledgeItems = (
+  id: string,
+  opts?: ServiceGetOptions<PaginatedKnowledgeItem>,
+): UseQueryResult<PaginatedKnowledgeItem, Error> => {
+  return useQuery({
+    queryKey: [...listKnowledgeItemsQueryKey(id), opts?.searchParams],
+    queryFn: () => knowledgeService.listItems(id, { ...opts, auth: "api-key" }),
+    enabled: Boolean(id),
   });
 };
 
@@ -90,11 +109,12 @@ export const useUpdateKnowledge = (
     mutationKey: updateKnowledgeQueryKey(),
     mutationFn: ({ id, data }: { id: string; data: UpdateKnowledge }) =>
       knowledgeService.update(id, data, { ...opts, auth: "api-key" }),
-    onSuccess: () => {
+    onSuccess: (_data, { id }) => {
       toast({
         title: "Knowledge updated successfully",
         description: "The knowledge source has been updated successfully",
       });
+      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(id) });
       queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey() });
     },
     onError: () => {
@@ -134,6 +154,7 @@ export const useSyncKnowledge = (
           : "A sync of the knowledge source has been queued",
       });
       queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeItemsQueryKey(id) });
       queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey() });
     },
     onError: (_error, { force }) => {

@@ -25,16 +25,27 @@ func (r *Repository[T]) Filter(ctx context.Context, filterOptions *filter.Option
 	if filterOptions == nil {
 		filterOptions = filter.Default[T]()
 	}
-	total, err := gorm.G[T](r.db(ctx)).Count(ctx, "1 = 1")
+	countChain, err := filterOptions.ToGorm(
+		gorm.G[T](r.db(ctx)),
+		filter.WithAllowOrder(false),
+		filter.WithAllowPaginate(false),
+		filter.WithAllowPreload(false),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	chain, err := filterOptions.ToGorm(gorm.G[T](r.db(ctx)))
+	total, err := countChain.Count(ctx, "1 = 1")
 	if err != nil {
 		return nil, err
 	}
-	data, err := chain.Find(ctx)
+
+	dataChain, err := filterOptions.ToGorm(gorm.G[T](r.db(ctx)))
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := dataChain.Find(ctx)
 	return page.NewPaginated(data, total, int64(filterOptions.Skip), int64(filterOptions.Take)), err
 }
 

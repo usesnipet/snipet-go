@@ -4,7 +4,12 @@ import { ErrorBoundary } from "react-error-boundary";
 import { ErrorFallback } from "./error-fallback";
 import { LoadingFallback } from "./loading-fallback";
 
-const PageActionsContext = createContext<((node: React.ReactNode) => void) | null>(null);
+type PageActionsContextType = {
+  setActions: (node: React.ReactNode) => void;
+  setLeftActions: (node: React.ReactNode) => void;
+};
+
+const PageActionsContext = createContext<PageActionsContextType | null>(null);
 
 export type PageProps = {
   title: string;
@@ -13,24 +18,31 @@ export type PageProps = {
   children: React.ReactNode;
   /** Prefer {@link PageActions} inside `content.tsx` when actions need colocation. */
   actions?: React.ReactNode;
+  leftActions?: React.ReactNode;
 };
 
-export function Page({ title, description, documentTitle, children, actions }: PageProps) {
+export function Page({ title, description, documentTitle, children, actions, leftActions }: PageProps) {
   const [slotActions, setSlotActions] = useState<React.ReactNode>(null);
+  const [slotLeftActions, setSlotLeftActions] = useState<React.ReactNode>(null);
+
   const headerActions = actions ?? slotActions;
+  const headerLeftActions = leftActions ?? slotLeftActions;
 
   useEffect(() => {
     document.title = documentTitle;
   }, [documentTitle]);
 
   return (
-    <PageActionsContext.Provider value={setSlotActions}>
+    <PageActionsContext.Provider value={{ setActions: setSlotActions, setLeftActions: setSlotLeftActions }}>
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4">
         <div className="flex min-h-0 flex-1 flex-col gap-2 divide-y">
           <header className="flex shrink-0 items-center justify-between pb-2">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-              <p className="text-muted-foreground text-sm">{description}</p>
+            <div className="flex items-center gap-2">
+              {headerLeftActions && <div>{headerLeftActions}</div>}
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+                <p className="text-muted-foreground text-sm">{description}</p>
+              </div>
             </div>
             {headerActions && <div>{headerActions}</div>}
           </header>
@@ -49,7 +61,7 @@ export function Page({ title, description, documentTitle, children, actions }: P
 
 /** Renders actions in the page header while keeping definition in `content.tsx`. */
 export function PageActions({ children }: { children: React.ReactNode }) {
-  const setActions = useContext(PageActionsContext);
+  const { setActions } = useContext(PageActionsContext);
   if (!setActions) {
     throw new Error("PageActions must be used within Page");
   }
@@ -61,3 +73,20 @@ export function PageActions({ children }: { children: React.ReactNode }) {
 
   return null;
 }
+
+
+/** Renders left actions in the page header while keeping definition in `content.tsx`. */
+export function PageLeftActions({ children }: { children: React.ReactNode }) {
+  const { setLeftActions } = useContext(PageActionsContext);
+  if (!setLeftActions) {
+    throw new Error("PageActions must be used within Page");
+  }
+
+  useLayoutEffect(() => {
+    setLeftActions(children);
+    return () => setLeftActions(null);
+  });
+
+  return null;
+}
+

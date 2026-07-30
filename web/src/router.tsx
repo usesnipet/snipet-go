@@ -6,6 +6,7 @@ import { ROUTES } from "./routes";
 import { AdminAgentsPage } from "./routes/admin/agents/page";
 import { AdminApiKeysPage } from "./routes/admin/api-keys/page";
 import { AdminClientsPage } from "./routes/admin/clients/page";
+import { AdminKnowledgeDetailPage } from "./routes/admin/knowledge/detail/page";
 import { AdminKnowledgePage } from "./routes/admin/knowledge/page";
 import { AdminLayout } from "./routes/admin/layout";
 import { AdminLlmsPage } from "./routes/admin/llms/page";
@@ -54,6 +55,10 @@ export const Router = () => {
             <Route path={toReactRouterPath(ROUTES.adminClients)} element={<AdminClientsPage />} />
             <Route path={toReactRouterPath(ROUTES.adminAgent)} element={<AdminAgentsPage />} />
             <Route path={toReactRouterPath(ROUTES.adminKnowledge)} element={<AdminKnowledgePage />} />
+            <Route
+              path={toReactRouterPath(ROUTES.adminKnowledgeDetail)}
+              element={<AdminKnowledgeDetailPage />}
+            />
             <Route path={toReactRouterPath(ROUTES.adminLlms)} element={<AdminLlmsPage />} />
             <Route path={toReactRouterPath(ROUTES.adminApiKeys)} element={<AdminApiKeysPage />} />
           </Route>

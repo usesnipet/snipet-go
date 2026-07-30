@@ -1,8 +1,14 @@
 import { http } from "@/lib/http";
 
 import {
-  createKnowledgeResponseSchema, createKnowledgeSchema, knowledgeSchema, listKnowledgeDriversSchema,
-  paginatedKnowledgeSchema, syncKnowledgeResponseSchema, updateKnowledgeSchema
+  createKnowledgeResponseSchema,
+  createKnowledgeSchema,
+  knowledgeSchema,
+  listKnowledgeDriversSchema,
+  paginatedKnowledgeItemSchema,
+  paginatedKnowledgeSchema,
+  syncKnowledgeResponseSchema,
+  updateKnowledgeSchema,
 } from "./schemas";
 
 import type {
@@ -11,6 +17,7 @@ import type {
   Knowledge,
   ListKnowledgeDrivers,
   PaginatedKnowledge,
+  PaginatedKnowledgeItem,
   SyncKnowledgeResponse,
   UpdateKnowledge,
 } from "./schemas";
@@ -45,6 +52,20 @@ const findByID = async (
     params: { id },
     schemas: {
       response: knowledgeSchema,
+    },
+    ...opts,
+  });
+};
+
+const listItems = async (
+  id: string,
+  opts?: ServiceGetOptions<PaginatedKnowledgeItem>,
+): Promise<PaginatedKnowledgeItem> => {
+  return http.get({
+    url: `${KNOWLEDGE_URL}/{id}/items`,
+    params: { id },
+    schemas: {
+      response: paginatedKnowledgeItemSchema,
     },
     ...opts,
   });
@@ -119,6 +140,7 @@ const remove = async (id: string, opts?: ServiceDeleteOptions<void>): Promise<vo
 export const knowledgeService = {
   list,
   findByID,
+  listItems,
   create,
   update,
   listDrivers,

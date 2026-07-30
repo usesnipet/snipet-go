@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SVG } from "@/components/ui/svg";
+import { cn } from "@/lib/utils";
 import { useCallback } from "react";
 
 import { formatUpdatedAt } from "./format-updated-at";
@@ -15,6 +16,7 @@ export type CatalogCardProps = {
   description?: string;
   extraBadges?: React.ReactNode;
   headerActions?: React.ReactNode;
+  onClick?: () => void;
   actions?: Array<{
     label: string;
     onClick: () => void;
@@ -32,6 +34,7 @@ export function CatalogCard({
   headerActions,
   description,
   extraBadges,
+  onClick,
 }: CatalogCardProps) {
   const renderIcon = useCallback(() => {
     if (!icon) return null;
@@ -40,7 +43,10 @@ export function CatalogCard({
   }, [icon]);
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card
+      className={cn("flex h-full flex-col", onClick && "cursor-pointer")}
+      onClick={onClick}
+    >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-3">
         {renderIcon()}
         <div className="flex min-w-0 flex-1 items-center justify-between space-y-1">
@@ -53,7 +59,10 @@ export function CatalogCard({
             ) : null}
             {extraBadges}
           </div>
-          <div className="flex shrink-0 items-center">
+          <div
+            className="flex shrink-0 items-center"
+            onClick={(event) => event.stopPropagation()}
+          >
             {headerActions}
             {actions?.map((action) => (
               <Button

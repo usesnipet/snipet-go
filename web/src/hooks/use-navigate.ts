@@ -10,7 +10,8 @@ type Options = NavigateOptions & {
 
 export const useNavigate = () => {
   const navigate = useNavigateReactRouter();
-  return (path: RoutePath, options?: Options) => {
+  return (path: RoutePath | number, options?: Options) => {
+    if (typeof path === "number") return navigate(path);
     const {params, ...rest} = options ?? {};
     const pathWithParams = applyPathParams(path, params ?? {});
     navigate(pathWithParams, rest)
