@@ -37,17 +37,8 @@ const navItems: NavEntry[] = [
   },
   {
     title: "Knowledge",
+    href: ROUTES.adminKnowledge,
     icon: BookOpen,
-    items: [
-      {
-        href: ROUTES.adminKnowledgeIndex,
-        title: "Index",
-      },
-      {
-        href: ROUTES.adminKnowledgeSource,
-        title: "Source",
-      }
-    ]
   },
   {
     title: "API Keys",

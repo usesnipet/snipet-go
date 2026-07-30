@@ -6,8 +6,7 @@ export const ROUTES = {
 
   // admin routes
   admin: "/admin",
-  adminKnowledgeIndex: "/admin/knowledge/index",
-  adminKnowledgeSource: "/admin/knowledge/source",
+  adminKnowledge: "/admin/knowledge",
   adminAgent: "/admin/agents",
   adminLlms: "/admin/llms",
   adminApiKeys: "/admin/api-keys",
