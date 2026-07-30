@@ -67,6 +67,7 @@ func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Kn
 		Description:   dto.Description,
 		Driver:        dto.Driver,
 		Configuration: dto.Configuration,
+		SyncStatus:    model.SyncStatusPending,
 	}
 
 	var jobID int64
@@ -74,7 +75,7 @@ func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Kn
 		if err := s.repo.Create(ctx, knowledge); err != nil {
 			return err
 		}
-		jID, err := s.Sync(ctx, knowledge.ID, false)
+		jID, err := s.Sync(ctx, knowledge.ID, true)
 		jobID = jID
 		return err
 	})

@@ -14,6 +14,7 @@ export type CatalogCardProps = {
   updatedAt?: string;
   description?: string;
   extraBadges?: React.ReactNode;
+  headerActions?: React.ReactNode;
   actions?: Array<{
     label: string;
     onClick: () => void;
@@ -28,6 +29,7 @@ export function CatalogCard({
   title,
   updatedAt,
   actions,
+  headerActions,
   description,
   extraBadges,
 }: CatalogCardProps) {
@@ -51,21 +53,20 @@ export function CatalogCard({
             ) : null}
             {extraBadges}
           </div>
-          <div>
-            {
-              actions?.map((action) => (
-                <Button
-                  key={action.label}
-                  variant="ghost"
-                  size="icon"
-                  aria-label={action.label}
-                  onClick={action.onClick}
-                  disabled={action.disabled}
-                >
-                  {action.icon}
-                </Button>
-              ))
-            }
+          <div className="flex shrink-0 items-center">
+            {headerActions}
+            {actions?.map((action) => (
+              <Button
+                key={action.label}
+                variant="ghost"
+                size="icon"
+                aria-label={action.label}
+                onClick={action.onClick}
+                disabled={action.disabled}
+              >
+                {action.icon}
+              </Button>
+            ))}
           </div>
         </div>
       </CardHeader>

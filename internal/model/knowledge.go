@@ -9,6 +9,7 @@ import (
 type SyncStatus string
 
 const (
+	SyncStatusPending    SyncStatus = "pending"
 	SyncStatusInProgress SyncStatus = "in_progress"
 	SyncStatusFailed     SyncStatus = "failed"
 	SyncStatusSuccess    SyncStatus = "success"
