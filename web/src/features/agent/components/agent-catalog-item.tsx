@@ -26,7 +26,9 @@ export function AgentCatalogItem({ agent }: { agent: Agent }) {
     });
   };
 
-  const llmKeys = agent.configuration.llms?.map((llm) => llm.key) ?? [];
+  const llmLabels = [...agent.llms]
+    .sort((a, b) => a.priority - b.priority)
+    .map((rel) => rel.llm.name || rel.llm.provider);
 
   return (
     <Card className="flex h-full flex-col">
@@ -36,14 +38,14 @@ export function AgentCatalogItem({ agent }: { agent: Agent }) {
           <div className="flex min-w-0 flex-col gap-1.5">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <h2 className="truncate text-base font-semibold leading-tight">{agent.name}</h2>
-              {llmKeys.length === 0 ? (
+              {llmLabels.length === 0 ? (
                 <Badge variant="outline" className="shrink-0 font-normal text-muted-foreground">
                   No LLM
                 </Badge>
               ) : (
-                llmKeys.map((key) => (
-                  <Badge key={key} variant="outline" className="shrink-0 font-normal">
-                    {key}
+                llmLabels.map((label, index) => (
+                  <Badge key={`${label}-${index}`} variant="outline" className="shrink-0 font-normal">
+                    {label}
                   </Badge>
                 ))
               )}

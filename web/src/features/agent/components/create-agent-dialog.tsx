@@ -24,18 +24,7 @@ const defaultValues: CreateAgent = {
   name: "",
   description: "",
   instructions: "",
-  llms: [
-    {
-      key: "gemini",
-      config: {
-        api_key: "",
-        model: "gemini-2.0-flash",
-        temperature: 1,
-        top_p: 1,
-      }
-    }
-  ],
-  tools: {}
+  llm_ids: [],
 };
 
 export function CreateAgentDialog({ onCreated, close }: CreateAgentDialogProps) {
@@ -58,7 +47,7 @@ export function CreateAgentDialog({ onCreated, close }: CreateAgentDialogProps) 
       <DialogHeader>
         <DialogTitle>Create agent</DialogTitle>
         <DialogDescription>
-          Define the agent persona and the language model it will use.
+          Define the agent persona and the language models it will use.
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>

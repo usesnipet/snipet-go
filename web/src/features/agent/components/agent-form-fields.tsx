@@ -1,13 +1,10 @@
 import { FormInput } from "@/components/form/input";
-import { DriverSelect } from "@/components/form/driver-select";
 import { FormTextarea } from "@/components/form/textarea";
 import { FieldGroup, FieldLegend, FieldSeparator, FieldSet } from "@/components/ui/field";
 
-import { useListLLMDrivers } from "../hooks";
+import { AgentLlmList } from "./agent-llm-list";
 
 export function AgentFormFields() {
-  const { data: llmDrivers } = useListLLMDrivers();
-
   return (
     <FieldGroup>
       <FormInput name="name" label="Name" placeholder="Support assistant" required />
@@ -26,15 +23,8 @@ export function AgentFormFields() {
 
       <FieldSet>
         <FieldSeparator />
-        <FieldLegend variant="label">Language model</FieldLegend>
-
-        <DriverSelect
-          name="llms.0.key"
-          configName="llms.0.config"
-          drivers={llmDrivers ?? []}
-          label="Provider"
-          placeholder="Select a provider"
-        />
+        <FieldLegend variant="label">Language models</FieldLegend>
+        <AgentLlmList />
       </FieldSet>
     </FieldGroup>
   );

@@ -1,28 +1,16 @@
-import { driverInfoSchema } from "@/schemas/driver";
+import { llmSchema } from "@/features/llm/schemas";
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
-export const llmConfigSchema = z
+export const agentToLlmSchema = z
   .object({
-    key: z.string().min(1),
-    config: z.record(z.string(), z.unknown()),
+    llm_id: z.uuid(),
+    priority: z.number().int(),
+    llm: llmSchema,
   })
   .strict();
 
-export type LlmConfig = z.infer<typeof llmConfigSchema>;
-
-export const toolConfigSchema = z.record(z.string(), z.record(z.string(), z.unknown()));
-
-export type ToolConfig = z.infer<typeof toolConfigSchema>;
-
-export const agentConfigurationSchema = z
-  .object({
-    llms: z.array(llmConfigSchema).nullable(),
-    tools: toolConfigSchema.nullable(),
-  })
-  .strict();
-
-export type AgentConfiguration = z.infer<typeof agentConfigurationSchema>;
+export type AgentToLlm = z.infer<typeof agentToLlmSchema>;
 
 export const agentSchema = z
   .object({
@@ -30,7 +18,7 @@ export const agentSchema = z
     name: z.string().min(1).max(255),
     description: z.string().max(1000),
     instructions: z.string().max(1000),
-    configuration: agentConfigurationSchema,
+    llms: z.array(agentToLlmSchema),
   })
   .strict();
 
@@ -45,8 +33,7 @@ export const createAgentSchema = z
     name: z.string().min(1).max(255),
     description: z.string().max(1000),
     instructions: z.string().max(1000),
-    llms: z.array(llmConfigSchema).min(1),
-    tools: toolConfigSchema,
+    llm_ids: z.array(z.uuid()).min(1),
   })
   .strict();
 
@@ -55,6 +42,3 @@ export type CreateAgent = z.infer<typeof createAgentSchema>;
 export const updateAgentSchema = createAgentSchema.partial().strict();
 
 export type UpdateAgent = z.infer<typeof updateAgentSchema>;
-
-export const listDriversSchema = z.array(driverInfoSchema);
-export type ListDrivers = z.infer<typeof listDriversSchema>;

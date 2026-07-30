@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { agentService } from "./service";
 
-import type { Agent, CreateAgent, ListDrivers, PaginatedAgent, UpdateAgent } from "./schemas";
+import type { Agent, CreateAgent, PaginatedAgent, UpdateAgent } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
@@ -110,15 +110,5 @@ export const useDeleteAgent = (
         variant: "destructive",
       });
     },
-  });
-};
-
-export const listDriversQueryKey = () => [BASE_QUERY_KEY, "drivers"] as const;
-export const useListLLMDrivers = (
-  opts?: ServiceGetOptions<ListDrivers>,
-): UseQueryResult<ListDrivers, Error> => {
-  return useQuery({
-    queryKey: listDriversQueryKey(),
-    queryFn: () => agentService.listDrivers({ ...opts, auth: "api-key" }),
   });
 };

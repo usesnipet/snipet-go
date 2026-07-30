@@ -1,10 +1,10 @@
 import { http } from "@/lib/http";
 
 import {
-  agentSchema, createAgentSchema, listDriversSchema, paginatedAgentSchema, updateAgentSchema
+  agentSchema, createAgentSchema, paginatedAgentSchema, updateAgentSchema
 } from "./schemas";
 
-import type { Agent, CreateAgent, ListDrivers, PaginatedAgent, UpdateAgent } from "./schemas";
+import type { Agent, CreateAgent, PaginatedAgent, UpdateAgent } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
@@ -69,19 +69,10 @@ const remove = async (id: string, opts?: ServiceDeleteOptions<void>): Promise<vo
   });
 };
 
-const listDrivers = async (opts?: ServiceGetOptions<ListDrivers>): Promise<ListDrivers> => {
-  return http.get({
-    url: `${AGENT_URL}/llms`,
-    schemas: { response: listDriversSchema },
-    ...opts,
-  });
-};
-
 export const agentService = {
   list,
   findById,
   create,
   update,
   delete: remove,
-  listDrivers,
 };

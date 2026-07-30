@@ -19,6 +19,12 @@ type UpdateAgentDialogProps = DialogInstanceProps<{
   agent: Agent
 }>;
 
+function llmIdsFromAgent(agent: Agent): string[] {
+  return [...agent.llms]
+    .sort((a, b) => a.priority - b.priority)
+    .map((rel) => rel.llm_id);
+}
+
 export function UpdateAgentDialog({ agent, close }: UpdateAgentDialogProps) {
   const form = useForm<UpdateAgent>({
     resolver: zodResolver(updateAgentSchema),
@@ -26,8 +32,7 @@ export function UpdateAgentDialog({ agent, close }: UpdateAgentDialogProps) {
       name: agent.name,
       description: agent.description,
       instructions: agent.instructions,
-      llms: agent.configuration.llms ?? [],
-      tools: agent.configuration.tools ?? {},
+      llm_ids: llmIdsFromAgent(agent),
     },
   });
 
