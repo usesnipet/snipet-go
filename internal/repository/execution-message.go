@@ -54,7 +54,7 @@ func (r *ExecutionMessageRepository) FilterInSession(
 	if len(filterOptions.Order.Fields) == 0 {
 		filterOptions = filter.Merge(
 			filterOptions,
-			filter.New[model.ExecutionMessage](filter.OrderAsc("created_at")),
+			filter.New[model.ExecutionMessage](filter.OrderAsc("timestamp")),
 		)
 	}
 

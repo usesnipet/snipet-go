@@ -200,6 +200,12 @@ func (s *Service) handleExecutionEvent(
 		if err := s.executionRepo.UpdateByID(ctx, execution.ID, execution); err != nil {
 			return nil, err
 		}
+		if event.Status == runtime.ExecutionStatusFailed {
+			errorMessage := msg.NewMessage(msg.RoleAssistant, "An error occurred while processing the request.")
+			if err := s.executionMessageRepo.CreateInExecution(ctx, execution.ID, []model.ExecutionMessage{{Message: errorMessage}}); err != nil {
+				return nil, err
+			}
+		}
 		return event, nil
 	case runtime.ExecutionMessageAddedEvent:
 		newMessages := make([]model.ExecutionMessage, 0, len(event.Messages))

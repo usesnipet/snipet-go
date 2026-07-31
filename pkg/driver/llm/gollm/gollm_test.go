@@ -17,17 +17,10 @@ func TestBuildPrompt(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "How are you?", prompt.Input)
 	require.Equal(t, "You are helpful.", prompt.SystemPrompt)
-	require.Equal(t, outputSpec, prompt.Output)
 	require.Len(t, prompt.Messages, 3)
 	require.Equal(t, "user", prompt.Messages[0].Role)
 	require.Equal(t, "assistant", prompt.Messages[1].Role)
 	require.Equal(t, "user", prompt.Messages[2].Role)
-}
-
-func TestExtractJSON(t *testing.T) {
-	require.Equal(t, `{"content":"ok"}`, extractJSON(`{"content":"ok"}`))
-	require.Equal(t, `{"content":"ok"}`, extractJSON("```json\n{\"content\":\"ok\"}\n```"))
-	require.Equal(t, `{"content":"ok"}`, extractJSON("```\n{\"content\":\"ok\"}\n```"))
 }
 
 func TestNewClientRequiresModel(t *testing.T) {

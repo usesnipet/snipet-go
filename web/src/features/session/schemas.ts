@@ -60,16 +60,21 @@ export const messageRoleSchema = z.enum([
 
 export type MessageRole = z.infer<typeof messageRoleSchema>;
 
-export const executionMessageSchema = z
+export const messageSchema = z
   .object({
     id: z.uuid(),
-    execution_id: z.uuid(),
     sequence: z.number(),
     role: messageRoleSchema,
     content: z.string(),
-    tool_calls: z.array(z.unknown()).optional(),
-    tool_result: z.unknown().nullable().optional(),
-    created_at: z.coerce.date(),
+    timestamp: z.coerce.date()
+  })
+  .strict();
+
+export type Message = z.infer<typeof messageSchema>;
+
+export const executionMessageSchema = messageSchema
+  .extend({
+    execution_id: z.uuid(),
   })
   .strict();
 
@@ -132,7 +137,7 @@ export type StatusChangedEvent = z.infer<typeof statusChangedEventSchema>;
 
 export const messageAddedEventSchema = z
   .object({
-    messages: z.array(executionMessageSchema),
+    messages: z.array(messageSchema),
   })
   .strict();
 

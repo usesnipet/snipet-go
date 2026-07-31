@@ -126,7 +126,7 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	assert.Nil(t, created.SessionID)
 	assert.Equal(t, agentID, created.AgentID)
 
-	roles := make([]msg.MessageRole, 0, len(persisted))
+	roles := make([]msg.Role, 0, len(persisted))
 	for _, m := range persisted {
 		roles = append(roles, m.Role)
 	}

@@ -62,7 +62,7 @@ type MessagesFilterDTO struct {
 
 func (dto *MessagesFilterDTO) ToFilter() *filter.Options[model.ExecutionMessage] {
 	return filter.New[model.ExecutionMessage](
-		filter.PtrOrderBy("created_at", dto.Sort),
+		filter.PtrOrderBy("timestamp", dto.Sort),
 		filter.PtrTake(dto.Take),
 		filter.PtrSkip(dto.Skip),
 	)

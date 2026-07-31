@@ -87,42 +87,41 @@ func (e *Engine) run(ctx context.Context, options StartOptions, execution Execut
 		return err
 	}
 
-	for {
-		if err := ctx.Err(); err != nil {
-			execution.Status = ExecutionStatusCancelled
-			execution.ErrorMessage = err.Error()
-			if emitErr := e.emit(options.OnEvent, statusChanged(execution)); emitErr != nil {
-				return emitErr
-			}
-			return err
+	if err := ctx.Err(); err != nil {
+		execution.Status = ExecutionStatusCancelled
+		execution.ErrorMessage = err.Error()
+		if emitErr := e.emit(options.OnEvent, statusChanged(execution)); emitErr != nil {
+			return emitErr
 		}
+		return err
+	}
 
-		if execution.Config.MaxTurns > 0 && execution.Turns >= execution.Config.MaxTurns {
-			execution.Status = ExecutionStatusMaxTurns
-			execution.ErrorMessage = "Max turns reached"
-			if err := e.emit(options.OnEvent, statusChanged(execution)); err != nil {
-				return err
-			}
-			return nil
-		}
-
-		message, err := e.runLLM(ctx, options.Agent, execution.Messages)
-		if err != nil {
-			return e.fail(&execution, options.OnEvent, err)
-		}
-
-		message = execution.AddMessage(message)
-		if err := e.emit(options.OnEvent, ExecutionMessageAddedEvent{
-			Messages: []msg.Message{message},
-		}); err != nil {
-			return err
-		}
-
-		execution.Status = ExecutionStatusCompleted
+	if execution.Config.MaxTurns > 0 && execution.Turns >= execution.Config.MaxTurns {
+		execution.Status = ExecutionStatusMaxTurns
+		execution.ErrorMessage = "Max turns reached"
 		if err := e.emit(options.OnEvent, statusChanged(execution)); err != nil {
 			return err
 		}
+		return nil
 	}
+
+	message, err := e.runLLM(ctx, options.Agent, execution.Messages)
+	if err != nil {
+		return e.fail(&execution, options.OnEvent, err)
+	}
+
+	message = execution.AddMessage(message)
+	if err := e.emit(options.OnEvent, ExecutionMessageAddedEvent{
+		Messages: []msg.Message{message},
+	}); err != nil {
+		return err
+	}
+
+	execution.Status = ExecutionStatusCompleted
+	if err := e.emit(options.OnEvent, statusChanged(execution)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (e *Engine) runLLM(

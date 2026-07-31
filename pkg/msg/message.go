@@ -6,20 +6,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type MessageRole string
+type Role string
 
 const (
-	RoleSystem    MessageRole = "system"
-	RoleUser      MessageRole = "user"
-	RoleAssistant MessageRole = "assistant"
+	RoleSystem    Role = "system"
+	RoleUser      Role = "user"
+	RoleAssistant Role = "assistant"
 )
 
 type Message struct {
-	ID        string      `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Role      MessageRole `json:"role" gorm:"type:varchar(50);not null"`
-	Sequence  int         `json:"sequence" gorm:"type:integer;not null"`
-	Content   string      `json:"content" gorm:"type:text"`
-	Timestamp time.Time   `json:"timestamp" gorm:"type:timestamp;not null;default:now()"`
+	ID        string    `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Role      Role      `json:"role" gorm:"type:varchar(50);not null"`
+	Sequence  int       `json:"sequence" gorm:"type:integer;not null"`
+	Content   string    `json:"content" gorm:"type:text"`
+	Timestamp time.Time `json:"timestamp" gorm:"type:timestamp;not null;default:now()"`
 }
 
 type MessageOption func(*Message)
@@ -42,7 +42,7 @@ func WithTimestamp(timestamp time.Time) MessageOption {
 	}
 }
 
-func NewMessage(role MessageRole, content string, options ...MessageOption) Message {
+func NewMessage(role Role, content string, options ...MessageOption) Message {
 	message := Message{
 		ID:        uuid.NewString(),
 		Role:      role,

@@ -2,9 +2,7 @@ package gollm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	gollmlib "github.com/teilomillet/gollm"
@@ -76,10 +74,7 @@ func testConnection(ctx context.Context, provider string, config util.JSONMap) e
 		return fmt.Errorf("failed to create client: %w", err)
 	}
 
-	prompt := gollmlib.NewPrompt(
-		`Respond with {"content":"ok"}`,
-		gollmlib.WithOutput(outputSpec),
-	)
+	prompt := gollmlib.NewPrompt(`Respond with "ok"`)
 
 	_, err = client.Generate(ctx, prompt, gollmlib.WithJSONSchemaValidation())
 	if err != nil {
@@ -117,23 +112,11 @@ func generate(
 	if err != nil {
 		return message, fmt.Errorf("%s: generate response: %w", provider, err)
 	}
-	text = extractJSON(text)
-	if text == "" {
-		return message, fmt.Errorf("%s: empty response", provider)
-	}
-
-	var out structuredMessage
-	if err := json.Unmarshal([]byte(text), &out); err != nil {
-		return message, fmt.Errorf("%s: parse structured output: %w", provider, err)
-	}
-
-	return msg.NewMessage(msg.RoleAssistant, out.Content, msg.WithTimestamp(time.Now())), nil
+	return msg.NewMessage(msg.RoleAssistant, text, msg.WithTimestamp(time.Now())), nil
 }
 
 func buildPrompt(instructions string, messages []msg.Message) (*gollmlib.Prompt, error) {
-	opts := []gollmlib.PromptOption{
-		gollmlib.WithOutput(outputSpec),
-	}
+	opts := []gollmlib.PromptOption{}
 	if instructions != "" {
 		opts = append(opts, gollmlib.WithSystemPrompt(instructions, gollmlib.CacheTypeEphemeral))
 	}
@@ -164,7 +147,7 @@ func buildPrompt(instructions string, messages []msg.Message) (*gollmlib.Prompt,
 	return gollmlib.NewPrompt(input, opts...), nil
 }
 
-func toGollmRole(role msg.MessageRole) (string, bool) {
+func toGollmRole(role msg.Role) (string, bool) {
 	switch role {
 	case msg.RoleUser:
 		return "user", true
@@ -175,21 +158,4 @@ func toGollmRole(role msg.MessageRole) (string, bool) {
 	default:
 		return "", false
 	}
-}
-
-// extractJSON strips optional markdown fences around a JSON payload.
-func extractJSON(text string) string {
-	text = strings.TrimSpace(text)
-	if !strings.HasPrefix(text, "```") {
-		return text
-	}
-	text = strings.TrimPrefix(text, "```")
-	text = strings.TrimSpace(text)
-	if strings.HasPrefix(strings.ToLower(text), "json") {
-		text = strings.TrimSpace(text[4:])
-	}
-	if i := strings.LastIndex(text, "```"); i >= 0 {
-		text = text[:i]
-	}
-	return strings.TrimSpace(text)
 }
