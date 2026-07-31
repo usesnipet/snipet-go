@@ -10,12 +10,8 @@ import (
 // API holds the provider methods used by a driver for connectivity checks and generation.
 type API struct {
 	TestConnection func(ctx context.Context, config util.JSONMap) error
-	Generate       func(
-		ctx context.Context,
-		config util.JSONMap,
-		instructions string,
-		messages []msg.Message,
-	) (msg.Message, error)
+	Generate       func(ctx context.Context, config util.JSONMap, prompt Prompt) (msg.Message, error)
+	Stream         func(ctx context.Context, config util.JSONMap, prompt Prompt) (<-chan StreamDelta, error)
 }
 
 func WithAPI(api API) Option {

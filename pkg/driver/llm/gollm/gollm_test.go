@@ -5,16 +5,21 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver/llm"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 func TestBuildPrompt(t *testing.T) {
-	prompt, err := buildPrompt("You are helpful.", []msg.Message{
-		msg.NewMessage(msg.RoleUser, "Hello"),
-		msg.NewMessage(msg.RoleAssistant, "Hi there"),
-		msg.NewMessage(msg.RoleUser, "How are you?"),
-	})
-	require.NoError(t, err)
+	prompt := buildPrompt(
+		llm.NewPrompt(
+			llm.WithSystem("You are helpful."),
+			llm.WithMessages([]msg.Message{
+				msg.NewMessage(msg.RoleUser, "Hello"),
+				msg.NewMessage(msg.RoleAssistant, "Hi there"),
+				msg.NewMessage(msg.RoleUser, "How are you?"),
+			}),
+		),
+	)
 	require.Equal(t, "How are you?", prompt.Input)
 	require.Equal(t, "You are helpful.", prompt.SystemPrompt)
 	require.Len(t, prompt.Messages, 3)
@@ -25,9 +30,7 @@ func TestBuildPrompt(t *testing.T) {
 
 func TestNewClientRequiresModel(t *testing.T) {
 	api := New("openai")
-	_, err := api.Generate(t.Context(), util.JSONMap{
-		"api_key": "test-key",
-	}, "", nil)
+	_, err := api.Generate(t.Context(), util.JSONMap{"api_key": "test-key"}, llm.Prompt{})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "model is required")
 }

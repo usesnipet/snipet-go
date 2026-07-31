@@ -24,6 +24,7 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
+	knowledgemocks "github.com/usesnipet/snipet/pkg/driver/knowledge/mocks"
 )
 
 var testConfigSchema = util.JSONMap{
@@ -32,28 +33,6 @@ var testConfigSchema = util.JSONMap{
 		"index": util.JSONMap{"type": "string"},
 	},
 	"required": []any{"index"},
-}
-
-type stubSourceDriver struct {
-	info            driver.Info
-	testConnection  func(ctx context.Context, config util.JSONMap) error
-}
-
-func (s *stubSourceDriver) Info() driver.Info { return s.info }
-
-func (s *stubSourceDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
-	if s.testConnection != nil {
-		return s.testConnection(ctx, config)
-	}
-	return nil
-}
-
-func (s *stubSourceDriver) Iterator(context.Context, util.JSONMap) (kdriver.IKnowledgeIterator, error) {
-	return nil, nil
-}
-
-func (s *stubSourceDriver) Reader(context.Context, util.JSONMap, string) (kdriver.IKnowledgeReader, error) {
-	return nil, nil
 }
 
 func newPassthroughTxManager(t *testing.T) *mocks.MockITxManager {
@@ -113,15 +92,16 @@ type testServiceOptions struct {
 	riverClient *queuemocks.MockIJobQueue
 }
 
-func newStubSource(name string, schema util.JSONMap, testConn func(context.Context, util.JSONMap) error) *stubSourceDriver {
-	return &stubSourceDriver{
-		info: driver.Info{
-			Name:                name,
-			Description:         name,
-			ConfigurationSchema: schema,
-		},
-		testConnection: testConn,
-	}
+func newMockSource(t *testing.T, name string, schema util.JSONMap) *knowledgemocks.MockISourceDriver {
+	t.Helper()
+
+	source := knowledgemocks.NewMockISourceDriver(t)
+	source.EXPECT().Info().Return(driver.Info{
+		Name:                name,
+		Description:         name,
+		ConfigurationSchema: schema,
+	})
+	return source
 }
 
 func assertAppError(t *testing.T, err error, statusCode int, message string) {
@@ -172,7 +152,8 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	var stored *model.Knowledge
 
-	source := newStubSource("pinecone", testConfigSchema, nil)
+	source := newMockSource(t, "pinecone", testConfigSchema)
+	source.EXPECT().TestConnection(mock.Anything, config).Return(nil)
 
 	repo := mocks.NewMockIKnowledgeRepository(t)
 	repo.EXPECT().
@@ -222,7 +203,8 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	expectedErr := errors.New("create failed")
 
-	source := newStubSource("pinecone", testConfigSchema, nil)
+	source := newMockSource(t, "pinecone", testConfigSchema)
+	source.EXPECT().TestConnection(mock.Anything, config).Return(nil)
 
 	repo := mocks.NewMockIKnowledgeRepository(t)
 	repo.EXPECT().
@@ -245,9 +227,8 @@ func TestCreateReturnsBadRequestWhenConnectionFails(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	connectionErr := errors.New("connection refused")
 
-	source := newStubSource("pinecone", testConfigSchema, func(context.Context, util.JSONMap) error {
-		return connectionErr
-	})
+	source := newMockSource(t, "pinecone", testConfigSchema)
+	source.EXPECT().TestConnection(mock.Anything, config).Return(connectionErr)
 
 	repo := mocks.NewMockIKnowledgeRepository(t)
 
@@ -337,7 +318,8 @@ func TestTestConnectionSucceedsWhenDriverValidatesAndConnects(t *testing.T) {
 	t.Parallel()
 
 	config := util.JSONMap{"index": "docs"}
-	source := newStubSource("pinecone", testConfigSchema, nil)
+	source := newMockSource(t, "pinecone", testConfigSchema)
+	source.EXPECT().TestConnection(mock.Anything, config).Return(nil)
 
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]kdriver.ISourceDriver{"pinecone": source})
 
@@ -357,7 +339,7 @@ func TestTestConnectionReturnsNotFoundForUnknownDriver(t *testing.T) {
 func TestTestConnectionReturnsBadRequestWhenConfigurationInvalid(t *testing.T) {
 	t.Parallel()
 
-	source := newStubSource("pinecone", testConfigSchema, nil)
+	source := newMockSource(t, "pinecone", testConfigSchema)
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]kdriver.ISourceDriver{"pinecone": source})
 
 	err := svc.TestConnection(context.Background(), "pinecone", util.JSONMap{})
@@ -373,9 +355,8 @@ func TestTestConnectionReturnsDriverConnectionError(t *testing.T) {
 	config := util.JSONMap{"index": "docs"}
 	connectionErr := errors.New("connection refused")
 
-	source := newStubSource("pinecone", testConfigSchema, func(context.Context, util.JSONMap) error {
-		return connectionErr
-	})
+	source := newMockSource(t, "pinecone", testConfigSchema)
+	source.EXPECT().TestConnection(mock.Anything, config).Return(connectionErr)
 
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]kdriver.ISourceDriver{"pinecone": source})
 
@@ -392,7 +373,7 @@ func TestListDriversReturnsSourceDrivers(t *testing.T) {
 	t.Parallel()
 
 	sourceSchema := util.JSONMap{"type": "object"}
-	source := newStubSource("fs", sourceSchema, nil)
+	source := newMockSource(t, "fs", sourceSchema)
 
 	svc := newTestService(
 		t,

@@ -25,29 +25,9 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
-
-type sessionTestLLM struct {
-	key string
-}
-
-func (s *sessionTestLLM) Info() driver.Info {
-	return driver.Info{
-		Name:                s.key,
-		Description:         s.key,
-		ConfigurationSchema: util.JSONMap{"type": "object"},
-	}
-}
-func (s *sessionTestLLM) TestConnection(context.Context, util.JSONMap) error { return nil }
-func (s *sessionTestLLM) Generate(
-	context.Context,
-	util.JSONMap,
-	string,
-	[]msg.Message,
-) (msg.Message, error) {
-	return msg.NewMessage(msg.RoleAssistant, "ok"), nil
-}
 
 func apiKeyContext() context.Context {
 	id := "api-key-id"
@@ -201,8 +181,18 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		CreateInExecution(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
+	primary := llmmocks.NewMockDriver(t)
+	primary.EXPECT().Info().Return(driver.Info{
+		Name:                "primary",
+		Description:         "primary",
+		ConfigurationSchema: util.JSONMap{"type": "object"},
+	})
+	primary.EXPECT().
+		Generate(mock.Anything, mock.Anything, mock.Anything).
+		Return(msg.NewMessage(msg.RoleAssistant, "ok"), nil)
+
 	llmReg := registry.New[llm.Driver]()
-	llmReg.MustRegister("primary", &sessionTestLLM{key: "primary"})
+	llmReg.MustRegister("primary", primary)
 	agentSvc := agent.NewService(
 		agentRepo,
 		mocks.NewMockILLMRepository(t),

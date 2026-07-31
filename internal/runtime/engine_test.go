@@ -5,47 +5,30 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
-type fakeLLM struct {
-	key      string
-	generate func(ctx context.Context, messages []msg.Message) (msg.Message, error)
-}
-
-func (f *fakeLLM) Info() driver.Info {
+func driverInfo(key string) driver.Info {
 	return driver.Info{
-		Name:                f.key,
-		Description:         f.key,
+		Name:                key,
+		Description:         key,
 		ConfigurationSchema: util.JSONMap{"type": "object"},
 	}
 }
 
-func (f *fakeLLM) TestConnection(ctx context.Context, config util.JSONMap) error {
-	return nil
-}
-
-func (f *fakeLLM) Generate(
-	ctx context.Context,
-	config util.JSONMap,
-	instructions string,
-	messages []msg.Message,
-) (msg.Message, error) {
-	return f.generate(ctx, messages)
-}
-
-func newTestEngine(t *testing.T, llms map[string]*fakeLLM) *runtime.Engine {
+func newTestEngine(t *testing.T, llms map[string]*llmmocks.MockDriver) *runtime.Engine {
 	t.Helper()
 
 	llmReg := registry.New[llm.Driver]()
 	for key, instance := range llms {
-		instance.key = key
 		llmReg.MustRegister(key, instance)
 	}
 
@@ -63,12 +46,14 @@ func collectEvents(events *[]runtime.IEvent) func(runtime.IEvent) error {
 }
 
 func TestEngine_HappyPath(t *testing.T) {
-	engine := newTestEngine(t, map[string]*fakeLLM{
-		"primary": {
-			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
-				return msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil
-			},
-		},
+	primary := llmmocks.NewMockDriver(t)
+	primary.EXPECT().Info().Return(driverInfo("primary"))
+	primary.EXPECT().
+		Generate(mock.Anything, mock.Anything, mock.Anything).
+		Return(msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil)
+
+	engine := newTestEngine(t, map[string]*llmmocks.MockDriver{
+		"primary": primary,
 	})
 
 	var events []runtime.IEvent
@@ -108,13 +93,11 @@ func TestEngine_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	engine := newTestEngine(t, map[string]*fakeLLM{
-		"primary": {
-			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
-				t.Fatal("LLM should not be called after cancel")
-				return msg.Message{}, nil
-			},
-		},
+	primary := llmmocks.NewMockDriver(t)
+	primary.EXPECT().Info().Return(driverInfo("primary"))
+
+	engine := newTestEngine(t, map[string]*llmmocks.MockDriver{
+		"primary": primary,
 	})
 
 	var events []runtime.IEvent
@@ -145,12 +128,15 @@ func TestEngine_ContextCancelled(t *testing.T) {
 }
 
 func TestEngine_OnEventError(t *testing.T) {
-	engine := newTestEngine(t, map[string]*fakeLLM{
-		"primary": {
-			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
-				return msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil
-			},
-		},
+	primary := llmmocks.NewMockDriver(t)
+	primary.EXPECT().Info().Return(driverInfo("primary"))
+	primary.EXPECT().
+		Generate(mock.Anything, mock.Anything, mock.Anything).
+		Return(msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil).
+		Maybe()
+
+	engine := newTestEngine(t, map[string]*llmmocks.MockDriver{
+		"primary": primary,
 	})
 
 	boom := errors.New("persist failed")
@@ -174,17 +160,21 @@ func TestEngine_OnEventError(t *testing.T) {
 }
 
 func TestEngine_LLMFallback(t *testing.T) {
-	engine := newTestEngine(t, map[string]*fakeLLM{
-		"bad": {
-			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
-				return msg.Message{}, errors.New("bad llm")
-			},
-		},
-		"good": {
-			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
-				return msg.Message{Role: msg.RoleAssistant, Content: "ok"}, nil
-			},
-		},
+	bad := llmmocks.NewMockDriver(t)
+	bad.EXPECT().Info().Return(driverInfo("bad"))
+	bad.EXPECT().
+		Generate(mock.Anything, mock.Anything, mock.Anything).
+		Return(msg.Message{}, errors.New("bad llm"))
+
+	good := llmmocks.NewMockDriver(t)
+	good.EXPECT().Info().Return(driverInfo("good"))
+	good.EXPECT().
+		Generate(mock.Anything, mock.Anything, mock.Anything).
+		Return(msg.Message{Role: msg.RoleAssistant, Content: "ok"}, nil)
+
+	engine := newTestEngine(t, map[string]*llmmocks.MockDriver{
+		"bad":  bad,
+		"good": good,
 	})
 
 	var events []runtime.IEvent
@@ -218,13 +208,10 @@ func TestEngine_LLMFallback(t *testing.T) {
 }
 
 func TestEngine_ValidateFail(t *testing.T) {
-	engine := newTestEngine(t, map[string]*fakeLLM{
-		"primary": {
-			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
-				t.Fatal("should not generate")
-				return msg.Message{}, nil
-			},
-		},
+	primary := llmmocks.NewMockDriver(t)
+
+	engine := newTestEngine(t, map[string]*llmmocks.MockDriver{
+		"primary": primary,
 	})
 
 	var events []runtime.IEvent

@@ -133,13 +133,19 @@ func (e *Engine) runLLM(
 		return msg, ErrNoLLMConfigured
 	}
 	var lastErr error
+
+	prompt := llm.NewPrompt(
+		llm.WithSystem(agent.Instructions),
+		llm.WithMessages(messages),
+	)
 	for _, llm := range agent.LLMs {
 		llmInstance, getErr := e.LLMs.GetDriver(llm.Key)
 		if getErr != nil {
 			lastErr = getErr
 			continue
 		}
-		msg, genErr := llmInstance.Generate(ctx, llm.Config, agent.Instructions, messages)
+
+		msg, genErr := llmInstance.Generate(ctx, llm.Config, prompt)
 		if genErr != nil {
 			e.logger.Error(genErr)
 			lastErr = genErr

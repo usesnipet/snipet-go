@@ -18,9 +18,10 @@ import (
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
+	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	knowledgemocks "github.com/usesnipet/snipet/pkg/driver/knowledge/mocks"
 )
 
 var testIndexConfigSchema = util.JSONMap{
@@ -29,28 +30,6 @@ var testIndexConfigSchema = util.JSONMap{
 		"dimension": util.JSONMap{"type": "number"},
 	},
 	"required": []any{"dimension"},
-}
-
-type stubIndexDriver struct {
-	info           driver.Info
-	testConnection func(ctx context.Context, config util.JSONMap) error
-}
-
-func (s *stubIndexDriver) Info() driver.Info { return s.info }
-
-func (s *stubIndexDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
-	if s.testConnection != nil {
-		return s.testConnection(ctx, config)
-	}
-	return nil
-}
-
-func (s *stubIndexDriver) Reader(util.JSONMap) (knowledge.IKnowledgeIndexReader, error) {
-	return nil, nil
-}
-
-func (s *stubIndexDriver) Writer(util.JSONMap) (knowledge.IKnowledgeIndexWriter, error) {
-	return nil, nil
 }
 
 func newPassthroughTxManager(t *testing.T) *mocks.MockITxManager {
@@ -80,15 +59,16 @@ type testServiceOptions struct {
 	riverClient *queuemocks.MockIJobQueue
 }
 
-func newStubIndex(name string, schema util.JSONMap, testConn func(context.Context, util.JSONMap) error) *stubIndexDriver {
-	return &stubIndexDriver{
-		info: driver.Info{
-			Name:                name,
-			Description:         name,
-			ConfigurationSchema: schema,
-		},
-		testConnection: testConn,
-	}
+func newMockIndex(t *testing.T, name string, schema util.JSONMap) *knowledgemocks.MockIIndexDriver {
+	t.Helper()
+
+	indexDriver := knowledgemocks.NewMockIIndexDriver(t)
+	indexDriver.EXPECT().Info().Return(driver.Info{
+		Name:                name,
+		Description:         name,
+		ConfigurationSchema: schema,
+	})
+	return indexDriver
 }
 
 func newTestService(
@@ -164,7 +144,8 @@ func TestCreateStoresIndexAndReturnsIt(t *testing.T) {
 	config := util.JSONMap{"dimension": 1536}
 	var stored *model.KnowledgeIndex
 
-	indexDriver := newStubIndex("pinecone", testIndexConfigSchema, nil)
+	indexDriver := newMockIndex(t, "pinecone", testIndexConfigSchema)
+	indexDriver.EXPECT().TestConnection(mock.Anything, config).Return(nil)
 
 	repo := mocks.NewMockIKnowledgeIndexRepository(t)
 	repo.EXPECT().
@@ -205,7 +186,8 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 	config := util.JSONMap{"dimension": 1536}
 	expectedErr := errors.New("create failed")
 
-	indexDriver := newStubIndex("pinecone", testIndexConfigSchema, nil)
+	indexDriver := newMockIndex(t, "pinecone", testIndexConfigSchema)
+	indexDriver.EXPECT().TestConnection(mock.Anything, config).Return(nil)
 
 	repo := mocks.NewMockIKnowledgeIndexRepository(t)
 	repo.EXPECT().
@@ -262,7 +244,7 @@ func TestListDriversReturnsIndexDrivers(t *testing.T) {
 	t.Parallel()
 
 	indexSchema := util.JSONMap{"type": "object", "title": "index"}
-	indexDriver := newStubIndex("rag", indexSchema, nil)
+	indexDriver := newMockIndex(t, "rag", indexSchema)
 
 	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), map[string]knowledge.IIndexDriver{"rag": indexDriver})
 

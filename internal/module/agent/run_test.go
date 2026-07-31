@@ -17,32 +17,9 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
-
-type capturingLLM struct {
-	key      string
-	generate func(ctx context.Context, messages []msg.Message) (msg.Message, error)
-}
-
-func (f *capturingLLM) Info() driver.Info {
-	return driver.Info{
-		Name:                f.key,
-		Description:         f.key,
-		ConfigurationSchema: util.JSONMap{"type": "object"},
-	}
-}
-
-func (f *capturingLLM) TestConnection(context.Context, util.JSONMap) error { return nil }
-
-func (f *capturingLLM) Generate(
-	ctx context.Context,
-	_ util.JSONMap,
-	_ string,
-	messages []msg.Message,
-) (msg.Message, error) {
-	return f.generate(ctx, messages)
-}
 
 func agentWithPrimaryLLM(agentID string) *model.Agent {
 	llmID := uuid.New().String()
@@ -61,6 +38,18 @@ func agentWithPrimaryLLM(agentID string) *model.Agent {
 			},
 		}},
 	}
+}
+
+func newPrimaryLLM(t *testing.T) *llmmocks.MockDriver {
+	t.Helper()
+
+	d := llmmocks.NewMockDriver(t)
+	d.EXPECT().Info().Return(driver.Info{
+		Name:                "primary",
+		Description:         "primary",
+		ConfigurationSchema: util.JSONMap{"type": "object"},
+	})
+	return d
 }
 
 func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
@@ -95,13 +84,13 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 		}).
 		Return(nil)
 
+	primary := newPrimaryLLM(t)
+	primary.EXPECT().
+		Generate(mock.Anything, mock.Anything, mock.Anything).
+		Return(msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil)
+
 	llmReg := registry.New[llm.Driver]()
-	llmReg.MustRegister("primary", &capturingLLM{
-		key: "primary",
-		generate: func(_ context.Context, _ []msg.Message) (msg.Message, error) {
-			return msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil
-		},
-	})
+	llmReg.MustRegister("primary", primary)
 
 	svc := agent.NewService(
 		agentRepo,
@@ -175,14 +164,16 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 		}).
 		Return(nil)
 
-	llmReg := registry.New[llm.Driver]()
-	llmReg.MustRegister("primary", &capturingLLM{
-		key: "primary",
-		generate: func(_ context.Context, messages []msg.Message) (msg.Message, error) {
-			llmSaw = append([]msg.Message{}, messages...)
+	primary := newPrimaryLLM(t)
+	primary.EXPECT().
+		Generate(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, _ util.JSONMap, prompt llm.Prompt) (msg.Message, error) {
+			llmSaw = append([]msg.Message{}, prompt.Messages...)
 			return msg.NewMessage(msg.RoleAssistant, "done"), nil
-		},
-	})
+		})
+
+	llmReg := registry.New[llm.Driver]()
+	llmReg.MustRegister("primary", primary)
 
 	svc := agent.NewService(
 		agentRepo,
