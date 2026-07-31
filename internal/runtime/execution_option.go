@@ -1,6 +1,8 @@
 package runtime
 
-import "github.com/usesnipet/snipet/pkg/driver/llm"
+import (
+	"github.com/usesnipet/snipet/pkg/msg"
+)
 
 type ExecutionOption func(execution *Execution)
 
@@ -16,24 +18,23 @@ func WithMetadata(key string, value any) ExecutionOption {
 	}
 }
 
-func WithInitialMessages(msg llm.Message, messages ...llm.Message) ExecutionOption {
+func WithInitialMessages(messages ...msg.Message) ExecutionOption {
 	return func(execution *Execution) {
-		execution.Messages = append(execution.Messages, msg)
 		execution.Messages = append(execution.Messages, messages...)
 	}
 }
 
-func WithMessage(msg llm.Message) ExecutionOption {
+func WithMessage(msg msg.Message) ExecutionOption {
 	return func(execution *Execution) {
 		execution.Messages = append(execution.Messages, msg)
 	}
 }
 
-func WithMessageFromUser(content string, options ...llm.MessageOption) ExecutionOption {
+func WithMessageFromUser(content string, options ...msg.MessageOption) ExecutionOption {
 	return func(execution *Execution) {
 		execution.Messages = append(
 			execution.Messages,
-			llm.NewMessage(llm.MessageRoleUser, content, options...),
+			msg.NewMessage(msg.RoleUser, content, options...),
 		)
 	}
 }

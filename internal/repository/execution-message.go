@@ -88,7 +88,7 @@ func (r *ExecutionMessageRepository) ListBySessionID(ctx context.Context, sessio
 		Select("execution_messages.*").
 		Joins("INNER JOIN executions ON executions.id = execution_messages.execution_id").
 		Where("executions.session_id = ?", sessionID).
-		Order("execution_messages.created_at ASC").
+		Order("execution_messages.timestamp ASC").
 		Order("execution_messages.sequence ASC").
 		Find(&data).Error
 	return data, err

@@ -11,7 +11,8 @@ import (
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
-	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/internal/util/set"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 type Service struct {
@@ -126,8 +127,8 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 		return err
 	}
 
-	historyIDs := map[string]struct{}{}
-	initialMessages := make([]llm.Message, 0)
+	historyIDSet := set.New[string]()
+	initialMessages := make([]msg.Message, 0)
 
 	if input.SessionID != nil {
 		history, err := s.executionMessageRepo.ListBySessionID(ctx, *input.SessionID)
@@ -135,15 +136,14 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 			return err
 		}
 		for _, em := range history {
-			msg := em.ToRuntimeMessage()
-			historyIDs[msg.ID] = struct{}{}
-			initialMessages = append(initialMessages, *msg)
+			historyIDSet.Add(em.ID)
+			initialMessages = append(initialMessages, em.Message)
 		}
 	}
 
 	initialMessages = append(
 		initialMessages,
-		llm.NewMessage(llm.MessageRoleUser, input.Message),
+		msg.NewMessage(msg.RoleUser, input.Message),
 	)
 
 	execution := &model.Execution{
@@ -167,10 +167,10 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 		runtime.StartOptions{
 			Agent: agent.ToRuntimeAgent(),
 			ExecutionOptions: []runtime.ExecutionOption{
-				runtime.WithInitialMessages(initialMessages[0], initialMessages[1:]...),
+				runtime.WithInitialMessages(initialMessages...),
 			},
 			OnEvent: func(event runtime.IEvent) error {
-				forward, err := s.handleExecutionEvent(ctx, execution, historyIDs, event)
+				forward, err := s.handleExecutionEvent(ctx, execution, historyIDSet, event)
 				if err != nil {
 					return err
 				}
@@ -189,7 +189,7 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 func (s *Service) handleExecutionEvent(
 	ctx context.Context,
 	execution *model.Execution,
-	historyIDs map[string]struct{},
+	historyIDSet set.Set[string],
 	event runtime.IEvent,
 ) (runtime.IEvent, error) {
 	switch event := event.(type) {
@@ -202,26 +202,22 @@ func (s *Service) handleExecutionEvent(
 		}
 		return event, nil
 	case runtime.ExecutionMessageAddedEvent:
-		newMessages := make([]llm.Message, 0, len(event.Messages))
-		for _, msg := range event.Messages {
-			if _, isHistory := historyIDs[msg.ID]; isHistory {
+		newMessages := make([]model.ExecutionMessage, 0, len(event.Messages))
+		for _, m := range event.Messages {
+			if historyIDSet.Contains(m.ID) {
 				continue
 			}
-			newMessages = append(newMessages, msg)
+			executionMessage := model.ExecutionMessage{Message: m}
+			newMessages = append(newMessages, executionMessage)
 		}
 		if len(newMessages) == 0 {
 			return nil, nil
 		}
-		if err := s.executionMessageRepo.CreateInExecution(
-			ctx,
-			execution.ID,
-			util.Map(newMessages, func(msg llm.Message) model.ExecutionMessage {
-				return *(&model.ExecutionMessage{}).FromRuntimeMessage(msg)
-			}),
-		); err != nil {
+		if err := s.executionMessageRepo.CreateInExecution(ctx, execution.ID, newMessages); err != nil {
 			return nil, err
 		}
-		return runtime.ExecutionMessageAddedEvent{Messages: newMessages}, nil
+
+		return event, nil
 	}
 	return event, nil
 }

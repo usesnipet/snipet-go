@@ -17,11 +17,12 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 type capturingLLM struct {
 	key      string
-	generate func(ctx context.Context, messages []llm.Message) (llm.Message, error)
+	generate func(ctx context.Context, messages []msg.Message) (msg.Message, error)
 }
 
 func (f *capturingLLM) Info() driver.Info {
@@ -38,8 +39,8 @@ func (f *capturingLLM) Generate(
 	ctx context.Context,
 	_ util.JSONMap,
 	_ string,
-	messages []llm.Message,
-) (llm.Message, error) {
+	messages []msg.Message,
+) (msg.Message, error) {
 	return f.generate(ctx, messages)
 }
 
@@ -97,8 +98,8 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", &capturingLLM{
 		key: "primary",
-		generate: func(_ context.Context, _ []llm.Message) (llm.Message, error) {
-			return llm.Message{Role: llm.MessageRoleAssistant, Content: "done"}, nil
+		generate: func(_ context.Context, _ []msg.Message) (msg.Message, error) {
+			return msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil
 		},
 	})
 
@@ -125,12 +126,12 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	assert.Nil(t, created.SessionID)
 	assert.Equal(t, agentID, created.AgentID)
 
-	roles := make([]llm.MessageRole, 0, len(persisted))
+	roles := make([]msg.MessageRole, 0, len(persisted))
 	for _, m := range persisted {
 		roles = append(roles, m.Role)
 	}
-	assert.Contains(t, roles, llm.MessageRoleUser)
-	assert.Contains(t, roles, llm.MessageRoleAssistant)
+	assert.Contains(t, roles, msg.RoleUser)
+	assert.Contains(t, roles, msg.RoleAssistant)
 }
 
 func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
@@ -142,7 +143,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 
 	var created *model.Execution
 	var persisted []model.ExecutionMessage
-	var llmSaw []llm.Message
+	var llmSaw []msg.Message
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	agentRepo.EXPECT().
@@ -165,9 +166,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 	messageRepo.EXPECT().
 		ListBySessionID(mock.Anything, sessionID).
 		Return([]model.ExecutionMessage{{
-			ID:      historyMsgID,
-			Role:    llm.MessageRoleUser,
-			Content: "earlier",
+			Message: msg.NewMessage(msg.RoleUser, "earlier", msg.WithID(historyMsgID)),
 		}}, nil)
 	messageRepo.EXPECT().
 		CreateInExecution(mock.Anything, mock.Anything, mock.Anything).
@@ -179,9 +178,9 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", &capturingLLM{
 		key: "primary",
-		generate: func(_ context.Context, messages []llm.Message) (llm.Message, error) {
-			llmSaw = append([]llm.Message{}, messages...)
-			return llm.Message{Role: llm.MessageRoleAssistant, Content: "done"}, nil
+		generate: func(_ context.Context, messages []msg.Message) (msg.Message, error) {
+			llmSaw = append([]msg.Message{}, messages...)
+			return msg.NewMessage(msg.RoleAssistant, "done"), nil
 		},
 	})
 

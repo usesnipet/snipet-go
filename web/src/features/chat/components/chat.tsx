@@ -9,18 +9,18 @@ import { useSessionChat } from "../hooks";
 
 import { ChatInput } from "./chat-input";
 
-import type { RuntimeMessage } from "@/features/session/schemas";
+import type { ChatMessage } from "../hooks";
 import type { ChatInputSubmit } from "./chat-input";
 
 type ChatLocationState = {
   initialMessage?: string;
 };
 
-function isVisibleMessage(message: RuntimeMessage) {
+function isVisibleMessage(message: ChatMessage) {
   return message.role === "user" || message.role === "assistant" || message.role === "final";
 }
 
-function MessageBubble({ message }: { message: RuntimeMessage }) {
+function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
 
   return (

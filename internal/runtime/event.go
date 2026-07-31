@@ -1,6 +1,6 @@
 package runtime
 
-import "github.com/usesnipet/snipet/pkg/driver/llm"
+import "github.com/usesnipet/snipet/pkg/msg"
 
 type EventListener func(event IEvent) error
 
@@ -19,7 +19,7 @@ func (e ExecutionStatusChangedEvent) isEvent() {}
 
 // ExecutionMessageAddedEvent is emitted when one or more messages are appended.
 type ExecutionMessageAddedEvent struct {
-	Messages []llm.Message `json:"messages"`
+	Messages []msg.Message `json:"messages"`
 }
 
 func (e ExecutionMessageAddedEvent) isEvent() {}

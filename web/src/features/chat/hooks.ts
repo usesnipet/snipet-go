@@ -1,6 +1,8 @@
 import { findMessagesSessionQueryKey, useFindMessagesSession } from "@/features/session/hooks";
 import {
-  messageAddedEventSchema, sseErrorEventSchema, statusChangedEventSchema
+  messageAddedEventSchema,
+  sseErrorEventSchema,
+  statusChangedEventSchema,
 } from "@/features/session/schemas";
 import { sessionService } from "@/features/session/service";
 import { toast } from "@/hooks/use-toast";
@@ -8,9 +10,13 @@ import { ApiError } from "@/lib/http";
 import { queryClient } from "@/lib/query-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { RuntimeMessage } from "@/features/session/schemas";
+import type { ExecutionMessage } from "@/features/session/schemas";
 
-function mergeMessages(existing: RuntimeMessage[], incoming: RuntimeMessage[]): RuntimeMessage[] {
+export type ChatMessage = Omit<ExecutionMessage, "execution_id"> & {
+  execution_id?: string;
+};
+
+function mergeMessages(existing: ChatMessage[], incoming: ChatMessage[]): ChatMessage[] {
   const byId = new Map(existing.map((m) => [m.id, m]));
 
   for (const msg of incoming) {
@@ -18,17 +24,17 @@ function mergeMessages(existing: RuntimeMessage[], incoming: RuntimeMessage[]): 
   }
 
   return Array.from(byId.values()).sort((a, b) => {
-    const timeDiff = a.timestamp.getTime() - b.timestamp.getTime();
+    const timeDiff = a.created_at.getTime() - b.created_at.getTime();
     if (timeDiff !== 0) return timeDiff;
     return a.sequence - b.sequence;
   });
 }
 
 function replaceOptimisticUserMessage(
-  messages: RuntimeMessage[],
+  messages: ChatMessage[],
   optimisticId: string,
-  confirmed: RuntimeMessage[],
-): RuntimeMessage[] {
+  confirmed: ChatMessage[],
+): ChatMessage[] {
   const userConfirmed = confirmed.find((m) => m.role === "user");
   if (!userConfirmed) {
     return mergeMessages(messages, confirmed);
@@ -48,7 +54,7 @@ export function useSessionChat(clientCode: string, sessionId: string) {
     searchParams: { sort: "asc" },
   });
 
-  const [messages, setMessages] = useState<RuntimeMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -60,7 +66,7 @@ export function useSessionChat(clientCode: string, sessionId: string) {
     if (historySyncedRef.current === sessionId && isRunning) return;
 
     const history = historyPage.data;
-    setMessages((prev: RuntimeMessage[]) => {
+    setMessages((prev: ChatMessage[]) => {
       if (historySyncedRef.current !== sessionId) {
         historySyncedRef.current = sessionId;
         return history;
@@ -121,7 +127,7 @@ export function useSessionChat(clientCode: string, sessionId: string) {
                 case "message_added": {
                   const parsed = messageAddedEventSchema.safeParse(data);
                   if (!parsed.success) return;
-                  const incoming = parsed.data.messages.map(normalizeRuntimeMessage);
+                  const incoming = parsed.data.messages;
                   setMessages((prev) =>
                     replaceOptimisticUserMessage(prev, optimisticId, incoming),
                   );

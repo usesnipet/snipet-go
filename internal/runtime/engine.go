@@ -6,6 +6,7 @@ import (
 
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 type Engine struct {
@@ -105,14 +106,14 @@ func (e *Engine) run(ctx context.Context, options StartOptions, execution Execut
 			return nil
 		}
 
-		msg, err := e.runLLM(ctx, options.Agent, execution.Messages)
+		message, err := e.runLLM(ctx, options.Agent, execution.Messages)
 		if err != nil {
 			return e.fail(&execution, options.OnEvent, err)
 		}
 
-		msg = execution.AddMessage(msg)
+		message = execution.AddMessage(message)
 		if err := e.emit(options.OnEvent, ExecutionMessageAddedEvent{
-			Messages: []llm.Message{msg},
+			Messages: []msg.Message{message},
 		}); err != nil {
 			return err
 		}
@@ -127,8 +128,8 @@ func (e *Engine) run(ctx context.Context, options StartOptions, execution Execut
 func (e *Engine) runLLM(
 	ctx context.Context,
 	agent Agent,
-	messages []llm.Message,
-) (msg llm.Message, err error) {
+	messages []msg.Message,
+) (msg msg.Message, err error) {
 	if len(agent.LLMs) == 0 {
 		return msg, ErrNoLLMConfigured
 	}

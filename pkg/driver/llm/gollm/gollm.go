@@ -10,6 +10,7 @@ import (
 	gollmlib "github.com/teilomillet/gollm"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 // New returns an llm.API backed by gollm for the given provider name
@@ -19,7 +20,12 @@ func New(provider string) llm.API {
 		TestConnection: func(ctx context.Context, config util.JSONMap) error {
 			return testConnection(ctx, provider, config)
 		},
-		Generate: func(ctx context.Context, config util.JSONMap, instructions string, messages []llm.Message) (llm.Message, error) {
+		Generate: func(
+			ctx context.Context,
+			config util.JSONMap,
+			instructions string,
+			messages []msg.Message,
+		) (msg.Message, error) {
 			return generate(ctx, provider, config, instructions, messages)
 		},
 	}
@@ -87,48 +93,44 @@ func generate(
 	provider string,
 	config util.JSONMap,
 	instructions string,
-	messages []llm.Message,
-) (msg llm.Message, err error) {
+	messages []msg.Message,
+) (message msg.Message, err error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
-		return msg, fmt.Errorf("failed to parse config: %w", err)
+		return message, fmt.Errorf("failed to parse config: %w", err)
 	}
 	if cfg.Model == "" {
-		return msg, fmt.Errorf("model is required")
+		return message, fmt.Errorf("model is required")
 	}
 
 	client, err := newClient(provider, cfg)
 	if err != nil {
-		return msg, fmt.Errorf("failed to create client: %w", err)
+		return message, fmt.Errorf("failed to create client: %w", err)
 	}
 
 	prompt, err := buildPrompt(instructions, messages)
 	if err != nil {
-		return msg, fmt.Errorf("%s: build prompt: %w", provider, err)
+		return message, fmt.Errorf("%s: build prompt: %w", provider, err)
 	}
 
 	text, err := client.Generate(ctx, prompt, gollmlib.WithJSONSchemaValidation())
 	if err != nil {
-		return msg, fmt.Errorf("%s: generate response: %w", provider, err)
+		return message, fmt.Errorf("%s: generate response: %w", provider, err)
 	}
 	text = extractJSON(text)
 	if text == "" {
-		return msg, fmt.Errorf("%s: empty response", provider)
+		return message, fmt.Errorf("%s: empty response", provider)
 	}
 
 	var out structuredMessage
 	if err := json.Unmarshal([]byte(text), &out); err != nil {
-		return msg, fmt.Errorf("%s: parse structured output: %w", provider, err)
+		return message, fmt.Errorf("%s: parse structured output: %w", provider, err)
 	}
 
-	return llm.Message{
-		Role:      llm.MessageRoleAssistant,
-		Content:   out.Content,
-		Timestamp: time.Now(),
-	}, nil
+	return msg.NewMessage(msg.RoleAssistant, out.Content, msg.WithTimestamp(time.Now())), nil
 }
 
-func buildPrompt(instructions string, messages []llm.Message) (*gollmlib.Prompt, error) {
+func buildPrompt(instructions string, messages []msg.Message) (*gollmlib.Prompt, error) {
 	opts := []gollmlib.PromptOption{
 		gollmlib.WithOutput(outputSpec),
 	}
@@ -137,14 +139,14 @@ func buildPrompt(instructions string, messages []llm.Message) (*gollmlib.Prompt,
 	}
 
 	promptMessages := make([]gollmlib.PromptMessage, 0, len(messages))
-	for _, msg := range messages {
-		role, ok := toGollmRole(msg.Role)
+	for _, m := range messages {
+		role, ok := toGollmRole(m.Role)
 		if !ok {
 			continue
 		}
 		promptMessages = append(promptMessages, gollmlib.PromptMessage{
 			Role:    role,
-			Content: msg.Content,
+			Content: m.Content,
 		})
 	}
 	if len(promptMessages) > 0 {
@@ -153,7 +155,7 @@ func buildPrompt(instructions string, messages []llm.Message) (*gollmlib.Prompt,
 
 	input := "Respond to the conversation."
 	for i := len(messages) - 1; i >= 0; i-- {
-		if messages[i].Role == llm.MessageRoleUser && messages[i].Content != "" {
+		if messages[i].Role == msg.RoleUser && messages[i].Content != "" {
 			input = messages[i].Content
 			break
 		}
@@ -162,13 +164,13 @@ func buildPrompt(instructions string, messages []llm.Message) (*gollmlib.Prompt,
 	return gollmlib.NewPrompt(input, opts...), nil
 }
 
-func toGollmRole(role llm.MessageRole) (string, bool) {
+func toGollmRole(role msg.MessageRole) (string, bool) {
 	switch role {
-	case llm.MessageRoleUser:
+	case msg.RoleUser:
 		return "user", true
-	case llm.MessageRoleAssistant:
+	case msg.RoleAssistant:
 		return "assistant", true
-	case llm.MessageRoleSystem:
+	case msg.RoleSystem:
 		return "system", true
 	default:
 		return "", false

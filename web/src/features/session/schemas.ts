@@ -130,24 +130,9 @@ export const statusChangedEventSchema = z
 
 export type StatusChangedEvent = z.infer<typeof statusChangedEventSchema>;
 
-/** Runtime message from SSE `message_added` (PascalCase — no JSON tags on Go struct). */
-export const runtimeMessageSchema = z
-  .object({
-    id: z.string(),
-    role: messageRoleSchema,
-    sequence: z.number(),
-    content: z.string(),
-    tool_calls: z.array(z.unknown()).optional(),
-    tool_result: z.unknown().nullable().optional(),
-    timestamp: z.coerce.date(),
-  })
-  .loose();
-
-export type RuntimeMessage = z.infer<typeof runtimeMessageSchema>;
-
 export const messageAddedEventSchema = z
   .object({
-    messages: z.array(runtimeMessageSchema),
+    messages: z.array(executionMessageSchema),
   })
   .strict();
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 type Driver interface {
@@ -14,6 +15,6 @@ type Driver interface {
 		ctx context.Context,
 		config util.JSONMap,
 		instructions string,
-		messages []Message,
-	) (Message, error)
+		messages []msg.Message,
+	) (msg.Message, error)
 }

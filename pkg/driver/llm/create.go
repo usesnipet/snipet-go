@@ -7,6 +7,7 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	jsonschema "github.com/usesnipet/snipet/internal/util/json_schema"
 	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 type Option func(*options)
@@ -88,10 +89,10 @@ func (d *llmDriver) Generate(
 	ctx context.Context,
 	config util.JSONMap,
 	instructions string,
-	messages []Message,
-) (Message, error) {
+	messages []msg.Message,
+) (msg.Message, error) {
 	if d.api.Generate == nil {
-		return Message{}, fmt.Errorf("generate not configured")
+		return msg.Message{}, fmt.Errorf("generate not configured")
 	}
 	return d.api.Generate(ctx, config, instructions, messages)
 }

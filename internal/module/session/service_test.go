@@ -25,6 +25,7 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 type sessionTestLLM struct {
@@ -43,9 +44,9 @@ func (s *sessionTestLLM) Generate(
 	context.Context,
 	util.JSONMap,
 	string,
-	[]llm.Message,
-) (llm.Message, error) {
-	return llm.Message{Role: llm.MessageRoleAssistant, Content: "ok"}, nil
+	[]msg.Message,
+) (msg.Message, error) {
+	return msg.NewMessage(msg.RoleAssistant, "ok"), nil
 }
 
 func apiKeyContext() context.Context {
@@ -93,7 +94,7 @@ func TestFindMessagesReturnsExecutionMessages(t *testing.T) {
 	clientCode := "abc"
 	clientID := uuid.New().String()
 	sessionID := uuid.New().String()
-	expected := page.NewPaginated([]model.ExecutionMessage{{Content: "hi"}}, 1, 0, 10)
+	expected := page.NewPaginated([]model.ExecutionMessage{{Message: msg.NewMessage(msg.RoleUser, "hi")}}, 1, 0, 10)
 
 	clientRepo := mocks.NewMockIClientRepository(t)
 	expectClientByCode(t, clientRepo, clientCode, clientID)

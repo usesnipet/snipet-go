@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/usesnipet/snipet/internal/util"
-	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 func TestBuildPrompt(t *testing.T) {
-	prompt, err := buildPrompt("You are helpful.", []llm.Message{
-		llm.NewMessage(llm.MessageRoleUser, "Hello"),
-		llm.NewMessage(llm.MessageRoleAssistant, "Hi there"),
-		llm.NewMessage(llm.MessageRoleUser, "How are you?"),
+	prompt, err := buildPrompt("You are helpful.", []msg.Message{
+		msg.NewMessage(msg.RoleUser, "Hello"),
+		msg.NewMessage(msg.RoleAssistant, "Hi there"),
+		msg.NewMessage(msg.RoleUser, "How are you?"),
 	})
 	require.NoError(t, err)
 	require.Equal(t, "How are you?", prompt.Input)

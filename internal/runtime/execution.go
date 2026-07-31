@@ -4,7 +4,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/usesnipet/snipet/internal/util"
-	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 var validate = validator.New()
@@ -26,11 +26,11 @@ type ExecutionConfig struct {
 }
 
 type Execution struct {
-	ErrorMessage string            `json:"error_message" validate:"omitempty"`
-	Config       ExecutionConfig   `json:"config" validate:"required"`
-	Status       ExecutionStatus   `json:"status" validate:"required"`
-	Messages     []llm.Message     `json:"messages" validate:"required,min=1"`
-	Turns        int               `json:"turns" validate:"min=0"`
+	ErrorMessage string          `json:"error_message" validate:"omitempty"`
+	Config       ExecutionConfig `json:"config" validate:"required"`
+	Status       ExecutionStatus `json:"status" validate:"required"`
+	Messages     []msg.Message   `json:"messages" validate:"required,min=1"`
+	Turns        int             `json:"turns" validate:"min=0"`
 }
 
 func NewExecution(options ...ExecutionOption) (Execution, error) {
@@ -40,7 +40,7 @@ func NewExecution(options ...ExecutionOption) (Execution, error) {
 			Metadata: util.JSONMap{},
 		},
 		Status:   ExecutionStatusPending,
-		Messages: []llm.Message{},
+		Messages: []msg.Message{},
 		Turns:    0,
 	}
 
@@ -62,7 +62,7 @@ func NewExecution(options ...ExecutionOption) (Execution, error) {
 	return execution, nil
 }
 
-func (e *Execution) AddMessage(msg llm.Message) llm.Message {
+func (e *Execution) AddMessage(msg msg.Message) msg.Message {
 	if msg.ID == "" {
 		msg.ID = uuid.NewString()
 	}

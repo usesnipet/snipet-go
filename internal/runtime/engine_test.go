@@ -11,11 +11,12 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 type fakeLLM struct {
 	key      string
-	generate func(ctx context.Context, messages []llm.Message) (llm.Message, error)
+	generate func(ctx context.Context, messages []msg.Message) (msg.Message, error)
 }
 
 func (f *fakeLLM) Info() driver.Info {
@@ -34,8 +35,8 @@ func (f *fakeLLM) Generate(
 	ctx context.Context,
 	config util.JSONMap,
 	instructions string,
-	messages []llm.Message,
-) (llm.Message, error) {
+	messages []msg.Message,
+) (msg.Message, error) {
 	return f.generate(ctx, messages)
 }
 
@@ -64,8 +65,8 @@ func collectEvents(events *[]runtime.IEvent) func(runtime.IEvent) error {
 func TestEngine_HappyPath(t *testing.T) {
 	engine := newTestEngine(t, map[string]*fakeLLM{
 		"primary": {
-			generate: func(ctx context.Context, messages []llm.Message) (llm.Message, error) {
-				return llm.Message{Role: llm.MessageRoleAssistant, Content: "done"}, nil
+			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
+				return msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil
 			},
 		},
 	})
@@ -109,9 +110,9 @@ func TestEngine_ContextCancelled(t *testing.T) {
 
 	engine := newTestEngine(t, map[string]*fakeLLM{
 		"primary": {
-			generate: func(ctx context.Context, messages []llm.Message) (llm.Message, error) {
+			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
 				t.Fatal("LLM should not be called after cancel")
-				return llm.Message{}, nil
+				return msg.Message{}, nil
 			},
 		},
 	})
@@ -146,8 +147,8 @@ func TestEngine_ContextCancelled(t *testing.T) {
 func TestEngine_OnEventError(t *testing.T) {
 	engine := newTestEngine(t, map[string]*fakeLLM{
 		"primary": {
-			generate: func(ctx context.Context, messages []llm.Message) (llm.Message, error) {
-				return llm.Message{Role: llm.MessageRoleAssistant, Content: "done"}, nil
+			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
+				return msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil
 			},
 		},
 	})
@@ -175,13 +176,13 @@ func TestEngine_OnEventError(t *testing.T) {
 func TestEngine_LLMFallback(t *testing.T) {
 	engine := newTestEngine(t, map[string]*fakeLLM{
 		"bad": {
-			generate: func(ctx context.Context, messages []llm.Message) (llm.Message, error) {
-				return llm.Message{}, errors.New("bad llm")
+			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
+				return msg.Message{}, errors.New("bad llm")
 			},
 		},
 		"good": {
-			generate: func(ctx context.Context, messages []llm.Message) (llm.Message, error) {
-				return llm.Message{Role: llm.MessageRoleAssistant, Content: "ok"}, nil
+			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
+				return msg.Message{Role: msg.RoleAssistant, Content: "ok"}, nil
 			},
 		},
 	})
@@ -219,9 +220,9 @@ func TestEngine_LLMFallback(t *testing.T) {
 func TestEngine_ValidateFail(t *testing.T) {
 	engine := newTestEngine(t, map[string]*fakeLLM{
 		"primary": {
-			generate: func(ctx context.Context, messages []llm.Message) (llm.Message, error) {
+			generate: func(ctx context.Context, messages []msg.Message) (msg.Message, error) {
 				t.Fatal("should not generate")
-				return llm.Message{}, nil
+				return msg.Message{}, nil
 			},
 		},
 	})
