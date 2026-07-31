@@ -1,4 +1,4 @@
-package openai
+package mistral
 
 import (
 	_ "embed"
@@ -12,11 +12,11 @@ var schemaJSON []byte
 
 func New() llm.Driver {
 	return llm.CreateDriver(
-		llm.WithName("OpenAI"),
-		llm.WithDescription("OpenAI language models via gollm."),
-		llm.WithIcon("https://openai.com/favicon.ico"),
+		llm.WithName("Mistral"),
+		llm.WithDescription("Mistral language models via gollm."),
+		llm.WithIcon("https://mistral.ai/favicon.ico"),
 		llm.WithTags("language", "model", "llm"),
 		llm.WithConfigurationSchema(llm.MustConfigurationSchema(schemaJSON)),
-		llm.WithAPI(gollmprovider.New("openai")),
+		llm.WithAPI(gollmprovider.New("mistral")),
 	)
 }

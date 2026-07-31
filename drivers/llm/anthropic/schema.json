@@ -4,7 +4,7 @@
   "properties": {
     "api_key": {
       "type": "string",
-      "description": "Google Gemini API key"
+      "description": "Anthropic API key"
     },
     "model": {
       "type": "string",

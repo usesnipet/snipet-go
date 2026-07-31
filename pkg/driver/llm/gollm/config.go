@@ -1,4 +1,4 @@
-package gemini
+package gollm
 
 type Config struct {
 	APIKey      string  `json:"api_key"`
@@ -6,4 +6,5 @@ type Config struct {
 	Temperature float64 `json:"temperature"`
 	MaxTokens   int     `json:"max_tokens"`
 	TopP        float64 `json:"top_p"`
+	Endpoint    string  `json:"endpoint"`
 }

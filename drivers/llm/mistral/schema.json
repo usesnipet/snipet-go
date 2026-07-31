@@ -4,7 +4,7 @@
   "properties": {
     "api_key": {
       "type": "string",
-      "description": "API key"
+      "description": "Mistral API key"
     },
     "model": {
       "type": "string",

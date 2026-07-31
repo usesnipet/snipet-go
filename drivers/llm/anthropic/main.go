@@ -1,4 +1,4 @@
-package openai
+package anthropic
 
 import (
 	_ "embed"
@@ -12,11 +12,11 @@ var schemaJSON []byte
 
 func New() llm.Driver {
 	return llm.CreateDriver(
-		llm.WithName("OpenAI"),
-		llm.WithDescription("OpenAI language models via gollm."),
-		llm.WithIcon("https://openai.com/favicon.ico"),
+		llm.WithName("Anthropic"),
+		llm.WithDescription("Anthropic Claude models via gollm."),
+		llm.WithIcon("https://www.anthropic.com/favicon.ico"),
 		llm.WithTags("language", "model", "llm"),
 		llm.WithConfigurationSchema(llm.MustConfigurationSchema(schemaJSON)),
-		llm.WithAPI(gollmprovider.New("openai")),
+		llm.WithAPI(gollmprovider.New("anthropic")),
 	)
 }

@@ -4,11 +4,15 @@
   "properties": {
     "api_key": {
       "type": "string",
-      "description": "API key"
+      "description": "Optional API key (not required for local Ollama)"
     },
     "model": {
       "type": "string",
       "description": "Model ID used to generate the response"
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "Ollama API endpoint (default http://localhost:11434)"
     },
     "temperature": {
       "type": "number",
@@ -25,6 +29,6 @@
       "maximum": 1
     }
   },
-  "required": ["api_key", "model"],
+  "required": ["model"],
   "additionalProperties": false
 }

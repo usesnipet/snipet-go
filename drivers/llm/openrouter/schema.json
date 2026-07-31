@@ -4,11 +4,11 @@
   "properties": {
     "api_key": {
       "type": "string",
-      "description": "API key"
+      "description": "OpenRouter API key"
     },
     "model": {
       "type": "string",
-      "description": "Model ID used to generate the response"
+      "description": "Model ID used to generate the response (e.g. anthropic/claude-3.5-sonnet)"
     },
     "temperature": {
       "type": "number",
