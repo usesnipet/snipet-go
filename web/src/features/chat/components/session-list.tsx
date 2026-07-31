@@ -12,7 +12,7 @@ type SessionListProps = {
   clientCode: string;
   data: Session[];
   isLoading: boolean;
-  error: Error;
+  error: Error | null;
   search?: string;
 }
 

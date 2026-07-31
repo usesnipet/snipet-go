@@ -58,13 +58,16 @@ export function Page({ title, description, documentTitle, children, actions, lef
     </PageActionsContext.Provider>
   );
 }
-
-/** Renders actions in the page header while keeping definition in `content.tsx`. */
-export function PageActions({ children }: { children: React.ReactNode }) {
-  const { setActions } = useContext(PageActionsContext);
-  if (!setActions) {
+const usePage = () => {
+  const context = useContext(PageActionsContext);
+  if (!context) {
     throw new Error("PageActions must be used within Page");
   }
+  return context;
+}
+/** Renders actions in the page header while keeping definition in `content.tsx`. */
+export function PageActions({ children }: { children: React.ReactNode }) {
+  const { setActions } = usePage();
 
   useLayoutEffect(() => {
     setActions(children);
@@ -77,10 +80,7 @@ export function PageActions({ children }: { children: React.ReactNode }) {
 
 /** Renders left actions in the page header while keeping definition in `content.tsx`. */
 export function PageLeftActions({ children }: { children: React.ReactNode }) {
-  const { setLeftActions } = useContext(PageActionsContext);
-  if (!setLeftActions) {
-    throw new Error("PageActions must be used within Page");
-  }
+  const { setLeftActions } = usePage();
 
   useLayoutEffect(() => {
     setLeftActions(children);

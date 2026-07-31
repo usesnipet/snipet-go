@@ -26,7 +26,7 @@ export function AgentCatalogItem({ agent }: { agent: Agent }) {
     });
   };
 
-  const llmLabels = [...agent.llms]
+  const llmLabels = [...(agent.llms ?? [])]
     .sort((a, b) => a.priority - b.priority)
     .map((rel) => rel.llm.name || rel.llm.provider);
 

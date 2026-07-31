@@ -20,7 +20,7 @@ type UpdateAgentDialogProps = DialogInstanceProps<{
 }>;
 
 function llmIdsFromAgent(agent: Agent): string[] {
-  return [...agent.llms]
+  return [...(agent.llms ?? [])]
     .sort((a, b) => a.priority - b.priority)
     .map((rel) => rel.llm_id);
 }
