@@ -50,13 +50,7 @@ export const runSessionSchema = z
 
 export type RunSession = z.infer<typeof runSessionSchema>;
 
-export const messageRoleSchema = z.enum([
-  "system",
-  "user",
-  "assistant",
-  "tool",
-  "final",
-]);
+export const messageRoleSchema = z.enum(["system", "user", "assistant"]);
 
 export type MessageRole = z.infer<typeof messageRoleSchema>;
 
@@ -67,7 +61,7 @@ export const messageSchema = z
     role: messageRoleSchema,
     content: z.string(),
     final: z.boolean().optional(),
-    timestamp: z.coerce.date()
+    timestamp: z.coerce.date(),
   })
   .strict();
 
@@ -126,23 +120,55 @@ export const executionStatusSchema = z.enum([
 
 export type ExecutionStatus = z.infer<typeof executionStatusSchema>;
 
-export const statusChangedEventSchema = z
+/** SSE event names from internal/module/agent/subscriber/sse.go */
+export const SSE_EVENT = {
+  EXECUTION_MESSAGE_ADDED: "execution_message_added",
+  EXECUTION_STATUS_CHANGED: "execution_status_changed",
+  EXECUTION_TURN_COMPLETED: "execution_turn_completed",
+  EXECUTION_FINISHED: "execution_finished",
+  ERROR: "error",
+} as const;
+
+export type SseEventName = (typeof SSE_EVENT)[keyof typeof SSE_EVENT];
+
+export const executionStatusChangedEventSchema = z
   .object({
     status: executionStatusSchema,
     error_message: z.string().optional(),
-    turns: z.number(),
   })
   .strict();
 
-export type StatusChangedEvent = z.infer<typeof statusChangedEventSchema>;
+export type ExecutionStatusChangedEvent = z.infer<
+  typeof executionStatusChangedEventSchema
+>;
 
-export const messageAddedEventSchema = z
+export const executionMessageAddedEventSchema = z
   .object({
-    messages: z.array(messageSchema),
+    message: messageSchema,
   })
   .strict();
 
-export type MessageAddedEvent = z.infer<typeof messageAddedEventSchema>;
+export type ExecutionMessageAddedEvent = z.infer<
+  typeof executionMessageAddedEventSchema
+>;
+
+export const executionTurnCompletedEventSchema = z
+  .object({
+    turn: z.number(),
+  })
+  .strict();
+
+export type ExecutionTurnCompletedEvent = z.infer<
+  typeof executionTurnCompletedEventSchema
+>;
+
+export const executionFinishedEventSchema = z
+  .object({
+    status: z.string(),
+  })
+  .strict();
+
+export type ExecutionFinishedEvent = z.infer<typeof executionFinishedEventSchema>;
 
 export const sseErrorEventSchema = z
   .object({
@@ -151,12 +177,4 @@ export const sseErrorEventSchema = z
   .strict();
 
 export type SseErrorEvent = z.infer<typeof sseErrorEventSchema>;
-
-export const sseCloseEventSchema = z
-  .object({
-    status: z.string(),
-  })
-  .strict();
-
-export type SseCloseEvent = z.infer<typeof sseCloseEventSchema>;
 

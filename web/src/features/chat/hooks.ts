@@ -1,41 +1,41 @@
 import { findMessagesSessionQueryKey, useFindMessagesSession } from "@/features/session/hooks";
 import {
-  messageAddedEventSchema, sseErrorEventSchema, statusChangedEventSchema
+  SSE_EVENT,
+  executionMessageAddedEventSchema,
+  executionStatusChangedEventSchema,
+  executionTurnCompletedEventSchema,
+  sseErrorEventSchema,
 } from "@/features/session/schemas";
 import { sessionService } from "@/features/session/service";
 import { toast } from "@/hooks/use-toast";
 import { ApiError } from "@/lib/http";
 import { queryClient } from "@/lib/query-client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { Message } from "@/features/session/schemas";
 
-function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
-  const byId = new Map(existing.map((m) => [m.id, m]));
+const EMPTY_MESSAGES: Message[] = [];
 
-  for (const msg of incoming) {
-    byId.set(msg.id, msg);
-  }
+type PendingMessage = {
+  message: Message;
+  knownIds: Set<string>;
+};
 
-  return Array.from(byId.values()).sort((a, b) => {
-    const timeDiff = a.timestamp.getTime() - b.timestamp.getTime();
-    if (timeDiff !== 0) return timeDiff;
-    return a.sequence - b.sequence;
-  });
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
 }
 
-function replaceOptimisticUserMessage(
-  messages: Message[],
-  optimisticId: string,
-  confirmed: Message[],
-): Message[] {
-  const userConfirmed = confirmed.find((m) => m.role === "user");
-  if (!userConfirmed) {
-    return mergeMessages(messages, confirmed);
-  }
-
-  const withoutOptimistic = messages.filter((m) => m.id !== optimisticId);
-  return mergeMessages(withoutOptimistic, confirmed);
+/**
+ * The run stream never echoes the user message back, so the persisted copy is only
+ * recognizable by its content: any user message that was not around when we sent it.
+ */
+function isPendingConfirmed(messages: Message[], pending: PendingMessage): boolean {
+  return messages.some(
+    (message) =>
+      message.role === "user" &&
+      message.content === pending.message.content &&
+      !pending.knownIds.has(message.id),
+  );
 }
 
 export function useSessionChat(clientCode: string, sessionId: string) {
@@ -48,62 +48,80 @@ export function useSessionChat(clientCode: string, sessionId: string) {
     searchParams: { sort: "asc" },
   });
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [streamed, setStreamed] = useState<Message[]>(EMPTY_MESSAGES);
+  const [pending, setPending] = useState<PendingMessage | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [turn, setTurn] = useState<number | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
+  const [renderedSessionId, setRenderedSessionId] = useState(sessionId);
+
   const abortRef = useRef<AbortController | null>(null);
-  const historySyncedRef = useRef<string | null>(null);
-  const prevSessionIdRef = useRef(sessionId);
+  const isRunningRef = useRef(false);
+  const sessionIdRef = useRef(sessionId);
+  const messagesRef = useRef<Message[]>(EMPTY_MESSAGES);
+
+  if (renderedSessionId !== sessionId) {
+    setRenderedSessionId(sessionId);
+    setStreamed(EMPTY_MESSAGES);
+    setPending(null);
+    setIsRunning(false);
+    setTurn(null);
+    setRunError(null);
+  }
 
   useEffect(() => {
-    if (!historyPage?.data) return;
-    if (historySyncedRef.current === sessionId && isRunning) return;
-
-    const history = historyPage.data;
-    setMessages((prev: Message[]) => {
-      if (historySyncedRef.current !== sessionId) {
-        historySyncedRef.current = sessionId;
-        return history;
-      }
-      return mergeMessages(history, prev);
-    });
-  }, [historyPage, sessionId, isRunning]);
-
-  useEffect(() => {
+    sessionIdRef.current = sessionId;
     return () => {
       abortRef.current?.abort();
+      abortRef.current = null;
+      isRunningRef.current = false;
     };
-  }, []);
+  }, [sessionId]);
+
+  const history = historyPage?.data;
+
+  const messages = useMemo(() => {
+    const byId = new Map<string, Message>();
+
+    for (const message of history ?? EMPTY_MESSAGES) {
+      byId.set(message.id, message);
+    }
+    for (const message of streamed) {
+      if (!byId.has(message.id)) byId.set(message.id, message);
+    }
+
+    const persisted = Array.from(byId.values());
+    if (!pending || isPendingConfirmed(persisted, pending)) return persisted;
+
+    return [...persisted, pending.message];
+  }, [history, streamed, pending]);
 
   useEffect(() => {
-    if (prevSessionIdRef.current === sessionId) return;
-    prevSessionIdRef.current = sessionId;
-
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setIsRunning(false);
-    setRunError(null);
-    historySyncedRef.current = null;
-    setMessages([]);
-  }, [sessionId]);
+    messagesRef.current = messages;
+  }, [messages]);
 
   const sendMessage = useCallback(
     async (text: string) => {
       const message = text.trim();
-      if (!clientCode || !sessionId || !message || isRunning) return;
+      if (!clientCode || !sessionId || !message || isRunningRef.current) return;
 
+      const runSessionId = sessionId;
+      const isSameSession = () => sessionIdRef.current === runSessionId;
+
+      isRunningRef.current = true;
       setIsRunning(true);
       setRunError(null);
-
-      const optimisticId = crypto.randomUUID();
-      const optimistic: Message = {
-        id: optimisticId,
-        sequence: Number.MAX_SAFE_INTEGER,
-        role: "user",
-        content: message,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, optimistic]);
+      setTurn(null);
+      setPending({
+        message: {
+          id: crypto.randomUUID(),
+          sequence: -1,
+          role: "user",
+          content: message,
+          timestamp: new Date(),
+        },
+        knownIds: new Set(messagesRef.current.map((m) => m.id)),
+      });
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -111,78 +129,91 @@ export function useSessionChat(clientCode: string, sessionId: string) {
       try {
         await sessionService.run(
           clientCode,
-          sessionId,
+          runSessionId,
           { message },
           {
             auth: "jwt",
             signal: controller.signal,
             onEvent: (event, data) => {
+              if (controller.signal.aborted || !isSameSession()) return;
+
               switch (event) {
-                case "message_added": {
-                  const parsed = messageAddedEventSchema.safeParse(data);
+                case SSE_EVENT.EXECUTION_MESSAGE_ADDED: {
+                  const parsed = executionMessageAddedEventSchema.safeParse(data);
                   if (!parsed.success) return;
-                  const incoming = parsed.data.messages;
-                  setMessages((prev) =>
-                    replaceOptimisticUserMessage(prev, optimisticId, incoming),
+                  const incoming = parsed.data.message;
+                  setStreamed((prev) =>
+                    prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming],
                   );
                   break;
                 }
-                case "status_changed": {
-                  const parsed = statusChangedEventSchema.safeParse(data);
+                case SSE_EVENT.EXECUTION_STATUS_CHANGED: {
+                  const parsed = executionStatusChangedEventSchema.safeParse(data);
                   if (!parsed.success) return;
                   if (
                     parsed.data.status === "failed" ||
-                    parsed.data.status === "cancelled"
+                    parsed.data.status === "max_turns"
                   ) {
-                    setRunError(parsed.data.error_message ?? `Run ${parsed.data.status}`);
+                    setRunError(
+                      parsed.data.error_message ?? `Run ${parsed.data.status}`,
+                    );
                   }
                   break;
                 }
-                case "error": {
-                  const parsed = sseErrorEventSchema.safeParse(data);
-                  const errMessage = parsed.success
-                    ? parsed.data.message
-                    : "Run failed";
-                  setRunError(errMessage);
+                case SSE_EVENT.EXECUTION_TURN_COMPLETED: {
+                  const parsed = executionTurnCompletedEventSchema.safeParse(data);
+                  if (!parsed.success) return;
+                  setTurn(parsed.data.turn);
                   break;
                 }
-                case "close":
+                case SSE_EVENT.ERROR: {
+                  const parsed = sseErrorEventSchema.safeParse(data);
+                  setRunError(parsed.success ? parsed.data.message : "Run failed");
                   break;
+                }
               }
             },
           },
         );
       } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
+        // The message is already persisted when the stream is aborted, so the refetch
+        // below is what replaces the optimistic copy.
+        if (isAbortError(error)) return;
+
         const errMessage =
           error instanceof ApiError ? error.message : "Failed to send message";
-        setRunError(errMessage);
-        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+        if (isSameSession()) {
+          setRunError(errMessage);
+          setPending(null);
+        }
         toast({
           title: "Failed to send message",
           description: errMessage,
           variant: "destructive",
         });
       } finally {
-        if (abortRef.current === controller) {
-          abortRef.current = null;
-        }
-        setIsRunning(false);
+        if (abortRef.current === controller) abortRef.current = null;
+        isRunningRef.current = false;
+        if (isSameSession()) setIsRunning(false);
         void queryClient.invalidateQueries({
-          queryKey: findMessagesSessionQueryKey(clientCode, sessionId),
+          queryKey: findMessagesSessionQueryKey(clientCode, runSessionId),
         });
       }
     },
-    [clientCode, sessionId, isRunning],
+    [clientCode, sessionId],
   );
+
+  const stop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
   return {
     messages,
     isLoading,
     isRunning,
+    turn,
     error: historyError?.message ?? runError,
     sendMessage,
+    stop,
   };
 }

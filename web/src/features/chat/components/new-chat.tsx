@@ -37,14 +37,15 @@ export function NewChat() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 h-full items-center justify-center">
+    <div className="flex h-full flex-col items-center justify-center gap-4 p-4">
       <h1 className="text-2xl font-bold">New Chat</h1>
       <p className="text-sm text-muted-foreground">Start a new chat with me</p>
       <ChatInput
         clientCode={clientCode}
-        containerclassname="w-full max-w-2xl"
+        containerClassName="w-full max-w-2xl"
         placeholder="Ask me anything..."
         disabled={!clientCode || isPending}
+        isLoading={isPending}
         onSubmit={handleCreateSession}
       />
     </div>
