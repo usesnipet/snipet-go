@@ -17,7 +17,7 @@ type Agent struct {
 	AgentToKnowledge []AgentToKnowledge `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
-func (a Agent) ToRuntimeAgent() runtime.Agent {
+func (a Agent) ToRuntimeAgent() *runtime.Agent {
 	llms := make([]runtime.LLMConfig, 0, len(a.AgentToLLMs))
 	rels := append([]AgentToLLM(nil), a.AgentToLLMs...)
 	sort.SliceStable(rels, func(i, j int) bool {
@@ -33,7 +33,6 @@ func (a Agent) ToRuntimeAgent() runtime.Agent {
 		a.Name,
 		a.Description,
 		a.Instructions,
-		runtime.ToolConfig{},
 		llms,
 	)
 }

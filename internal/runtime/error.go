@@ -7,4 +7,6 @@ var (
 	ErrLLMGenerationFailed = errors.New("llm generation failed")
 
 	ErrToolNotFound = errors.New("tool not found")
+
+	ErrFinishExecution = errors.New("execution finished")
 )

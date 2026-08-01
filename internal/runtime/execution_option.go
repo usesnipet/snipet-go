@@ -18,6 +18,13 @@ func WithMetadata(key string, value any) ExecutionOption {
 	}
 }
 
+func WithAgent(agent *Agent) ExecutionOption {
+	return func(execution *Execution) {
+		execution.agent = agent
+	}
+}
+
+// region Messages
 func WithInitialMessages(messages ...msg.Message) ExecutionOption {
 	return func(execution *Execution) {
 		execution.Messages = append(execution.Messages, messages...)
@@ -38,3 +45,14 @@ func WithMessageFromUser(content string, options ...msg.MessageOption) Execution
 		)
 	}
 }
+
+// endregion
+
+// region Publisher
+func WithPublisher(publisher IPublisher) ExecutionOption {
+	return func(execution *Execution) {
+		execution.publisher = publisher
+	}
+}
+
+// endregion

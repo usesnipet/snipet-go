@@ -7,11 +7,11 @@ import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/module/agent/subscriber"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/util"
-	"github.com/usesnipet/snipet/internal/util/set"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
@@ -119,15 +119,12 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	return s.agentRepo.DeleteByID(ctx, id)
 }
 
-type EventHandler func(event runtime.IEvent) error
-
-func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler) error {
+func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...runtime.Subscriber) error {
 	agent, err := s.agentRepo.FindByID(ctx, input.AgentID)
 	if err != nil {
 		return err
 	}
 
-	historyIDSet := set.New[string]()
 	initialMessages := make([]msg.Message, 0)
 
 	if input.SessionID != nil {
@@ -136,15 +133,12 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 			return err
 		}
 		for _, em := range history {
-			historyIDSet.Add(em.ID)
 			initialMessages = append(initialMessages, em.Message)
 		}
 	}
 
-	initialMessages = append(
-		initialMessages,
-		msg.NewMessage(msg.RoleUser, input.Message),
-	)
+	userMessage := msg.NewMessage(msg.RoleUser, input.Message)
+	initialMessages = append(initialMessages, userMessage)
 
 	execution := &model.Execution{
 		SessionID:    input.SessionID,
@@ -154,78 +148,27 @@ func (s *Service) Run(ctx context.Context, input RunInput, onEvent EventHandler)
 		Turns:        0,
 		Metadata:     util.JSONMap{},
 	}
+	executionRuntime, err := execution.ToRuntimeExecution(
+		runtime.WithAgent(agent.ToRuntimeAgent()),
+		runtime.WithInitialMessages(initialMessages...),
+	)
+	if err != nil {
+		return err
+	}
 	if err := s.executionRepo.Create(ctx, execution); err != nil {
 		return err
 	}
-
-	if onEvent == nil {
-		onEvent = func(runtime.IEvent) error { return nil }
+	err = s.executionMessageRepo.CreateInExecution(ctx, execution.ID, model.ExecutionMessage{Message: userMessage})
+	if err != nil {
+		return err
 	}
 
-	return s.engine.Start(
-		ctx,
-		runtime.StartOptions{
-			Agent: agent.ToRuntimeAgent(),
-			ExecutionOptions: []runtime.ExecutionOption{
-				runtime.WithInitialMessages(initialMessages...),
-			},
-			OnEvent: func(event runtime.IEvent) error {
-				forward, err := s.handleExecutionEvent(ctx, execution, historyIDSet, event)
-				if err != nil {
-					return err
-				}
-				if forward == nil {
-					return nil
-				}
-				return onEvent(forward)
-			},
-		},
+	executionRuntime.Subscribe(
+		subscriber.NewPersistence(s.executionRepo, s.executionMessageRepo, s.logger, execution.ID),
 	)
-}
+	executionRuntime.Subscribe(subscribers...)
 
-// handleExecutionEvent persists execution updates and returns the event to forward to
-// callers. History messages re-emitted as initial context are skipped so they are not
-// duplicated in the new execution or streamed again to the client.
-func (s *Service) handleExecutionEvent(
-	ctx context.Context,
-	execution *model.Execution,
-	historyIDSet set.Set[string],
-	event runtime.IEvent,
-) (runtime.IEvent, error) {
-	switch event := event.(type) {
-	case runtime.ExecutionStatusChangedEvent:
-		execution.Status = event.Status
-		execution.ErrorMessage = event.ErrorMessage
-		execution.Turns = event.Turns
-		if err := s.executionRepo.UpdateByID(ctx, execution.ID, execution); err != nil {
-			return nil, err
-		}
-		if event.Status == runtime.ExecutionStatusFailed {
-			errorMessage := msg.NewMessage(msg.RoleAssistant, "An error occurred while processing the request.")
-			if err := s.executionMessageRepo.CreateInExecution(ctx, execution.ID, []model.ExecutionMessage{{Message: errorMessage}}); err != nil {
-				return nil, err
-			}
-		}
-		return event, nil
-	case runtime.ExecutionMessageAddedEvent:
-		newMessages := make([]model.ExecutionMessage, 0, len(event.Messages))
-		for _, m := range event.Messages {
-			if historyIDSet.Contains(m.ID) {
-				continue
-			}
-			executionMessage := model.ExecutionMessage{Message: m}
-			newMessages = append(newMessages, executionMessage)
-		}
-		if len(newMessages) == 0 {
-			return nil, nil
-		}
-		if err := s.executionMessageRepo.CreateInExecution(ctx, execution.ID, newMessages); err != nil {
-			return nil, err
-		}
-
-		return event, nil
-	}
-	return event, nil
+	return s.engine.Start(ctx, executionRuntime)
 }
 
 func (s *Service) validateLLMIDs(ctx context.Context, llmIDs []string) error {

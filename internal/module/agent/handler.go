@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/internal/api"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/module/agent/subscriber"
 )
 
 type Handler struct {
@@ -94,42 +94,11 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	var sse *api.SSEWriter
-	ensureSSE := func() error {
-		if sse != nil {
-			return nil
-		}
-		var err error
-		sse, err = api.NewSSEWriter(w)
-		return err
-	}
+	sse := subscriber.NewSSE(w)
 
-	err := h.service.Run(r.Context(), RunInput{
-		AgentID: h.agentID(r),
-		Message: dto.Message,
-	}, func(event runtime.IEvent) error {
-		if err := ensureSSE(); err != nil {
-			return err
-		}
-		switch event := event.(type) {
-		case runtime.ExecutionStatusChangedEvent:
-			return sse.Write("status_changed", event)
-		case runtime.ExecutionMessageAddedEvent:
-			return sse.Write("message_added", event)
-		default:
-			return nil
-		}
-	})
+	err := h.service.Run(r.Context(), RunInput{AgentID: h.agentID(r), Message: dto.Message}, sse)
 	if err != nil {
-		if sse == nil {
-			return err
-		}
-		_ = sse.Write("error", map[string]string{"message": err.Error()})
-		return nil
+		return sse.HandleError(err)
 	}
-
-	if err := ensureSSE(); err != nil {
-		return err
-	}
-	return sse.Write("close", map[string]string{"status": "done"})
+	return nil
 }

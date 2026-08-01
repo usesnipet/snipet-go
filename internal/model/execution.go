@@ -20,25 +20,13 @@ type Execution struct {
 	UpdatedAt    time.Time               `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 
 	Session  *Session           `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Agent    Agent              `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Agent    *Agent             `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Messages []ExecutionMessage `gorm:"foreignKey:ExecutionID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
-func (e *Execution) ToRuntimeExecution() runtime.Execution {
-	return runtime.Execution{
-		Status:       e.Status,
-		ErrorMessage: e.ErrorMessage,
-		Turns:        e.Turns,
-		Config: runtime.ExecutionConfig{
-			Metadata: e.Metadata,
-		},
+func (e *Execution) ToRuntimeExecution(options ...runtime.ExecutionOption) (*runtime.Execution, error) {
+	if e.Agent != nil {
+		options = append(options, runtime.WithAgent(e.Agent.ToRuntimeAgent()))
 	}
-}
-
-func (e *Execution) FromRuntimeExecution(execution runtime.Execution) *Execution {
-	e.Status = execution.Status
-	e.ErrorMessage = execution.ErrorMessage
-	e.Turns = execution.Turns
-	e.Metadata = execution.Config.Metadata
-	return e
+	return runtime.NewExecution(options...)
 }

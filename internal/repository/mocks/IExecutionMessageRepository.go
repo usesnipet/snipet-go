@@ -108,16 +108,22 @@ func (_c *MockIExecutionMessageRepository_CountByExecutionID_Call) RunAndReturn(
 }
 
 // CreateInExecution provides a mock function for the type MockIExecutionMessageRepository
-func (_mock *MockIExecutionMessageRepository) CreateInExecution(ctx context.Context, executionID string, messages []model.ExecutionMessage) error {
-	ret := _mock.Called(ctx, executionID, messages)
+func (_mock *MockIExecutionMessageRepository) CreateInExecution(ctx context.Context, executionID string, messages ...model.ExecutionMessage) error {
+	var tmpRet mock.Arguments
+	if len(messages) > 0 {
+		tmpRet = _mock.Called(ctx, executionID, messages)
+	} else {
+		tmpRet = _mock.Called(ctx, executionID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateInExecution")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []model.ExecutionMessage) error); ok {
-		r0 = returnFunc(ctx, executionID, messages)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...model.ExecutionMessage) error); ok {
+		r0 = returnFunc(ctx, executionID, messages...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -132,12 +138,13 @@ type MockIExecutionMessageRepository_CreateInExecution_Call struct {
 // CreateInExecution is a helper method to define mock.On call
 //   - ctx context.Context
 //   - executionID string
-//   - messages []model.ExecutionMessage
-func (_e *MockIExecutionMessageRepository_Expecter) CreateInExecution(ctx any, executionID any, messages any) *MockIExecutionMessageRepository_CreateInExecution_Call {
-	return &MockIExecutionMessageRepository_CreateInExecution_Call{Call: _e.mock.On("CreateInExecution", ctx, executionID, messages)}
+//   - messages ...model.ExecutionMessage
+func (_e *MockIExecutionMessageRepository_Expecter) CreateInExecution(ctx any, executionID any, messages ...any) *MockIExecutionMessageRepository_CreateInExecution_Call {
+	return &MockIExecutionMessageRepository_CreateInExecution_Call{Call: _e.mock.On("CreateInExecution",
+		append([]any{ctx, executionID}, messages...)...)}
 }
 
-func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) Run(run func(ctx context.Context, executionID string, messages []model.ExecutionMessage)) *MockIExecutionMessageRepository_CreateInExecution_Call {
+func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) Run(run func(ctx context.Context, executionID string, messages ...model.ExecutionMessage)) *MockIExecutionMessageRepository_CreateInExecution_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -148,13 +155,15 @@ func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) Run(run func(c
 			arg1 = args[1].(string)
 		}
 		var arg2 []model.ExecutionMessage
-		if args[2] != nil {
-			arg2 = args[2].([]model.ExecutionMessage)
+		var variadicArgs []model.ExecutionMessage
+		if len(args) > 2 {
+			variadicArgs = args[2].([]model.ExecutionMessage)
 		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
-			arg2,
+			arg2...,
 		)
 	})
 	return _c
@@ -165,7 +174,7 @@ func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) Return(err err
 	return _c
 }
 
-func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) RunAndReturn(run func(ctx context.Context, executionID string, messages []model.ExecutionMessage) error) *MockIExecutionMessageRepository_CreateInExecution_Call {
+func (_c *MockIExecutionMessageRepository_CreateInExecution_Call) RunAndReturn(run func(ctx context.Context, executionID string, messages ...model.ExecutionMessage) error) *MockIExecutionMessageRepository_CreateInExecution_Call {
 	_c.Call.Return(run)
 	return _c
 }

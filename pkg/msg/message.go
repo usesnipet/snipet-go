@@ -20,6 +20,12 @@ type Message struct {
 	Sequence  int       `json:"sequence" gorm:"type:integer;not null"`
 	Content   string    `json:"content" gorm:"type:text"`
 	Timestamp time.Time `json:"timestamp" gorm:"type:timestamp;not null;default:now()"`
+
+	Final bool `json:"final" gorm:"-"`
+}
+
+func (m *Message) IsFinal() bool {
+	return m.Final
 }
 
 type MessageOption func(*Message)
@@ -39,6 +45,12 @@ func WithSequence(sequence int) MessageOption {
 func WithTimestamp(timestamp time.Time) MessageOption {
 	return func(message *Message) {
 		message.Timestamp = timestamp
+	}
+}
+
+func WithFinal() MessageOption {
+	return func(message *Message) {
+		message.Final = true
 	}
 }
 

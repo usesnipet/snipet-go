@@ -66,6 +66,7 @@ export const messageSchema = z
     sequence: z.number(),
     role: messageRoleSchema,
     content: z.string(),
+    final: z.boolean().optional(),
     timestamp: z.coerce.date()
   })
   .strict();

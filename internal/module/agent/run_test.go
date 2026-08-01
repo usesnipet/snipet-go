@@ -79,7 +79,7 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	messageRepo := mocks.NewMockIExecutionMessageRepository(t)
 	messageRepo.EXPECT().
 		CreateInExecution(mock.Anything, mock.Anything, mock.Anything).
-		Run(func(_ context.Context, _ string, msgs []model.ExecutionMessage) {
+		Run(func(_ context.Context, _ string, msgs ...model.ExecutionMessage) {
 			persisted = append(persisted, msgs...)
 		}).
 		Return(nil)
@@ -108,7 +108,7 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	err := svc.Run(context.Background(), agent.RunInput{
 		AgentID: agentID,
 		Message: "hello",
-	}, nil)
+	})
 	require.NoError(t, err)
 
 	require.NotNil(t, created)
@@ -159,7 +159,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 		}}, nil)
 	messageRepo.EXPECT().
 		CreateInExecution(mock.Anything, mock.Anything, mock.Anything).
-		Run(func(_ context.Context, _ string, msgs []model.ExecutionMessage) {
+		Run(func(_ context.Context, _ string, msgs ...model.ExecutionMessage) {
 			persisted = append(persisted, msgs...)
 		}).
 		Return(nil)
@@ -192,7 +192,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 		AgentID:   agentID,
 		SessionID: &sessionID,
 		Message:   "follow up",
-	}, nil)
+	})
 	require.NoError(t, err)
 
 	require.NotNil(t, created)

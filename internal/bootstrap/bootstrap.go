@@ -69,10 +69,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	llmRegistry := llm.Registry()
 	llmManager := runtime.NewDriverManager(llmRegistry)
 
-	engine := runtime.NewEngine(
-		llmManager,
-		logger,
-	)
+	engine := runtime.NewEngine(llmManager, logger)
 
 	workers := river.NewWorkers()
 	river.AddWorker(

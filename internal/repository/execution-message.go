@@ -10,7 +10,7 @@ import (
 )
 
 type IExecutionMessageRepository interface {
-	CreateInExecution(ctx context.Context, executionID string, messages []model.ExecutionMessage) error
+	CreateInExecution(ctx context.Context, executionID string, messages ...model.ExecutionMessage) error
 	CountByExecutionID(ctx context.Context, executionID string) (int64, error)
 	FilterInSession(
 		ctx context.Context,
@@ -36,7 +36,7 @@ func (r *ExecutionMessageRepository) CountByExecutionID(ctx context.Context, exe
 		Count(ctx, "1 = 1")
 }
 
-func (r *ExecutionMessageRepository) CreateInExecution(ctx context.Context, executionID string, messages []model.ExecutionMessage) error {
+func (r *ExecutionMessageRepository) CreateInExecution(ctx context.Context, executionID string, messages ...model.ExecutionMessage) error {
 	for i := range messages {
 		messages[i].ExecutionID = executionID
 	}

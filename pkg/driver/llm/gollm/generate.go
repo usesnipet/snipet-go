@@ -32,5 +32,5 @@ func generate(ctx context.Context, provider string, config util.JSONMap, prompt 
 	if err != nil {
 		return message, fmt.Errorf("%s: generate response: %w", provider, err)
 	}
-	return msg.NewMessage(msg.RoleAssistant, text), nil
+	return msg.NewMessage(msg.RoleAssistant, text, msg.WithFinal()), nil
 }
