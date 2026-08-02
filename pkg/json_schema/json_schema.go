@@ -16,6 +16,14 @@ func Load(schemaJSON []byte) (util.JSONMap, error) {
 	return schema, nil
 }
 
+func MustLoad(schemaJSON []byte) util.JSONMap {
+	schema, err := Load(schemaJSON)
+	if err != nil {
+		panic(err)
+	}
+	return schema
+}
+
 func Validate(schema util.JSONMap, json util.JSONMap) error {
 	referenceLoader := gojsonschema.NewGoLoader(schema)
 	jsonLoader := gojsonschema.NewGoLoader(json)

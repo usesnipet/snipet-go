@@ -6,8 +6,8 @@ import (
 
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
-	jsonschema "github.com/usesnipet/snipet/internal/util/json_schema"
 	"github.com/usesnipet/snipet/pkg/driver"
+	jsonschema "github.com/usesnipet/snipet/pkg/json_schema"
 )
 
 type DriverManager[T driver.IDriver] struct {

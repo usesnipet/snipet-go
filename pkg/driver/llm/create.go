@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/usesnipet/snipet/internal/util"
-	jsonschema "github.com/usesnipet/snipet/internal/util/json_schema"
 	"github.com/usesnipet/snipet/pkg/driver"
+	jsonschema "github.com/usesnipet/snipet/pkg/json_schema"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
