@@ -7,9 +7,9 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	jsonschema "github.com/usesnipet/snipet/pkg/json_schema"
-	"github.com/usesnipet/snipet/pkg/msg"
 )
 
+// Option configures a Driver created via CreateDriver.
 type Option func(*options)
 
 type options struct {
@@ -17,30 +17,37 @@ type options struct {
 	api  API
 }
 
+// WithName sets the driver's display name (driver.Info.Name).
 func WithName(name string) Option {
 	return func(o *options) {
 		o.info.Name = name
 	}
 }
 
+// WithDescription sets the driver's human-readable description.
 func WithDescription(description string) Option {
 	return func(o *options) {
 		o.info.Description = description
 	}
 }
 
+// WithIcon sets the driver's display icon.
 func WithIcon(icon string) Option {
 	return func(o *options) {
 		o.info.Icon = icon
 	}
 }
 
+// WithTags sets the driver's classification tags.
 func WithTags(tags ...string) Option {
 	return func(o *options) {
 		o.info.Tags = tags
 	}
 }
 
+// WithConfigurationSchema sets the raw JSON Schema (as a util.JSONMap) used
+// to validate config passed to the driver. Prefer ConfigurationSchema or
+// MustConfigurationSchema to build this value from a JSON document.
 func WithConfigurationSchema(schema util.JSONMap) Option {
 	return func(o *options) {
 		o.info.ConfigurationSchema = schema
@@ -61,6 +68,9 @@ func MustConfigurationSchema(schemaJSON []byte) util.JSONMap {
 	return schema
 }
 
+// CreateDriver builds a Driver from the given Options. The actual behavior
+// (TestConnection/Generate/Stream) comes from WithAPI; any method whose
+// underlying func is nil returns an error when called.
 func CreateDriver(opts ...Option) Driver {
 	o := &options{}
 	for _, opt := range opts {
@@ -69,6 +79,8 @@ func CreateDriver(opts ...Option) Driver {
 	return &llmDriver{info: o.info, api: o.api}
 }
 
+// llmDriver is the concrete Driver built by CreateDriver, delegating each
+// method to the corresponding func in api, if configured.
 type llmDriver struct {
 	info driver.Info
 	api  API
@@ -83,13 +95,6 @@ func (d *llmDriver) TestConnection(ctx context.Context, config util.JSONMap) err
 		return fmt.Errorf("test connection not configured")
 	}
 	return d.api.TestConnection(ctx, config)
-}
-
-func (d *llmDriver) Generate(ctx context.Context, config util.JSONMap, options GenerateOptions) (msg.Message, error) {
-	if d.api.Generate == nil {
-		return msg.Message{}, fmt.Errorf("generate not configured")
-	}
-	return d.api.Generate(ctx, config, options)
 }
 
 func (d *llmDriver) Stream(ctx context.Context, config util.JSONMap, options GenerateOptions) (<-chan StreamEvent, error) {

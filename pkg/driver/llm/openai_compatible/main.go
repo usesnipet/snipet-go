@@ -5,7 +5,6 @@ import (
 
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
-	"github.com/usesnipet/snipet/pkg/msg"
 )
 
 // New returns an llm.API that talks to an OpenAI-compatible Chat Completions
@@ -15,9 +14,6 @@ func New(baseURL string) llm.API {
 	return llm.API{
 		TestConnection: func(ctx context.Context, config util.JSONMap) error {
 			return testConnection(ctx, baseURL, config)
-		},
-		Generate: func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (msg.Message, error) {
-			return generate(ctx, baseURL, config, options)
 		},
 		Stream: func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
 			return stream(ctx, baseURL, config, options)

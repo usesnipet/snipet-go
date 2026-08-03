@@ -17,6 +17,9 @@ type Config struct {
 	Endpoint    string  `json:"endpoint"`
 }
 
+// NewConfig parses and validates a driver config map into a Config. It fails
+// if the map doesn't match Config's shape or required fields (e.g. Model)
+// are missing.
 func NewConfig(config util.JSONMap) (Config, error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {

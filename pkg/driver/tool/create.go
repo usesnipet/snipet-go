@@ -14,44 +14,56 @@ type options struct {
 	api     API
 }
 
+// Option configures a Driver created via CreateDriver.
 type Option func(*options)
 
+// WithName sets the driver's display name (driver.Info.Name).
 func WithName(name string) Option {
 	return func(o *options) {
 		o.info.Name = name
 	}
 }
 
+// WithDescription sets the driver's human-readable description.
 func WithDescription(description string) Option {
 	return func(o *options) {
 		o.info.Description = description
 	}
 }
 
+// WithIcon sets the driver's display icon.
 func WithIcon(icon string) Option {
 	return func(o *options) {
 		o.info.Icon = icon
 	}
 }
 
+// WithTags sets the driver's classification tags.
 func WithTags(tags ...string) Option {
 	return func(o *options) {
 		o.info.Tags = tags
 	}
 }
 
+// WithConfigurationSchema sets the raw JSON Schema (as a util.JSONMap) used
+// to validate config passed to the driver.
 func WithConfigurationSchema(schema util.JSONMap) Option {
 	return func(o *options) {
 		o.info.ConfigurationSchema = schema
 	}
 }
 
+// WithToolSet sets the Toolset the driver exposes directly.
 func WithToolSet(toolset Toolset) Option {
 	return func(o *options) {
 		o.toolset = toolset
 	}
 }
 
+// WithToolSetSchema sets the driver's Toolset by parsing and validating
+// schemaJSON against the embedded tool-set schema (see ToolSetFromSchema).
+// It panics if schemaJSON is invalid, since toolsets are normally built
+// from schemas known at compile time.
 func WithToolSetSchema(schemaJSON []byte) Option {
 	return func(o *options) {
 		toolSet, err := ToolSetFromSchema(schemaJSON)
@@ -62,6 +74,9 @@ func WithToolSetSchema(schemaJSON []byte) Option {
 	}
 }
 
+// CreateDriver builds a Driver from the given Options. The actual behavior
+// (TestConnection/Call) comes from WithAPI; any method whose underlying func
+// is nil returns an error when called.
 func CreateDriver(opts ...Option) Driver {
 	o := &options{
 		toolset: Toolset{},
@@ -74,6 +89,8 @@ func CreateDriver(opts ...Option) Driver {
 	return &toolDriver{info: o.info, toolset: o.toolset, api: o.api}
 }
 
+// toolDriver is the concrete Driver built by CreateDriver, delegating each
+// method to the corresponding func in api, if configured.
 type toolDriver struct {
 	info    driver.Info
 	toolset Toolset

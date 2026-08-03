@@ -7,14 +7,23 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
-var httpClient = &http.Client{}
+// httpClient is shared across requests to reuse connections; it carries no
+// per-call state.
+var httpClient = &http.Client{
+	Timeout: 5 * time.Minute, // TODO: make this configurable
+}
 
+// chatCompletionsURL builds the /chat/completions endpoint under baseURL.
 func chatCompletionsURL(baseURL string) string {
 	return baseURL + "/chat/completions"
 }
 
+// doChatCompletion sends a non-streaming chat completions request and
+// decodes the JSON response, surfacing both API-level errors (parsed.Error)
+// and HTTP-level errors (non-2xx status).
 func doChatCompletion(ctx context.Context, defaultBaseURL string, cfg Config, body chatRequest) (*chatResponse, error) {
 	baseURL, err := resolveBaseURL(defaultBaseURL, cfg)
 	if err != nil {
@@ -56,6 +65,10 @@ func doChatCompletion(ctx context.Context, defaultBaseURL string, cfg Config, bo
 	return &parsed, nil
 }
 
+// openChatCompletionStream opens a Server-Sent Events stream for a chat
+// completions request. The caller owns the returned response body and must
+// close it; on a non-2xx status the body is drained and closed here instead,
+// and an error is returned.
 func openChatCompletionStream(ctx context.Context, defaultBaseURL string, cfg Config, body chatRequest) (*http.Response, error) {
 	baseURL, err := resolveBaseURL(defaultBaseURL, cfg)
 	if err != nil {
@@ -90,6 +103,8 @@ func openChatCompletionStream(ctx context.Context, defaultBaseURL string, cfg Co
 	return res, nil
 }
 
+// setHeaders applies the standard JSON content headers and, if configured,
+// a Bearer authorization header.
 func setHeaders(req *http.Request, cfg Config) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -98,6 +113,8 @@ func setHeaders(req *http.Request, cfg Config) {
 	}
 }
 
+// truncate shortens s to at most n bytes, appending "..." when it was cut,
+// so error messages don't embed unbounded response bodies.
 func truncate(s string, n int) string {
 	if len(s) <= n {
 		return s

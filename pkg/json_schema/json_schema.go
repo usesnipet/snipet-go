@@ -1,3 +1,6 @@
+// Package jsonschema provides small helpers to load JSON documents into
+// util.JSONMap and validate one JSON document against another treated as a
+// JSON Schema, on top of github.com/xeipuuv/gojsonschema.
 package jsonschema
 
 import (
@@ -8,6 +11,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+// Load unmarshals a JSON document into a util.JSONMap.
 func Load(schemaJSON []byte) (util.JSONMap, error) {
 	var schema util.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
@@ -16,6 +20,8 @@ func Load(schemaJSON []byte) (util.JSONMap, error) {
 	return schema, nil
 }
 
+// MustLoad is like Load but panics on error. It is meant for schemas known
+// at compile time (e.g. embedded via //go:embed).
 func MustLoad(schemaJSON []byte) util.JSONMap {
 	schema, err := Load(schemaJSON)
 	if err != nil {
@@ -24,9 +30,11 @@ func MustLoad(schemaJSON []byte) util.JSONMap {
 	return schema
 }
 
-func Validate(schema util.JSONMap, json util.JSONMap) error {
+// Validate checks that json satisfies the JSON Schema described by schema,
+// returning an error describing the first violation found, if any.
+func Validate(schema util.JSONMap, data util.JSONMap) error {
 	referenceLoader := gojsonschema.NewGoLoader(schema)
-	jsonLoader := gojsonschema.NewGoLoader(json)
+	jsonLoader := gojsonschema.NewGoLoader(data)
 
 	result, err := gojsonschema.Validate(referenceLoader, jsonLoader)
 
@@ -41,6 +49,8 @@ func Validate(schema util.JSONMap, json util.JSONMap) error {
 	return nil
 }
 
+// ParseAndValidate validates data against schema and, if valid, decodes it
+// into a value of type T.
 func ParseAndValidate[T any](schema util.JSONMap, data util.JSONMap) (*T, error) {
 	if err := Validate(schema, data); err != nil {
 		return nil, err

@@ -12,6 +12,10 @@ import (
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 )
 
+// stream opens a chat completions SSE stream and translates it into
+// llm.StreamEvent values on the returned channel. The channel is closed once
+// the stream ends, either successfully (llm.CompletedEvent) or with an error
+// (llm.ErrorEvent).
 func stream(ctx context.Context, baseURL string, config util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
 	cfg, err := NewConfig(config)
 	if err != nil {
@@ -39,6 +43,12 @@ func stream(ctx context.Context, baseURL string, config util.JSONMap, options ll
 	return out, nil
 }
 
+// readSSE parses the OpenAI-compatible SSE response line by line, emitting
+// TextDeltaEvent for content chunks and reassembling tool call deltas
+// (indexed by their position in the response, tracked via streamToolCall)
+// into ToolCallStartedEvent/ToolCallArgumentsDeltaEvent/ToolCallFinishedEvent.
+// It returns nil once a "[DONE]" marker or end of stream is reached after
+// emitting a final llm.CompletedEvent.
 func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) error {
 	scanner := bufio.NewScanner(body)
 	// Tool-call argument chunks can be large; raise the default token limit.
@@ -156,6 +166,9 @@ func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) er
 	return nil
 }
 
+// streamToolCall accumulates the id/name for one in-progress tool call
+// across SSE delta chunks until enough is known to emit
+// ToolCallStartedEvent (tracked via started).
 type streamToolCall struct {
 	id      string
 	name    string
