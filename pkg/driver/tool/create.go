@@ -95,9 +95,9 @@ func (d *toolDriver) ToolSet() Toolset {
 	return d.toolset
 }
 
-func (d *toolDriver) Call(ctx context.Context, call ToolCall) (ToolResult, error) {
+func (d *toolDriver) Call(ctx context.Context, call Call) (Result, error) {
 	if d.api.Call == nil {
-		return ToolResult{}, fmt.Errorf("call not configured")
+		return Result{}, fmt.Errorf("call not configured")
 	}
 	return d.api.Call(ctx, call)
 }

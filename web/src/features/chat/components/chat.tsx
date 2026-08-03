@@ -12,7 +12,8 @@ import { useSessionChat } from "../hooks";
 
 import { ChatInput } from "./chat-input";
 
-import type { Message as ChatMessage } from "@/features/session/schemas";
+import type { ToolCallResult } from "../hooks";
+import type { Message as ChatMessage, ToolCall } from "@/features/session/schemas";
 import type { ChatInputSubmit } from "./chat-input";
 
 type ChatLocationState = {
@@ -23,8 +24,65 @@ function isVisibleMessage(message: ChatMessage) {
   return message.role === "user" || message.role === "assistant";
 }
 
-function ChatMessageItem({ message }: { message: ChatMessage }) {
+function formatToolArguments(args: Record<string, unknown>) {
+  const keys = Object.keys(args);
+  if (keys.length === 0) return null;
+  try {
+    return JSON.stringify(args, null, 2);
+  } catch {
+    return null;
+  }
+}
+
+function ToolCallItem({
+  call,
+  result,
+}: {
+  call: ToolCall;
+  result?: ToolCallResult;
+}) {
+  const args = formatToolArguments(call.arguments);
+  const isPending = !result;
+  const failed = Boolean(result?.error);
+
+  return (
+    <div className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 font-medium text-foreground">
+        <span>{call.tool}</span>
+        {isPending ? (
+          <Loader variant="text-shimmer" text="Running" className="text-xs" />
+        ) : failed ? (
+          <span className="text-destructive">Failed</span>
+        ) : (
+          <span className="text-muted-foreground">Done</span>
+        )}
+      </div>
+      {args && (
+        <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] opacity-80">
+          {args}
+        </pre>
+      )}
+      {result?.error && (
+        <p className="mt-1 text-destructive">{result.error}</p>
+      )}
+      {result?.result && (
+        <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] opacity-80">
+          {result.result}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function ChatMessageItem({
+  message,
+  toolResults,
+}: {
+  message: ChatMessage;
+  toolResults: Record<string, ToolCallResult>;
+}) {
   const isUser = message.role === "user";
+  const toolCalls = message.tool_calls ?? [];
 
   return (
     <Message
@@ -33,15 +91,25 @@ function ChatMessageItem({ message }: { message: ChatMessage }) {
         isUser ? "items-end" : "items-start",
       )}
     >
-      <MessageContent
-        markdown={!isUser}
-        className={cn(
-          "max-w-[90%]",
-          !isUser && "bg-transparent",
-        )}
-      >
-        {message.content}
-      </MessageContent>
+      {message.content ? (
+        <MessageContent
+          markdown={!isUser}
+          className={cn("max-w-[90%]", !isUser && "bg-transparent")}
+        >
+          {message.content}
+        </MessageContent>
+      ) : null}
+      {!isUser && toolCalls.length > 0 && (
+        <div className="flex w-full max-w-[90%] flex-col gap-2">
+          {toolCalls.map((call) => (
+            <ToolCallItem
+              key={call.id}
+              call={call}
+              result={toolResults[call.id]}
+            />
+          ))}
+        </div>
+      )}
     </Message>
   );
 }
@@ -57,10 +125,23 @@ export function Chat() {
   const navigate = useNavigate();
   const initialSentRef = useRef(false);
 
-  const { messages, isLoading, isRunning, error, sendMessage, stop } =
+  const { messages, toolResults, isLoading, isRunning, error, sendMessage, stop } =
     useSessionChat(clientCode, sessionId);
 
   const visibleMessages = messages.filter(isVisibleMessage);
+  const lastVisible = visibleMessages[visibleMessages.length - 1];
+  const toolsFinishedOnLast =
+    lastVisible?.role === "assistant" &&
+    (lastVisible.tool_calls?.length ?? 0) > 0 &&
+    lastVisible.tool_calls!.every((call) => toolResults[call.id]);
+  const waitingForFirstChunk =
+    isRunning &&
+    (!lastVisible ||
+      lastVisible.role === "user" ||
+      (lastVisible.role === "assistant" &&
+        !lastVisible.content &&
+        !(lastVisible.tool_calls?.length)) ||
+      toolsFinishedOnLast);
 
   const handleSubmit = useCallback(
     ({ message }: ChatInputSubmit) => {
@@ -102,10 +183,14 @@ export function Chat() {
               </p>
             ) : (
               visibleMessages.map((message) => (
-                <ChatMessageItem key={message.id} message={message} />
+                <ChatMessageItem
+                  key={message.id}
+                  message={message}
+                  toolResults={toolResults}
+                />
               ))
             )}
-            {isRunning && (
+            {waitingForFirstChunk && (
               <Message className="mx-auto w-full items-start px-2">
                 <Loader variant="text-shimmer" text="Thinking" />
               </Message>

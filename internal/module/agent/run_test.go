@@ -18,8 +18,27 @@ import (
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
+
+// streamOf builds a closed, buffered channel of StreamEvents for MockDriver.Stream to return.
+func streamOf(events ...llm.StreamEvent) <-chan llm.StreamEvent {
+	ch := make(chan llm.StreamEvent, len(events))
+	for _, event := range events {
+		ch <- event
+	}
+	close(ch)
+	return ch
+}
+
+func newTestEngine(llmReg *registry.R[llm.Driver]) *runtime.Engine {
+	return runtime.NewEngine(
+		runtime.NewDriverManager(llmReg),
+		runtime.NewToolManager(runtime.NewDriverManager(registry.New[tool.Driver]())),
+		logger.NewLogger(logger.LevelError),
+	)
+}
 
 func agentWithPrimaryLLM(agentID string) *model.Agent {
 	llmID := uuid.New().String()
@@ -86,8 +105,8 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 
 	primary := newPrimaryLLM(t)
 	primary.EXPECT().
-		Generate(mock.Anything, mock.Anything, mock.Anything).
-		Return(msg.Message{Role: msg.RoleAssistant, Content: "done"}, nil)
+		Stream(mock.Anything, mock.Anything, mock.Anything).
+		Return(streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil)
 
 	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", primary)
@@ -96,10 +115,7 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 		agentRepo,
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
-		runtime.NewEngine(
-			runtime.NewDriverManager(llmReg),
-			logger.NewLogger(logger.LevelError),
-		),
+		newTestEngine(llmReg),
 		executionRepo,
 		messageRepo,
 		logger.NewLogger(logger.LevelError),
@@ -166,10 +182,10 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 
 	primary := newPrimaryLLM(t)
 	primary.EXPECT().
-		Generate(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ util.JSONMap, prompt llm.Prompt) (msg.Message, error) {
-			llmSaw = append([]msg.Message{}, prompt.Messages...)
-			return msg.NewMessage(msg.RoleAssistant, "done"), nil
+		Stream(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, _ util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
+			llmSaw = append([]msg.Message{}, options.Prompt.Messages...)
+			return streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil
 		})
 
 	llmReg := registry.New[llm.Driver]()
@@ -179,10 +195,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 		agentRepo,
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
-		runtime.NewEngine(
-			runtime.NewDriverManager(llmReg),
-			logger.NewLogger(logger.LevelError),
-		),
+		newTestEngine(llmReg),
 		executionRepo,
 		messageRepo,
 		logger.NewLogger(logger.LevelError),

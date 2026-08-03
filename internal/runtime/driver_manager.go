@@ -26,6 +26,11 @@ func (m *DriverManager[T]) GetDriver(key string) (T, error) {
 	return driverInstance, nil
 }
 
+// Names returns the sorted keys of every registered driver.
+func (m *DriverManager[T]) Names() []string {
+	return m.registry.Names()
+}
+
 func (m *DriverManager[T]) ValidateConfiguration(schema util.JSONMap, config util.JSONMap) error {
 	return jsonschema.Validate(schema, config)
 }

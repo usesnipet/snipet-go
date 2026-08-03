@@ -41,13 +41,13 @@ func Validate(schema util.JSONMap, json util.JSONMap) error {
 	return nil
 }
 
-func ParseAndValidate[T any](schema util.JSONMap, json util.JSONMap) (*T, error) {
-	parsed, err := util.ParseJSONMap[T](schema)
-	if err != nil {
+func ParseAndValidate[T any](schema util.JSONMap, data util.JSONMap) (*T, error) {
+	if err := Validate(schema, data); err != nil {
 		return nil, err
 	}
 
-	if err := Validate(schema, json); err != nil {
+	parsed, err := util.ParseJSONMap[T](data)
+	if err != nil {
 		return nil, err
 	}
 

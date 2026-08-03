@@ -9,7 +9,7 @@ import (
 type API struct {
 	TestConnection func(ctx context.Context, config util.JSONMap) error
 
-	Call func(ctx context.Context, call ToolCall) (ToolResult, error)
+	Call func(ctx context.Context, call Call) (Result, error)
 }
 
 func WithAPI(api API) Option {

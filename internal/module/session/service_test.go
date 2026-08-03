@@ -26,8 +26,18 @@ import (
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
+
+func streamOf(events ...llm.StreamEvent) <-chan llm.StreamEvent {
+	ch := make(chan llm.StreamEvent, len(events))
+	for _, event := range events {
+		ch <- event
+	}
+	close(ch)
+	return ch
+}
 
 func apiKeyContext() context.Context {
 	id := "api-key-id"
@@ -188,8 +198,8 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		ConfigurationSchema: util.JSONMap{"type": "object"},
 	})
 	primary.EXPECT().
-		Generate(mock.Anything, mock.Anything, mock.Anything).
-		Return(msg.NewMessage(msg.RoleAssistant, "ok"), nil)
+		Stream(mock.Anything, mock.Anything, mock.Anything).
+		Return(streamOf(llm.TextDeltaEvent{Text: "ok"}, llm.CompletedEvent{}), nil)
 
 	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", primary)
@@ -199,6 +209,7 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
 			runtime.NewDriverManager(llmReg),
+			runtime.NewToolManager(runtime.NewDriverManager(registry.New[tool.Driver]())),
 			logger.NewLogger(logger.LevelError),
 		),
 		executionRepo,
@@ -208,7 +219,7 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 
 	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, agentRepo, agentSvc)
 
-	err := svc.Run(apiKeyContext(), clientCode, sessionID, session.RunSessionDTO{Message: "hi"}, nil)
+	err := svc.Run(apiKeyContext(), clientCode, sessionID, session.RunSessionDTO{Message: "hi"})
 	require.NoError(t, err)
 
 	require.NotNil(t, created)

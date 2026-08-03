@@ -10,7 +10,10 @@
       "name": "get_people",
       "description": "Get a specific person/character by id from the Star Wars API",
       "parameters": {
-        "id": "integer"
+        "type": "object",
+        "properties": {
+
+        }
       }
     },
     {
@@ -22,7 +25,7 @@
       "name": "get_films",
       "description": "Get a specific film by id from the Star Wars API",
       "parameters": {
-        "id": "integer"
+        "type": "string"
       }
     },
     {

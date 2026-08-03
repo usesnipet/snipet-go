@@ -12,6 +12,7 @@ import (
 	"github.com/usesnipet/snipet/drivers/index"
 	"github.com/usesnipet/snipet/drivers/llm"
 	"github.com/usesnipet/snipet/drivers/source"
+	"github.com/usesnipet/snipet/drivers/tool"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
@@ -69,7 +70,10 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	llmRegistry := llm.Registry()
 	llmManager := runtime.NewDriverManager(llmRegistry)
 
-	engine := runtime.NewEngine(llmManager, logger)
+	toolRegistry := tool.Registry()
+	toolManager := runtime.NewToolManager(runtime.NewDriverManager(toolRegistry))
+
+	engine := runtime.NewEngine(llmManager, toolManager, logger)
 
 	workers := river.NewWorkers()
 	river.AddWorker(

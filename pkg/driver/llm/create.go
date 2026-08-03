@@ -85,16 +85,16 @@ func (d *llmDriver) TestConnection(ctx context.Context, config util.JSONMap) err
 	return d.api.TestConnection(ctx, config)
 }
 
-func (d *llmDriver) Generate(ctx context.Context, config util.JSONMap, prompt Prompt) (msg.Message, error) {
+func (d *llmDriver) Generate(ctx context.Context, config util.JSONMap, options GenerateOptions) (msg.Message, error) {
 	if d.api.Generate == nil {
 		return msg.Message{}, fmt.Errorf("generate not configured")
 	}
-	return d.api.Generate(ctx, config, prompt)
+	return d.api.Generate(ctx, config, options)
 }
 
-func (d *llmDriver) Stream(ctx context.Context, config util.JSONMap, prompt Prompt) (<-chan StreamDelta, error) {
+func (d *llmDriver) Stream(ctx context.Context, config util.JSONMap, options GenerateOptions) (<-chan StreamEvent, error) {
 	if d.api.Stream == nil {
 		return nil, fmt.Errorf("stream not configured")
 	}
-	return d.api.Stream(ctx, config, prompt)
+	return d.api.Stream(ctx, config, options)
 }

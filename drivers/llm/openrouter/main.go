@@ -4,19 +4,21 @@ import (
 	_ "embed"
 
 	llm "github.com/usesnipet/snipet/pkg/driver/llm"
-	gollmprovider "github.com/usesnipet/snipet/pkg/driver/llm/gollm"
+	openaicompatible "github.com/usesnipet/snipet/pkg/driver/llm/openai_compatible"
 )
 
 //go:embed schema.json
 var schemaJSON []byte
 
+const baseURL = "https://openrouter.ai/api/v1"
+
 func New() llm.Driver {
 	return llm.CreateDriver(
 		llm.WithName("OpenRouter"),
-		llm.WithDescription("OpenRouter multi-provider models via gollm."),
+		llm.WithDescription("OpenRouter multi-provider models."),
 		llm.WithIcon("https://openrouter.ai/favicon.ico"),
 		llm.WithTags("language", "model", "llm"),
 		llm.WithConfigurationSchema(llm.MustConfigurationSchema(schemaJSON)),
-		llm.WithAPI(gollmprovider.New("openrouter")),
+		llm.WithAPI(openaicompatible.New(baseURL)),
 	)
 }

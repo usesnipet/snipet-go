@@ -10,15 +10,16 @@ type Driver interface {
 	driver.IDriver
 
 	ToolSet() Toolset
-	Call(ctx context.Context, call ToolCall) (ToolResult, error)
+	Call(ctx context.Context, call Call) (Result, error)
 }
 
-type ToolCall struct {
+type Call struct {
+	ID        string         `json:"id"`
 	Tool      string         `json:"tool"`
 	Arguments map[string]any `json:"arguments"`
 }
 
-type ToolResult struct {
+type Result struct {
 	Tool      string         `json:"tool"`
 	Arguments map[string]any `json:"arguments"`
 	Result    string         `json:"result"`

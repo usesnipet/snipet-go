@@ -7,9 +7,9 @@ import (
 	llmdrivers "github.com/usesnipet/snipet/drivers/llm"
 )
 
-func TestRegistryRegistersGollmProviders(t *testing.T) {
+func TestRegistryRegistersProviders(t *testing.T) {
 	reg := llmdrivers.Registry()
-	want := []string{"openai", "anthropic", "groq", "ollama", "mistral", "openrouter"}
+	want := []string{"openai", "groq", "ollama", "mistral", "openrouter"}
 	require.ElementsMatch(t, want, reg.Names())
 
 	for _, id := range want {

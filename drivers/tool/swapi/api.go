@@ -32,25 +32,25 @@ func testConnection(ctx context.Context, _ util.JSONMap) error {
 	return nil
 }
 
-func call(ctx context.Context, tc tool.ToolCall) (tool.ToolResult, error) {
+func call(ctx context.Context, tc tool.Call) (tool.Result, error) {
 	path, err := resolvePath(tc)
 	if err != nil {
-		return tool.ToolResult{}, err
+		return tool.Result{}, err
 	}
 
 	body, err := get(ctx, baseURL+path)
 	if err != nil {
-		return tool.ToolResult{}, err
+		return tool.Result{}, err
 	}
 
-	return tool.ToolResult{
+	return tool.Result{
 		Tool:      tc.Tool,
 		Arguments: tc.Arguments,
 		Result:    body,
 	}, nil
 }
 
-func resolvePath(tc tool.ToolCall) (string, error) {
+func resolvePath(tc tool.Call) (string, error) {
 	switch tc.Tool {
 	case "list_people":
 		return "/people", nil

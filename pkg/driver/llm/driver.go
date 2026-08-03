@@ -11,6 +11,6 @@ import (
 type Driver interface {
 	driver.IDriver
 
-	Generate(ctx context.Context, config util.JSONMap, prompt Prompt) (msg.Message, error)
-	Stream(ctx context.Context, config util.JSONMap, prompt Prompt) (<-chan StreamDelta, error)
+	Generate(ctx context.Context, config util.JSONMap, options GenerateOptions) (msg.Message, error)
+	Stream(ctx context.Context, config util.JSONMap, options GenerateOptions) (<-chan StreamEvent, error)
 }

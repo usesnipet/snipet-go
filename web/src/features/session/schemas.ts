@@ -50,9 +50,19 @@ export const runSessionSchema = z
 
 export type RunSession = z.infer<typeof runSessionSchema>;
 
-export const messageRoleSchema = z.enum(["system", "user", "assistant"]);
+export const messageRoleSchema = z.enum(["system", "user", "assistant", "tool"]);
 
 export type MessageRole = z.infer<typeof messageRoleSchema>;
+
+export const toolCallSchema = z
+  .object({
+    id: z.string(),
+    tool: z.string(),
+    arguments: z.record(z.string(), z.unknown()),
+  })
+  .strict();
+
+export type ToolCall = z.infer<typeof toolCallSchema>;
 
 export const messageSchema = z
   .object({
@@ -61,6 +71,8 @@ export const messageSchema = z
     role: messageRoleSchema,
     content: z.string(),
     final: z.boolean().optional(),
+    tool_calls: z.array(toolCallSchema).optional(),
+    tool_call_id: z.string().optional(),
     timestamp: z.coerce.date(),
   })
   .strict();
@@ -126,6 +138,11 @@ export const SSE_EVENT = {
   EXECUTION_STATUS_CHANGED: "execution_status_changed",
   EXECUTION_TURN_COMPLETED: "execution_turn_completed",
   EXECUTION_FINISHED: "execution_finished",
+  EXECUTION_MESSAGE_DELTA: "execution_message_delta",
+  EXECUTION_TOOL_CALL_STARTED: "execution_tool_call_started",
+  EXECUTION_TOOL_CALL_DELTA: "execution_tool_call_delta",
+  EXECUTION_TOOL_CALL_COMPLETED: "execution_tool_call_completed",
+  EXECUTION_TOOL_RESULT: "execution_tool_result",
   ERROR: "error",
 } as const;
 
@@ -169,6 +186,65 @@ export const executionFinishedEventSchema = z
   .strict();
 
 export type ExecutionFinishedEvent = z.infer<typeof executionFinishedEventSchema>;
+
+export const executionMessageDeltaEventSchema = z
+  .object({
+    message_id: z.uuid(),
+    content: z.string(),
+  })
+  .strict();
+
+export type ExecutionMessageDeltaEvent = z.infer<
+  typeof executionMessageDeltaEventSchema
+>;
+
+export const executionToolCallStartedEventSchema = z
+  .object({
+    message_id: z.uuid(),
+    id: z.string(),
+    name: z.string(),
+  })
+  .strict();
+
+export type ExecutionToolCallStartedEvent = z.infer<
+  typeof executionToolCallStartedEventSchema
+>;
+
+export const executionToolCallDeltaEventSchema = z
+  .object({
+    id: z.string(),
+    delta: z.string(),
+  })
+  .strict();
+
+export type ExecutionToolCallDeltaEvent = z.infer<
+  typeof executionToolCallDeltaEventSchema
+>;
+
+export const executionToolCallCompletedEventSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    arguments: z.record(z.string(), z.unknown()),
+  })
+  .strict();
+
+export type ExecutionToolCallCompletedEvent = z.infer<
+  typeof executionToolCallCompletedEventSchema
+>;
+
+export const executionToolResultEventSchema = z
+  .object({
+    tool_call_id: z.string(),
+    tool: z.string(),
+    result: z.string().optional(),
+    error: z.string().optional(),
+  })
+  .strict();
+
+export type ExecutionToolResultEvent = z.infer<
+  typeof executionToolResultEventSchema
+>;
 
 export const sseErrorEventSchema = z
   .object({

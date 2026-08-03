@@ -1,8 +1,13 @@
 import { findMessagesSessionQueryKey, useFindMessagesSession } from "@/features/session/hooks";
 import {
   SSE_EVENT,
+  executionFinishedEventSchema,
   executionMessageAddedEventSchema,
+  executionMessageDeltaEventSchema,
   executionStatusChangedEventSchema,
+  executionToolCallCompletedEventSchema,
+  executionToolCallStartedEventSchema,
+  executionToolResultEventSchema,
   executionTurnCompletedEventSchema,
   sseErrorEventSchema,
 } from "@/features/session/schemas";
@@ -12,13 +17,18 @@ import { ApiError } from "@/lib/http";
 import { queryClient } from "@/lib/query-client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { Message } from "@/features/session/schemas";
+import type { Message, ToolCall } from "@/features/session/schemas";
 
 const EMPTY_MESSAGES: Message[] = [];
 
 type PendingMessage = {
   message: Message;
   knownIds: Set<string>;
+};
+
+export type ToolCallResult = {
+  result?: string;
+  error?: string;
 };
 
 function isAbortError(error: unknown): boolean {
@@ -38,6 +48,36 @@ function isPendingConfirmed(messages: Message[], pending: PendingMessage): boole
   );
 }
 
+function upsertMessage(messages: Message[], incoming: Message): Message[] {
+  const index = messages.findIndex((message) => message.id === incoming.id);
+  if (index === -1) return [...messages, incoming];
+  const next = [...messages];
+  next[index] = incoming;
+  return next;
+}
+
+function updateMessage(
+  messages: Message[],
+  messageId: string,
+  update: (message: Message) => Message,
+  create: () => Message,
+): Message[] {
+  const index = messages.findIndex((message) => message.id === messageId);
+  if (index === -1) return [...messages, create()];
+  const next = [...messages];
+  next[index] = update(next[index]);
+  return next;
+}
+
+function upsertToolCall(toolCalls: ToolCall[] | undefined, toolCall: ToolCall): ToolCall[] {
+  const current = toolCalls ?? [];
+  const index = current.findIndex((call) => call.id === toolCall.id);
+  if (index === -1) return [...current, toolCall];
+  const next = [...current];
+  next[index] = { ...next[index], ...toolCall };
+  return next;
+}
+
 export function useSessionChat(clientCode: string, sessionId: string) {
   const {
     data: historyPage,
@@ -50,6 +90,7 @@ export function useSessionChat(clientCode: string, sessionId: string) {
 
   const [streamed, setStreamed] = useState<Message[]>(EMPTY_MESSAGES);
   const [pending, setPending] = useState<PendingMessage | null>(null);
+  const [toolResults, setToolResults] = useState<Record<string, ToolCallResult>>({});
   const [isRunning, setIsRunning] = useState(false);
   const [turn, setTurn] = useState<number | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
@@ -64,6 +105,7 @@ export function useSessionChat(clientCode: string, sessionId: string) {
     setRenderedSessionId(sessionId);
     setStreamed(EMPTY_MESSAGES);
     setPending(null);
+    setToolResults({});
     setIsRunning(false);
     setTurn(null);
     setRunError(null);
@@ -87,18 +129,35 @@ export function useSessionChat(clientCode: string, sessionId: string) {
       byId.set(message.id, message);
     }
     for (const message of streamed) {
-      if (!byId.has(message.id)) byId.set(message.id, message);
+      const existing = byId.get(message.id);
+      // Prefer the live streamed copy while a run is in progress so deltas stick.
+      if (!existing || isRunning) byId.set(message.id, message);
     }
 
     const persisted = Array.from(byId.values());
     if (!pending || isPendingConfirmed(persisted, pending)) return persisted;
 
     return [...persisted, pending.message];
-  }, [history, streamed, pending]);
+  }, [history, streamed, pending, isRunning]);
 
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  const resolvedToolResults = useMemo(() => {
+    const derived: Record<string, ToolCallResult> = {};
+    for (const message of messages) {
+      if (message.role !== "tool" || !message.tool_call_id) continue;
+      if (message.content.startsWith("error: ")) {
+        derived[message.tool_call_id] = {
+          error: message.content.slice("error: ".length),
+        };
+      } else {
+        derived[message.tool_call_id] = { result: message.content };
+      }
+    }
+    return { ...derived, ...toolResults };
+  }, [messages, toolResults]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -112,6 +171,7 @@ export function useSessionChat(clientCode: string, sessionId: string) {
       setIsRunning(true);
       setRunError(null);
       setTurn(null);
+      setToolResults({});
       setPending({
         message: {
           id: crypto.randomUUID(),
@@ -138,13 +198,92 @@ export function useSessionChat(clientCode: string, sessionId: string) {
               if (controller.signal.aborted || !isSameSession()) return;
 
               switch (event) {
+                case SSE_EVENT.EXECUTION_MESSAGE_DELTA: {
+                  const parsed = executionMessageDeltaEventSchema.safeParse(data);
+                  if (!parsed.success) return;
+                  const { message_id, content } = parsed.data;
+                  setStreamed((prev) =>
+                    updateMessage(
+                      prev,
+                      message_id,
+                      (current) => ({
+                        ...current,
+                        content: current.content + content,
+                      }),
+                      () => ({
+                        id: message_id,
+                        sequence: -1,
+                        role: "assistant",
+                        content,
+                        timestamp: new Date(),
+                      }),
+                    ),
+                  );
+                  break;
+                }
+                case SSE_EVENT.EXECUTION_TOOL_CALL_STARTED: {
+                  const parsed = executionToolCallStartedEventSchema.safeParse(data);
+                  if (!parsed.success) return;
+                  const { message_id, id, name } = parsed.data;
+                  setStreamed((prev) =>
+                    updateMessage(
+                      prev,
+                      message_id,
+                      (current) => ({
+                        ...current,
+                        tool_calls: upsertToolCall(current.tool_calls, {
+                          id,
+                          tool: name,
+                          arguments: {},
+                        }),
+                      }),
+                      () => ({
+                        id: message_id,
+                        sequence: -1,
+                        role: "assistant",
+                        content: "",
+                        tool_calls: [{ id, tool: name, arguments: {} }],
+                        timestamp: new Date(),
+                      }),
+                    ),
+                  );
+                  break;
+                }
+                case SSE_EVENT.EXECUTION_TOOL_CALL_COMPLETED: {
+                  const parsed = executionToolCallCompletedEventSchema.safeParse(data);
+                  if (!parsed.success) return;
+                  const { id, name, arguments: args } = parsed.data;
+                  setStreamed((prev) =>
+                    prev.map((current) => {
+                      if (!current.tool_calls?.some((call) => call.id === id)) {
+                        return current;
+                      }
+                      return {
+                        ...current,
+                        tool_calls: upsertToolCall(current.tool_calls, {
+                          id,
+                          tool: name,
+                          arguments: args,
+                        }),
+                      };
+                    }),
+                  );
+                  break;
+                }
+                case SSE_EVENT.EXECUTION_TOOL_RESULT: {
+                  const parsed = executionToolResultEventSchema.safeParse(data);
+                  if (!parsed.success) return;
+                  const { tool_call_id, result, error } = parsed.data;
+                  setToolResults((prev) => ({
+                    ...prev,
+                    [tool_call_id]: { result, error },
+                  }));
+                  break;
+                }
                 case SSE_EVENT.EXECUTION_MESSAGE_ADDED: {
                   const parsed = executionMessageAddedEventSchema.safeParse(data);
                   if (!parsed.success) return;
-                  const incoming = parsed.data.message;
-                  setStreamed((prev) =>
-                    prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming],
-                  );
+                  setStreamed((prev) => upsertMessage(prev, parsed.data.message));
                   break;
                 }
                 case SSE_EVENT.EXECUTION_STATUS_CHANGED: {
@@ -164,6 +303,10 @@ export function useSessionChat(clientCode: string, sessionId: string) {
                   const parsed = executionTurnCompletedEventSchema.safeParse(data);
                   if (!parsed.success) return;
                   setTurn(parsed.data.turn);
+                  break;
+                }
+                case SSE_EVENT.EXECUTION_FINISHED: {
+                  executionFinishedEventSchema.safeParse(data);
                   break;
                 }
                 case SSE_EVENT.ERROR: {
@@ -209,6 +352,7 @@ export function useSessionChat(clientCode: string, sessionId: string) {
 
   return {
     messages,
+    toolResults: resolvedToolResults,
     isLoading,
     isRunning,
     turn,

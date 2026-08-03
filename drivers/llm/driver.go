@@ -1,7 +1,6 @@
 package llm
 
 import (
-	"github.com/usesnipet/snipet/drivers/llm/anthropic"
 	"github.com/usesnipet/snipet/drivers/llm/groq"
 	"github.com/usesnipet/snipet/drivers/llm/mistral"
 	"github.com/usesnipet/snipet/drivers/llm/ollama"
@@ -14,7 +13,6 @@ import (
 func Registry() *registry.R[llmDriver.Driver] {
 	registry := registry.New[llmDriver.Driver]()
 	registry.MustRegister("openai", openai.New())
-	registry.MustRegister("anthropic", anthropic.New())
 	registry.MustRegister("groq", groq.New())
 	registry.MustRegister("ollama", ollama.New())
 	registry.MustRegister("mistral", mistral.New())
