@@ -18,18 +18,15 @@ func buildChatRequest(cfg Config, options llm.GenerateOptions, stream bool) chat
 		Tools:    buildTools(options.Tools),
 		Stream:   stream,
 	}
-	if cfg.Temperature != 0 {
-		t := cfg.Temperature
-		req.Temperature = &t
-	}
+
 	if cfg.MaxTokens != 0 {
 		m := cfg.MaxTokens
 		req.MaxTokens = &m
 	}
-	if cfg.TopP != 0 {
-		p := cfg.TopP
-		req.TopP = &p
-	}
+
+	req.Temperature = &cfg.Temperature
+	req.TopP = &cfg.TopP
+
 	return req
 }
 

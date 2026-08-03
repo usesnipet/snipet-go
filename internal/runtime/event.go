@@ -74,6 +74,20 @@ type ExecutionToolCallCompletedEvent struct {
 
 func (e ExecutionToolCallCompletedEvent) isEvent() {}
 
+// ExecutionAttemptFailedEvent is emitted when an LLM generation attempt
+// fails after part of its response was already streamed to subscribers
+// (text deltas and/or tool call events). It signals that everything
+// published under MessageID for this attempt must be discarded — the engine
+// will either retry with a different LLM configuration or fail the
+// execution, but this attempt's partial content never becomes part of the
+// conversation history.
+type ExecutionAttemptFailedEvent struct {
+	MessageID string `json:"message_id"`
+	Error     string `json:"error"`
+}
+
+func (e ExecutionAttemptFailedEvent) isEvent() {}
+
 // ExecutionToolResultEvent is emitted after a tool call has been executed,
 // carrying its result or the error that occurred.
 type ExecutionToolResultEvent struct {

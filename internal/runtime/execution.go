@@ -23,7 +23,7 @@ const (
 )
 
 type ExecutionConfig struct {
-	MaxTurns int          `json:"max_turns" validate:"required,min=1"`
+	MaxTurns int          `json:"max_turns" validate:"omitempty"`
 	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
@@ -95,6 +95,12 @@ func (e *Execution) SetStatus(ctx context.Context, status ExecutionStatus) error
 func (e *Execution) SetError(ctx context.Context, errorMessage string) error {
 	e.ErrorMessage = errorMessage
 	e.Status = ExecutionStatusFailed
+	return e.publish(ctx, ExecutionStatusChangedEvent{Status: e.Status, ErrorMessage: e.ErrorMessage})
+}
+
+func (e *Execution) SetMaxTurnsReachedError(ctx context.Context) error {
+	e.ErrorMessage = "Maximum number of turns reached"
+	e.Status = ExecutionStatusMaxTurns
 	return e.publish(ctx, ExecutionStatusChangedEvent{Status: e.Status, ErrorMessage: e.ErrorMessage})
 }
 

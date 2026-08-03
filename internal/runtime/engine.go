@@ -36,6 +36,9 @@ func (e *Engine) validateAgent(agent *Agent) error {
 	if agent == nil {
 		return fmt.Errorf("agent is required")
 	}
+	if len(agent.LLMs) == 0 {
+		return ErrNoLLMConfigured
+	}
 	llmConfigs := make([]Configuration, 0, len(agent.LLMs))
 	for _, cfg := range agent.LLMs {
 		llmConfigs = append(llmConfigs, Configuration(cfg))
@@ -81,7 +84,7 @@ func (e *Engine) loop(ctx context.Context, execution *Execution) error {
 		case StepCancel:
 			return execution.Cancel(ctx)
 		case StepMaxTurnsReached:
-			return execution.SetError(ctx, "Max turns reached")
+			return execution.SetMaxTurnsReachedError(ctx)
 		}
 	}
 }
@@ -97,6 +100,9 @@ func (e *Engine) step(ctx context.Context, execution *Execution) (StepResult, er
 
 	message, err := e.runLLM(ctx, execution)
 	if err != nil {
+		if ctx.Err() != nil {
+			return StepCancel, nil
+		}
 		return StepContinue, err
 	}
 
@@ -154,6 +160,9 @@ func (e *Engine) runLLM(ctx context.Context, execution *Execution) (message msg.
 		if consumeErr != nil {
 			e.logger.Error(consumeErr)
 			lastErr = consumeErr
+			if ctx.Err() != nil {
+				break
+			}
 			continue
 		}
 		return message, nil
@@ -170,71 +179,85 @@ type pendingToolCall struct {
 	id        string
 	name      string
 	arguments strings.Builder
+	err       error
 
 	parsedArguments map[string]any
 }
 
 // consumeStream ranges over a driver's StreamEvents, re-emitting them as
 // runtime events, and assembles the resulting assistant message.
-func (e *Engine) consumeStream(
-	ctx context.Context,
-	execution *Execution,
-	events <-chan llm.StreamEvent,
-) (msg.Message, error) {
+func (e *Engine) consumeStream(ctx context.Context, execution *Execution, events <-chan llm.StreamEvent) (msg.Message, error) {
 	messageID := uuid.NewString()
 
 	var content strings.Builder
 	var order []string
-	calls := map[string]*pendingToolCall{}
+	calls := make(map[string]*pendingToolCall)
 
-	for event := range events {
-		switch ev := event.(type) {
-		case llm.TextDeltaEvent:
-			content.WriteString(ev.Text)
-			if err := execution.publish(ctx, ExecutionMessageDeltaEvent{MessageID: messageID, Content: ev.Text}); err != nil {
-				return msg.Message{}, err
-			}
-
-		case llm.ToolCallStartedEvent:
-			calls[ev.ID] = &pendingToolCall{id: ev.ID, name: ev.Name}
-			order = append(order, ev.ID)
-			if err := execution.publish(ctx, ExecutionToolCallStartedEvent{MessageID: messageID, ID: ev.ID, Name: ev.Name}); err != nil {
-				return msg.Message{}, err
-			}
-
-		case llm.ToolCallArgumentsDeltaEvent:
-			if call, ok := calls[ev.ID]; ok {
-				call.arguments.WriteString(ev.Delta)
-			}
-			if err := execution.publish(ctx, ExecutionToolCallDeltaEvent{ID: ev.ID, Delta: ev.Delta}); err != nil {
-				return msg.Message{}, err
-			}
-
-		case llm.ToolCallFinishedEvent:
-			call, ok := calls[ev.ID]
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			return msg.Message{}, ctx.Err()
+		case event, ok := <-events:
 			if !ok {
-				continue
+				break loop
 			}
-			arguments, err := parseArguments(call.arguments.String())
-			if err != nil {
-				e.logger.Error(fmt.Errorf("parse arguments for tool call %s: %w", call.name, err))
-			}
-			call.parsedArguments = arguments
-			if err := execution.publish(ctx, ExecutionToolCallCompletedEvent{ID: call.id, Name: call.name, Arguments: arguments}); err != nil {
-				return msg.Message{}, err
-			}
+			switch ev := event.(type) {
+			case llm.TextDeltaEvent:
+				content.WriteString(ev.Text)
+				if err := execution.publish(ctx, ExecutionMessageDeltaEvent{MessageID: messageID, Content: ev.Text}); err != nil {
+					return msg.Message{}, err
+				}
 
-		case llm.ErrorEvent:
-			return msg.Message{}, errors.New(ev.Error)
+			case llm.ToolCallStartedEvent:
+				calls[ev.ID] = &pendingToolCall{id: ev.ID, name: ev.Name}
+				order = append(order, ev.ID)
+				if err := execution.publish(ctx, ExecutionToolCallStartedEvent{MessageID: messageID, ID: ev.ID, Name: ev.Name}); err != nil {
+					return msg.Message{}, err
+				}
 
-		case llm.CompletedEvent:
-			// no-op: consumption ends when the channel closes.
+			case llm.ToolCallArgumentsDeltaEvent:
+				if call, ok := calls[ev.ID]; ok {
+					call.arguments.WriteString(ev.Delta)
+				}
+				if err := execution.publish(ctx, ExecutionToolCallDeltaEvent{ID: ev.ID, Delta: ev.Delta}); err != nil {
+					return msg.Message{}, err
+				}
+
+			case llm.ToolCallFinishedEvent:
+				call, ok := calls[ev.ID]
+				if !ok {
+					continue
+				}
+				arguments, err := parseArguments(call.arguments.String())
+				if err != nil {
+					e.logger.Error(fmt.Errorf("parse arguments for tool call %s: %w", call.name, err))
+					call.err = err
+					continue
+				}
+				call.parsedArguments = arguments
+				if err := execution.publish(ctx, ExecutionToolCallCompletedEvent{ID: call.id, Name: call.name, Arguments: arguments}); err != nil {
+					return msg.Message{}, err
+				}
+
+			case llm.ErrorEvent:
+				if pubErr := execution.publish(ctx, ExecutionAttemptFailedEvent{MessageID: messageID, Error: ev.Error}); pubErr != nil {
+					return msg.Message{}, pubErr
+				}
+				return msg.Message{}, errors.New(ev.Error)
+
+			case llm.CompletedEvent:
+				// no-op: consumption ends when the channel closes.
+			}
 		}
 	}
 
 	toolCalls := make([]tool.Call, 0, len(order))
 	for _, id := range order {
 		call := calls[id]
+		if call.err != nil {
+			continue
+		}
 		toolCalls = append(toolCalls, tool.Call{ID: call.id, Tool: call.name, Arguments: call.parsedArguments})
 	}
 
