@@ -28,7 +28,3 @@ packages:
     config:
       dir: pkg/driver/knowledge/mocks
       include-interface-regex: '^I(SourceDriver|IndexDriver)$'
-  github.com/usesnipet/snipet/internal/queue:
-    config:
-      dir: internal/queue/mocks
-      include-interface-regex: '^IJobQueue$'

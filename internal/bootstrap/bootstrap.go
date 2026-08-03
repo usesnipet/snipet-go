@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/riverqueue/river"
 	"github.com/usesnipet/snipet/config"
 	"github.com/usesnipet/snipet/drivers/index"
 	"github.com/usesnipet/snipet/drivers/llm"
@@ -38,7 +37,7 @@ import (
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// database
-	db, sqlDB, err := database.NewDatabase(cfg, logger)
+	db, _, err := database.NewDatabase(cfg, logger)
 	if err != nil {
 		logger.Errorf("failed to create database: %v", err)
 		return err
@@ -75,16 +74,27 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	engine := runtime.NewEngine(llmManager, toolManager, logger)
 
-	workers := river.NewWorkers()
-	river.AddWorker(
-		workers,
-		knowledge.NewSyncWorker(txManager, sourceManager, knowledgeRepo, knowledgeItemRepo, knowledgeIndexRepo, 100, logger),
+	syncPool := queue.NewPool(cfg.Sync.Workers, logger)
+	syncPool.Start(context.Background())
+
+	indexSyncWorker := knowledgeindex.NewSyncIndexWorker(
+		indexManager,
+		sourceManager,
+		knowledgeRepo,
+		knowledgeItemRepo,
+		knowledgeIndexRepo,
+		indexedKnowledgeItemRepo,
+		logger,
 	)
-	riverClient, err := queue.NewRiver(sqlDB, workers)
-	if err != nil {
-		logger.Errorf("failed to create river client: %v", err)
-		return err
-	}
+	knowledgeSyncWorker := knowledge.NewSyncWorker(
+		sourceManager,
+		knowledgeRepo,
+		knowledgeItemRepo,
+		knowledgeIndexRepo,
+		indexSyncWorker.Sync,
+		100,
+		logger,
+	)
 
 	// services
 	apiKeyGenerator := auth.NewAPIKeyGenerator()
@@ -117,8 +127,22 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	agentService := agent.NewService(agentRepo, llmRepo, txManager, engine, executionRepo, messageRepo, logger)
 	llmService := llmmodule.NewService(llmRepo, llmManager)
 
-	knowledgeService := knowledge.NewService(txManager, knowledgeRepo, knowledgeItemRepo, sourceManager, riverClient)
-	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo, indexedKnowledgeItemRepo, indexManager, riverClient, txManager)
+	knowledgeService := knowledge.NewService(
+		txManager,
+		knowledgeRepo,
+		knowledgeItemRepo,
+		sourceManager,
+		syncPool,
+		knowledgeSyncWorker,
+	)
+	knowledgeIndexService := knowledgeindex.NewService(
+		knowledgeIndexRepo,
+		indexedKnowledgeItemRepo,
+		indexManager,
+		syncPool,
+		indexSyncWorker,
+		txManager,
+	)
 
 	sessionService := session.NewService(sessionRepo, messageRepo, clientService, agentService)
 
@@ -161,12 +185,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		userHandler.RegisterRoutes(r, api.Serve)
 	})
 
-	err = riverClient.Start(context.Background())
-	if err != nil {
-		logger.Errorf("failed to start river client: %v", err)
-		return err
-	}
-
+	logger.Infof("sync worker pool started with %d workers", cfg.Sync.Workers)
 	logger.Infof("server started on port %d", cfg.Server.Port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Server.Port), api.Router)
 	if err != nil {

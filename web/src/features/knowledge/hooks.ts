@@ -11,7 +11,6 @@ import type {
   ListKnowledgeDrivers,
   PaginatedKnowledge,
   PaginatedKnowledgeItem,
-  SyncKnowledgeResponse,
   UpdateKnowledge,
 } from "./schemas";
 import type {
@@ -140,8 +139,8 @@ export const useListKnowledgeDrivers = (
 
 export const syncKnowledgeQueryKey = () => [BASE_QUERY_KEY, "sync"] as const;
 export const useSyncKnowledge = (
-  opts?: ServicePostOptions<undefined, SyncKnowledgeResponse>,
-): UseMutationResult<SyncKnowledgeResponse, Error, { id: string; force?: boolean }> => {
+  opts?: ServicePostOptions<undefined, void>,
+): UseMutationResult<void, Error, { id: string; force?: boolean }> => {
   return useMutation({
     mutationKey: syncKnowledgeQueryKey(),
     mutationFn: ({ id, force = false }) =>

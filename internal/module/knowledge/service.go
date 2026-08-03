@@ -3,7 +3,6 @@ package knowledge
 import (
 	"context"
 	"errors"
-	"log"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
@@ -22,7 +21,8 @@ type Service struct {
 	repo              repository.IKnowledgeRepository
 	knowledgeItemRepo repository.IKnowledgeItemRepository
 	sourceManager     *runtime.DriverManager[kdriver.ISourceDriver]
-	riverClient       queue.IJobQueue
+	pool              queue.IPool
+	syncWorker        *SyncWorker
 }
 
 func NewService(
@@ -30,14 +30,16 @@ func NewService(
 	repo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	sourceManager *runtime.DriverManager[kdriver.ISourceDriver],
-	riverClient queue.IJobQueue,
+	pool queue.IPool,
+	syncWorker *SyncWorker,
 ) *Service {
 	return &Service{
 		txManager:         txManager,
 		repo:              repo,
 		knowledgeItemRepo: knowledgeItemRepo,
 		sourceManager:     sourceManager,
-		riverClient:       riverClient,
+		pool:              pool,
+		syncWorker:        syncWorker,
 	}
 }
 
@@ -57,9 +59,9 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.Knowledge, er
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Knowledge, int64, error) {
+func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Knowledge, error) {
 	if err := s.TestConnection(ctx, dto.Driver, dto.Configuration); err != nil {
-		return nil, 0, apperr.BadRequest(err.Error())
+		return nil, apperr.BadRequest(err.Error())
 	}
 
 	knowledge := &model.Knowledge{
@@ -70,17 +72,17 @@ func (s *Service) Create(ctx context.Context, dto CreateKnowledgeDTO) (*model.Kn
 		SyncStatus:    model.SyncStatusPending,
 	}
 
-	var jobID int64
 	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
-		if err := s.repo.Create(ctx, knowledge); err != nil {
-			return err
-		}
-		jID, err := s.Sync(ctx, knowledge.ID, true)
-		jobID = jID
-		return err
+		return s.repo.Create(ctx, knowledge)
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return knowledge, jobID, err
+	if err := s.Sync(ctx, knowledge.ID, true); err != nil {
+		return knowledge, err
+	}
+	return knowledge, nil
 }
 
 func (s *Service) Update(ctx context.Context, id string, dto UpdateKnowledgeDTO) error {
@@ -120,24 +122,16 @@ func (s *Service) TestConnection(ctx context.Context, key string, config util.JS
 	return nil
 }
 
-func (s *Service) Sync(ctx context.Context, knowledgeID string, force bool) (int64, error) {
+func (s *Service) Sync(ctx context.Context, knowledgeID string, force bool) error {
 	_, err := s.FindByID(ctx, knowledgeID)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	log.Printf("syncing knowledge %s with force: %v", knowledgeID, force)
-	jobID, err := s.riverClient.Push(ctx, SyncKnowledgeArgs{KnowledgeID: knowledgeID, Force: force}, nil)
-
+	err = s.pool.Submit(ctx, func(ctx context.Context) error {
+		return s.syncWorker.Sync(ctx, knowledgeID, force)
+	})
 	if err != nil {
-		return 0, apperr.InternalServerError(err.Error())
+		return apperr.InternalServerError(err.Error())
 	}
-	return jobID, nil
-}
-
-func (s *Service) GetSyncStatus(ctx context.Context, jobID int64) (string, error) {
-	job, err := s.riverClient.JobGet(ctx, jobID)
-	if err != nil {
-		return "", apperr.InternalServerError(err.Error())
-	}
-	return string(job.State), nil
+	return nil
 }

@@ -114,6 +114,7 @@ The API will be available at `http://localhost:8852`.
 | `LOG_LEVEL` | `info` | Log level (`debug`, `info`, `warn`, `error`) |
 | `SERVER_PORT` | `8852` | HTTP port |
 | `SERVER_SHUTDOWN_TIMEOUT` | `15s` | Graceful shutdown timeout |
+| `SYNC_WORKERS` | `4` | In-process worker pool size for knowledge sync jobs |
 | `DB_URL` | — | PostgreSQL connection string |
 | `DB_AUTO_MIGRATE` | `true` | Run migrations on startup |
 | `DB_AUTO_CREATE` | `true` | Create the database if it does not exist |

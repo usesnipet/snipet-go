@@ -20,7 +20,8 @@ type Service struct {
 	repo                     repository.IKnowledgeIndexRepository
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository
 	indexManager             *runtime.DriverManager[kdriver.IIndexDriver]
-	riverClient              queue.IJobQueue
+	pool                     queue.IPool
+	syncWorker               *SyncIndexWorker
 	txManager                repository.ITxManager
 }
 
@@ -28,15 +29,17 @@ func NewService(
 	repo repository.IKnowledgeIndexRepository,
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository,
 	indexManager *runtime.DriverManager[kdriver.IIndexDriver],
-	riverClient queue.IJobQueue,
+	pool queue.IPool,
+	syncWorker *SyncIndexWorker,
 	txManager repository.ITxManager,
 ) *Service {
 	return &Service{
 		repo:                     repo,
 		indexedKnowledgeItemRepo: indexedKnowledgeItemRepo,
 		indexManager:             indexManager,
+		pool:                     pool,
+		syncWorker:               syncWorker,
 		txManager:                txManager,
-		riverClient:              riverClient,
 	}
 }
 
@@ -64,11 +67,7 @@ func (s *Service) Create(ctx context.Context, knowledgeID string, dto CreateKnow
 		KnowledgeID:   knowledgeID,
 	}
 	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
-		if err := s.repo.CreateInKnowledge(ctx, knowledgeID, index); err != nil {
-			return err
-		}
-		return nil
-		// return s.Sync(ctx, knowledgeID, index.ID)
+		return s.repo.CreateInKnowledge(ctx, knowledgeID, index)
 	})
 	return index, err
 }
@@ -112,8 +111,9 @@ func (s *Service) Sync(ctx context.Context, knowledgeID, indexID string) error {
 		return err
 	}
 
-	_, err = s.riverClient.Push(ctx, SyncIndexArgs{IndexID: indexID}, nil)
-
+	err = s.pool.Submit(ctx, func(ctx context.Context) error {
+		return s.syncWorker.Sync(ctx, knowledgeID, indexID)
+	})
 	if err != nil {
 		return apperr.InternalServerError(err.Error())
 	}

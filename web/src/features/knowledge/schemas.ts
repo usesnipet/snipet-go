@@ -82,7 +82,6 @@ export type UpdateKnowledge = z.infer<typeof updateKnowledgeSchema>;
 export const createKnowledgeResponseSchema = z
   .object({
     knowledge: knowledgeSchema,
-    job_id: z.number().int(),
   })
   .strict();
 
@@ -95,11 +94,3 @@ export const listKnowledgeDriversSchema = z
   .strict();
 
 export type ListKnowledgeDrivers = z.infer<typeof listKnowledgeDriversSchema>;
-
-export const syncKnowledgeResponseSchema = z
-  .object({
-    job_id: z.number().int(),
-  })
-  .strict();
-
-export type SyncKnowledgeResponse = z.infer<typeof syncKnowledgeResponseSchema>;

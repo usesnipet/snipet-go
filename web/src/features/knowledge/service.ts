@@ -7,7 +7,6 @@ import {
   listKnowledgeDriversSchema,
   paginatedKnowledgeItemSchema,
   paginatedKnowledgeSchema,
-  syncKnowledgeResponseSchema,
   updateKnowledgeSchema,
 } from "./schemas";
 
@@ -18,7 +17,6 @@ import type {
   ListKnowledgeDrivers,
   PaginatedKnowledge,
   PaginatedKnowledgeItem,
-  SyncKnowledgeResponse,
   UpdateKnowledge,
 } from "./schemas";
 import type {
@@ -116,15 +114,12 @@ const listDrivers = async (
 const sync = async (
   id: string,
   force = false,
-  opts?: ServicePostOptions<undefined, SyncKnowledgeResponse>,
-): Promise<SyncKnowledgeResponse> => {
+  opts?: ServicePostOptions<undefined, void>,
+): Promise<void> => {
   return http.post({
     url: `${KNOWLEDGE_URL}/{id}/sync`,
     params: { id },
     searchParams: { force },
-    schemas: {
-      response: syncKnowledgeResponseSchema,
-    },
     ...opts,
   });
 };

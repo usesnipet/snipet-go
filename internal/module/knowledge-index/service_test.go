@@ -10,10 +10,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	"github.com/usesnipet/snipet/internal/page"
-	queuemocks "github.com/usesnipet/snipet/internal/queue/mocks"
+	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
@@ -32,6 +33,10 @@ var testIndexConfigSchema = util.JSONMap{
 	"required": []any{"dimension"},
 }
 
+type noopPool struct{}
+
+func (noopPool) Submit(context.Context, queue.Job) error { return nil }
+
 func newPassthroughTxManager(t *testing.T) *mocks.MockITxManager {
 	t.Helper()
 
@@ -45,18 +50,9 @@ func newPassthroughTxManager(t *testing.T) *mocks.MockITxManager {
 	return tx
 }
 
-func newNoopJobQueue(t *testing.T) *queuemocks.MockIJobQueue {
-	t.Helper()
-
-	q := queuemocks.NewMockIJobQueue(t)
-	q.EXPECT().Push(mock.Anything, mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
-	q.EXPECT().JobGet(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	return q
-}
-
 type testServiceOptions struct {
-	txManager   repository.ITxManager
-	riverClient *queuemocks.MockIJobQueue
+	txManager repository.ITxManager
+	pool      queue.IPool
 }
 
 func newMockIndex(t *testing.T, name string, schema util.JSONMap) *knowledgemocks.MockIIndexDriver {
@@ -80,8 +76,8 @@ func newTestService(
 	t.Helper()
 
 	options := testServiceOptions{
-		txManager:   newPassthroughTxManager(t),
-		riverClient: newNoopJobQueue(t),
+		txManager: newPassthroughTxManager(t),
+		pool:      noopPool{},
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -92,11 +88,21 @@ func newTestService(
 		reg.MustRegister(name, d)
 	}
 	indexManager := runtime.NewDriverManager(reg)
+	syncWorker := knowledgeindex.NewSyncIndexWorker(
+		indexManager,
+		runtime.NewDriverManager(registry.New[knowledge.ISourceDriver]()),
+		mocks.NewMockIKnowledgeRepository(t),
+		mocks.NewMockIKnowledgeItemRepository(t),
+		repo,
+		mocks.NewMockIIndexedKnowledgeItemRepository(t),
+		logger.NewLogger(logger.LevelError),
+	)
 	return knowledgeindex.NewService(
 		repo,
 		mocks.NewMockIIndexedKnowledgeItemRepository(t),
 		indexManager,
-		options.riverClient,
+		options.pool,
+		syncWorker,
 		options.txManager,
 	)
 }

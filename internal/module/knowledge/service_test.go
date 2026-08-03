@@ -13,10 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	knowledge "github.com/usesnipet/snipet/internal/module/knowledge"
 	"github.com/usesnipet/snipet/internal/page"
-	queuemocks "github.com/usesnipet/snipet/internal/queue/mocks"
+	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
@@ -35,6 +36,10 @@ var testConfigSchema = util.JSONMap{
 	"required": []any{"index"},
 }
 
+type noopPool struct{}
+
+func (noopPool) Submit(context.Context, queue.Job) error { return nil }
+
 func newPassthroughTxManager(t *testing.T) *mocks.MockITxManager {
 	t.Helper()
 
@@ -48,15 +53,6 @@ func newPassthroughTxManager(t *testing.T) *mocks.MockITxManager {
 	return tx
 }
 
-func newNoopJobQueue(t *testing.T) *queuemocks.MockIJobQueue {
-	t.Helper()
-
-	q := queuemocks.NewMockIJobQueue(t)
-	q.EXPECT().Push(mock.Anything, mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
-	q.EXPECT().JobGet(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	return q
-}
-
 func newTestService(
 	t *testing.T,
 	repo repository.IKnowledgeRepository,
@@ -66,8 +62,8 @@ func newTestService(
 	t.Helper()
 
 	options := testServiceOptions{
-		txManager:   newPassthroughTxManager(t),
-		riverClient: newNoopJobQueue(t),
+		txManager: newPassthroughTxManager(t),
+		pool:      noopPool{},
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -78,18 +74,28 @@ func newTestService(
 		reg.MustRegister(name, d)
 	}
 	sourceManager := runtime.NewDriverManager(reg)
+	syncWorker := knowledge.NewSyncWorker(
+		sourceManager,
+		repo,
+		mocks.NewMockIKnowledgeItemRepository(t),
+		mocks.NewMockIKnowledgeIndexRepository(t),
+		nil,
+		100,
+		logger.NewLogger(logger.LevelError),
+	)
 	return knowledge.NewService(
 		options.txManager,
 		repo,
 		mocks.NewMockIKnowledgeItemRepository(t),
 		sourceManager,
-		options.riverClient,
+		options.pool,
+		syncWorker,
 	)
 }
 
 type testServiceOptions struct {
-	txManager   repository.ITxManager
-	riverClient *queuemocks.MockIJobQueue
+	txManager repository.ITxManager
+	pool      queue.IPool
 }
 
 func newMockSource(t *testing.T, name string, schema util.JSONMap) *knowledgemocks.MockISourceDriver {
@@ -169,14 +175,9 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 			return &model.Knowledge{ID: id}, nil
 		})
 
-	riverClient := queuemocks.NewMockIJobQueue(t)
-	riverClient.EXPECT().Push(mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil).Once()
+	svc := newTestService(t, repo, map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	svc := newTestService(t, repo, map[string]kdriver.ISourceDriver{"pinecone": source}, func(o *testServiceOptions) {
-		o.riverClient = riverClient
-	})
-
-	result, _, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
+	result, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
 		Name:          "Product Docs",
 		Description:   "Internal documentation",
 		Driver:        "pinecone",
@@ -213,7 +214,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 
 	svc := newTestService(t, repo, map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	_, _, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
+	_, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
 		Name:          "Knowledge",
 		Driver:        "pinecone",
 		Configuration: config,
@@ -234,7 +235,7 @@ func TestCreateReturnsBadRequestWhenConnectionFails(t *testing.T) {
 
 	svc := newTestService(t, repo, map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	_, _, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
+	_, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
 		Name:          "Knowledge",
 		Driver:        "pinecone",
 		Configuration: config,

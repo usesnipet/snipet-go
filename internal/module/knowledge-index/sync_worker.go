@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/riverqueue/river"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
@@ -13,15 +12,6 @@ import (
 	"github.com/usesnipet/snipet/internal/util"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
-
-type SyncIndexArgs struct {
-	KnowledgeID string `json:"knowledge_id"`
-	IndexID     string `json:"index_id"`
-}
-
-func (SyncIndexArgs) Kind() string {
-	return "sync_index"
-}
 
 type SyncIndexResult struct {
 	Created int64 `json:"created"`
@@ -31,8 +21,6 @@ type SyncIndexResult struct {
 }
 
 type SyncIndexWorker struct {
-	river.WorkerDefaults[SyncIndexArgs]
-
 	sourceManager            *runtime.DriverManager[kdriver.ISourceDriver]
 	indexManager             *runtime.DriverManager[kdriver.IIndexDriver]
 	knowledgeRepo            repository.IKnowledgeRepository
@@ -62,13 +50,13 @@ func NewSyncIndexWorker(
 	}
 }
 
-func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs]) error {
-	knowledge, err := s.knowledgeRepo.FindByID(ctx, job.Args.KnowledgeID)
+func (s *SyncIndexWorker) Sync(ctx context.Context, knowledgeID, indexID string) error {
+	knowledge, err := s.knowledgeRepo.FindByID(ctx, knowledgeID)
 	if err != nil {
 		return err
 	}
 
-	index, err := s.indexRepo.FindByIDInKnowledge(ctx, job.Args.KnowledgeID, job.Args.IndexID)
+	index, err := s.indexRepo.FindByIDInKnowledge(ctx, knowledgeID, indexID)
 	if err != nil {
 		return err
 	}
@@ -89,15 +77,15 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 	}
 	defer writer.Close()
 
-	toCreate, err := s.indexedKnowledgeItemRepo.FindToCreateInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID)
+	toCreate, err := s.indexedKnowledgeItemRepo.FindToCreateInIndex(ctx, knowledgeID, indexID)
 	if err != nil {
 		return err
 	}
-	toUpdate, err := s.indexedKnowledgeItemRepo.FindToUpdateInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID)
+	toUpdate, err := s.indexedKnowledgeItemRepo.FindToUpdateInIndex(ctx, knowledgeID, indexID)
 	if err != nil {
 		return err
 	}
-	toDelete, err := s.indexedKnowledgeItemRepo.FindToDeleteInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID)
+	toDelete, err := s.indexedKnowledgeItemRepo.FindToDeleteInIndex(ctx, knowledgeID, indexID)
 	if err != nil {
 		return err
 	}
@@ -105,7 +93,7 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 	var indexedToCreate []*model.IndexedKnowledgeItem
 	for _, item := range toCreate {
 		indexedToCreate = append(indexedToCreate, &model.IndexedKnowledgeItem{
-			IndexID:         job.Args.IndexID,
+			IndexID:         indexID,
 			KnowledgeItemID: &item.ID,
 			Hash:            item.Hash,
 			Metadata:        item.Metadata,
@@ -113,7 +101,7 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 		})
 	}
 	if len(indexedToCreate) > 0 {
-		if err := s.indexedKnowledgeItemRepo.CreateManyInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID, indexedToCreate); err != nil {
+		if err := s.indexedKnowledgeItemRepo.CreateManyInIndex(ctx, knowledgeID, indexID, indexedToCreate); err != nil {
 			return err
 		}
 	}
@@ -128,8 +116,8 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 	if len(pendingIDs) > 0 {
 		err = s.indexedKnowledgeItemRepo.UpdateStatusesByIDsInIndex(
 			ctx,
-			job.Args.KnowledgeID,
-			job.Args.IndexID,
+			knowledgeID,
+			indexID,
 			pendingIDs,
 			model.IndexedStatusPending,
 		)
@@ -143,7 +131,7 @@ func (s *SyncIndexWorker) Work(ctx context.Context, job *river.Job[SyncIndexArgs
 			return err
 		}
 		for _, id := range toDeleteIDs {
-			if err := s.indexedKnowledgeItemRepo.DeleteInIndex(ctx, job.Args.KnowledgeID, job.Args.IndexID, id); err != nil {
+			if err := s.indexedKnowledgeItemRepo.DeleteInIndex(ctx, knowledgeID, indexID, id); err != nil {
 				return err
 			}
 		}

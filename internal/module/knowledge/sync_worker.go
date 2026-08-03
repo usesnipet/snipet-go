@@ -4,26 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/riverqueue/river"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
-	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
-	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
-
-type SyncKnowledgeArgs struct {
-	KnowledgeID string `json:"knowledge_id"`
-	Force       bool   `json:"force"`
-}
-
-func (SyncKnowledgeArgs) Kind() string {
-	return "knowledge-sync"
-}
 
 type SyncResult struct {
 	Created int64 `json:"created"`
@@ -32,42 +20,40 @@ type SyncResult struct {
 	Failed  int64 `json:"failed"`
 }
 
-type SyncWorker struct {
-	river.WorkerDefaults[SyncKnowledgeArgs]
+// IndexSyncFunc runs an index sync for a knowledge source after items are synced.
+type IndexSyncFunc func(ctx context.Context, knowledgeID, indexID string) error
 
-	txManager          repository.ITxManager
+type SyncWorker struct {
 	sourceManager      *runtime.DriverManager[kdriver.ISourceDriver]
 	knowledgeRepo      repository.IKnowledgeRepository
 	knowledgeItemRepo  repository.IKnowledgeItemRepository
 	knowledgeIndexRepo repository.IKnowledgeIndexRepository
+	indexSync          IndexSyncFunc
 	batchSize          int
 	logger             *logger.Logger
 }
 
 func NewSyncWorker(
-	txManager repository.ITxManager,
 	sourceManager *runtime.DriverManager[kdriver.ISourceDriver],
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	knowledgeIndexRepo repository.IKnowledgeIndexRepository,
+	indexSync IndexSyncFunc,
 	batchSize int,
 	logger *logger.Logger,
 ) *SyncWorker {
 	return &SyncWorker{
-		txManager:          txManager,
 		sourceManager:      sourceManager,
 		knowledgeRepo:      knowledgeRepo,
 		knowledgeItemRepo:  knowledgeItemRepo,
 		knowledgeIndexRepo: knowledgeIndexRepo,
+		indexSync:          indexSync,
 		batchSize:          batchSize,
 		logger:             logger,
 	}
 }
 
-func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]) error {
-	knowledgeID := job.Args.KnowledgeID
-	force := job.Args.Force
-
+func (s *SyncWorker) Sync(ctx context.Context, knowledgeID string, force bool) (err error) {
 	if force {
 		s.logger.Verbosef("syncing knowledge %s with force", knowledgeID)
 	} else {
@@ -98,8 +84,8 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 		}
 
 		kn := &model.Knowledge{SyncStatus: status, LastSyncedAt: &now, SyncError: &errMessage}
-		if err = s.knowledgeRepo.UpdateByID(ctx, knowledgeID, kn); err != nil {
-			s.logger.Errorf("failed to update knowledge sync status for knowledge %s: %s", knowledgeID, err.Error())
+		if updateErr := s.knowledgeRepo.UpdateByID(ctx, knowledgeID, kn); updateErr != nil {
+			s.logger.Errorf("failed to update knowledge sync status for knowledge %s: %s", knowledgeID, updateErr.Error())
 		}
 		s.logger.Verbosef(
 			"knowledge sync status updated for knowledge %s: status=%s, last_synced_at=%s, sync_error=%s",
@@ -194,6 +180,15 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 		result.Deleted = deleted
 	}
 
+	s.logger.Verbosef(
+		"knowledge sync completed for knowledge %s: c=%d, u=%d, d=%d, f=%d",
+		knowledgeID, result.Created, result.Updated, result.Deleted, result.Failed,
+	)
+
+	if s.indexSync == nil {
+		return nil
+	}
+
 	indexed, err := s.knowledgeIndexRepo.FilterInKnowledge(
 		ctx,
 		knowledgeID,
@@ -204,24 +199,10 @@ func (s *SyncWorker) Work(ctx context.Context, job *river.Job[SyncKnowledgeArgs]
 		return err
 	}
 
-	s.logger.Verbosef(
-		"knowledge sync completed for knowledge %s: c=%d, u=%d, d=%d, f=%d",
-		knowledgeID, result.Created, result.Updated, result.Deleted, result.Failed,
-	)
-
-	return s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
-		var err error
-		for _, index := range indexed.Data {
-			_, err = queue.PushFromContext(
-				ctx,
-				knowledgeindex.SyncIndexArgs{IndexID: index.ID, KnowledgeID: knowledgeID},
-				nil,
-			)
-			if err != nil {
-				s.logger.Errorf("failed to push sync index job for index %s: %s", index.ID, err.Error())
-				break
-			}
+	for _, index := range indexed.Data {
+		if syncErr := s.indexSync(ctx, knowledgeID, index.ID); syncErr != nil {
+			s.logger.Errorf("failed to sync index %s for knowledge %s: %s", index.ID, knowledgeID, syncErr.Error())
 		}
-		return err
-	})
+	}
+	return nil
 }
