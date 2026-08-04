@@ -61,9 +61,7 @@ func TestEngineExecutesToolCallsBeforeFinishing(t *testing.T) {
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(
-			llm.ToolCallStartedEvent{ID: "call-1", Name: "echo__echo_tool"},
-			llm.ToolCallArgumentsDeltaEvent{ID: "call-1", Delta: `{"msg":"hi"}`},
-			llm.ToolCallFinishedEvent{ID: "call-1"},
+			llm.ToolCallEvent{ID: "call-1", Name: "echo__echo_tool", Arguments: map[string]any{"msg": "hi"}},
 			llm.CompletedEvent{},
 		), nil).
 		Once()
@@ -130,11 +128,10 @@ func TestEngineExecutesToolCallsBeforeFinishing(t *testing.T) {
 	require.Equal(t, "done", final.Content)
 	require.True(t, final.IsFinal())
 
-	require.True(t, subscriber.has(runtime.ExecutionToolCallEvent{
-		MessageID: assistantWithToolCall.ID,
-		ID:        "call-1",
-		Name:      "echo__echo_tool",
-		Arguments: map[string]any{"msg": "hi"},
+	require.True(t, subscriber.has(runtime.ExecutionToolCallStartedEvent{
+		ToolCallID: "call-1",
+		Tool:       "echo__echo_tool",
+		Arguments:  map[string]any{"msg": "hi"},
 	}))
 	require.True(t, subscriber.has(runtime.ExecutionToolResultEvent{
 		ToolCallID: "call-1",
@@ -159,8 +156,7 @@ func TestEngineSurfacesToolCallErrorAsToolMessage(t *testing.T) {
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(
-			llm.ToolCallStartedEvent{ID: "call-1", Name: "unregistered__tool"},
-			llm.ToolCallFinishedEvent{ID: "call-1"},
+			llm.ToolCallEvent{ID: "call-1", Name: "unregistered__tool", Arguments: map[string]any{}},
 			llm.CompletedEvent{},
 		), nil).
 		Once()

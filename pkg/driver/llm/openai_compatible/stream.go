@@ -46,29 +46,31 @@ func stream(ctx context.Context, baseURL string, config util.JSONMap, options ll
 // readSSE parses the OpenAI-compatible SSE response line by line, emitting
 // TextDeltaEvent for content chunks and reassembling tool call deltas
 // (indexed by their position in the response, tracked via streamToolCall)
-// into ToolCallStartedEvent/ToolCallArgumentsDeltaEvent/ToolCallFinishedEvent.
-// It returns nil once a "[DONE]" marker or end of stream is reached after
-// emitting a final llm.CompletedEvent.
+// into a single llm.ToolCallEvent (or llm.ToolCallErrorEvent if its
+// arguments aren't valid JSON) once its finish_reason arrives. It returns
+// nil once a "[DONE]" marker or end of stream is reached after emitting a
+// final llm.CompletedEvent.
 func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) error {
 	scanner := bufio.NewScanner(body)
 	// Tool-call argument chunks can be large; raise the default token limit.
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 
 	toolCalls := map[int]*streamToolCall{}
-	finished := map[string]bool{}
+	flushed := map[string]bool{}
 
-	flushFinished := func() {
+	flushToolCalls := func() error {
 		for _, tc := range toolCalls {
-			if tc.id == "" || finished[tc.id] {
+			if tc.id == "" || flushed[tc.id] {
 				continue
 			}
-			finished[tc.id] = true
+			flushed[tc.id] = true
 			select {
 			case <-ctx.Done():
-				return
-			case out <- llm.ToolCallFinishedEvent{ID: tc.id}:
+				return ctx.Err()
+			case out <- tc.event():
 			}
 		}
+		return nil
 	}
 
 	for scanner.Scan() {
@@ -87,7 +89,9 @@ func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) er
 		}
 		data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 		if data == "[DONE]" {
-			flushFinished()
+			if err := flushToolCalls(); err != nil {
+				return err
+			}
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
@@ -132,32 +136,24 @@ func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) er
 			if tc.Function.Name != "" {
 				state.name = tc.Function.Name
 			}
-			if state.id != "" && state.name != "" && !state.started {
-				state.started = true
-				select {
-				case <-ctx.Done():
-					return ctx.Err()
-				case out <- llm.ToolCallStartedEvent{ID: state.id, Name: state.name}:
-				}
-			}
-			if tc.Function.Arguments != "" && state.started {
-				select {
-				case <-ctx.Done():
-					return ctx.Err()
-				case out <- llm.ToolCallArgumentsDeltaEvent{ID: state.id, Delta: tc.Function.Arguments}:
-				}
+			if tc.Function.Arguments != "" {
+				state.arguments.WriteString(tc.Function.Arguments)
 			}
 		}
 
 		if chunk.Choices[0].FinishReason != nil && *chunk.Choices[0].FinishReason != "" {
-			flushFinished()
+			if err := flushToolCalls(); err != nil {
+				return err
+			}
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("read stream: %w", err)
 	}
 
-	flushFinished()
+	if err := flushToolCalls(); err != nil {
+		return err
+	}
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -166,11 +162,34 @@ func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) er
 	return nil
 }
 
-// streamToolCall accumulates the id/name for one in-progress tool call
-// across SSE delta chunks until enough is known to emit
-// ToolCallStartedEvent (tracked via started).
+// streamToolCall accumulates one in-progress tool call's id/name/arguments
+// across SSE delta chunks until its finish_reason (or "[DONE]") is seen.
 type streamToolCall struct {
-	id      string
-	name    string
-	started bool
+	id        string
+	name      string
+	arguments strings.Builder
+}
+
+// event assembles the accumulated state into the terminal event for this
+// tool call: llm.ToolCallEvent on success, llm.ToolCallErrorEvent if the
+// arguments aren't valid JSON.
+func (tc *streamToolCall) event() llm.StreamEvent {
+	arguments, err := parseToolCallArguments(tc.arguments.String())
+	if err != nil {
+		return llm.ToolCallErrorEvent{ID: tc.id, Error: fmt.Sprintf("parse arguments for tool call %s: %v", tc.name, err)}
+	}
+	return llm.ToolCallEvent{ID: tc.id, Name: tc.name, Arguments: arguments}
+}
+
+// parseToolCallArguments decodes a tool call's accumulated JSON arguments,
+// treating an empty payload as an empty object.
+func parseToolCallArguments(raw string) (map[string]any, error) {
+	if raw == "" {
+		return map[string]any{}, nil
+	}
+	arguments := map[string]any{}
+	if err := json.Unmarshal([]byte(raw), &arguments); err != nil {
+		return nil, err
+	}
+	return arguments, nil
 }

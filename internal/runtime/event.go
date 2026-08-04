@@ -47,14 +47,13 @@ type ExecutionMessageDeltaEvent struct {
 	Content   string `json:"content"`
 }
 
-// ExecutionToolCallEvent is emitted once a tool call's arguments have
-// finished streaming and been parsed, right before it is executed.
-type ExecutionToolCallEvent struct {
+// ExecutionToolCallStartedEvent is emitted right before a requested tool
+// call is invoked.
+type ExecutionToolCallStartedEvent struct {
 	event
-	MessageID string         `json:"message_id"`
-	ID        string         `json:"id"`
-	Name      string         `json:"name"`
-	Arguments map[string]any `json:"arguments"`
+	ToolCallID string         `json:"tool_call_id"`
+	Tool       string         `json:"tool"`
+	Arguments  map[string]any `json:"arguments"`
 }
 
 // ExecutionAttemptFailedEvent is emitted when an LLM generation attempt

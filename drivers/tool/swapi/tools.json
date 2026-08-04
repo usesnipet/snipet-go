@@ -12,8 +12,12 @@
       "parameters": {
         "type": "object",
         "properties": {
-
-        }
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
       }
     },
     {
@@ -25,7 +29,14 @@
       "name": "get_films",
       "description": "Get a specific film by id from the Star Wars API",
       "parameters": {
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
       }
     },
     {
@@ -37,7 +48,14 @@
       "name": "get_planets",
       "description": "Get a specific planet by id from the Star Wars API",
       "parameters": {
-        "id": "integer"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
       }
     },
     {
@@ -49,7 +67,14 @@
       "name": "get_species",
       "description": "Get a specific species by id from the Star Wars API",
       "parameters": {
-        "id": "integer"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
       }
     },
     {
@@ -61,7 +86,14 @@
       "name": "get_starships",
       "description": "Get a specific starship by id from the Star Wars API",
       "parameters": {
-        "id": "integer"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
       }
     },
     {
@@ -73,7 +105,14 @@
       "name": "get_vehicles",
       "description": "Get a specific vehicle by id from the Star Wars API",
       "parameters": {
-        "id": "integer"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
       }
     }
   ]

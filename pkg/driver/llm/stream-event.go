@@ -2,8 +2,8 @@ package llm
 
 // StreamEvent is a sealed interface implemented by every event Driver.Stream
 // may emit on its channel. Consumers type-switch on the concrete event types
-// below (ErrorEvent, TextDeltaEvent, ToolCall*Event, CompletedEvent); no
-// other package can implement StreamEvent.
+// below (ErrorEvent, TextDeltaEvent, ToolCallEvent, ToolCallErrorEvent,
+// CompletedEvent); no other package can implement StreamEvent.
 type StreamEvent interface {
 	isStreamEvent()
 }
@@ -24,28 +24,24 @@ type TextDeltaEvent struct {
 	Text string `json:"text"`
 }
 
-// ToolCallStartedEvent signals that the model began requesting a tool call,
-// identified by ID, before its arguments are known.
-type ToolCallStartedEvent struct {
+// ToolCallEvent signals that the model finished requesting a tool call: its
+// ID, Name and Arguments are fully known. The driver is responsible for
+// assembling this internally from whatever incremental shape its wire
+// protocol uses.
+type ToolCallEvent struct {
 	streamEvent
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Arguments map[string]any `json:"arguments"`
 }
 
-// ToolCallArgumentsDeltaEvent carries an incremental chunk of a tool call's
-// JSON arguments; concatenate Delta values by ID to reconstruct the full
-// argument payload.
-type ToolCallArgumentsDeltaEvent struct {
+// ToolCallErrorEvent signals that the model requested a tool call whose
+// arguments could not be assembled (e.g. malformed JSON). It does not end
+// the stream; consumers should drop this one call and keep processing.
+type ToolCallErrorEvent struct {
 	streamEvent
-	ID    string
-	Delta string
-}
-
-// ToolCallFinishedEvent signals that a tool call's arguments are complete
-// and it is ready to be invoked.
-type ToolCallFinishedEvent struct {
-	streamEvent
-	ID string
+	ID    string `json:"id"`
+	Error string `json:"error"`
 }
 
 // CompletedEvent signals that the stream finished successfully. It is

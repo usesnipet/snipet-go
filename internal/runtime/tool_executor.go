@@ -26,6 +26,14 @@ func NewToolExecutor(tools *ToolManager, logger *logger.Logger) *ToolExecutor {
 // surfaced to the LLM as an error result so it can react.
 func (e *ToolExecutor) Run(ctx context.Context, execution *Execution, calls []tool.Call) error {
 	for _, call := range calls {
+		if err := execution.publish(ctx, ExecutionToolCallStartedEvent{
+			ToolCallID: call.ID,
+			Tool:       call.Tool,
+			Arguments:  call.Arguments,
+		}); err != nil {
+			return err
+		}
+
 		result, callErr := e.tools.Call(ctx, tool.Call{Tool: call.Tool, Arguments: call.Arguments})
 
 		content := result.Result
