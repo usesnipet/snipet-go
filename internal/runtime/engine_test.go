@@ -214,7 +214,31 @@ func TestEngineFallsBackToJSONToolCallWhenUnsupported(t *testing.T) {
 		), nil).
 		Once()
 	llmDriver.EXPECT().
-		Stream(mock.Anything, mock.Anything, mock.Anything).
+		Stream(mock.Anything, mock.Anything, mock.MatchedBy(func(options llm.GenerateOptions) bool {
+			// The tool call/result turns from the previous attempt must survive
+			// as plain text the fallback model can read - not as the structured
+			// tool_calls/"tool"-role shape its chat template doesn't understand
+			// (see rewriteMessagesForFallback) - or it never learns the tool
+			// already ran and just calls it again forever.
+			for _, m := range options.Prompt.Messages {
+				if m.Role == msg.RoleTool {
+					return false
+				}
+				if len(m.ToolCalls) > 0 {
+					return false
+				}
+			}
+			var sawToolRequest, sawToolResult bool
+			for _, m := range options.Prompt.Messages {
+				if strings.Contains(m.Content, "echo__echo_tool") && m.Role == msg.RoleAssistant {
+					sawToolRequest = true
+				}
+				if strings.Contains(m.Content, "echo:hi") {
+					sawToolResult = true
+				}
+			}
+			return sawToolRequest && sawToolResult
+		})).
 		Return(streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil).
 		Once()
 
@@ -265,4 +289,9 @@ func TestEngineFallsBackToJSONToolCallWhenUnsupported(t *testing.T) {
 	toolResult := execution.Messages[2]
 	require.Equal(t, msg.RoleTool, toolResult.Role)
 	require.Equal(t, "echo:hi", toolResult.Content)
+
+	final := execution.Messages[3]
+	require.Equal(t, msg.RoleAssistant, final.Role)
+	require.Equal(t, "done", final.Content)
+	require.True(t, final.IsFinal())
 }

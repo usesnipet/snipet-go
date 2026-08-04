@@ -15,8 +15,11 @@ type chatRequest struct {
 // message/delta: Content/ToolCalls/ToolCallID are used when sending, while
 // the same fields (via chatChoice.Message or .Delta) hold response data.
 type chatMessage struct {
-	Role       string         `json:"role"`
-	Content    string         `json:"content,omitempty"`
+	Role string `json:"role"`
+	// Content is intentionally not omitempty: some OpenAI-compatible servers
+	// (e.g. Ollama) error on tool-call-only assistant messages when the
+	// "content" key is missing entirely, expecting at least "" instead.
+	Content    string         `json:"content"`
 	ToolCalls  []chatToolCall `json:"tool_calls,omitempty"`
 	ToolCallID string         `json:"tool_call_id,omitempty"`
 }

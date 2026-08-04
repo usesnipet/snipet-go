@@ -140,8 +140,6 @@ export const SSE_EVENT = {
   EXECUTION_FINISHED: "execution_finished",
   EXECUTION_MESSAGE_DELTA: "execution_message_delta",
   EXECUTION_TOOL_CALL_STARTED: "execution_tool_call_started",
-  EXECUTION_TOOL_CALL_DELTA: "execution_tool_call_delta",
-  EXECUTION_TOOL_CALL_COMPLETED: "execution_tool_call_completed",
   EXECUTION_TOOL_RESULT: "execution_tool_result",
   ERROR: "error",
 } as const;
@@ -200,37 +198,14 @@ export type ExecutionMessageDeltaEvent = z.infer<
 
 export const executionToolCallStartedEventSchema = z
   .object({
-    message_id: z.uuid(),
-    id: z.string(),
-    name: z.string(),
+    tool_call_id: z.string(),
+    tool: z.string(),
+    arguments: z.record(z.string(), z.unknown()),
   })
   .strict();
 
 export type ExecutionToolCallStartedEvent = z.infer<
   typeof executionToolCallStartedEventSchema
->;
-
-export const executionToolCallDeltaEventSchema = z
-  .object({
-    id: z.string(),
-    delta: z.string(),
-  })
-  .strict();
-
-export type ExecutionToolCallDeltaEvent = z.infer<
-  typeof executionToolCallDeltaEventSchema
->;
-
-export const executionToolCallCompletedEventSchema = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-    arguments: z.record(z.string(), z.unknown()),
-  })
-  .strict();
-
-export type ExecutionToolCallCompletedEvent = z.infer<
-  typeof executionToolCallCompletedEventSchema
 >;
 
 export const executionToolResultEventSchema = z

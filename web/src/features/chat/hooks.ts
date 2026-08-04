@@ -5,7 +5,6 @@ import {
   executionMessageAddedEventSchema,
   executionMessageDeltaEventSchema,
   executionStatusChangedEventSchema,
-  executionToolCallCompletedEventSchema,
   executionToolCallStartedEventSchema,
   executionToolResultEventSchema,
   executionTurnCompletedEventSchema,
@@ -17,7 +16,7 @@ import { ApiError } from "@/lib/http";
 import { queryClient } from "@/lib/query-client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { Message, ToolCall } from "@/features/session/schemas";
+import type { Message } from "@/features/session/schemas";
 
 const EMPTY_MESSAGES: Message[] = [];
 
@@ -66,15 +65,6 @@ function updateMessage(
   if (index === -1) return [...messages, create()];
   const next = [...messages];
   next[index] = update(next[index]);
-  return next;
-}
-
-function upsertToolCall(toolCalls: ToolCall[] | undefined, toolCall: ToolCall): ToolCall[] {
-  const current = toolCalls ?? [];
-  const index = current.findIndex((call) => call.id === toolCall.id);
-  if (index === -1) return [...current, toolCall];
-  const next = [...current];
-  next[index] = { ...next[index], ...toolCall };
   return next;
 }
 
@@ -222,52 +212,11 @@ export function useSessionChat(clientCode: string, sessionId: string) {
                   break;
                 }
                 case SSE_EVENT.EXECUTION_TOOL_CALL_STARTED: {
-                  const parsed = executionToolCallStartedEventSchema.safeParse(data);
-                  if (!parsed.success) return;
-                  const { message_id, id, name } = parsed.data;
-                  setStreamed((prev) =>
-                    updateMessage(
-                      prev,
-                      message_id,
-                      (current) => ({
-                        ...current,
-                        tool_calls: upsertToolCall(current.tool_calls, {
-                          id,
-                          tool: name,
-                          arguments: {},
-                        }),
-                      }),
-                      () => ({
-                        id: message_id,
-                        sequence: -1,
-                        role: "assistant",
-                        content: "",
-                        tool_calls: [{ id, tool: name, arguments: {} }],
-                        timestamp: new Date(),
-                      }),
-                    ),
-                  );
-                  break;
-                }
-                case SSE_EVENT.EXECUTION_TOOL_CALL_COMPLETED: {
-                  const parsed = executionToolCallCompletedEventSchema.safeParse(data);
-                  if (!parsed.success) return;
-                  const { id, name, arguments: args } = parsed.data;
-                  setStreamed((prev) =>
-                    prev.map((current) => {
-                      if (!current.tool_calls?.some((call) => call.id === id)) {
-                        return current;
-                      }
-                      return {
-                        ...current,
-                        tool_calls: upsertToolCall(current.tool_calls, {
-                          id,
-                          tool: name,
-                          arguments: args,
-                        }),
-                      };
-                    }),
-                  );
+                  // The assistant message (with tool_calls already fully populated)
+                  // arrives via EXECUTION_MESSAGE_ADDED before this fires, so there's
+                  // nothing left to assemble here — a tool call reads as "running" in
+                  // the UI simply by not having an entry in toolResults yet.
+                  executionToolCallStartedEventSchema.safeParse(data);
                   break;
                 }
                 case SSE_EVENT.EXECUTION_TOOL_RESULT: {

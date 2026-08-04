@@ -25,7 +25,11 @@ func NewToolExecutor(tools *ToolManager, logger *logger.Logger) *ToolExecutor {
 // them back to the LLM. Tool failures don't abort the execution — they're
 // surfaced to the LLM as an error result so it can react.
 func (e *ToolExecutor) Run(ctx context.Context, execution *Execution, calls []tool.Call) error {
-	for _, call := range calls {
+	e.logger.Debugf("tool_executor: running %d tool call(s)", len(calls))
+
+	for i, call := range calls {
+		e.logger.Debugf("tool_executor: [%d/%d] invoking tool=%q id=%s arguments=%v", i+1, len(calls), call.Tool, call.ID, call.Arguments)
+
 		if err := execution.publish(ctx, ExecutionToolCallStartedEvent{
 			ToolCallID: call.ID,
 			Tool:       call.Tool,
@@ -39,9 +43,11 @@ func (e *ToolExecutor) Run(ctx context.Context, execution *Execution, calls []to
 		content := result.Result
 		errMessage := ""
 		if callErr != nil {
-			e.logger.Error(callErr)
+			e.logger.Errorf("tool_executor: [%d/%d] tool=%q id=%s failed: %v", i+1, len(calls), call.Tool, call.ID, callErr)
 			errMessage = callErr.Error()
 			content = fmt.Sprintf("error: %s", errMessage)
+		} else {
+			e.logger.Debugf("tool_executor: [%d/%d] tool=%q id=%s succeeded result_len=%d", i+1, len(calls), call.Tool, call.ID, len(result.Result))
 		}
 
 		if err := execution.publish(ctx, ExecutionToolResultEvent{

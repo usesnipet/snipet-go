@@ -41,45 +41,46 @@ func (_m *MockDriver) EXPECT() *MockDriver_Expecter {
 	return &MockDriver_Expecter{mock: &_m.Mock}
 }
 
-// Capabilities provides a mock function for the type MockDriver
-func (_mock *MockDriver) Capabilities(ctx context.Context, config util.JSONMap) (llm.Capabilities, error) {
-	ret := _mock.Called(ctx, config)
+// Generate provides a mock function for the type MockDriver
+func (_mock *MockDriver) Generate(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (llm.GenerateResult, error) {
+	ret := _mock.Called(ctx, config, options)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Capabilities")
+		panic("no return value specified for Generate")
 	}
 
-	var r0 llm.Capabilities
+	var r0 llm.GenerateResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) (llm.Capabilities, error)); ok {
-		return returnFunc(ctx, config)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, llm.GenerateOptions) (llm.GenerateResult, error)); ok {
+		return returnFunc(ctx, config, options)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) llm.Capabilities); ok {
-		r0 = returnFunc(ctx, config)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, llm.GenerateOptions) llm.GenerateResult); ok {
+		r0 = returnFunc(ctx, config, options)
 	} else {
-		r0 = ret.Get(0).(llm.Capabilities)
+		r0 = ret.Get(0).(llm.GenerateResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap) error); ok {
-		r1 = returnFunc(ctx, config)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap, llm.GenerateOptions) error); ok {
+		r1 = returnFunc(ctx, config, options)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockDriver_Capabilities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Capabilities'
-type MockDriver_Capabilities_Call struct {
+// MockDriver_Generate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Generate'
+type MockDriver_Generate_Call struct {
 	*mock.Call
 }
 
-// Capabilities is a helper method to define mock.On call
+// Generate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - config util.JSONMap
-func (_e *MockDriver_Expecter) Capabilities(ctx any, config any) *MockDriver_Capabilities_Call {
-	return &MockDriver_Capabilities_Call{Call: _e.mock.On("Capabilities", ctx, config)}
+//   - options llm.GenerateOptions
+func (_e *MockDriver_Expecter) Generate(ctx any, config any, options any) *MockDriver_Generate_Call {
+	return &MockDriver_Generate_Call{Call: _e.mock.On("Generate", ctx, config, options)}
 }
 
-func (_c *MockDriver_Capabilities_Call) Run(run func(ctx context.Context, config util.JSONMap)) *MockDriver_Capabilities_Call {
+func (_c *MockDriver_Generate_Call) Run(run func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions)) *MockDriver_Generate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -89,20 +90,25 @@ func (_c *MockDriver_Capabilities_Call) Run(run func(ctx context.Context, config
 		if args[1] != nil {
 			arg1 = args[1].(util.JSONMap)
 		}
+		var arg2 llm.GenerateOptions
+		if args[2] != nil {
+			arg2 = args[2].(llm.GenerateOptions)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockDriver_Capabilities_Call) Return(capabilities llm.Capabilities, err error) *MockDriver_Capabilities_Call {
-	_c.Call.Return(capabilities, err)
+func (_c *MockDriver_Generate_Call) Return(generateResult llm.GenerateResult, err error) *MockDriver_Generate_Call {
+	_c.Call.Return(generateResult, err)
 	return _c
 }
 
-func (_c *MockDriver_Capabilities_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap) (llm.Capabilities, error)) *MockDriver_Capabilities_Call {
+func (_c *MockDriver_Generate_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (llm.GenerateResult, error)) *MockDriver_Generate_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -147,6 +153,146 @@ func (_c *MockDriver_Info_Call) Return(info driver.Info) *MockDriver_Info_Call {
 }
 
 func (_c *MockDriver_Info_Call) RunAndReturn(run func() driver.Info) *MockDriver_Info_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Model provides a mock function for the type MockDriver
+func (_mock *MockDriver) Model(ctx context.Context, config util.JSONMap, name string) (llm.Model, error) {
+	ret := _mock.Called(ctx, config, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Model")
+	}
+
+	var r0 llm.Model
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, string) (llm.Model, error)); ok {
+		return returnFunc(ctx, config, name)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, string) llm.Model); ok {
+		r0 = returnFunc(ctx, config, name)
+	} else {
+		r0 = ret.Get(0).(llm.Model)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap, string) error); ok {
+		r1 = returnFunc(ctx, config, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDriver_Model_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Model'
+type MockDriver_Model_Call struct {
+	*mock.Call
+}
+
+// Model is a helper method to define mock.On call
+//   - ctx context.Context
+//   - config util.JSONMap
+//   - name string
+func (_e *MockDriver_Expecter) Model(ctx any, config any, name any) *MockDriver_Model_Call {
+	return &MockDriver_Model_Call{Call: _e.mock.On("Model", ctx, config, name)}
+}
+
+func (_c *MockDriver_Model_Call) Run(run func(ctx context.Context, config util.JSONMap, name string)) *MockDriver_Model_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 util.JSONMap
+		if args[1] != nil {
+			arg1 = args[1].(util.JSONMap)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDriver_Model_Call) Return(model llm.Model, err error) *MockDriver_Model_Call {
+	_c.Call.Return(model, err)
+	return _c
+}
+
+func (_c *MockDriver_Model_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap, name string) (llm.Model, error)) *MockDriver_Model_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Models provides a mock function for the type MockDriver
+func (_mock *MockDriver) Models(ctx context.Context, config util.JSONMap) ([]llm.Model, error) {
+	ret := _mock.Called(ctx, config)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Models")
+	}
+
+	var r0 []llm.Model
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) ([]llm.Model, error)); ok {
+		return returnFunc(ctx, config)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) []llm.Model); ok {
+		r0 = returnFunc(ctx, config)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]llm.Model)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap) error); ok {
+		r1 = returnFunc(ctx, config)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDriver_Models_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Models'
+type MockDriver_Models_Call struct {
+	*mock.Call
+}
+
+// Models is a helper method to define mock.On call
+//   - ctx context.Context
+//   - config util.JSONMap
+func (_e *MockDriver_Expecter) Models(ctx any, config any) *MockDriver_Models_Call {
+	return &MockDriver_Models_Call{Call: _e.mock.On("Models", ctx, config)}
+}
+
+func (_c *MockDriver_Models_Call) Run(run func(ctx context.Context, config util.JSONMap)) *MockDriver_Models_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 util.JSONMap
+		if args[1] != nil {
+			arg1 = args[1].(util.JSONMap)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDriver_Models_Call) Return(models []llm.Model, err error) *MockDriver_Models_Call {
+	_c.Call.Return(models, err)
+	return _c
+}
+
+func (_c *MockDriver_Models_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap) ([]llm.Model, error)) *MockDriver_Models_Call {
 	_c.Call.Return(run)
 	return _c
 }
