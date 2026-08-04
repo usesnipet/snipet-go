@@ -10,7 +10,7 @@ import (
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
-func TestBuildChatRequest(t *testing.T) {
+func TestBuildChatParams(t *testing.T) {
 	cfg := Config{
 		Model:       "gpt-4o-mini",
 		Temperature: 0.5,
@@ -36,45 +36,44 @@ func TestBuildChatRequest(t *testing.T) {
 		),
 	}
 
-	req := buildChatRequest(cfg, options, false)
-	require.Equal(t, "gpt-4o-mini", req.Model)
-	require.False(t, req.Stream)
-	require.NotNil(t, req.Temperature)
-	require.Equal(t, 0.5, *req.Temperature)
-	require.NotNil(t, req.MaxTokens)
-	require.Equal(t, 100, *req.MaxTokens)
-	require.NotNil(t, req.TopP)
-	require.Equal(t, 0.9, *req.TopP)
+	params := buildChatParams(cfg, options)
+	require.Equal(t, "gpt-4o-mini", string(params.Model))
+	require.True(t, params.Temperature.Valid())
+	require.Equal(t, 0.5, params.Temperature.Value)
+	require.True(t, params.MaxTokens.Valid())
+	require.Equal(t, int64(100), params.MaxTokens.Value)
+	require.True(t, params.TopP.Valid())
+	require.Equal(t, 0.9, params.TopP.Value)
 
-	require.Len(t, req.Messages, 4)
-	require.Equal(t, "system", req.Messages[0].Role)
-	require.Equal(t, "You are helpful.", req.Messages[0].Content)
-	require.Equal(t, "user", req.Messages[1].Role)
-	require.Equal(t, "assistant", req.Messages[2].Role)
-	require.Equal(t, "user", req.Messages[3].Role)
-	require.Equal(t, "How are you?", req.Messages[3].Content)
+	require.Len(t, params.Messages, 4)
+	require.NotNil(t, params.Messages[0].OfSystem)
+	require.Equal(t, "You are helpful.", params.Messages[0].OfSystem.Content.OfString.Value)
+	require.NotNil(t, params.Messages[1].OfUser)
+	require.NotNil(t, params.Messages[2].OfAssistant)
+	require.NotNil(t, params.Messages[3].OfUser)
+	require.Equal(t, "How are you?", params.Messages[3].OfUser.Content.OfString.Value)
 
-	require.Len(t, req.Tools, 1)
-	require.Equal(t, "function", req.Tools[0].Type)
-	require.Equal(t, "get_weather", req.Tools[0].Function.Name)
-	require.Equal(t, "Get weather", req.Tools[0].Function.Description)
+	require.Len(t, params.Tools, 1)
+	require.NotNil(t, params.Tools[0].OfFunction)
+	require.Equal(t, "get_weather", params.Tools[0].OfFunction.Function.Name)
+	require.Equal(t, "Get weather", params.Tools[0].OfFunction.Function.Description.Value)
 
-	payload, err := json.Marshal(req)
+	payload, err := json.Marshal(params)
 	require.NoError(t, err)
 	require.Contains(t, string(payload), `"tools"`)
-	require.NotContains(t, string(payload), `"stream"`)
 }
 
-func TestBuildChatRequestStreamAndEmptyTools(t *testing.T) {
-	req := buildChatRequest(Config{Model: "m"}, llm.GenerateOptions{
+func TestBuildChatParamsOmitsZeroOptionalFields(t *testing.T) {
+	params := buildChatParams(Config{Model: "m"}, llm.GenerateOptions{
 		Prompt: llm.NewPrompt(llm.WithMessages([]msg.Message{
 			msg.NewMessage(msg.RoleUser, "hi"),
 		})),
-	}, true)
-	require.True(t, req.Stream)
-	require.Nil(t, req.Tools)
-	require.Nil(t, req.Temperature)
-	require.Len(t, req.Messages, 1)
+	})
+	require.False(t, params.Temperature.Valid())
+	require.False(t, params.TopP.Valid())
+	require.False(t, params.MaxTokens.Valid())
+	require.Nil(t, params.Tools)
+	require.Len(t, params.Messages, 1)
 }
 
 func TestBuildMessagesRoundTripsToolCalls(t *testing.T) {
@@ -83,34 +82,37 @@ func TestBuildMessagesRoundTripsToolCalls(t *testing.T) {
 	}))
 	toolResult := msg.NewMessage(msg.RoleTool, "sunny", msg.WithToolCallID("call-1"))
 
-	req := buildChatRequest(Config{Model: "m"}, llm.GenerateOptions{
+	params := buildChatParams(Config{Model: "m"}, llm.GenerateOptions{
 		Prompt: llm.NewPrompt(llm.WithMessages([]msg.Message{
 			msg.NewMessage(msg.RoleUser, "weather?"),
 			assistant,
 			toolResult,
 		})),
-	}, false)
+	})
 
-	require.Len(t, req.Messages, 3)
+	require.Len(t, params.Messages, 3)
 
-	assistantMsg := req.Messages[1]
-	require.Equal(t, "assistant", assistantMsg.Role)
+	assistantMsg := params.Messages[1].OfAssistant
+	require.NotNil(t, assistantMsg)
+	require.True(t, assistantMsg.Content.OfString.Valid())
+	require.Equal(t, "", assistantMsg.Content.OfString.Value)
 	require.Len(t, assistantMsg.ToolCalls, 1)
-	require.Equal(t, "call-1", assistantMsg.ToolCalls[0].ID)
-	require.Equal(t, "function", assistantMsg.ToolCalls[0].Type)
-	require.Equal(t, "get_weather", assistantMsg.ToolCalls[0].Function.Name)
-	require.JSONEq(t, `{"city":"SP"}`, assistantMsg.ToolCalls[0].Function.Arguments)
+	require.NotNil(t, assistantMsg.ToolCalls[0].OfFunction)
+	require.Equal(t, "call-1", assistantMsg.ToolCalls[0].OfFunction.ID)
+	require.Equal(t, "get_weather", assistantMsg.ToolCalls[0].OfFunction.Function.Name)
+	require.JSONEq(t, `{"city":"SP"}`, assistantMsg.ToolCalls[0].OfFunction.Function.Arguments)
 
-	toolMsg := req.Messages[2]
-	require.Equal(t, "tool", toolMsg.Role)
+	toolMsg := params.Messages[2].OfTool
+	require.NotNil(t, toolMsg)
 	require.Equal(t, "call-1", toolMsg.ToolCallID)
-	require.Equal(t, "sunny", toolMsg.Content)
+	require.Equal(t, "sunny", toolMsg.Content.OfString.Value)
 }
 
 func TestBuildToolsNilParameters(t *testing.T) {
 	tools := buildTools(tool.NewToolset(tool.NewTool("noop", "No op", nil)))
 	require.Len(t, tools, 1)
-	require.Equal(t, "object", tools[0].Function.Parameters["type"])
+	require.NotNil(t, tools[0].OfFunction)
+	require.Equal(t, "object", tools[0].OfFunction.Function.Parameters["type"])
 }
 
 func TestResolveBaseURL(t *testing.T) {

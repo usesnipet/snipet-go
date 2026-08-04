@@ -3,127 +3,117 @@ package openaicompatible
 import (
 	"encoding/json"
 
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/shared"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
-// buildChatRequest translates a GenerateOptions/Config pair into the
-// OpenAI-compatible request body, omitting optional numeric parameters that
-// were left at their zero value.
-func buildChatRequest(cfg Config, options llm.GenerateOptions, stream bool) chatRequest {
-	req := chatRequest{
+// buildChatParams translates a GenerateOptions/Config pair into openai-go
+// Chat Completions params. Optional numeric fields left at zero are omitted.
+func buildChatParams(cfg Config, options llm.GenerateOptions) openai.ChatCompletionNewParams {
+	params := openai.ChatCompletionNewParams{
 		Model:    cfg.Model,
 		Messages: buildMessages(options.Prompt),
 		Tools:    buildTools(options.Tools),
-		Stream:   stream,
 	}
 
 	if cfg.MaxTokens != 0 {
-		m := cfg.MaxTokens
-		req.MaxTokens = &m
+		params.MaxTokens = openai.Int(int64(cfg.MaxTokens))
+	}
+	if cfg.Temperature != 0 {
+		params.Temperature = openai.Float(cfg.Temperature)
+	}
+	if cfg.TopP != 0 {
+		params.TopP = openai.Float(cfg.TopP)
 	}
 
-	req.Temperature = &cfg.Temperature
-	req.TopP = &cfg.TopP
-
-	return req
+	return params
 }
 
-// buildMessages converts a llm.Prompt into the OpenAI-compatible message
-// list, prepending a system message when Prompt.System is set and dropping
-// any message whose Role has no OpenAI equivalent (see toOpenAIRole).
-func buildMessages(prompt llm.Prompt) []chatMessage {
-	messages := make([]chatMessage, 0, len(prompt.Messages)+1)
+// buildMessages converts a llm.Prompt into openai-go message params,
+// prepending a system message when Prompt.System is set and dropping any
+// message whose Role has no OpenAI equivalent.
+func buildMessages(prompt llm.Prompt) []openai.ChatCompletionMessageParamUnion {
+	messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(prompt.Messages)+1)
 	if prompt.System != "" {
-		messages = append(messages, chatMessage{
-			Role:    "system",
-			Content: prompt.System,
-		})
+		messages = append(messages, openai.SystemMessage(prompt.System))
 	}
 	for _, m := range prompt.Messages {
-		role, ok := toOpenAIRole(m.Role)
-		if !ok {
-			continue
+		switch m.Role {
+		case msg.RoleSystem:
+			messages = append(messages, openai.SystemMessage(m.Content))
+		case msg.RoleUser:
+			messages = append(messages, openai.UserMessage(m.Content))
+		case msg.RoleAssistant:
+			messages = append(messages, buildAssistantMessage(m))
+		case msg.RoleTool:
+			messages = append(messages, openai.ToolMessage(m.Content, m.ToolCallID))
 		}
-		message := chatMessage{
-			Role:    role,
-			Content: m.Content,
-		}
-		if m.Role == msg.RoleAssistant && len(m.ToolCalls) > 0 {
-			message.ToolCalls = buildToolCalls(m.ToolCalls)
-		}
-		if m.Role == msg.RoleTool {
-			message.ToolCallID = m.ToolCallID
-		}
-		messages = append(messages, message)
 	}
 	return messages
 }
 
-// buildToolCalls converts assistant tool.Call records into the
-// OpenAI-compatible tool_calls representation, JSON-encoding each call's
-// arguments (falling back to "{}" if they don't marshal).
-func buildToolCalls(calls []tool.Call) []chatToolCall {
-	toolCalls := make([]chatToolCall, 0, len(calls))
+// buildAssistantMessage builds an assistant turn, including tool_calls when
+// present. Content is always set (even to "") so Ollama-compatible servers
+// that reject missing content on tool-call-only messages keep working.
+func buildAssistantMessage(m msg.Message) openai.ChatCompletionMessageParamUnion {
+	assistant := openai.ChatCompletionAssistantMessageParam{
+		Content: openai.ChatCompletionAssistantMessageParamContentUnion{
+			OfString: openai.String(m.Content),
+		},
+	}
+	if len(m.ToolCalls) > 0 {
+		assistant.ToolCalls = buildToolCalls(m.ToolCalls)
+	}
+	return openai.ChatCompletionMessageParamUnion{OfAssistant: &assistant}
+}
+
+// buildToolCalls converts assistant tool.Call records into openai-go tool
+// call params, JSON-encoding each call's arguments (falling back to "{}" if
+// they don't marshal).
+func buildToolCalls(calls []tool.Call) []openai.ChatCompletionMessageToolCallUnionParam {
+	toolCalls := make([]openai.ChatCompletionMessageToolCallUnionParam, 0, len(calls))
 	for _, c := range calls {
 		arguments, err := json.Marshal(c.Arguments)
 		if err != nil {
 			arguments = []byte("{}")
 		}
-		toolCalls = append(toolCalls, chatToolCall{
-			ID:   c.ID,
-			Type: "function",
-			Function: chatToolCallFunction{
-				Name:      c.Tool,
-				Arguments: string(arguments),
+		toolCalls = append(toolCalls, openai.ChatCompletionMessageToolCallUnionParam{
+			OfFunction: &openai.ChatCompletionMessageFunctionToolCallParam{
+				ID: c.ID,
+				Function: openai.ChatCompletionMessageFunctionToolCallFunctionParam{
+					Name:      c.Tool,
+					Arguments: string(arguments),
+				},
 			},
 		})
 	}
 	return toolCalls
 }
 
-// buildTools converts a tool.Toolset into the OpenAI-compatible tools list,
-// returning nil when the toolset is empty and defaulting each tool's
-// parameters to an empty object schema when not specified.
-func buildTools(toolset tool.Toolset) []chatTool {
+// buildTools converts a tool.Toolset into openai-go tools, returning nil when
+// empty and defaulting each tool's parameters to an empty object schema when
+// not specified.
+func buildTools(toolset tool.Toolset) []openai.ChatCompletionToolUnionParam {
 	if len(toolset.Tools) == 0 {
 		return nil
 	}
-	tools := make([]chatTool, 0, len(toolset.Tools))
+	tools := make([]openai.ChatCompletionToolUnionParam, 0, len(toolset.Tools))
 	for _, t := range toolset.Tools {
-		params := t.Parameters
+		params := shared.FunctionParameters(t.Parameters)
 		if params == nil {
-			params = map[string]any{
+			params = shared.FunctionParameters{
 				"type":       "object",
 				"properties": map[string]any{},
 			}
 		}
-		tools = append(tools, chatTool{
-			Type: "function",
-			Function: chatToolFunction{
-				Name:        t.Name,
-				Description: t.Description,
-				Parameters:  params,
-			},
-		})
+		tools = append(tools, openai.ChatCompletionFunctionTool(shared.FunctionDefinitionParam{
+			Name:        t.Name,
+			Description: openai.String(t.Description),
+			Parameters:  params,
+		}))
 	}
 	return tools
-}
-
-// toOpenAIRole maps a msg.Role to its OpenAI-compatible string value. The
-// second return value is false for roles with no OpenAI equivalent.
-func toOpenAIRole(role msg.Role) (string, bool) {
-	switch role {
-	case msg.RoleSystem:
-		return "system", true
-	case msg.RoleUser:
-		return "user", true
-	case msg.RoleAssistant:
-		return "assistant", true
-	case msg.RoleTool:
-		return "tool", true
-	default:
-		return "", false
-	}
 }

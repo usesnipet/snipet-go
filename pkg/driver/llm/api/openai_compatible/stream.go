@@ -1,60 +1,58 @@
 package openaicompatible
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
 
+	"github.com/openai/openai-go/v3"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
-// stream opens a chat completions SSE stream and translates it into
-// llm.StreamEvent values on the returned channel. The channel is closed once
-// the stream ends, either successfully (llm.CompletedEvent) or with an error
-// (llm.ErrorEvent).
-func stream(ctx context.Context, baseURL string, config util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
+// stream opens a chat completions SSE stream via openai-go and translates it
+// into llm.StreamEvent values on the returned channel. The channel is closed
+// once the stream ends, either successfully (llm.CompletedEvent) or with an
+// error (llm.ErrorEvent).
+func stream(ctx context.Context, defaultBaseURL string, config util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
 	cfg, err := NewConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	body := buildChatRequest(cfg, options, true)
-	res, err := openChatCompletionStream(ctx, baseURL, cfg, body)
+	baseURL, err := resolveBaseURL(defaultBaseURL, cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	client := newClient(baseURL, cfg)
+	params := buildChatParams(cfg, options)
+	sdkStream := client.Chat.Completions.NewStreaming(ctx, params)
+
 	out := make(chan llm.StreamEvent)
 	go func() {
 		defer close(out)
-		defer res.Body.Close()
-		if err := readSSE(ctx, res.Body, out); err != nil {
+		defer sdkStream.Close()
+		if err := consumeStream(ctx, sdkStream, out); err != nil {
 			select {
 			case <-ctx.Done():
 			case out <- llm.ErrorEvent{Error: err.Error()}:
 			}
-			return
 		}
 	}()
 	return out, nil
 }
 
-// readSSE parses the OpenAI-compatible SSE response line by line, emitting
-// TextDeltaEvent for content chunks and reassembling tool call deltas
-// (indexed by their position in the response, tracked via streamToolCall)
-// into a single llm.ToolCallEvent (or llm.ToolCallErrorEvent if its
-// arguments aren't valid JSON) once its finish_reason arrives. It returns
-// nil once a "[DONE]" marker or end of stream is reached after emitting a
-// final llm.CompletedEvent.
-func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) error {
-	scanner := bufio.NewScanner(body)
-	// Tool-call argument chunks can be large; raise the default token limit.
-	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-
+// consumeStream reads openai-go chat completion chunks, emitting text deltas
+// and reassembling tool-call deltas (by index) into ToolCallEvents. Malformed
+// tool-call arguments are skipped (soft-fail). Ends with CompletedEvent.
+func consumeStream(ctx context.Context, sdkStream interface {
+	Next() bool
+	Current() openai.ChatCompletionChunk
+	Err() error
+}, out chan<- llm.StreamEvent) error {
 	toolCalls := map[int]*streamToolCall{}
 	flushed := map[string]bool{}
 
@@ -64,54 +62,34 @@ func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) er
 				continue
 			}
 			flushed[tc.id] = true
+			event, ok := tc.event()
+			if !ok {
+				continue
+			}
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-			case out <- tc.event():
+			case out <- event:
 			}
 		}
 		return nil
 	}
 
-	for scanner.Scan() {
+	for sdkStream.Next() {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
 
-		line := scanner.Text()
-		if line == "" {
-			continue
-		}
-		if !strings.HasPrefix(line, "data:") {
-			continue
-		}
-		data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
-		if data == "[DONE]" {
-			if err := flushToolCalls(); err != nil {
-				return err
-			}
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case out <- llm.CompletedEvent{}:
-			}
-			return nil
-		}
-
-		var chunk chatResponse
-		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
-			return fmt.Errorf("decode stream chunk: %w", err)
-		}
-		if chunk.Error != nil {
-			return chunk.Error
-		}
-		if len(chunk.Choices) == 0 || chunk.Choices[0].Delta == nil {
+		chunk := sdkStream.Current()
+		if len(chunk.Choices) == 0 {
 			continue
 		}
 
-		delta := chunk.Choices[0].Delta
+		choice := chunk.Choices[0]
+		delta := choice.Delta
+
 		if delta.Content != "" {
 			select {
 			case <-ctx.Done():
@@ -121,10 +99,7 @@ func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) er
 		}
 
 		for _, tc := range delta.ToolCalls {
-			idx := 0
-			if tc.Index != nil {
-				idx = *tc.Index
-			}
+			idx := int(tc.Index)
 			state, ok := toolCalls[idx]
 			if !ok {
 				state = &streamToolCall{}
@@ -141,13 +116,13 @@ func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) er
 			}
 		}
 
-		if chunk.Choices[0].FinishReason != nil && *chunk.Choices[0].FinishReason != "" {
+		if choice.FinishReason != "" {
 			if err := flushToolCalls(); err != nil {
 				return err
 			}
 		}
 	}
-	if err := scanner.Err(); err != nil {
+	if err := sdkStream.Err(); err != nil {
 		return fmt.Errorf("read stream: %w", err)
 	}
 
@@ -163,22 +138,27 @@ func readSSE(ctx context.Context, body io.Reader, out chan<- llm.StreamEvent) er
 }
 
 // streamToolCall accumulates one in-progress tool call's id/name/arguments
-// across SSE delta chunks until its finish_reason (or "[DONE]") is seen.
+// across stream delta chunks until finish_reason (or end of stream) is seen.
 type streamToolCall struct {
 	id        string
 	name      string
 	arguments strings.Builder
 }
 
-// event assembles the accumulated state into the terminal event for this
-// tool call: llm.ToolCallEvent on success, llm.ToolCallErrorEvent if the
-// arguments aren't valid JSON.
-func (tc *streamToolCall) event() llm.StreamEvent {
+// event assembles the accumulated state into a ToolCallEvent. ok is false
+// when arguments aren't valid JSON (call is skipped).
+func (tc *streamToolCall) event() (llm.StreamEvent, bool) {
 	arguments, err := parseToolCallArguments(tc.arguments.String())
 	if err != nil {
-		return llm.ToolCallErrorEvent{ID: tc.id, Error: fmt.Sprintf("parse arguments for tool call %s: %v", tc.name, err)}
+		return nil, false
 	}
-	return llm.ToolCallEvent{ID: tc.id, Name: tc.name, Arguments: arguments}
+	return llm.ToolCallEvent{
+		ToolCall: tool.Call{
+			ID:        tc.id,
+			Tool:      tc.name,
+			Arguments: arguments,
+		},
+	}, true
 }
 
 // parseToolCallArguments decodes a tool call's accumulated JSON arguments,

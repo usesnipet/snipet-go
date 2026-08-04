@@ -32,5 +32,5 @@ type Driver interface {
 	Generate(ctx context.Context, config util.JSONMap, options GenerateOptions) (GenerateResult, error)
 
 	Models(ctx context.Context, config util.JSONMap) ([]Model, error)
-	Model(ctx context.Context, config util.JSONMap, name string) (Model, error)
+	Model(ctx context.Context, config util.JSONMap) (Model, error)
 }

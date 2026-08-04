@@ -1,14 +1,9 @@
 package groq
 
 import (
-	_ "embed"
-
 	llm "github.com/usesnipet/snipet/pkg/driver/llm"
-	openaicompatible "github.com/usesnipet/snipet/pkg/driver/llm/openai_compatible"
+	openaicompatible "github.com/usesnipet/snipet/pkg/driver/llm/api/openai_compatible"
 )
-
-//go:embed schema.json
-var schemaJSON []byte
 
 const baseURL = "https://api.groq.com/openai/v1"
 
@@ -18,7 +13,7 @@ func New() llm.Driver {
 		llm.WithDescription("Groq high-speed inference models."),
 		llm.WithIcon("https://groq.com/favicon.ico"),
 		llm.WithTags("language", "model", "llm"),
-		llm.WithConfigurationSchema(llm.MustConfigurationSchema(schemaJSON)),
+		llm.WithConfigurationSchema(openaicompatible.DefaultConfigSchema),
 		llm.WithAPI(openaicompatible.New(baseURL)),
 	)
 }

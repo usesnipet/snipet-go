@@ -1,14 +1,9 @@
 package mistral
 
 import (
-	_ "embed"
-
 	llm "github.com/usesnipet/snipet/pkg/driver/llm"
-	openaicompatible "github.com/usesnipet/snipet/pkg/driver/llm/openai_compatible"
+	openaicompatible "github.com/usesnipet/snipet/pkg/driver/llm/api/openai_compatible"
 )
-
-//go:embed schema.json
-var schemaJSON []byte
 
 const baseURL = "https://api.mistral.ai/v1"
 
@@ -18,7 +13,7 @@ func New() llm.Driver {
 		llm.WithDescription("Mistral language models."),
 		llm.WithIcon("https://mistral.ai/favicon.ico"),
 		llm.WithTags("language", "model", "llm"),
-		llm.WithConfigurationSchema(llm.MustConfigurationSchema(schemaJSON)),
+		llm.WithConfigurationSchema(openaicompatible.DefaultConfigSchema),
 		llm.WithAPI(openaicompatible.New(baseURL)),
 	)
 }

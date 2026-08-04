@@ -47,9 +47,9 @@ func (d *llmDriver) Models(ctx context.Context, config util.JSONMap) ([]Model, e
 	return d.modelLoader.Models(ctx, config)
 }
 
-func (d *llmDriver) Model(ctx context.Context, config util.JSONMap, name string) (Model, error) {
+func (d *llmDriver) Model(ctx context.Context, config util.JSONMap) (Model, error) {
 	if d.modelLoader.Model == nil {
 		return Model{}, ErrModelLoaderNotConfigured
 	}
-	return d.modelLoader.Model(ctx, config, name)
+	return d.modelLoader.Model(ctx, config)
 }

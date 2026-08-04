@@ -56,12 +56,12 @@ func TestEngineExecutesToolCallsBeforeFinishing(t *testing.T) {
 		ConfigurationSchema: util.JSONMap{"type": "object"},
 	})
 	llmDriver.EXPECT().
-		Capabilities(mock.Anything, mock.Anything).
-		Return(llm.Capabilities{ToolCall: true}, nil)
+		Model(mock.Anything, mock.Anything, "test-model").
+		Return(llm.NewModel("test-model", "test", []llm.ModelCapabilities{llm.ModelCapabilitiesToolCall}), nil)
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(
-			llm.ToolCallEvent{ID: "call-1", Name: "echo__echo_tool", Arguments: map[string]any{"msg": "hi"}},
+			llm.ToolCallEvent{ToolCall: tool.Call{ID: "call-1", Tool: "echo__echo_tool", Arguments: map[string]any{"msg": "hi"}}},
 			llm.CompletedEvent{},
 		), nil).
 		Once()
@@ -94,7 +94,7 @@ func TestEngineExecutesToolCallsBeforeFinishing(t *testing.T) {
 	)
 
 	agent := runtime.NewAgent("agent", "agent", "be helpful", []runtime.LLMConfig{
-		{Key: "primary", Config: util.JSONMap{}},
+		{Key: "primary", Config: util.JSONMap{"model": "test-model"}},
 	})
 
 	execution, err := runtime.NewExecution(
@@ -156,7 +156,7 @@ func TestEngineSurfacesToolCallErrorAsToolMessage(t *testing.T) {
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(
-			llm.ToolCallEvent{ID: "call-1", Name: "unregistered__tool", Arguments: map[string]any{}},
+			llm.ToolCallEvent{ToolCall: tool.Call{ID: "call-1", Tool: "unregistered__tool", Arguments: map[string]any{}}},
 			llm.CompletedEvent{},
 		), nil).
 		Once()
@@ -202,8 +202,8 @@ func TestEngineFallsBackToJSONToolCallWhenUnsupported(t *testing.T) {
 		ConfigurationSchema: util.JSONMap{"type": "object"},
 	})
 	llmDriver.EXPECT().
-		Capabilities(mock.Anything, mock.Anything).
-		Return(llm.Capabilities{ToolCall: false}, nil)
+		Model(mock.Anything, mock.Anything, "test-model").
+		Return(llm.NewModel("test-model", "test", nil), nil)
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.MatchedBy(func(options llm.GenerateOptions) bool {
 			return len(options.Tools.Tools) == 0 && strings.Contains(options.Prompt.System, "echo__echo_tool")
@@ -266,7 +266,7 @@ func TestEngineFallsBackToJSONToolCallWhenUnsupported(t *testing.T) {
 	)
 
 	agent := runtime.NewAgent("agent", "agent", "be helpful", []runtime.LLMConfig{
-		{Key: "primary", Config: util.JSONMap{}},
+		{Key: "primary", Config: util.JSONMap{"model": "test-model"}},
 	})
 	execution, err := runtime.NewExecution(
 		runtime.WithAgent(agent),

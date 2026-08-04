@@ -1,11 +1,17 @@
 package openaicompatible
 
 import (
-	"fmt"
+	_ "embed"
 	"strings"
 
 	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
 )
+
+//go:embed schema.json
+var schemaJSON []byte
+
+var DefaultConfigSchema = driver.MustConfigurationSchema(schemaJSON)
 
 // Config holds OpenAI-compatible provider settings from the driver configuration schema.
 type Config struct {
@@ -23,7 +29,7 @@ type Config struct {
 func NewConfig(config util.JSONMap) (Config, error) {
 	cfg, err := util.ParseJSONMap[Config](config)
 	if err != nil {
-		return Config{}, fmt.Errorf("failed to parse config: %w", err)
+		return Config{}, ErrFailedToParseConfig
 	}
 	err = cfg.validate()
 	return cfg, err
@@ -31,7 +37,7 @@ func NewConfig(config util.JSONMap) (Config, error) {
 
 func (c Config) validate() error {
 	if c.Model == "" {
-		return fmt.Errorf("model is required")
+		return ErrModelRequired
 	}
 	return nil
 }
@@ -45,7 +51,7 @@ func resolveBaseURL(defaultBaseURL string, cfg Config) (string, error) {
 	}
 	base = strings.TrimRight(base, "/")
 	if base == "" {
-		return "", fmt.Errorf("base url is required")
+		return "", ErrBaseURLRequired
 	}
 	return base, nil
 }

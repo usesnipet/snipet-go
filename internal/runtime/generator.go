@@ -52,15 +52,18 @@ func (g *Generator) Generate(ctx context.Context, execution *Execution, toolset 
 		generateOptions := llm.GenerateOptions{Prompt: prompt, Tools: toolset}
 		fallback := false
 		if len(toolset.Tools) > 0 {
-			caps, capErr := llmInstance.Capabilities(ctx, llmConfig.Config)
-			if capErr != nil {
-				g.logger.Error(fmt.Errorf("check capabilities for %s: %w", llmConfig.Key, capErr))
-			} else {
-				g.logger.Debugf("generator: llm=%q capabilities tool_call=%v", llmConfig.Key, caps.ToolCall)
-				if !caps.ToolCall {
-					g.logger.Infof("generator: llm=%q has no native tool call support, switching to JSON fallback prompt (%d tools)", llmConfig.Key, len(toolset.Tools))
-					generateOptions = withToolCallFallback(generateOptions)
-					fallback = true
+			if modelName, _ := llmConfig.Config["model"].(string); modelName != "" {
+				model, modelErr := llmInstance.Model(ctx, llmConfig.Config)
+				if modelErr != nil {
+					g.logger.Error(fmt.Errorf("check model %s for %s: %w", modelName, llmConfig.Key, modelErr))
+				} else {
+					canToolCall := model.Can(llm.ModelCapabilitiesToolCall)
+					g.logger.Debugf("generator: llm=%q model=%q tool_call=%v", llmConfig.Key, modelName, canToolCall)
+					if !canToolCall {
+						g.logger.Infof("generator: llm=%q model=%q has no native tool call support, switching to JSON fallback prompt (%d tools)", llmConfig.Key, modelName, len(toolset.Tools))
+						generateOptions = withToolCallFallback(generateOptions)
+						fallback = true
+					}
 				}
 			}
 		}
@@ -128,11 +131,8 @@ loop:
 				}
 
 			case llm.ToolCallEvent:
-				g.logger.Debugf("generator: message_id=%s tool call requested id=%s name=%s arguments=%v", messageID, ev.ID, ev.Name, ev.Arguments)
-				toolCalls = append(toolCalls, tool.Call{ID: ev.ID, Tool: ev.Name, Arguments: ev.Arguments})
-
-			case llm.ToolCallErrorEvent:
-				g.logger.Errorf("generator: message_id=%s tool call %s failed to assemble: %s", messageID, ev.ID, ev.Error)
+				g.logger.Debugf("generator: message_id=%s tool call requested id=%s name=%s arguments=%v", messageID, ev.ToolCall.ID, ev.ToolCall.Tool, ev.ToolCall.Arguments)
+				toolCalls = append(toolCalls, ev.ToolCall)
 
 			case llm.ErrorEvent:
 				g.logger.Warnf("generator: message_id=%s stream error: %s", messageID, ev.Error)

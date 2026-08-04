@@ -10,7 +10,7 @@ import (
 )
 
 // testConnection verifies that config can reach and authenticate against
-// baseURL by issuing a minimal real completion request.
+// baseURL by issuing a minimal non-streaming completion request.
 func testConnection(ctx context.Context, baseURL string, config util.JSONMap) error {
 	cfg, err := NewConfig(config)
 	if err != nil {
@@ -27,7 +27,7 @@ func testConnection(ctx context.Context, baseURL string, config util.JSONMap) er
 		return fmt.Errorf("failed to encode config: %w", err)
 	}
 
-	_, err = stream(ctx, baseURL, probeConfig, llm.GenerateOptions{
+	_, err = generate(ctx, baseURL, probeConfig, llm.GenerateOptions{
 		Prompt: llm.NewPrompt(
 			llm.WithMessages([]msg.Message{
 				msg.NewMessage(msg.RoleUser, `Respond with "ok"`),
