@@ -1,13 +1,13 @@
-package runtime
+package generator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/usesnipet/snipet/internal/logger"
+	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
 	"github.com/usesnipet/snipet/pkg/msg"
@@ -17,11 +17,11 @@ import (
 // prompt, streams a completion (retrying across configured LLMs on
 // failure), and assembles the resulting assistant message.
 type Generator struct {
-	llms   *DriverManager[llm.Driver]
+	llms   *manager.Driver[llm.Driver]
 	logger *logger.Logger
 }
 
-func NewGenerator(llms *DriverManager[llm.Driver], logger *logger.Logger) *Generator {
+func NewGenerator(llms *manager.Driver[llm.Driver], logger *logger.Logger) *Generator {
 	return &Generator{llms: llms, logger: logger}
 }
 
@@ -52,31 +52,29 @@ func (g *Generator) Generate(ctx context.Context, execution *Execution, toolset 
 		generateOptions := llm.GenerateOptions{Prompt: prompt, Tools: toolset}
 		fallback := false
 		if len(toolset.Tools) > 0 {
-			if modelName, _ := llmConfig.Config["model"].(string); modelName != "" {
-				model, modelErr := llmInstance.Model(ctx, llmConfig.Config)
-				if modelErr != nil {
-					g.logger.Error(fmt.Errorf("check model %s for %s: %w", modelName, llmConfig.Key, modelErr))
-				} else {
-					canToolCall := model.Can(llm.ModelCapabilitiesToolCall)
-					g.logger.Debugf("generator: llm=%q model=%q tool_call=%v", llmConfig.Key, modelName, canToolCall)
-					if !canToolCall {
-						g.logger.Infof("generator: llm=%q model=%q has no native tool call support, switching to JSON fallback prompt (%d tools)", llmConfig.Key, modelName, len(toolset.Tools))
-						generateOptions = withToolCallFallback(generateOptions)
-						fallback = true
-					}
+			model, modelErr := llmInstance.Model(ctx, llmConfig.Config)
+			if modelErr != nil {
+				g.logger.Error(fmt.Errorf("check model for %s: %w", llmConfig.Key, modelErr))
+			} else {
+				canToolCall := model.Can(llm.ModelCapabilitiesToolCall)
+				g.logger.Debugf("generator: llm=%q model=%q tool_call=%v", llmConfig.Key, model.Name, canToolCall)
+				if !canToolCall {
+					g.logger.Infof("generator: llm=%q model=%q has no native tool call support, switching to JSON fallback prompt (%d tools)", llmConfig.Key, model.Name, len(toolset.Tools))
+					generateOptions = withToolCallFallback(generateOptions)
+					fallback = true
 				}
 			}
 		}
 
 		g.logger.Debugf("generator: llm=%q streaming request fallback=%v", llmConfig.Key, fallback)
-		events, streamErr := llmInstance.Stream(ctx, llmConfig.Config, generateOptions)
+		it, streamErr := llmInstance.Stream(ctx, llmConfig.Config, generateOptions)
 		if streamErr != nil {
 			g.logger.Errorf("generator: attempt %d/%d llm=%q stream failed: %v", attempt, len(agent.LLMs), llmConfig.Key, streamErr)
 			lastErr = streamErr
 			continue
 		}
 
-		message, consumeErr := g.consumeStream(ctx, execution, events, fallback)
+		message, consumeErr := g.consumeStream(ctx, execution, it, fallback)
 		if consumeErr != nil {
 			g.logger.Errorf("generator: attempt %d/%d llm=%q consume failed: %v", attempt, len(agent.LLMs), llmConfig.Key, consumeErr)
 			lastErr = consumeErr
@@ -86,6 +84,7 @@ func (g *Generator) Generate(ctx context.Context, execution *Execution, toolset 
 			}
 			continue
 		}
+
 		g.logger.Debugf("generator: attempt %d/%d llm=%q succeeded content_len=%d tool_calls=%d final=%v",
 			attempt, len(agent.LLMs), llmConfig.Key, len(message.Content), len(message.ToolCalls), message.IsFinal())
 		return message, nil
@@ -98,53 +97,46 @@ func (g *Generator) Generate(ctx context.Context, execution *Execution, toolset 
 	return message, ErrLLMGenerationFailed
 }
 
-// consumeStream ranges over a driver's StreamEvents, re-emitting them as
+// consumeStream walks a driver's StreamIterator, re-emitting events as
 // runtime events, and assembles the resulting assistant message. When
 // fallback is true, the driver has no native tool call support: text isn't
 // re-emitted as it arrives, and once the stream ends the buffered content is
 // checked for a fallback JSON tool-call envelope (see parseFallbackToolCall)
 // instead of relying on llm.ToolCallEvent, which such a driver never emits.
-func (g *Generator) consumeStream(ctx context.Context, execution *Execution, events <-chan llm.StreamEvent, fallback bool) (msg.Message, error) {
+func (g *Generator) consumeStream(ctx context.Context, execution *Execution, it llm.StreamIterator, fallback bool) (msg.Message, error) {
+	defer it.Close()
+
 	messageID := uuid.NewString()
 	g.logger.Debugf("generator: consuming stream message_id=%s fallback=%v", messageID, fallback)
 
 	var content strings.Builder
 	var toolCalls []tool.Call
 
-loop:
-	for {
-		select {
-		case <-ctx.Done():
-			return msg.Message{}, ctx.Err()
-		case event, ok := <-events:
-			if !ok {
-				break loop
+	for it.Next(ctx) {
+		switch ev := it.Event().(type) {
+		case llm.TextDeltaEvent:
+			content.WriteString(ev.Text)
+			if fallback {
+				continue
 			}
-			switch ev := event.(type) {
-			case llm.TextDeltaEvent:
-				content.WriteString(ev.Text)
-				if fallback {
-					continue
-				}
-				if err := execution.publish(ctx, ExecutionMessageDeltaEvent{MessageID: messageID, Content: ev.Text}); err != nil {
-					return msg.Message{}, err
-				}
-
-			case llm.ToolCallEvent:
-				g.logger.Debugf("generator: message_id=%s tool call requested id=%s name=%s arguments=%v", messageID, ev.ToolCall.ID, ev.ToolCall.Tool, ev.ToolCall.Arguments)
-				toolCalls = append(toolCalls, ev.ToolCall)
-
-			case llm.ErrorEvent:
-				g.logger.Warnf("generator: message_id=%s stream error: %s", messageID, ev.Error)
-				if pubErr := execution.publish(ctx, ExecutionAttemptFailedEvent{MessageID: messageID, Error: ev.Error}); pubErr != nil {
-					return msg.Message{}, pubErr
-				}
-				return msg.Message{}, errors.New(ev.Error)
-
-			case llm.CompletedEvent:
-				// no-op: consumption ends when the channel closes.
+			if err := execution.publish(ctx, ExecutionMessageDeltaEvent{MessageID: messageID, Content: ev.Text}); err != nil {
+				return msg.Message{}, err
 			}
+
+		case llm.ToolCallEvent:
+			g.logger.Debugf("generator: message_id=%s tool call requested id=%s name=%s arguments=%v", messageID, ev.ToolCall.ID, ev.ToolCall.Tool, ev.ToolCall.Arguments)
+			toolCalls = append(toolCalls, ev.ToolCall)
 		}
+	}
+	if err := it.Err(); err != nil {
+		if ctx.Err() != nil {
+			return msg.Message{}, err
+		}
+		g.logger.Warnf("generator: message_id=%s stream error: %s", messageID, err)
+		if pubErr := execution.publish(ctx, ExecutionAttemptFailedEvent{MessageID: messageID, Error: err.Error()}); pubErr != nil {
+			return msg.Message{}, pubErr
+		}
+		return msg.Message{}, err
 	}
 
 	text := content.String()

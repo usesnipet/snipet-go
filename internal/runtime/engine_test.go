@@ -19,14 +19,27 @@ import (
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
-func streamOf(events ...llm.StreamEvent) <-chan llm.StreamEvent {
-	ch := make(chan llm.StreamEvent, len(events))
-	for _, event := range events {
-		ch <- event
-	}
-	close(ch)
-	return ch
+// fakeStreamIterator is a fixed-slice llm.StreamIterator for MockDriver.Stream to return.
+type fakeStreamIterator struct {
+	events []llm.StreamEvent
+	idx    int
 }
+
+func streamOf(events ...llm.StreamEvent) llm.StreamIterator {
+	return &fakeStreamIterator{events: events}
+}
+
+func (it *fakeStreamIterator) Next(_ context.Context) bool {
+	if it.idx >= len(it.events) {
+		return false
+	}
+	it.idx++
+	return true
+}
+
+func (it *fakeStreamIterator) Event() llm.StreamEvent { return it.events[it.idx-1] }
+func (it *fakeStreamIterator) Err() error             { return nil }
+func (it *fakeStreamIterator) Close() error           { return nil }
 
 type recordingSubscriber struct {
 	events []runtime.IEvent
@@ -56,18 +69,17 @@ func TestEngineExecutesToolCallsBeforeFinishing(t *testing.T) {
 		ConfigurationSchema: util.JSONMap{"type": "object"},
 	})
 	llmDriver.EXPECT().
-		Model(mock.Anything, mock.Anything, "test-model").
+		Model(mock.Anything, mock.Anything).
 		Return(llm.NewModel("test-model", "test", []llm.ModelCapabilities{llm.ModelCapabilitiesToolCall}), nil)
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(
 			llm.ToolCallEvent{ToolCall: tool.Call{ID: "call-1", Tool: "echo__echo_tool", Arguments: map[string]any{"msg": "hi"}}},
-			llm.CompletedEvent{},
 		), nil).
 		Once()
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
-		Return(streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil).
+		Return(streamOf(llm.TextDeltaEvent{Text: "done"}), nil).
 		Once()
 
 	llmReg := registry.New[llm.Driver]()
@@ -157,12 +169,11 @@ func TestEngineSurfacesToolCallErrorAsToolMessage(t *testing.T) {
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(
 			llm.ToolCallEvent{ToolCall: tool.Call{ID: "call-1", Tool: "unregistered__tool", Arguments: map[string]any{}}},
-			llm.CompletedEvent{},
 		), nil).
 		Once()
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
-		Return(streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil).
+		Return(streamOf(llm.TextDeltaEvent{Text: "done"}), nil).
 		Once()
 
 	llmReg := registry.New[llm.Driver]()
@@ -202,7 +213,7 @@ func TestEngineFallsBackToJSONToolCallWhenUnsupported(t *testing.T) {
 		ConfigurationSchema: util.JSONMap{"type": "object"},
 	})
 	llmDriver.EXPECT().
-		Model(mock.Anything, mock.Anything, "test-model").
+		Model(mock.Anything, mock.Anything).
 		Return(llm.NewModel("test-model", "test", nil), nil)
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.MatchedBy(func(options llm.GenerateOptions) bool {
@@ -210,7 +221,6 @@ func TestEngineFallsBackToJSONToolCallWhenUnsupported(t *testing.T) {
 		})).
 		Return(streamOf(
 			llm.TextDeltaEvent{Text: `{"tool_call": {"name": "echo__echo_tool", "arguments": {"msg":"hi"}}}`},
-			llm.CompletedEvent{},
 		), nil).
 		Once()
 	llmDriver.EXPECT().
@@ -239,7 +249,7 @@ func TestEngineFallsBackToJSONToolCallWhenUnsupported(t *testing.T) {
 			}
 			return sawToolRequest && sawToolResult
 		})).
-		Return(streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil).
+		Return(streamOf(llm.TextDeltaEvent{Text: "done"}), nil).
 		Once()
 
 	llmReg := registry.New[llm.Driver]()

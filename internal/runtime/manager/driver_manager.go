@@ -1,4 +1,4 @@
-package runtime
+package manager
 
 import (
 	"context"
@@ -10,15 +10,15 @@ import (
 	jsonschema "github.com/usesnipet/snipet/pkg/json_schema"
 )
 
-type DriverManager[T driver.IDriver] struct {
+type Driver[T driver.IDriver] struct {
 	registry *registry.R[T]
 }
 
-func NewDriverManager[T driver.IDriver](registry *registry.R[T]) *DriverManager[T] {
-	return &DriverManager[T]{registry: registry}
+func NewDriver[T driver.IDriver](registry *registry.R[T]) *Driver[T] {
+	return &Driver[T]{registry: registry}
 }
 
-func (m *DriverManager[T]) GetDriver(key string) (T, error) {
+func (m *Driver[T]) GetDriver(key string) (T, error) {
 	driverInstance, ok := m.registry.Get(key)
 	if !ok {
 		return driverInstance, driver.ErrDriverNotFound
@@ -27,15 +27,15 @@ func (m *DriverManager[T]) GetDriver(key string) (T, error) {
 }
 
 // Names returns the sorted keys of every registered driver.
-func (m *DriverManager[T]) Names() []string {
+func (m *Driver[T]) Names() []string {
 	return m.registry.Names()
 }
 
-func (m *DriverManager[T]) ValidateConfiguration(schema util.JSONMap, config util.JSONMap) error {
+func (m *Driver[T]) ValidateConfiguration(schema util.JSONMap, config util.JSONMap) error {
 	return jsonschema.Validate(schema, config)
 }
 
-func (m *DriverManager[T]) ValidateConfigurations(schema util.JSONMap, configs ...util.JSONMap) error {
+func (m *Driver[T]) ValidateConfigurations(schema util.JSONMap, configs ...util.JSONMap) error {
 	for _, config := range configs {
 		if err := jsonschema.Validate(schema, config); err != nil {
 			return err
@@ -44,7 +44,7 @@ func (m *DriverManager[T]) ValidateConfigurations(schema util.JSONMap, configs .
 	return nil
 }
 
-func (m *DriverManager[T]) ValidateConfigurationByKey(key string, config util.JSONMap) error {
+func (m *Driver[T]) ValidateConfigurationByKey(key string, config util.JSONMap) error {
 	driver, err := m.GetDriver(key)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (m *DriverManager[T]) ValidateConfigurationByKey(key string, config util.JS
 	return m.ValidateConfiguration(driver.Info().ConfigurationSchema, config)
 }
 
-func (m *DriverManager[T]) ValidateConfigurationsByKey(key string, configs ...util.JSONMap) error {
+func (m *Driver[T]) ValidateConfigurationsByKey(key string, configs ...util.JSONMap) error {
 	driver, err := m.GetDriver(key)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ type Configuration struct {
 	Config util.JSONMap `json:"config"`
 }
 
-func (m *DriverManager[T]) ValidateMultipleConfigurationsByKey(configs ...Configuration) error {
+func (m *Driver[T]) ValidateMultipleConfigurationsByKey(configs ...Configuration) error {
 	for _, c := range configs {
 		if err := m.ValidateConfigurationByKey(c.Key, c.Config); err != nil {
 			return err
@@ -74,7 +74,7 @@ func (m *DriverManager[T]) ValidateMultipleConfigurationsByKey(configs ...Config
 	return nil
 }
 
-func (m *DriverManager[T]) Prepare(ctx context.Context, driverKey string, config util.JSONMap) (T, error) {
+func (m *Driver[T]) Prepare(ctx context.Context, driverKey string, config util.JSONMap) (T, error) {
 	driverInstance, err := m.GetDriver(driverKey)
 	if err != nil {
 		return driverInstance, err
@@ -89,7 +89,7 @@ func (m *DriverManager[T]) Prepare(ctx context.Context, driverKey string, config
 	return driverInstance, nil
 }
 
-func (m *DriverManager[T]) ListDrivers(ctx context.Context) ([]driver.Info, error) {
+func (m *Driver[T]) ListDrivers(ctx context.Context) ([]driver.Info, error) {
 	names := m.registry.Names()
 	drivers := make([]driver.Info, 0, len(names))
 

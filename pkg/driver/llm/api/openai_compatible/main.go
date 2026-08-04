@@ -16,7 +16,7 @@ func New(baseURL string) llm.API {
 		TestConnection: func(ctx context.Context, config util.JSONMap) error {
 			return testConnection(ctx, baseURL, config)
 		},
-		Stream: func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
+		Stream: func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
 			return stream(ctx, baseURL, config, options)
 		},
 		Generate: func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (llm.GenerateResult, error) {

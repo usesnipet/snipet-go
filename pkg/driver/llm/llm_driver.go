@@ -26,7 +26,7 @@ func (d *llmDriver) TestConnection(ctx context.Context, config util.JSONMap) err
 	return d.api.TestConnection(ctx, config)
 }
 
-func (d *llmDriver) Stream(ctx context.Context, config util.JSONMap, options GenerateOptions) (<-chan StreamEvent, error) {
+func (d *llmDriver) Stream(ctx context.Context, config util.JSONMap, options GenerateOptions) (StreamIterator, error) {
 	if d.api.Stream == nil {
 		return nil, ErrStreamNotConfigured
 	}

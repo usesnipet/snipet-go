@@ -12,11 +12,10 @@ import (
 	"github.com/usesnipet/snipet/pkg/driver/tool"
 )
 
-// stream opens a chat completions SSE stream via openai-go and translates it
-// into llm.StreamEvent values on the returned channel. The channel is closed
-// once the stream ends, either successfully (llm.CompletedEvent) or with an
-// error (llm.ErrorEvent).
-func stream(ctx context.Context, defaultBaseURL string, config util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
+// stream opens a chat completions SSE stream via openai-go and returns an
+// llm.StreamIterator that translates chunks into llm.StreamEvent values as
+// the caller pulls them via Next.
+func stream(ctx context.Context, defaultBaseURL string, config util.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
 	cfg, err := NewConfig(config)
 	if err != nil {
 		return nil, err
@@ -31,110 +30,129 @@ func stream(ctx context.Context, defaultBaseURL string, config util.JSONMap, opt
 	params := buildChatParams(cfg, options)
 	sdkStream := client.Chat.Completions.NewStreaming(ctx, params)
 
-	out := make(chan llm.StreamEvent)
-	go func() {
-		defer close(out)
-		defer sdkStream.Close()
-		if err := consumeStream(ctx, sdkStream, out); err != nil {
-			select {
-			case <-ctx.Done():
-			case out <- llm.ErrorEvent{Error: err.Error()}:
-			}
-		}
-	}()
-	return out, nil
+	return newStreamIterator(sdkStream, sdkStream.Close), nil
 }
 
-// consumeStream reads openai-go chat completion chunks, emitting text deltas
-// and reassembling tool-call deltas (by index) into ToolCallEvents. Malformed
-// tool-call arguments are skipped (soft-fail). Ends with CompletedEvent.
-func consumeStream(ctx context.Context, sdkStream interface {
+// sdkChunkStream is the slice of the openai-go SSE stream that
+// streamIterator drives. It is narrowed to an interface so tests can fake it.
+type sdkChunkStream interface {
 	Next() bool
 	Current() openai.ChatCompletionChunk
 	Err() error
-}, out chan<- llm.StreamEvent) error {
-	toolCalls := map[int]*streamToolCall{}
-	flushed := map[string]bool{}
+}
 
-	flushToolCalls := func() error {
-		for _, tc := range toolCalls {
-			if tc.id == "" || flushed[tc.id] {
-				continue
-			}
-			flushed[tc.id] = true
-			event, ok := tc.event()
-			if !ok {
-				continue
-			}
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case out <- event:
-			}
+// streamIterator adapts an sdkChunkStream, which delivers raw chat
+// completion chunks, into an llm.StreamIterator that yields llm.StreamEvent
+// values one at a time: text deltas as they arrive, and tool-call deltas
+// reassembled (by index) into a single ToolCallEvent once a chunk's
+// FinishReason (or end of stream) confirms the call is complete. Malformed
+// tool-call arguments are skipped (soft-fail).
+type streamIterator struct {
+	sdk     sdkChunkStream
+	closeFn func() error
+
+	pending []llm.StreamEvent
+	event   llm.StreamEvent
+	err     error
+	done    bool
+
+	toolCalls map[int]*streamToolCall
+	flushed   map[string]bool
+}
+
+func newStreamIterator(sdk sdkChunkStream, closeFn func() error) *streamIterator {
+	return &streamIterator{
+		sdk:       sdk,
+		closeFn:   closeFn,
+		toolCalls: map[int]*streamToolCall{},
+		flushed:   map[string]bool{},
+	}
+}
+
+func (it *streamIterator) Next(ctx context.Context) bool {
+	if it.done {
+		return false
+	}
+	for len(it.pending) == 0 {
+		if ctx.Err() != nil {
+			it.err = ctx.Err()
+			it.done = true
+			return false
 		}
+		if !it.sdk.Next() {
+			if err := it.sdk.Err(); err != nil {
+				it.err = fmt.Errorf("read stream: %w", err)
+				it.done = true
+				return false
+			}
+			it.flushToolCalls()
+			if len(it.pending) == 0 {
+				it.done = true
+				return false
+			}
+			break
+		}
+		it.consumeChunk(it.sdk.Current())
+	}
+	it.event, it.pending = it.pending[0], it.pending[1:]
+	return true
+}
+
+func (it *streamIterator) Event() llm.StreamEvent { return it.event }
+func (it *streamIterator) Err() error             { return it.err }
+
+func (it *streamIterator) Close() error {
+	if it.closeFn == nil {
 		return nil
 	}
+	return it.closeFn()
+}
 
-	for sdkStream.Next() {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
+func (it *streamIterator) consumeChunk(chunk openai.ChatCompletionChunk) {
+	if len(chunk.Choices) == 0 {
+		return
+	}
+
+	choice := chunk.Choices[0]
+	delta := choice.Delta
+
+	if delta.Content != "" {
+		it.pending = append(it.pending, llm.TextDeltaEvent{Text: delta.Content})
+	}
+
+	for _, tc := range delta.ToolCalls {
+		idx := int(tc.Index)
+		state, ok := it.toolCalls[idx]
+		if !ok {
+			state = &streamToolCall{}
+			it.toolCalls[idx] = state
 		}
+		if tc.ID != "" {
+			state.id = tc.ID
+		}
+		if tc.Function.Name != "" {
+			state.name = tc.Function.Name
+		}
+		if tc.Function.Arguments != "" {
+			state.arguments.WriteString(tc.Function.Arguments)
+		}
+	}
 
-		chunk := sdkStream.Current()
-		if len(chunk.Choices) == 0 {
+	if choice.FinishReason != "" {
+		it.flushToolCalls()
+	}
+}
+
+func (it *streamIterator) flushToolCalls() {
+	for _, tc := range it.toolCalls {
+		if tc.id == "" || it.flushed[tc.id] {
 			continue
 		}
-
-		choice := chunk.Choices[0]
-		delta := choice.Delta
-
-		if delta.Content != "" {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case out <- llm.TextDeltaEvent{Text: delta.Content}:
-			}
-		}
-
-		for _, tc := range delta.ToolCalls {
-			idx := int(tc.Index)
-			state, ok := toolCalls[idx]
-			if !ok {
-				state = &streamToolCall{}
-				toolCalls[idx] = state
-			}
-			if tc.ID != "" {
-				state.id = tc.ID
-			}
-			if tc.Function.Name != "" {
-				state.name = tc.Function.Name
-			}
-			if tc.Function.Arguments != "" {
-				state.arguments.WriteString(tc.Function.Arguments)
-			}
-		}
-
-		if choice.FinishReason != "" {
-			if err := flushToolCalls(); err != nil {
-				return err
-			}
+		it.flushed[tc.id] = true
+		if event, ok := tc.event(); ok {
+			it.pending = append(it.pending, event)
 		}
 	}
-	if err := sdkStream.Err(); err != nil {
-		return fmt.Errorf("read stream: %w", err)
-	}
-
-	if err := flushToolCalls(); err != nil {
-		return err
-	}
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case out <- llm.CompletedEvent{}:
-	}
-	return nil
 }
 
 // streamToolCall accumulates one in-progress tool call's id/name/arguments

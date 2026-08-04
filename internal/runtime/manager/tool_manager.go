@@ -1,4 +1,4 @@
-package runtime
+package manager
 
 import (
 	"context"
@@ -17,19 +17,19 @@ const toolNameSeparator = "__"
 // ToolManager aggregates every registered tool driver into a single toolset
 // the LLM can be given, and dispatches calls back to the owning driver.
 type ToolManager struct {
-	drivers *DriverManager[tool.Driver]
+	dm *Driver[tool.Driver]
 }
 
-func NewToolManager(drivers *DriverManager[tool.Driver]) *ToolManager {
-	return &ToolManager{drivers: drivers}
+func NewToolManager(dm *Driver[tool.Driver]) *ToolManager {
+	return &ToolManager{dm: dm}
 }
 
 // Toolset returns every tool from every registered driver, by default all
 // tools installed are made available to the LLM.
 func (m *ToolManager) Toolset() (tool.Toolset, error) {
 	var tools []tool.Tool
-	for _, key := range m.drivers.Names() {
-		driverInstance, err := m.drivers.GetDriver(key)
+	for _, key := range m.dm.Names() {
+		driverInstance, err := m.dm.GetDriver(key)
 		if err != nil {
 			return tool.Toolset{}, err
 		}
@@ -47,7 +47,7 @@ func (m *ToolManager) Call(ctx context.Context, call tool.Call) (tool.Result, er
 		return tool.Result{}, fmt.Errorf("%w: %q", ErrToolNotFound, call.Tool)
 	}
 
-	driverInstance, err := m.drivers.GetDriver(driverKey)
+	driverInstance, err := m.dm.GetDriver(driverKey)
 	if err != nil {
 		return tool.Result{}, fmt.Errorf("%w: %q", ErrToolNotFound, call.Tool)
 	}

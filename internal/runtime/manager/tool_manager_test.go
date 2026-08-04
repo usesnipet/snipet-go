@@ -1,11 +1,11 @@
-package runtime_test
+package manager_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
@@ -30,7 +30,7 @@ func TestToolManagerToolsetNamespacesByDriver(t *testing.T) {
 	reg.MustRegister("alpha", newFakeToolDriver("Alpha", "search", nil))
 	reg.MustRegister("beta", newFakeToolDriver("Beta", "search", nil))
 
-	manager := runtime.NewToolManager(runtime.NewDriverManager(reg))
+	manager := manager.NewToolManager(manager.NewDriver(reg))
 
 	toolset, err := manager.Toolset()
 	require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestToolManagerCallDispatchesToOwningDriver(t *testing.T) {
 		return tool.Result{Tool: call.Tool, Arguments: call.Arguments, Result: "ok"}, nil
 	}))
 
-	manager := runtime.NewToolManager(runtime.NewDriverManager(reg))
+	manager := manager.NewToolManager(manager.NewDriver(reg))
 
 	result, err := manager.Call(context.Background(), tool.Call{
 		Tool:      "alpha__search",
@@ -66,11 +66,11 @@ func TestToolManagerCallDispatchesToOwningDriver(t *testing.T) {
 func TestToolManagerCallUnknownToolReturnsErrToolNotFound(t *testing.T) {
 	t.Parallel()
 
-	manager := runtime.NewToolManager(runtime.NewDriverManager(registry.New[tool.Driver]()))
+	toolManager := manager.NewToolManager(manager.NewDriver(registry.New[tool.Driver]()))
 
-	_, err := manager.Call(context.Background(), tool.Call{Tool: "missing__tool"})
-	require.ErrorIs(t, err, runtime.ErrToolNotFound)
+	_, err := toolManager.Call(context.Background(), tool.Call{Tool: "missing__tool"})
+	require.ErrorIs(t, err, manager.ErrToolNotFound)
 
-	_, err = manager.Call(context.Background(), tool.Call{Tool: "no-separator"})
-	require.ErrorIs(t, err, runtime.ErrToolNotFound)
+	_, err = toolManager.Call(context.Background(), tool.Call{Tool: "no-separator"})
+	require.ErrorIs(t, err, manager.ErrToolNotFound)
 }

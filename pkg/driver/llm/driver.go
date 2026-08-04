@@ -28,7 +28,7 @@ type GenerateResult struct {
 type Driver interface {
 	driver.IDriver
 
-	Stream(ctx context.Context, config util.JSONMap, options GenerateOptions) (<-chan StreamEvent, error)
+	Stream(ctx context.Context, config util.JSONMap, options GenerateOptions) (StreamIterator, error)
 	Generate(ctx context.Context, config util.JSONMap, options GenerateOptions) (GenerateResult, error)
 
 	Models(ctx context.Context, config util.JSONMap) ([]Model, error)

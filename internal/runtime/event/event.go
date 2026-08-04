@@ -1,6 +1,9 @@
-package runtime
+package event
 
-import "github.com/usesnipet/snipet/pkg/msg"
+import (
+	"github.com/usesnipet/snipet/internal/runtime/execution"
+	"github.com/usesnipet/snipet/pkg/msg"
+)
 
 type EventListener func(event IEvent) error
 
@@ -17,8 +20,8 @@ func (event) isEvent() {}
 // ExecutionStatusChangedEvent is emitted whenever execution status (and related fields) change.
 type ExecutionStatusChangedEvent struct {
 	event
-	Status       ExecutionStatus `json:"status"`
-	ErrorMessage string          `json:"error_message,omitempty"`
+	Status       execution.Status `json:"status"`
+	ErrorMessage string           `json:"error_message,omitempty"`
 }
 
 // ExecutionMessageAddedEvent is emitted when one or more messages are appended.

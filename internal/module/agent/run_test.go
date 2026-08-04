@@ -22,15 +22,27 @@ import (
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
-// streamOf builds a closed, buffered channel of StreamEvents for MockDriver.Stream to return.
-func streamOf(events ...llm.StreamEvent) <-chan llm.StreamEvent {
-	ch := make(chan llm.StreamEvent, len(events))
-	for _, event := range events {
-		ch <- event
-	}
-	close(ch)
-	return ch
+// fakeStreamIterator is a fixed-slice llm.StreamIterator for MockDriver.Stream to return.
+type fakeStreamIterator struct {
+	events []llm.StreamEvent
+	idx    int
 }
+
+func streamOf(events ...llm.StreamEvent) llm.StreamIterator {
+	return &fakeStreamIterator{events: events}
+}
+
+func (it *fakeStreamIterator) Next(_ context.Context) bool {
+	if it.idx >= len(it.events) {
+		return false
+	}
+	it.idx++
+	return true
+}
+
+func (it *fakeStreamIterator) Event() llm.StreamEvent { return it.events[it.idx-1] }
+func (it *fakeStreamIterator) Err() error              { return nil }
+func (it *fakeStreamIterator) Close() error            { return nil }
 
 func newTestEngine(llmReg *registry.R[llm.Driver]) *runtime.Engine {
 	return runtime.NewEngine(
@@ -106,7 +118,7 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 	primary := newPrimaryLLM(t)
 	primary.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
-		Return(streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil)
+		Return(streamOf(llm.TextDeltaEvent{Text: "done"}), nil)
 
 	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", primary)
@@ -183,9 +195,9 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 	primary := newPrimaryLLM(t)
 	primary.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
+		RunAndReturn(func(_ context.Context, _ util.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
 			llmSaw = append([]msg.Message{}, options.Prompt.Messages...)
-			return streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil
+			return streamOf(llm.TextDeltaEvent{Text: "done"}), nil
 		})
 
 	llmReg := registry.New[llm.Driver]()

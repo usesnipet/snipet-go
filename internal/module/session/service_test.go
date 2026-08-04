@@ -30,14 +30,26 @@ import (
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
-func streamOf(events ...llm.StreamEvent) <-chan llm.StreamEvent {
-	ch := make(chan llm.StreamEvent, len(events))
-	for _, event := range events {
-		ch <- event
-	}
-	close(ch)
-	return ch
+type fakeStreamIterator struct {
+	events []llm.StreamEvent
+	idx    int
 }
+
+func streamOf(events ...llm.StreamEvent) llm.StreamIterator {
+	return &fakeStreamIterator{events: events}
+}
+
+func (it *fakeStreamIterator) Next(_ context.Context) bool {
+	if it.idx >= len(it.events) {
+		return false
+	}
+	it.idx++
+	return true
+}
+
+func (it *fakeStreamIterator) Event() llm.StreamEvent { return it.events[it.idx-1] }
+func (it *fakeStreamIterator) Err() error              { return nil }
+func (it *fakeStreamIterator) Close() error            { return nil }
 
 func apiKeyContext() context.Context {
 	id := "api-key-id"
@@ -199,7 +211,7 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 	})
 	primary.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
-		Return(streamOf(llm.TextDeltaEvent{Text: "ok"}, llm.CompletedEvent{}), nil)
+		Return(streamOf(llm.TextDeltaEvent{Text: "ok"}), nil)
 
 	llmReg := registry.New[llm.Driver]()
 	llmReg.MustRegister("primary", primary)

@@ -158,8 +158,8 @@ func (_c *MockDriver_Info_Call) RunAndReturn(run func() driver.Info) *MockDriver
 }
 
 // Model provides a mock function for the type MockDriver
-func (_mock *MockDriver) Model(ctx context.Context, config util.JSONMap, name string) (llm.Model, error) {
-	ret := _mock.Called(ctx, config, name)
+func (_mock *MockDriver) Model(ctx context.Context, config util.JSONMap) (llm.Model, error) {
+	ret := _mock.Called(ctx, config)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Model")
@@ -167,16 +167,16 @@ func (_mock *MockDriver) Model(ctx context.Context, config util.JSONMap, name st
 
 	var r0 llm.Model
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, string) (llm.Model, error)); ok {
-		return returnFunc(ctx, config, name)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) (llm.Model, error)); ok {
+		return returnFunc(ctx, config)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, string) llm.Model); ok {
-		r0 = returnFunc(ctx, config, name)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) llm.Model); ok {
+		r0 = returnFunc(ctx, config)
 	} else {
 		r0 = ret.Get(0).(llm.Model)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap, string) error); ok {
-		r1 = returnFunc(ctx, config, name)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap) error); ok {
+		r1 = returnFunc(ctx, config)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -191,12 +191,11 @@ type MockDriver_Model_Call struct {
 // Model is a helper method to define mock.On call
 //   - ctx context.Context
 //   - config util.JSONMap
-//   - name string
-func (_e *MockDriver_Expecter) Model(ctx any, config any, name any) *MockDriver_Model_Call {
-	return &MockDriver_Model_Call{Call: _e.mock.On("Model", ctx, config, name)}
+func (_e *MockDriver_Expecter) Model(ctx any, config any) *MockDriver_Model_Call {
+	return &MockDriver_Model_Call{Call: _e.mock.On("Model", ctx, config)}
 }
 
-func (_c *MockDriver_Model_Call) Run(run func(ctx context.Context, config util.JSONMap, name string)) *MockDriver_Model_Call {
+func (_c *MockDriver_Model_Call) Run(run func(ctx context.Context, config util.JSONMap)) *MockDriver_Model_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -206,14 +205,9 @@ func (_c *MockDriver_Model_Call) Run(run func(ctx context.Context, config util.J
 		if args[1] != nil {
 			arg1 = args[1].(util.JSONMap)
 		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -224,7 +218,7 @@ func (_c *MockDriver_Model_Call) Return(model llm.Model, err error) *MockDriver_
 	return _c
 }
 
-func (_c *MockDriver_Model_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap, name string) (llm.Model, error)) *MockDriver_Model_Call {
+func (_c *MockDriver_Model_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap) (llm.Model, error)) *MockDriver_Model_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -298,23 +292,23 @@ func (_c *MockDriver_Models_Call) RunAndReturn(run func(ctx context.Context, con
 }
 
 // Stream provides a mock function for the type MockDriver
-func (_mock *MockDriver) Stream(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error) {
+func (_mock *MockDriver) Stream(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
 	ret := _mock.Called(ctx, config, options)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Stream")
 	}
 
-	var r0 <-chan llm.StreamEvent
+	var r0 llm.StreamIterator
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, llm.GenerateOptions) (<-chan llm.StreamEvent, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, llm.GenerateOptions) (llm.StreamIterator, error)); ok {
 		return returnFunc(ctx, config, options)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, llm.GenerateOptions) <-chan llm.StreamEvent); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, llm.GenerateOptions) llm.StreamIterator); ok {
 		r0 = returnFunc(ctx, config, options)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(<-chan llm.StreamEvent)
+			r0 = ret.Get(0).(llm.StreamIterator)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap, llm.GenerateOptions) error); ok {
@@ -361,12 +355,12 @@ func (_c *MockDriver_Stream_Call) Run(run func(ctx context.Context, config util.
 	return _c
 }
 
-func (_c *MockDriver_Stream_Call) Return(streamEventCh <-chan llm.StreamEvent, err error) *MockDriver_Stream_Call {
-	_c.Call.Return(streamEventCh, err)
+func (_c *MockDriver_Stream_Call) Return(streamIterator llm.StreamIterator, err error) *MockDriver_Stream_Call {
+	_c.Call.Return(streamIterator, err)
 	return _c
 }
 
-func (_c *MockDriver_Stream_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (<-chan llm.StreamEvent, error)) *MockDriver_Stream_Call {
+func (_c *MockDriver_Stream_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error)) *MockDriver_Stream_Call {
 	_c.Call.Return(run)
 	return _c
 }

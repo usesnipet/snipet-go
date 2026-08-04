@@ -33,15 +33,13 @@ func (s *fakeChunkStream) Err() error {
 
 func collectChunks(t *testing.T, chunks ...openai.ChatCompletionChunk) []llm.StreamEvent {
 	t.Helper()
-	out := make(chan llm.StreamEvent, 16)
-	err := consumeStream(context.Background(), &fakeChunkStream{chunks: chunks}, out)
-	require.NoError(t, err)
-	close(out)
+	it := newStreamIterator(&fakeChunkStream{chunks: chunks}, nil)
 
-	events := make([]llm.StreamEvent, 0, len(out))
-	for event := range out {
-		events = append(events, event)
+	events := make([]llm.StreamEvent, 0, len(chunks))
+	for it.Next(context.Background()) {
+		events = append(events, it.Event())
 	}
+	require.NoError(t, it.Err())
 	return events
 }
 
@@ -76,13 +74,12 @@ func TestConsumeStreamAssemblesToolCallAcrossDeltas(t *testing.T) {
 		}}},
 	)
 
-	require.Len(t, events, 2)
+	require.Len(t, events, 1)
 	toolCall, ok := events[0].(llm.ToolCallEvent)
 	require.True(t, ok, "expected llm.ToolCallEvent, got %T", events[0])
 	require.Equal(t, "call-1", toolCall.ToolCall.ID)
 	require.Equal(t, "echo_tool", toolCall.ToolCall.Tool)
 	require.Equal(t, map[string]any{"msg": "hi"}, toolCall.ToolCall.Arguments)
-	require.IsType(t, llm.CompletedEvent{}, events[1])
 }
 
 func TestConsumeStreamSkipsMalformedToolCallArguments(t *testing.T) {
@@ -100,8 +97,7 @@ func TestConsumeStreamSkipsMalformedToolCallArguments(t *testing.T) {
 		}}},
 	)
 
-	require.Len(t, events, 1)
-	require.IsType(t, llm.CompletedEvent{}, events[0])
+	require.Len(t, events, 0)
 }
 
 func TestConsumeStreamEmitsTextDeltas(t *testing.T) {
@@ -115,10 +111,9 @@ func TestConsumeStreamEmitsTextDeltas(t *testing.T) {
 		}}},
 	)
 
-	require.Len(t, events, 3)
+	require.Len(t, events, 2)
 	require.Equal(t, llm.TextDeltaEvent{Text: "Hello"}, events[0])
 	require.Equal(t, llm.TextDeltaEvent{Text: " world"}, events[1])
-	require.IsType(t, llm.CompletedEvent{}, events[2])
 }
 
 func TestParseToolCallArguments(t *testing.T) {
