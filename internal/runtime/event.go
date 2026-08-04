@@ -8,71 +8,54 @@ type IEvent interface {
 	isEvent()
 }
 
+// event is embedded in every event struct so they satisfy IEvent without
+// each having to declare its own isEvent method.
+type event struct{}
+
+func (event) isEvent() {}
+
 // ExecutionStatusChangedEvent is emitted whenever execution status (and related fields) change.
 type ExecutionStatusChangedEvent struct {
+	event
 	Status       ExecutionStatus `json:"status"`
 	ErrorMessage string          `json:"error_message,omitempty"`
 }
 
-func (e ExecutionStatusChangedEvent) isEvent() {}
-
 // ExecutionMessageAddedEvent is emitted when one or more messages are appended.
 type ExecutionMessageAddedEvent struct {
+	event
 	Message msg.Message `json:"message"`
 }
 
-func (e ExecutionMessageAddedEvent) isEvent() {}
-
 // ExecutionTurnCompletedEvent is emitted when a turn is completed.
 type ExecutionTurnCompletedEvent struct {
+	event
 	Turn int `json:"turn"`
 }
 
-func (e ExecutionTurnCompletedEvent) isEvent() {}
-
 // ExecutionFinishedEvent is emitted when an execution is finished.
 type ExecutionFinishedEvent struct {
+	event
 }
-
-func (e ExecutionFinishedEvent) isEvent() {}
 
 // ExecutionMessageDeltaEvent is emitted for each chunk of assistant text
 // streamed from the LLM, before the full message is added via
 // ExecutionMessageAddedEvent.
 type ExecutionMessageDeltaEvent struct {
+	event
 	MessageID string `json:"message_id"`
 	Content   string `json:"content"`
 }
 
-func (e ExecutionMessageDeltaEvent) isEvent() {}
-
-// ExecutionToolCallStartedEvent is emitted when the LLM begins requesting a tool call.
-type ExecutionToolCallStartedEvent struct {
-	MessageID string `json:"message_id"`
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-}
-
-func (e ExecutionToolCallStartedEvent) isEvent() {}
-
-// ExecutionToolCallDeltaEvent is emitted for each chunk of a tool call's
-// streamed arguments.
-type ExecutionToolCallDeltaEvent struct {
-	ID    string `json:"id"`
-	Delta string `json:"delta"`
-}
-
-func (e ExecutionToolCallDeltaEvent) isEvent() {}
-
-// ExecutionToolCallCompletedEvent is emitted once a tool call's arguments
-// have finished streaming and been parsed, right before it is executed.
-type ExecutionToolCallCompletedEvent struct {
+// ExecutionToolCallEvent is emitted once a tool call's arguments have
+// finished streaming and been parsed, right before it is executed.
+type ExecutionToolCallEvent struct {
+	event
+	MessageID string         `json:"message_id"`
 	ID        string         `json:"id"`
 	Name      string         `json:"name"`
 	Arguments map[string]any `json:"arguments"`
 }
-
-func (e ExecutionToolCallCompletedEvent) isEvent() {}
 
 // ExecutionAttemptFailedEvent is emitted when an LLM generation attempt
 // fails after part of its response was already streamed to subscribers
@@ -82,19 +65,17 @@ func (e ExecutionToolCallCompletedEvent) isEvent() {}
 // execution, but this attempt's partial content never becomes part of the
 // conversation history.
 type ExecutionAttemptFailedEvent struct {
+	event
 	MessageID string `json:"message_id"`
 	Error     string `json:"error"`
 }
 
-func (e ExecutionAttemptFailedEvent) isEvent() {}
-
 // ExecutionToolResultEvent is emitted after a tool call has been executed,
 // carrying its result or the error that occurred.
 type ExecutionToolResultEvent struct {
+	event
 	ToolCallID string `json:"tool_call_id"`
 	Tool       string `json:"tool"`
 	Result     string `json:"result,omitempty"`
 	Error      string `json:"error,omitempty"`
 }
-
-func (e ExecutionToolResultEvent) isEvent() {}

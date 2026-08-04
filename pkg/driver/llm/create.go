@@ -103,3 +103,10 @@ func (d *llmDriver) Stream(ctx context.Context, config util.JSONMap, options Gen
 	}
 	return d.api.Stream(ctx, config, options)
 }
+
+func (d *llmDriver) Capabilities(ctx context.Context, config util.JSONMap) (Capabilities, error) {
+	if d.api.Capabilities == nil {
+		return Capabilities{ToolCall: true}, nil
+	}
+	return d.api.Capabilities(ctx, config)
+}

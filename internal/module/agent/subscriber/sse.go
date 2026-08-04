@@ -11,15 +11,13 @@ import (
 type SSEEvent string
 
 const (
-	SSEEventExecutionTurnCompleted     SSEEvent = "execution_turn_completed"
-	SSEEventExecutionMessageAdded      SSEEvent = "execution_message_added"
-	SSEEventExecutionStatusChanged     SSEEvent = "execution_status_changed"
-	SSEEventExecutionFinished          SSEEvent = "execution_finished"
-	SSEEventExecutionMessageDelta      SSEEvent = "execution_message_delta"
-	SSEEventExecutionToolCallStarted   SSEEvent = "execution_tool_call_started"
-	SSEEventExecutionToolCallDelta     SSEEvent = "execution_tool_call_delta"
-	SSEEventExecutionToolCallCompleted SSEEvent = "execution_tool_call_completed"
-	SSEEventExecutionToolResult        SSEEvent = "execution_tool_result"
+	SSEEventExecutionTurnCompleted SSEEvent = "execution_turn_completed"
+	SSEEventExecutionMessageAdded  SSEEvent = "execution_message_added"
+	SSEEventExecutionStatusChanged SSEEvent = "execution_status_changed"
+	SSEEventExecutionFinished      SSEEvent = "execution_finished"
+	SSEEventExecutionMessageDelta  SSEEvent = "execution_message_delta"
+	SSEEventExecutionToolCall      SSEEvent = "execution_tool_call"
+	SSEEventExecutionToolResult    SSEEvent = "execution_tool_result"
 )
 
 type SSE struct {
@@ -47,12 +45,8 @@ func (s *SSE) Handle(ctx context.Context, event runtime.IEvent) error {
 		return s.sse.Write(string(SSEEventExecutionFinished), map[string]string{"status": "done"})
 	case runtime.ExecutionMessageDeltaEvent:
 		return s.sse.Write(string(SSEEventExecutionMessageDelta), event)
-	case runtime.ExecutionToolCallStartedEvent:
-		return s.sse.Write(string(SSEEventExecutionToolCallStarted), event)
-	case runtime.ExecutionToolCallDeltaEvent:
-		return s.sse.Write(string(SSEEventExecutionToolCallDelta), event)
-	case runtime.ExecutionToolCallCompletedEvent:
-		return s.sse.Write(string(SSEEventExecutionToolCallCompleted), event)
+	case runtime.ExecutionToolCallEvent:
+		return s.sse.Write(string(SSEEventExecutionToolCall), event)
 	case runtime.ExecutionToolResultEvent:
 		return s.sse.Write(string(SSEEventExecutionToolResult), event)
 	}

@@ -2,6 +2,8 @@ package runtime_test
 
 import (
 	"context"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -37,7 +39,7 @@ func (r *recordingSubscriber) Handle(_ context.Context, event runtime.IEvent) er
 
 func (r *recordingSubscriber) has(want runtime.IEvent) bool {
 	for _, event := range r.events {
-		if event == want {
+		if reflect.DeepEqual(event, want) {
 			return true
 		}
 	}
@@ -53,6 +55,9 @@ func TestEngineExecutesToolCallsBeforeFinishing(t *testing.T) {
 		Description:         "primary",
 		ConfigurationSchema: util.JSONMap{"type": "object"},
 	})
+	llmDriver.EXPECT().
+		Capabilities(mock.Anything, mock.Anything).
+		Return(llm.Capabilities{ToolCall: true}, nil)
 	llmDriver.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(
@@ -125,10 +130,11 @@ func TestEngineExecutesToolCallsBeforeFinishing(t *testing.T) {
 	require.Equal(t, "done", final.Content)
 	require.True(t, final.IsFinal())
 
-	require.True(t, subscriber.has(runtime.ExecutionToolCallStartedEvent{
+	require.True(t, subscriber.has(runtime.ExecutionToolCallEvent{
 		MessageID: assistantWithToolCall.ID,
 		ID:        "call-1",
 		Name:      "echo__echo_tool",
+		Arguments: map[string]any{"msg": "hi"},
 	}))
 	require.True(t, subscriber.has(runtime.ExecutionToolResultEvent{
 		ToolCallID: "call-1",
@@ -188,4 +194,79 @@ func TestEngineSurfacesToolCallErrorAsToolMessage(t *testing.T) {
 	toolResult := execution.Messages[2]
 	require.Equal(t, msg.RoleTool, toolResult.Role)
 	require.Contains(t, toolResult.Content, "error:")
+}
+
+func TestEngineFallsBackToJSONToolCallWhenUnsupported(t *testing.T) {
+	t.Parallel()
+
+	llmDriver := llmmocks.NewMockDriver(t)
+	llmDriver.EXPECT().Info().Return(driver.Info{
+		Name:                "primary",
+		Description:         "primary",
+		ConfigurationSchema: util.JSONMap{"type": "object"},
+	})
+	llmDriver.EXPECT().
+		Capabilities(mock.Anything, mock.Anything).
+		Return(llm.Capabilities{ToolCall: false}, nil)
+	llmDriver.EXPECT().
+		Stream(mock.Anything, mock.Anything, mock.MatchedBy(func(options llm.GenerateOptions) bool {
+			return len(options.Tools.Tools) == 0 && strings.Contains(options.Prompt.System, "echo__echo_tool")
+		})).
+		Return(streamOf(
+			llm.TextDeltaEvent{Text: `{"tool_call": {"name": "echo__echo_tool", "arguments": {"msg":"hi"}}}`},
+			llm.CompletedEvent{},
+		), nil).
+		Once()
+	llmDriver.EXPECT().
+		Stream(mock.Anything, mock.Anything, mock.Anything).
+		Return(streamOf(llm.TextDeltaEvent{Text: "done"}, llm.CompletedEvent{}), nil).
+		Once()
+
+	llmReg := registry.New[llm.Driver]()
+	llmReg.MustRegister("primary", llmDriver)
+
+	var gotArguments map[string]any
+	toolReg := registry.New[tool.Driver]()
+	toolReg.MustRegister("echo", tool.CreateDriver(
+		tool.WithName("Echo"),
+		tool.WithDescription("Echo"),
+		tool.WithToolSet(tool.NewToolset(tool.NewTool("echo_tool", "Echoes input", nil))),
+		tool.WithAPI(tool.API{
+			Call: func(_ context.Context, call tool.Call) (tool.Result, error) {
+				gotArguments = call.Arguments
+				return tool.Result{Tool: call.Tool, Arguments: call.Arguments, Result: "echo:hi"}, nil
+			},
+		}),
+	))
+
+	engine := runtime.NewEngine(
+		runtime.NewDriverManager(llmReg),
+		runtime.NewToolManager(runtime.NewDriverManager(toolReg)),
+		logger.NewLogger(logger.LevelError),
+	)
+
+	agent := runtime.NewAgent("agent", "agent", "be helpful", []runtime.LLMConfig{
+		{Key: "primary", Config: util.JSONMap{}},
+	})
+	execution, err := runtime.NewExecution(
+		runtime.WithAgent(agent),
+		runtime.WithMessageFromUser("hello"),
+	)
+	require.NoError(t, err)
+
+	err = engine.Start(context.Background(), execution)
+	require.NoError(t, err)
+
+	require.Equal(t, runtime.ExecutionStatusCompleted, execution.Status)
+	require.Equal(t, map[string]any{"msg": "hi"}, gotArguments)
+
+	assistantWithToolCall := execution.Messages[1]
+	require.Equal(t, msg.RoleAssistant, assistantWithToolCall.Role)
+	require.Len(t, assistantWithToolCall.ToolCalls, 1)
+	require.Equal(t, "echo__echo_tool", assistantWithToolCall.ToolCalls[0].Tool)
+	require.Equal(t, map[string]any{"msg": "hi"}, assistantWithToolCall.ToolCalls[0].Arguments)
+
+	toolResult := execution.Messages[2]
+	require.Equal(t, msg.RoleTool, toolResult.Role)
+	require.Equal(t, "echo:hi", toolResult.Content)
 }
