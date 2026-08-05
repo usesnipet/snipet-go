@@ -1,11 +1,18 @@
 package model
 
-import "github.com/usesnipet/snipet/internal/util"
+import (
+	"time"
 
-type KnowledgeType string
+	"github.com/usesnipet/snipet/pkg/jsonx"
+)
+
+type SyncStatus string
 
 const (
-	KnowledgeTypeDocuments KnowledgeType = "documents"
+	SyncStatusPending    SyncStatus = "pending"
+	SyncStatusInProgress SyncStatus = "in_progress"
+	SyncStatusFailed     SyncStatus = "failed"
+	SyncStatusSuccess    SyncStatus = "success"
 )
 
 type Knowledge struct {
@@ -13,9 +20,11 @@ type Knowledge struct {
 
 	Name          string        `gorm:"type:varchar(255);not null" json:"name"`
 	Description   string        `gorm:"type:text" json:"description"`
-	Type          KnowledgeType `gorm:"type:varchar(100);not null;index" json:"type"`
 	Driver        string        `gorm:"type:varchar(100);not null" json:"driver"`
-	Configuration util.JSONMap  `gorm:"type:jsonb;not null" json:"configuration"`
+	Configuration jsonx.JSONMap `gorm:"type:jsonb;not null" json:"configuration"`
+	LastSyncedAt  *time.Time    `gorm:"type:timestamp;default:null" json:"last_synced_at"`
+	SyncStatus    SyncStatus    `gorm:"type:varchar(20);default:null" json:"sync_status"`
+	SyncError     *string       `gorm:"type:text;default:null" json:"sync_error"`
 
 	Items   []KnowledgeItem  `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"-"`
 	Indexes []KnowledgeIndex `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"-"`

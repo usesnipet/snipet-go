@@ -21,16 +21,30 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Use(h.apiKeyMiddleware)
 		r.Get("/", serve(h.filter))
 		r.Post("/", serve(h.create))
+		r.Get("/me", serve(h.me))
 		r.Get("/{id}", serve(h.findByID))
 		r.Post("/{id}/roll", serve(h.roll))
 		r.Put("/{id}/expiration", serve(h.updateExpiration))
 		r.Put("/{id}/active", serve(h.toggleActive))
 		r.Put("/{id}/disabled", serve(h.toggleDisabled))
+		r.Delete("/{id}", serve(h.delete))
 	})
 }
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.Filter(r.Context())
+	var query FindAPIKeysFilterDTO
+	if err := api.ParseQuery(r, &query); err != nil {
+		return err
+	}
+	data, err := h.service.Filter(r.Context(), query.ToFilter())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
+}
+
+func (h *Handler) me(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.Me(r.Context())
 	if err != nil {
 		return err
 	}
@@ -85,6 +99,13 @@ func (h *Handler) toggleActive(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) toggleDisabled(w http.ResponseWriter, r *http.Request) error {
 	if err := h.service.ToggleActive(r.Context(), chi.URLParam(r, "id"), false); err != nil {
+		return err
+	}
+	return api.WriteNoContent(w)
+}
+
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) error {
+	if err := h.service.Delete(r.Context(), chi.URLParam(r, "id")); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)

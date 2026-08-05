@@ -8,106 +8,185 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/config"
+	"github.com/usesnipet/snipet/drivers/index"
+	"github.com/usesnipet/snipet/drivers/llm"
+	"github.com/usesnipet/snipet/drivers/source"
+	"github.com/usesnipet/snipet/drivers/tool"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/middleware"
+	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
+	app_module "github.com/usesnipet/snipet/internal/module/app"
 	auth_module "github.com/usesnipet/snipet/internal/module/auth"
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
-	"github.com/usesnipet/snipet/internal/module/bot"
 	"github.com/usesnipet/snipet/internal/module/client"
-	indexedknowledgeitem "github.com/usesnipet/snipet/internal/module/indexed-knowledge-item"
-	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
-	knowledgeitem "github.com/usesnipet/snipet/internal/module/knowledge-item"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
+	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
+	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
 	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/module/user"
+	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
+	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/manager"
+	"github.com/usesnipet/snipet/web"
 )
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// database
-	db, err := database.NewDatabase(cfg, logger)
+	db, _, err := database.NewDatabase(cfg, logger)
 	if err != nil {
 		logger.Errorf("failed to create database: %v", err)
 		return err
 	}
 
 	// repositories
+	txManager := repository.NewTxManager(db)
 	apiKeyRepo := repository.NewApiKeyRepository(db)
-	botRepo := repository.NewBotRepository(db)
+	agentRepo := repository.NewAgentRepository(db)
+	llmRepo := repository.NewLLMRepository(db)
 	clientRepo := repository.NewClientRepository(db)
 	sessionRepo := repository.NewSessionRepository(db, clientRepo)
-	sessionMessageRepo := repository.NewSessionMessageRepository(db, clientRepo)
 	knowledgeRepo := repository.NewKnowledgeRepository(db)
 	knowledgeIndexRepo := repository.NewKnowledgeIndexRepository(db)
 	knowledgeItemRepo := repository.NewKnowledgeItemRepository(db)
 	indexedKnowledgeItemRepo := repository.NewIndexedKnowledgeItemRepository(db)
 	userRepo := repository.NewUserRepository(db, clientRepo)
+	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
+	executionRepo := repository.NewExecutionRepository(db)
+	messageRepo := repository.NewExecutionMessageRepository(db)
+
+	// runtime
+	sourceRegistry := source.Registry()
+	sourceManager := manager.NewDriver(sourceRegistry)
+
+	indexRegistry := index.Registry()
+	indexManager := manager.NewDriver(indexRegistry)
+
+	llmRegistry := llm.Registry()
+	llmManager := manager.NewDriver(llmRegistry)
+
+	toolRegistry := tool.Registry()
+	toolManager := manager.NewTool(manager.NewDriver(toolRegistry))
+
+	engine := runtime.NewEngine(llmManager, toolManager, logger)
+
+	syncPool := queue.NewPool(cfg.Sync.Workers, logger)
+	syncPool.Start(context.Background())
+
+	indexSyncWorker := knowledgeindex.NewSyncIndexWorker(
+		indexManager,
+		sourceManager,
+		knowledgeRepo,
+		knowledgeItemRepo,
+		knowledgeIndexRepo,
+		indexedKnowledgeItemRepo,
+		logger,
+	)
+	knowledgeSyncWorker := knowledge.NewSyncWorker(
+		sourceManager,
+		knowledgeRepo,
+		knowledgeItemRepo,
+		knowledgeIndexRepo,
+		indexSyncWorker.Sync,
+		100,
+		logger,
+	)
 
 	// services
 	apiKeyGenerator := auth.NewAPIKeyGenerator()
 	apiKeyHasher := auth.NewKeyHasher()
 	jwtService := auth.NewJWTService(cfg.Auth)
 
+	refreshTokenService := auth.NewRefreshTokenService(cfg.Auth)
+
 	authRegistry := auth_provider.NewRegistry()
 
-	authService := auth_module.NewService(authRegistry, clientRepo, userRepo, jwtService)
+	authService := auth_module.NewService(
+		authRegistry,
+		clientRepo,
+		userRepo,
+		refreshTokenRepo,
+		jwtService,
+		refreshTokenService,
+		cfg.Auth,
+	)
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 	apiKeyService.Init(context.Background())
 
-	clientService := client.NewService(clientRepo)
+	clientService := client.NewService(clientRepo, agentRepo, logger)
+	if err := clientService.Init(context.Background(), &cfg.App); err != nil {
+		logger.Errorf("failed to init client service: %v", err)
+		return err
+	}
 
-	botService := bot.NewService(botRepo)
+	agentService := agent.NewService(agentRepo, llmRepo, txManager, engine, executionRepo, messageRepo, logger)
+	llmService := llmmodule.NewService(llmRepo, llmManager)
 
-	knowledgeService := knowledge.NewService(knowledgeRepo)
-	knowledgeIndexService := knowledgeindex.NewService(knowledgeIndexRepo)
-	knowledgeItemService := knowledgeitem.NewService(knowledgeItemRepo)
-	indexedKnowledgeItemService := indexedknowledgeitem.NewService(indexedKnowledgeItemRepo)
+	knowledgeService := knowledge.NewService(
+		txManager,
+		knowledgeRepo,
+		knowledgeItemRepo,
+		sourceManager,
+		syncPool,
+		knowledgeSyncWorker,
+	)
+	knowledgeIndexService := knowledgeindex.NewService(
+		knowledgeIndexRepo,
+		indexedKnowledgeItemRepo,
+		indexManager,
+		syncPool,
+		indexSyncWorker,
+		txManager,
+	)
 
-	sessionService := session.NewService(sessionRepo, sessionMessageRepo, clientService)
+	sessionService := session.NewService(sessionRepo, messageRepo, clientService, agentService)
 
 	userService := user.NewService(userRepo)
+	appService := app_module.NewService(&cfg.App)
 
 	// cache
 	apiKeyCache := cache.NewMemoryCache(1000, 1*time.Hour)
 
 	// middlewares
 	apiKeyMiddleware := middleware.APIKeyMiddleware(apiKeyService, apiKeyCache)
-	jwtAuthMiddleware := middleware.JWT(jwtService)
 	anyAuthMiddleware := middleware.AnyAuth(jwtService, apiKeyService, apiKeyCache)
+	jwtMiddleware := middleware.JWT(jwtService)
 
 	// handlers
 	authHandler := auth_module.NewHandler(authService)
+	appHandler := app_module.NewHandler(appService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
-	botHandler := bot.NewHandler(botService, apiKeyMiddleware)
-	clientHandler := client.NewHandler(clientService, apiKeyMiddleware)
-	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware, jwtAuthMiddleware)
+	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
+	llmHandler := llmmodule.NewHandler(llmService, apiKeyMiddleware)
+	clientHandler := client.NewHandler(clientService, apiKeyMiddleware, anyAuthMiddleware)
+	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
-	knowledgeItemHandler := knowledgeitem.NewHandler(knowledgeItemService, apiKeyMiddleware)
-	indexedKnowledgeItemHandler := indexedknowledgeitem.NewHandler(indexedKnowledgeItemService, apiKeyMiddleware)
-	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware)
+	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware, jwtMiddleware)
 
 	// register routes
 	api := api.New()
+	api.Router.Handle("/*", web.Handler())
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
 		authHandler.RegisterRoutes(r, api.Serve)
+		appHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
-		botHandler.RegisterRoutes(r, api.Serve)
+		agentHandler.RegisterRoutes(r, api.Serve)
+		llmHandler.RegisterRoutes(r, api.Serve)
 		clientHandler.RegisterRoutes(r, api.Serve)
 		sessionHandler.RegisterRoutes(r, api.Serve)
 		knowledgeHandler.RegisterRoutes(r, api.Serve)
 		knowledgeIndexHandler.RegisterRoutes(r, api.Serve)
-		knowledgeItemHandler.RegisterRoutes(r, api.Serve)
-		indexedKnowledgeItemHandler.RegisterRoutes(r, api.Serve)
 		userHandler.RegisterRoutes(r, api.Serve)
 	})
 
+	logger.Infof("sync worker pool started with %d workers", cfg.Sync.Workers)
 	logger.Infof("server started on port %d", cfg.Server.Port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Server.Port), api.Router)
 	if err != nil {

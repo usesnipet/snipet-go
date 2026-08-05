@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RAG Config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "store": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Postgres connection URL with pgvector enabled"
+        },
+        "table": {
+          "type": "string",
+          "description": "Table name used to store embeddings"
+        },
+        "length": {
+          "type": "number",
+          "description": "Embedding vector dimension (must match the embedder model)"
+        }
+      },
+      "required": ["url", "table", "length"]
+    },
+    "chunker": {
+      "type": "object",
+      "properties": {
+        "chunkSize": {
+          "type": "number",
+          "description": "Target chunk size in characters"
+        },
+        "overlap": {
+          "type": "number",
+          "description": "Overlap between consecutive chunks"
+        },
+        "minChunkSize": {
+          "type": "number",
+          "description": "Minimum chunk size in characters"
+        },
+        "trimWhitespace": {
+          "type": "boolean",
+          "description": "Whether to trim whitespace from chunks"
+        },
+        "separators": {
+          "type": "array",
+          "description": "Preferred split separators, in priority order",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "embedder": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Embedding model id"
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "API key for the embedder"
+        }
+      },
+      "required": ["model", "apiKey"]
+    }
+  },
+  "required": ["store", "embedder"]
+}

@@ -23,10 +23,15 @@ func NewHandler(
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
+	r.Route("/knowledge/index", func(r chi.Router) {
+		r.Use(h.apiKeyMiddleware)
+		r.Get("/drivers", serve(h.listDrivers))
+	})
 	r.Route("/knowledge/{knowledge_id}/index", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.apiKeyMiddleware)
 			r.Get("/", serve(h.filter))
+			r.Get("/{id}/items", serve(h.filterItems))
 			r.Post("/", serve(h.create))
 			r.Get("/{id}", serve(h.findByID))
 			r.Put("/{id}", serve(h.update))
@@ -45,6 +50,18 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	data, err := h.service.Filter(r.Context(), h.knowledgeID(r), dto.ToFilter())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
+}
+
+func (h *Handler) filterItems(w http.ResponseWriter, r *http.Request) error {
+	var dto FilterIndexedKnowledgeItemDTO
+	if err := api.ParseQuery(r, &dto); err != nil {
+		return err
+	}
+	data, err := h.service.FilterItems(r.Context(), h.knowledgeID(r), chi.URLParam(r, "id"), dto.ToFilter())
 	if err != nil {
 		return err
 	}
@@ -88,4 +105,12 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteNoContent(w)
+}
+
+func (h *Handler) listDrivers(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.ListDrivers(r.Context())
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
 }

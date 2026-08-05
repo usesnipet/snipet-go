@@ -1,0 +1,119 @@
+{
+  "$schema": "../../../pkg/driver/tool/tool-set-schema.json",
+  "tools": [
+    {
+      "name": "list_people",
+      "description": "List all people (characters) from the Star Wars API",
+      "parameters": {}
+    },
+    {
+      "name": "get_people",
+      "description": "Get a specific person/character by id from the Star Wars API",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
+      }
+    },
+    {
+      "name": "list_films",
+      "description": "List all films from the Star Wars API",
+      "parameters": {}
+    },
+    {
+      "name": "get_films",
+      "description": "Get a specific film by id from the Star Wars API",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
+      }
+    },
+    {
+      "name": "list_planets",
+      "description": "List all planets from the Star Wars API",
+      "parameters": {}
+    },
+    {
+      "name": "get_planets",
+      "description": "Get a specific planet by id from the Star Wars API",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
+      }
+    },
+    {
+      "name": "list_species",
+      "description": "List all species from the Star Wars API",
+      "parameters": {}
+    },
+    {
+      "name": "get_species",
+      "description": "Get a specific species by id from the Star Wars API",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
+      }
+    },
+    {
+      "name": "list_starships",
+      "description": "List all starships from the Star Wars API",
+      "parameters": {}
+    },
+    {
+      "name": "get_starships",
+      "description": "Get a specific starship by id from the Star Wars API",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
+      }
+    },
+    {
+      "name": "list_vehicles",
+      "description": "List all vehicles from the Star Wars API",
+      "parameters": {}
+    },
+    {
+      "name": "get_vehicles",
+      "description": "Get a specific vehicle by id from the Star Wars API",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the person/character"
+          }
+        },
+        "required": ["id"]
+      }
+    }
+  ]
+}

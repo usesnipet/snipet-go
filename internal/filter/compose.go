@@ -3,10 +3,11 @@ package filter
 type Option func(*state)
 
 type state struct {
-	take  int
-	skip  int
-	order OrderOptions
-	where WhereOptions
+	take    int
+	skip    int
+	order   OrderOptions
+	where   WhereOptions
+	include []string
 }
 
 func newState() *state {
@@ -16,12 +17,31 @@ func newState() *state {
 	}
 }
 
+func appendUnique(dst []string, paths ...string) []string {
+	seen := make(map[string]struct{}, len(dst)+len(paths))
+	for _, p := range dst {
+		seen[p] = struct{}{}
+	}
+	for _, p := range paths {
+		if p == "" {
+			continue
+		}
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+		dst = append(dst, p)
+	}
+	return dst
+}
+
 func toOptions[T any](s *state) *Options[T] {
 	return &Options[T]{
-		Take:  s.take,
-		Skip:  s.skip,
-		Order: s.order,
-		Where: s.where,
+		Take:    s.take,
+		Skip:    s.skip,
+		Order:   s.order,
+		Where:   s.where,
+		Include: s.include,
 	}
 }
 
@@ -155,4 +175,10 @@ func WhereIsNull(field string) Option {
 
 func WhereIsNotNull(field string) Option {
 	return Where(field, WhereOperatorIsNotNull)
+}
+
+func Include(paths ...string) Option {
+	return func(s *state) {
+		s.include = appendUnique(s.include, paths...)
+	}
 }

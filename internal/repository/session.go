@@ -35,6 +35,7 @@ type ISessionRepository interface {
 		ctx context.Context,
 		clientID string,
 		id string,
+		opts *filter.Options[model.Session],
 	) (*model.Session, error)
 
 	DeleteInClient(
@@ -101,7 +102,7 @@ func (r *SessionRepository) FilterInClientWithUser(
 	if err != nil {
 		return nil, err
 	}
-	chain, err := sessionFilter.ToGormTx(r.db(ctx).Table("sessions"))
+	chain, err := sessionFilter.ToGormTx(r.db(ctx).Model(&model.Session{}))
 	if err != nil {
 		return nil, err
 	}
@@ -119,11 +120,15 @@ func (r *SessionRepository) FindByIDInClient(
 	ctx context.Context,
 	clientId string,
 	id string,
+	opts *filter.Options[model.Session],
 ) (*model.Session, error) {
 	paginated, err := r.FilterInClient(
 		ctx,
 		clientId,
-		filter.New[model.Session](filter.WhereEq("id", id)),
+		filter.Merge(
+			opts,
+			filter.New[model.Session](filter.WhereEq("id", id)),
+		),
 	)
 	if err != nil {
 		return nil, err

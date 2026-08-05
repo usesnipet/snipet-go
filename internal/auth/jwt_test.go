@@ -32,7 +32,7 @@ func TestGenerateTokenReturnsBearerToken(t *testing.T) {
 	t.Parallel()
 
 	service := auth.NewJWTService(testAuthConfig())
-	token, _, err := service.GenerateToken("client-abc", testUser())
+	token, _, _, err := service.GenerateToken("client-abc", testUser())
 	require.NoError(t, err)
 
 	assert.True(t, strings.HasPrefix(token, "Bearer "))
@@ -45,7 +45,7 @@ func TestGenerateTokenEmbedsExpectedClaims(t *testing.T) {
 	service := auth.NewJWTService(cfg)
 	user := testUser()
 
-	_, claims, err := service.GenerateToken("client-abc", user)
+	_, _, claims, err := service.GenerateToken("client-abc", user)
 	require.NoError(t, err)
 
 	assert.Equal(t, "client-abc", claims.ClientCode)
@@ -62,7 +62,7 @@ func TestVerifyTokenAcceptsValidToken(t *testing.T) {
 	service := auth.NewJWTService(testAuthConfig())
 	user := testUser()
 
-	token, expectedClaims, err := service.GenerateToken("client-abc", user)
+	token, _, expectedClaims, err := service.GenerateToken("client-abc", user)
 	require.NoError(t, err)
 
 	claims, err := service.VerifyToken(token)
@@ -77,7 +77,7 @@ func TestVerifyTokenAcceptsTokenWithoutBearerPrefix(t *testing.T) {
 	t.Parallel()
 
 	service := auth.NewJWTService(testAuthConfig())
-	token, _, err := service.GenerateToken("client-abc", testUser())
+	token, _, _, err := service.GenerateToken("client-abc", testUser())
 	require.NoError(t, err)
 
 	claims, err := service.VerifyToken(strings.TrimPrefix(token, "Bearer "))
@@ -100,7 +100,7 @@ func TestVerifyTokenRejectsWrongSecret(t *testing.T) {
 	t.Parallel()
 
 	issuer := auth.NewJWTService(testAuthConfig())
-	token, _, err := issuer.GenerateToken("client-abc", testUser())
+	token, _, _, err := issuer.GenerateToken("client-abc", testUser())
 	require.NoError(t, err)
 
 	otherSecret := testAuthConfig()
@@ -119,7 +119,7 @@ func TestVerifyTokenRejectsExpiredToken(t *testing.T) {
 	cfg.JWTExpiration = -time.Minute
 	service := auth.NewJWTService(cfg)
 
-	token, _, err := service.GenerateToken("client-abc", testUser())
+	token, _, _, err := service.GenerateToken("client-abc", testUser())
 	require.NoError(t, err)
 
 	claims, err := service.VerifyToken(token)

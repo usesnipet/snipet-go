@@ -35,8 +35,13 @@ func WithTx(ctx context.Context, tx *gorm.DB) context.Context {
 }
 
 func DB(ctx context.Context, db *gorm.DB) *gorm.DB {
-	if tx, ok := ctx.Value(txKey{}).(*gorm.DB); ok && tx != nil {
+	if tx, ok := GetTx(ctx); ok && tx != nil {
 		return tx.WithContext(ctx)
 	}
 	return db.WithContext(ctx)
+}
+
+func GetTx(ctx context.Context) (*gorm.DB, bool) {
+	tx, ok := ctx.Value(txKey{}).(*gorm.DB)
+	return tx, ok
 }

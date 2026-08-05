@@ -1,5 +1,7 @@
 package filter
 
+import "maps"
+
 // From applies an existing Options onto the builder state.
 // Pagination fields (Take, Skip) are only applied when the source filter
 // carries pagination intent (non-zero Take, non-zero Skip, or any Order).
@@ -17,17 +19,15 @@ func From[T any](opts *Options[T]) Option {
 			s.skip = opts.Skip
 		}
 
-		for field, direction := range opts.Order.Fields {
-			s.order.Fields[field] = direction
-		}
-		for field, where := range opts.Where.Fields {
-			s.where.Fields[field] = where
-		}
+		maps.Copy(s.order.Fields, opts.Order.Fields)
+		maps.Copy(s.where.Fields, opts.Where.Fields)
+		s.include = appendUnique(s.include, opts.Include...)
 	}
 }
 
 // Merge combines multiple filters into one. Order and Where fields are merged;
 // when the same key appears in multiple filters, the last one wins.
+// Include paths are unioned and deduplicated.
 func Merge[T any](filters ...*Options[T]) *Options[T] {
 	opts := make([]Option, 0, len(filters))
 	for _, f := range filters {

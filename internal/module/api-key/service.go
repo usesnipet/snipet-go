@@ -81,12 +81,20 @@ func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) (*model.APIKe
 	return key, nil
 }
 
-func (s *Service) Filter(ctx context.Context) (*page.Paginated[model.APIKey], error) {
-	return s.repository.Filter(ctx, filter.Default[model.APIKey]())
+func (s *Service) Filter(ctx context.Context, opts *filter.Options[model.APIKey]) (*page.Paginated[model.APIKey], error) {
+	return s.repository.Filter(ctx, opts)
 }
 
 func (s *Service) FindByID(ctx context.Context, id string) (*model.APIKey, error) {
 	return s.repository.FindByID(ctx, id)
+}
+
+func (s *Service) Me(ctx context.Context) (*model.APIKey, error) {
+	principal, ok := auth.GetPrincipal(ctx)
+	if !ok || principal.GetType() != auth.PrincipalTypeAPIKey || principal.GetAPIKeyID() == nil {
+		return nil, apperr.Unauthorized("unauthorized")
+	}
+	return s.repository.FindByID(ctx, *principal.GetAPIKeyID())
 }
 
 func (s *Service) Create(ctx context.Context, dto CreateAPIKeyDTO) (*APIKeyWithSecret, error) {
@@ -157,4 +165,11 @@ func (s *Service) UpdateExpiration(ctx context.Context, id string, dto UpdateExp
 
 func (s *Service) ToggleActive(ctx context.Context, id string, active bool) error {
 	return s.repository.ToggleActive(ctx, id, active)
+}
+
+func (s *Service) Delete(ctx context.Context, id string) error {
+	if _, err := s.repository.FindByID(ctx, id); err != nil {
+		return err
+	}
+	return s.repository.DeleteByID(ctx, id)
 }

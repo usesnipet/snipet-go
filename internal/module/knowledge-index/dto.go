@@ -3,13 +3,14 @@ package knowledgeindex
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type CreateKnowledgeIndexDTO struct {
-	Name          string       `json:"name" validate:"required,max=255"`
-	Driver        string       `json:"driver" validate:"required,max=100"`
-	Configuration util.JSONMap `json:"configuration" validate:"required"`
+	Name          string        `json:"name" validate:"required,max=255"`
+	Driver        string        `json:"driver" validate:"required,max=100"`
+	Configuration jsonx.JSONMap `json:"configuration" validate:"required"`
 }
 
 type UpdateKnowledgeIndexDTO struct {
@@ -26,4 +27,20 @@ func (dto *FilterKnowledgeIndexDTO) ToFilter() *filter.Options[model.KnowledgeIn
 		filter.PtrTake(dto.Take),
 		filter.PtrSkip(dto.Skip),
 	)
+}
+
+type FilterIndexedKnowledgeItemDTO struct {
+	Take *int `form:"take" validate:"omitempty,min=1"`
+	Skip *int `form:"skip" validate:"omitempty,min=0"`
+}
+
+func (dto *FilterIndexedKnowledgeItemDTO) ToFilter() *filter.Options[model.IndexedKnowledgeItem] {
+	return filter.New[model.IndexedKnowledgeItem](
+		filter.PtrTake(dto.Take),
+		filter.PtrSkip(dto.Skip),
+	)
+}
+
+type DriversDTO struct {
+	IndexDrivers []driver.Info `json:"index_drivers"`
 }

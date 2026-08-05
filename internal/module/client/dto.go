@@ -26,3 +26,21 @@ func (dto *FindClientsFilterDTO) ToFilter() *filter.Options[model.Client] {
 		filter.PtrSkip(dto.Skip),
 	)
 }
+
+type ClientPublicDTO struct {
+	Code           string `json:"code"`
+	Name           string `json:"name"`
+	AllowAnonymous bool   `json:"allow_anonymous"`
+}
+
+type FindClientAgentsFilterDTO struct {
+	Take *int `form:"take" validate:"omitempty,min=1"`
+	Skip *int `form:"skip" validate:"omitempty,min=0"`
+}
+
+func (dto *FindClientAgentsFilterDTO) ToFilter() *filter.Options[model.Agent] {
+	return filter.New[model.Agent](
+		filter.PtrTake(dto.Take),
+		filter.PtrSkip(dto.Skip),
+	)
+}

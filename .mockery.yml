@@ -18,5 +18,13 @@ template-schema: '{{.Template}}.schema.json'
 packages:
   github.com/usesnipet/snipet/internal/repository:
     config:
-      include-interface-regex: '^I[A-Z].*Repository$'
+      include-interface-regex: '^I([A-Z].*Repository|TxManager)$'
       exclude-interface-regex: '^I(Filterable|Findable|Creatable|Updatable|Deletable)Repository$|^IRepository$'
+  github.com/usesnipet/snipet/pkg/driver/llm:
+    config:
+      dir: pkg/driver/llm/mocks
+      include-interface-regex: '^Driver$'
+  github.com/usesnipet/snipet/pkg/driver/knowledge:
+    config:
+      dir: pkg/driver/knowledge/mocks
+      include-interface-regex: '^I(SourceDriver|IndexDriver)$'

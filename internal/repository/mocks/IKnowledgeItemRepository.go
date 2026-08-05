@@ -104,6 +104,78 @@ func (_c *MockIKnowledgeItemRepository_CreateInKnowledge_Call) RunAndReturn(run 
 	return _c
 }
 
+// DeleteByExternalIDsInKnowledge provides a mock function for the type MockIKnowledgeItemRepository
+func (_mock *MockIKnowledgeItemRepository) DeleteByExternalIDsInKnowledge(ctx context.Context, knowledgeID string, externalIDs []string) (int64, error) {
+	ret := _mock.Called(ctx, knowledgeID, externalIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteByExternalIDsInKnowledge")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) (int64, error)); ok {
+		return returnFunc(ctx, knowledgeID, externalIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) int64); ok {
+		r0 = returnFunc(ctx, knowledgeID, externalIDs)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []string) error); ok {
+		r1 = returnFunc(ctx, knowledgeID, externalIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByExternalIDsInKnowledge'
+type MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call struct {
+	*mock.Call
+}
+
+// DeleteByExternalIDsInKnowledge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - knowledgeID string
+//   - externalIDs []string
+func (_e *MockIKnowledgeItemRepository_Expecter) DeleteByExternalIDsInKnowledge(ctx any, knowledgeID any, externalIDs any) *MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call {
+	return &MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call{Call: _e.mock.On("DeleteByExternalIDsInKnowledge", ctx, knowledgeID, externalIDs)}
+}
+
+func (_c *MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call) Run(run func(ctx context.Context, knowledgeID string, externalIDs []string)) *MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call) Return(n int64, err error) *MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string, externalIDs []string) (int64, error)) *MockIKnowledgeItemRepository_DeleteByExternalIDsInKnowledge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteInKnowledge provides a mock function for the type MockIKnowledgeItemRepository
 func (_mock *MockIKnowledgeItemRepository) DeleteInKnowledge(ctx context.Context, knowledgeID string, id string) error {
 	ret := _mock.Called(ctx, knowledgeID, id)
@@ -315,6 +387,74 @@ func (_c *MockIKnowledgeItemRepository_FindByIDInKnowledge_Call) RunAndReturn(ru
 	return _c
 }
 
+// HashesByExternalIDInKnowledge provides a mock function for the type MockIKnowledgeItemRepository
+func (_mock *MockIKnowledgeItemRepository) HashesByExternalIDInKnowledge(ctx context.Context, knowledgeID string) (map[string]string, error) {
+	ret := _mock.Called(ctx, knowledgeID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HashesByExternalIDInKnowledge")
+	}
+
+	var r0 map[string]string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (map[string]string, error)); ok {
+		return returnFunc(ctx, knowledgeID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) map[string]string); ok {
+		r0 = returnFunc(ctx, knowledgeID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, knowledgeID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HashesByExternalIDInKnowledge'
+type MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call struct {
+	*mock.Call
+}
+
+// HashesByExternalIDInKnowledge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - knowledgeID string
+func (_e *MockIKnowledgeItemRepository_Expecter) HashesByExternalIDInKnowledge(ctx any, knowledgeID any) *MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call {
+	return &MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call{Call: _e.mock.On("HashesByExternalIDInKnowledge", ctx, knowledgeID)}
+}
+
+func (_c *MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call) Run(run func(ctx context.Context, knowledgeID string)) *MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call) Return(stringToString map[string]string, err error) *MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call {
+	_c.Call.Return(stringToString, err)
+	return _c
+}
+
+func (_c *MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string) (map[string]string, error)) *MockIKnowledgeItemRepository_HashesByExternalIDInKnowledge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateInKnowledge provides a mock function for the type MockIKnowledgeItemRepository
 func (_mock *MockIKnowledgeItemRepository) UpdateInKnowledge(ctx context.Context, knowledgeID string, id string, item *model.KnowledgeItem) error {
 	ret := _mock.Called(ctx, knowledgeID, id, item)
@@ -380,6 +520,69 @@ func (_c *MockIKnowledgeItemRepository_UpdateInKnowledge_Call) Return(err error)
 }
 
 func (_c *MockIKnowledgeItemRepository_UpdateInKnowledge_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string, id string, item *model.KnowledgeItem) error) *MockIKnowledgeItemRepository_UpdateInKnowledge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpsertMany provides a mock function for the type MockIKnowledgeItemRepository
+func (_mock *MockIKnowledgeItemRepository) UpsertMany(ctx context.Context, items []model.KnowledgeItem, batchSize int) error {
+	ret := _mock.Called(ctx, items, batchSize)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertMany")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []model.KnowledgeItem, int) error); ok {
+		r0 = returnFunc(ctx, items, batchSize)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIKnowledgeItemRepository_UpsertMany_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpsertMany'
+type MockIKnowledgeItemRepository_UpsertMany_Call struct {
+	*mock.Call
+}
+
+// UpsertMany is a helper method to define mock.On call
+//   - ctx context.Context
+//   - items []model.KnowledgeItem
+//   - batchSize int
+func (_e *MockIKnowledgeItemRepository_Expecter) UpsertMany(ctx any, items any, batchSize any) *MockIKnowledgeItemRepository_UpsertMany_Call {
+	return &MockIKnowledgeItemRepository_UpsertMany_Call{Call: _e.mock.On("UpsertMany", ctx, items, batchSize)}
+}
+
+func (_c *MockIKnowledgeItemRepository_UpsertMany_Call) Run(run func(ctx context.Context, items []model.KnowledgeItem, batchSize int)) *MockIKnowledgeItemRepository_UpsertMany_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []model.KnowledgeItem
+		if args[1] != nil {
+			arg1 = args[1].([]model.KnowledgeItem)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIKnowledgeItemRepository_UpsertMany_Call) Return(err error) *MockIKnowledgeItemRepository_UpsertMany_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIKnowledgeItemRepository_UpsertMany_Call) RunAndReturn(run func(ctx context.Context, items []model.KnowledgeItem, batchSize int) error) *MockIKnowledgeItemRepository_UpsertMany_Call {
 	_c.Call.Return(run)
 	return _c
 }

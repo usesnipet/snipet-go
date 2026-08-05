@@ -1,6 +1,10 @@
-h1:eHYshGyb5b8J3o+9KkPl5EYIg9KnezVCl+kLFVnPkXA=
-20260627012522_initial.up.sql h1:XAi8ZpM9JuWosfPCDGImUv/Q6rTXAl4ZNMd1E2/wmRU=
-20260630225056_primary_key_on_composite_key.up.sql h1:dxZvhXMsI7fU509R8j5XlDZbGprCScgq+QYw/GstrXo=
-20260701184519_remove_client_to_bot.up.sql h1:YkGyvBcfOMbXSxhj/B5OqsfUDWo7mtYLc7vnbr7dyL4=
-20260702172254_add_knowledge.up.sql h1:fzK2zTmYWn4VWfPe0/0UGrie4qHeXwsYWhO4jtClYso=
-20260702235817_rename_knowledge_provider_to_driver.up.sql h1:8XyGikE/3Hm3hND6njFIOD++xbamm1iysymt68IutsE=
+h1:s1n2nGS4SsYq+CFKFPDtFgyKn2BDcZ70bTuXYvPy+0s=
+20260716181040_initial.up.sql h1:hxbax4Yc8GH0cBil2OKNyNMxjVf7KdQ2x+DPk+CKgcc=
+20260718024811_add_error_message_on_execution_table.up.sql h1:wA3ZNAx9FqHasr0/TUKGBO6aC2yZ2Hi4SQEf6+dsMuc=
+20260720211500_drop_session_messages.up.sql h1:gHWR1ttErC7ozc8w0FRuT+faRZzpHUwSiTnoRJMpnNs=
+20260722102828_add_refresh_tokens.up.sql h1:8Zuz9MFHRkq9RC3YqFq7eWWBsNesK3FnPQif+mNLT14=
+20260723165533_convert_client_code_to_varchar.up.sql h1:67e3/FTk1tOYZSUyW741pJJOTb1ZHGuVtSn63ZYXVmo=
+20260729152048_create_llms_table.up.sql h1:PMZ+LWsGa7+zE9CWf3zWeOAu4mjeMA5mG0N6yQp/vCw=
+20260729155446_associate_agent_llms.up.sql h1:q4OJ4OzfNnoaFvTyGQ70hahr2y2ojDHkjNtP+ZAD7OI=
+20260731155414_convert_created_at_to_timestamp_on_execution_message.up.sql h1:neh+n6DNNfDkM8tiLU64pYymmI430UnvsxTiUzGkm+o=
+20260803173701_add_message_tool_calls.up.sql h1:iY932LuPeSgiJqfofBDhSuWAXwugDa03/YwX497BV/U=
