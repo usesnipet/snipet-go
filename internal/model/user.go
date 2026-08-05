@@ -1,16 +1,14 @@
 package model
 
-import (
-	"github.com/usesnipet/snipet/internal/util"
-)
+import "github.com/usesnipet/snipet/pkg/jsonx"
 
 type User struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	Name     string       `gorm:"type:varchar(255);not null" json:"name"`
-	Picture  *string      `gorm:"type:text" json:"picture"`
-	Email    *string      `gorm:"type:text" json:"email"`
-	Metadata util.JSONMap `gorm:"type:jsonb;not null" json:"metadata"`
+	Name     string        `gorm:"type:varchar(255);not null" json:"name"`
+	Picture  *string       `gorm:"type:text" json:"picture"`
+	Email    *string       `gorm:"type:text" json:"email"`
+	Metadata jsonx.JSONMap `gorm:"type:jsonb;not null" json:"metadata"`
 
 	UserToSessions []UserToSession `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	ClientToUsers  []ClientToUser  `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`

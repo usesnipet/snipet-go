@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Reader struct {
@@ -15,8 +15,8 @@ type Reader struct {
 	item *knowledge.SourceItem
 }
 
-func NewReader(config util.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
-	cfg, err := util.ParseJSONMap[Config](config)
+func NewReader(config jsonx.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
+	cfg, err := jsonx.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
 	}

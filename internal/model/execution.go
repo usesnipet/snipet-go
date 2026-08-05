@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/usesnipet/snipet/internal/runtime/execution"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Execution struct {
@@ -15,7 +15,7 @@ type Execution struct {
 	Status       execution.Status `gorm:"type:varchar(50);not null" json:"status"`
 	ErrorMessage string           `gorm:"type:text;not null" json:"error_message,omitempty"`
 	Turns        int              `gorm:"type:integer;not null;default:0" json:"turns"`
-	Metadata     util.JSONMap     `gorm:"type:jsonb;not null" json:"metadata"`
+	Metadata     jsonx.JSONMap    `gorm:"type:jsonb;not null" json:"metadata"`
 	CreatedAt    time.Time        `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt    time.Time        `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 

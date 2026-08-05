@@ -19,16 +19,16 @@ import (
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	knowledgemocks "github.com/usesnipet/snipet/pkg/driver/knowledge/mocks"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
-var testIndexConfigSchema = util.JSONMap{
+var testIndexConfigSchema = jsonx.JSONMap{
 	"type": "object",
-	"properties": util.JSONMap{
-		"dimension": util.JSONMap{"type": "number"},
+	"properties": jsonx.JSONMap{
+		"dimension": jsonx.JSONMap{"type": "number"},
 	},
 	"required": []any{"dimension"},
 }
@@ -55,7 +55,7 @@ type testServiceOptions struct {
 	pool      queue.IPool
 }
 
-func newMockIndex(t *testing.T, name string, schema util.JSONMap) *knowledgemocks.MockIIndexDriver {
+func newMockIndex(t *testing.T, name string, schema jsonx.JSONMap) *knowledgemocks.MockIIndexDriver {
 	t.Helper()
 
 	indexDriver := knowledgemocks.NewMockIIndexDriver(t)
@@ -147,7 +147,7 @@ func TestCreateStoresIndexAndReturnsIt(t *testing.T) {
 	t.Parallel()
 
 	knowledgeID := uuid.New().String()
-	config := util.JSONMap{"dimension": 1536}
+	config := jsonx.JSONMap{"dimension": 1536}
 	var stored *model.KnowledgeIndex
 
 	indexDriver := newMockIndex(t, "pinecone", testIndexConfigSchema)
@@ -189,7 +189,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 	t.Parallel()
 
 	knowledgeID := uuid.New().String()
-	config := util.JSONMap{"dimension": 1536}
+	config := jsonx.JSONMap{"dimension": 1536}
 	expectedErr := errors.New("create failed")
 
 	indexDriver := newMockIndex(t, "pinecone", testIndexConfigSchema)
@@ -249,7 +249,7 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 func TestListDriversReturnsIndexDrivers(t *testing.T) {
 	t.Parallel()
 
-	indexSchema := util.JSONMap{"type": "object", "title": "index"}
+	indexSchema := jsonx.JSONMap{"type": "object", "title": "index"}
 	indexDriver := newMockIndex(t, "rag", indexSchema)
 
 	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), map[string]knowledge.IIndexDriver{"rag": indexDriver})

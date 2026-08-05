@@ -7,7 +7,7 @@ import (
 
 	"github.com/ledongthuc/pdf"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Chunk struct {
@@ -81,14 +81,14 @@ func documentMediaType(attributes any) (string, error) {
 			return "", fmt.Errorf("chunker: document attributes are nil")
 		}
 		return v.MediaType, nil
-	case util.JSONMap:
-		attrs, err := util.ParseJSONMap[knowledge.DocumentAttributes](v)
+	case jsonx.JSONMap:
+		attrs, err := jsonx.ParseJSONMap[knowledge.DocumentAttributes](v)
 		if err != nil {
 			return "", fmt.Errorf("chunker: parse document attributes: %w", err)
 		}
 		return attrs.MediaType, nil
 	case map[string]any:
-		attrs, err := util.ParseJSONMap[knowledge.DocumentAttributes](util.JSONMap(v))
+		attrs, err := jsonx.ParseJSONMap[knowledge.DocumentAttributes](jsonx.JSONMap(v))
 		if err != nil {
 			return "", fmt.Errorf("chunker: parse document attributes: %w", err)
 		}

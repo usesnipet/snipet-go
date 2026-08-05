@@ -1,8 +1,8 @@
 package manager
 
-import "github.com/usesnipet/snipet/internal/util"
+import "github.com/usesnipet/snipet/pkg/jsonx"
 
 type Configuration struct {
-	Key    string       `json:"key"`
-	Config util.JSONMap `json:"config"`
+	Key    string        `json:"key"`
+	Config jsonx.JSONMap `json:"config"`
 }

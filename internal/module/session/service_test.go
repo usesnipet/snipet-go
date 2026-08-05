@@ -23,11 +23,11 @@ import (
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
@@ -179,7 +179,7 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 				LLM: model.LLM{
 					ID:            llmID,
 					Provider:      "primary",
-					Configuration: util.JSONMap{},
+					Configuration: jsonx.JSONMap{},
 				},
 			}},
 		}, nil)
@@ -208,7 +208,7 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 	primary.EXPECT().Info().Return(driver.Info{
 		Name:                "primary",
 		Description:         "primary",
-		ConfigurationSchema: util.JSONMap{"type": "object"},
+		ConfigurationSchema: jsonx.JSONMap{"type": "object"},
 	})
 	primary.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).

@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/usesnipet/snipet/internal/util"
 	llm "github.com/usesnipet/snipet/pkg/driver/llm"
 	openaicompatible "github.com/usesnipet/snipet/pkg/driver/llm/api/openai_compatible"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // modelLoader lists the models actually installed on the local Ollama
@@ -54,7 +54,7 @@ func capabilitiesToModelCapabilities(capabilities []capabilities) []llm.ModelCap
 	return modelCapabilities
 }
 
-func listModels(ctx context.Context, config util.JSONMap) ([]llm.Model, error) {
+func listModels(ctx context.Context, config jsonx.JSONMap) ([]llm.Model, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, tagsURL(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build tags request: %w", err)
@@ -83,7 +83,7 @@ func listModels(ctx context.Context, config util.JSONMap) ([]llm.Model, error) {
 	return models, nil
 }
 
-func getModel(ctx context.Context, config util.JSONMap) (llm.Model, error) {
+func getModel(ctx context.Context, config jsonx.JSONMap) (llm.Model, error) {
 	cfg, err := openaicompatible.NewConfig(config)
 	if err != nil {
 		return llm.Model{}, err

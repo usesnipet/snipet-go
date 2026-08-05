@@ -15,11 +15,11 @@ import (
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
@@ -66,7 +66,7 @@ func agentWithPrimaryLLM(agentID string) *model.Agent {
 				ID:            llmID,
 				Name:          "primary",
 				Provider:      "primary",
-				Configuration: util.JSONMap{},
+				Configuration: jsonx.JSONMap{},
 			},
 		}},
 	}
@@ -79,7 +79,7 @@ func newPrimaryLLM(t *testing.T) *llmmocks.MockDriver {
 	d.EXPECT().Info().Return(driver.Info{
 		Name:                "primary",
 		Description:         "primary",
-		ConfigurationSchema: util.JSONMap{"type": "object"},
+		ConfigurationSchema: jsonx.JSONMap{"type": "object"},
 	})
 	return d
 }
@@ -196,7 +196,7 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 	primary := newPrimaryLLM(t)
 	primary.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ util.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
+		RunAndReturn(func(_ context.Context, _ jsonx.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
 			llmSaw = append([]msg.Message{}, options.Prompt.Messages...)
 			return streamOf(llm.TextDeltaEvent{Text: "done"}), nil
 		})

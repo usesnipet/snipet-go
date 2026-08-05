@@ -3,10 +3,10 @@ package llm
 import (
 	"context"
 
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type ModelLoader struct {
-	Models func(ctx context.Context, config util.JSONMap) ([]Model, error)
-	Model  func(ctx context.Context, config util.JSONMap) (Model, error)
+	Models func(ctx context.Context, config jsonx.JSONMap) ([]Model, error)
+	Model  func(ctx context.Context, config jsonx.JSONMap) (Model, error)
 }

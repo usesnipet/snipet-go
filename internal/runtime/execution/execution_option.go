@@ -1,7 +1,7 @@
 package execution
 
 import (
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
@@ -16,7 +16,7 @@ func WithMaxTurns(maxTurns int) ExecutionOption {
 func WithMetadata(key string, value any) ExecutionOption {
 	return func(execution *Execution) {
 		if execution.Config.Metadata == nil {
-			execution.Config.Metadata = util.JSONMap{}
+			execution.Config.Metadata = jsonx.JSONMap{}
 		}
 		execution.Config.Metadata[key] = value
 	}

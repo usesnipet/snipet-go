@@ -12,7 +12,7 @@ import (
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/execution"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
@@ -147,7 +147,7 @@ func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...execut
 		Status:       execution.StatusRunning,
 		ErrorMessage: "",
 		Turns:        0,
-		Metadata:     util.JSONMap{},
+		Metadata:     jsonx.JSONMap{},
 	}
 	executionRuntime, err := executionModel.ToRuntimeExecution(
 		execution.WithAgent(agent.ToRuntimeAgent()),

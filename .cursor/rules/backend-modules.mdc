@@ -38,7 +38,7 @@ type Foo struct {
 }
 ```
 
-- UUID PKs; sensitive fields `json:"-"`; JSONB via `util.JSONMap` or `serializer:json`.
+- UUID PKs; sensitive fields `json:"-"`; JSONB via `jsonx.JSONMap` or `serializer:json`.
 - Add `TableName()` when GORM pluralization is wrong.
 
 ## Repository

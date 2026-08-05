@@ -127,7 +127,7 @@ func (e *Engine) step(ctx context.Context, exe *execution.Execution) (StepResult
 		exe,
 		e.LLMs,
 		toolset,
-		e.logger.Child(logger.WithPrefix("generator")),
+		e.logger.Child(logger.WithPrefix("generator: ")),
 	)
 	if err != nil {
 		if ctx.Err() != nil {

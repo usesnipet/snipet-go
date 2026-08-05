@@ -3,7 +3,7 @@ package session
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type RunSessionDTO struct {
@@ -11,13 +11,13 @@ type RunSessionDTO struct {
 }
 
 type CreateSessionDTO struct {
-	AgentID  string       `json:"agent_id" validate:"required,uuid"`
-	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
+	AgentID  string        `json:"agent_id" validate:"required,uuid"`
+	Metadata jsonx.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
 type UpdateSessionDTO struct {
-	AgentID  *string      `json:"agent_id" validate:"omitempty,uuid"`
-	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
+	AgentID  *string       `json:"agent_id" validate:"omitempty,uuid"`
+	Metadata jsonx.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
 type SessionsFilterDTO struct {

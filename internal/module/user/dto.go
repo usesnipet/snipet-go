@@ -3,20 +3,20 @@ package user
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type CreateAnonymousClientUserDTO struct {
-	Name     *string      `json:"name" validate:"omitempty,max=255"`
-	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
+	Name     *string       `json:"name" validate:"omitempty,max=255"`
+	Metadata jsonx.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
 type CreateAuthenticatedClientUserDTO struct {
-	ExternalID string       `json:"external_id" validate:"required,max=255"`
-	Name       string       `json:"name" validate:"omitempty,max=255"`
-	Email      string       `json:"email" validate:"required,email"`
-	Picture    *string      `json:"picture" validate:"omitempty,url"`
-	Metadata   util.JSONMap `json:"metadata" validate:"omitempty"`
+	ExternalID string        `json:"external_id" validate:"required,max=255"`
+	Name       string        `json:"name" validate:"omitempty,max=255"`
+	Email      string        `json:"email" validate:"required,email"`
+	Picture    *string       `json:"picture" validate:"omitempty,url"`
+	Metadata   jsonx.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
 type FindUsersFilterDTO struct {

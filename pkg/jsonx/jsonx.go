@@ -1,4 +1,4 @@
-package util
+package jsonx
 
 import (
 	"database/sql/driver"

@@ -9,7 +9,7 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/collections/slice"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
 
@@ -106,10 +106,10 @@ func (s *SyncIndexWorker) Sync(ctx context.Context, knowledgeID, indexID string)
 		}
 	}
 
-	toUpdateIDs := util.Map(toUpdate, func(item model.IndexedKnowledgeItem) string {
+	toUpdateIDs := slice.Map(toUpdate, func(item model.IndexedKnowledgeItem) string {
 		return item.ID
 	})
-	toDeleteIDs := util.Map(toDelete, func(item model.IndexedKnowledgeItem) string {
+	toDeleteIDs := slice.Map(toDelete, func(item model.IndexedKnowledgeItem) string {
 		return item.ID
 	})
 	pendingIDs := append(toUpdateIDs, toDeleteIDs...)

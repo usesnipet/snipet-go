@@ -9,9 +9,9 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // NewMockISourceDriver creates a new instance of MockISourceDriver. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -86,7 +86,7 @@ func (_c *MockISourceDriver_Info_Call) RunAndReturn(run func() driver.Info) *Moc
 }
 
 // Iterator provides a mock function for the type MockISourceDriver
-func (_mock *MockISourceDriver) Iterator(ctx context.Context, config util.JSONMap) (knowledge.IKnowledgeIterator, error) {
+func (_mock *MockISourceDriver) Iterator(ctx context.Context, config jsonx.JSONMap) (knowledge.IKnowledgeIterator, error) {
 	ret := _mock.Called(ctx, config)
 
 	if len(ret) == 0 {
@@ -95,17 +95,17 @@ func (_mock *MockISourceDriver) Iterator(ctx context.Context, config util.JSONMa
 
 	var r0 knowledge.IKnowledgeIterator
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) (knowledge.IKnowledgeIterator, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, jsonx.JSONMap) (knowledge.IKnowledgeIterator, error)); ok {
 		return returnFunc(ctx, config)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) knowledge.IKnowledgeIterator); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, jsonx.JSONMap) knowledge.IKnowledgeIterator); ok {
 		r0 = returnFunc(ctx, config)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(knowledge.IKnowledgeIterator)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, jsonx.JSONMap) error); ok {
 		r1 = returnFunc(ctx, config)
 	} else {
 		r1 = ret.Error(1)
@@ -120,20 +120,20 @@ type MockISourceDriver_Iterator_Call struct {
 
 // Iterator is a helper method to define mock.On call
 //   - ctx context.Context
-//   - config util.JSONMap
+//   - config jsonx.JSONMap
 func (_e *MockISourceDriver_Expecter) Iterator(ctx any, config any) *MockISourceDriver_Iterator_Call {
 	return &MockISourceDriver_Iterator_Call{Call: _e.mock.On("Iterator", ctx, config)}
 }
 
-func (_c *MockISourceDriver_Iterator_Call) Run(run func(ctx context.Context, config util.JSONMap)) *MockISourceDriver_Iterator_Call {
+func (_c *MockISourceDriver_Iterator_Call) Run(run func(ctx context.Context, config jsonx.JSONMap)) *MockISourceDriver_Iterator_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 util.JSONMap
+		var arg1 jsonx.JSONMap
 		if args[1] != nil {
-			arg1 = args[1].(util.JSONMap)
+			arg1 = args[1].(jsonx.JSONMap)
 		}
 		run(
 			arg0,
@@ -148,13 +148,13 @@ func (_c *MockISourceDriver_Iterator_Call) Return(iKnowledgeIterator knowledge.I
 	return _c
 }
 
-func (_c *MockISourceDriver_Iterator_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap) (knowledge.IKnowledgeIterator, error)) *MockISourceDriver_Iterator_Call {
+func (_c *MockISourceDriver_Iterator_Call) RunAndReturn(run func(ctx context.Context, config jsonx.JSONMap) (knowledge.IKnowledgeIterator, error)) *MockISourceDriver_Iterator_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Reader provides a mock function for the type MockISourceDriver
-func (_mock *MockISourceDriver) Reader(ctx context.Context, config util.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
+func (_mock *MockISourceDriver) Reader(ctx context.Context, config jsonx.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
 	ret := _mock.Called(ctx, config, itemID)
 
 	if len(ret) == 0 {
@@ -163,17 +163,17 @@ func (_mock *MockISourceDriver) Reader(ctx context.Context, config util.JSONMap,
 
 	var r0 knowledge.IKnowledgeReader
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, string) (knowledge.IKnowledgeReader, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, jsonx.JSONMap, string) (knowledge.IKnowledgeReader, error)); ok {
 		return returnFunc(ctx, config, itemID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap, string) knowledge.IKnowledgeReader); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, jsonx.JSONMap, string) knowledge.IKnowledgeReader); ok {
 		r0 = returnFunc(ctx, config, itemID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(knowledge.IKnowledgeReader)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, util.JSONMap, string) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, jsonx.JSONMap, string) error); ok {
 		r1 = returnFunc(ctx, config, itemID)
 	} else {
 		r1 = ret.Error(1)
@@ -188,21 +188,21 @@ type MockISourceDriver_Reader_Call struct {
 
 // Reader is a helper method to define mock.On call
 //   - ctx context.Context
-//   - config util.JSONMap
+//   - config jsonx.JSONMap
 //   - itemID string
 func (_e *MockISourceDriver_Expecter) Reader(ctx any, config any, itemID any) *MockISourceDriver_Reader_Call {
 	return &MockISourceDriver_Reader_Call{Call: _e.mock.On("Reader", ctx, config, itemID)}
 }
 
-func (_c *MockISourceDriver_Reader_Call) Run(run func(ctx context.Context, config util.JSONMap, itemID string)) *MockISourceDriver_Reader_Call {
+func (_c *MockISourceDriver_Reader_Call) Run(run func(ctx context.Context, config jsonx.JSONMap, itemID string)) *MockISourceDriver_Reader_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 util.JSONMap
+		var arg1 jsonx.JSONMap
 		if args[1] != nil {
-			arg1 = args[1].(util.JSONMap)
+			arg1 = args[1].(jsonx.JSONMap)
 		}
 		var arg2 string
 		if args[2] != nil {
@@ -222,13 +222,13 @@ func (_c *MockISourceDriver_Reader_Call) Return(iKnowledgeReader knowledge.IKnow
 	return _c
 }
 
-func (_c *MockISourceDriver_Reader_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap, itemID string) (knowledge.IKnowledgeReader, error)) *MockISourceDriver_Reader_Call {
+func (_c *MockISourceDriver_Reader_Call) RunAndReturn(run func(ctx context.Context, config jsonx.JSONMap, itemID string) (knowledge.IKnowledgeReader, error)) *MockISourceDriver_Reader_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // TestConnection provides a mock function for the type MockISourceDriver
-func (_mock *MockISourceDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
+func (_mock *MockISourceDriver) TestConnection(ctx context.Context, config jsonx.JSONMap) error {
 	ret := _mock.Called(ctx, config)
 
 	if len(ret) == 0 {
@@ -236,7 +236,7 @@ func (_mock *MockISourceDriver) TestConnection(ctx context.Context, config util.
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, jsonx.JSONMap) error); ok {
 		r0 = returnFunc(ctx, config)
 	} else {
 		r0 = ret.Error(0)
@@ -251,20 +251,20 @@ type MockISourceDriver_TestConnection_Call struct {
 
 // TestConnection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - config util.JSONMap
+//   - config jsonx.JSONMap
 func (_e *MockISourceDriver_Expecter) TestConnection(ctx any, config any) *MockISourceDriver_TestConnection_Call {
 	return &MockISourceDriver_TestConnection_Call{Call: _e.mock.On("TestConnection", ctx, config)}
 }
 
-func (_c *MockISourceDriver_TestConnection_Call) Run(run func(ctx context.Context, config util.JSONMap)) *MockISourceDriver_TestConnection_Call {
+func (_c *MockISourceDriver_TestConnection_Call) Run(run func(ctx context.Context, config jsonx.JSONMap)) *MockISourceDriver_TestConnection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 util.JSONMap
+		var arg1 jsonx.JSONMap
 		if args[1] != nil {
-			arg1 = args[1].(util.JSONMap)
+			arg1 = args[1].(jsonx.JSONMap)
 		}
 		run(
 			arg0,
@@ -279,7 +279,7 @@ func (_c *MockISourceDriver_TestConnection_Call) Return(err error) *MockISourceD
 	return _c
 }
 
-func (_c *MockISourceDriver_TestConnection_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap) error) *MockISourceDriver_TestConnection_Call {
+func (_c *MockISourceDriver_TestConnection_Call) RunAndReturn(run func(ctx context.Context, config jsonx.JSONMap) error) *MockISourceDriver_TestConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

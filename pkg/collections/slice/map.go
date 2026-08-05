@@ -1,4 +1,4 @@
-package util
+package slice
 
 func Map[T any, R any](slice []T, fn func(T) R) []R {
 	result := make([]R, len(slice))

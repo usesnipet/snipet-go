@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
@@ -23,8 +23,8 @@ const (
 )
 
 type Config struct {
-	MaxTurns int          `json:"max_turns" validate:"omitempty"`
-	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
+	MaxTurns int           `json:"max_turns" validate:"omitempty"`
+	Metadata jsonx.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
 type Execution struct {
@@ -42,7 +42,7 @@ func NewExecution(options ...ExecutionOption) (*Execution, error) {
 	execution := &Execution{
 		Agent:     nil,
 		publisher: NewLocalPublisher(),
-		Config:    Config{MaxTurns: 10, Metadata: util.JSONMap{}},
+		Config:    Config{MaxTurns: 10, Metadata: jsonx.JSONMap{}},
 		Status:    StatusPending,
 		Messages:  []msg.Message{},
 		Turns:     0,

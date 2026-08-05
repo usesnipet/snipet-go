@@ -8,13 +8,13 @@ import (
 	"os"
 
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // mapAttributes builds kind-specific attributes for a local file.
 // Values that require deeper format parsing (language, title, duration, etc.)
 // are left unset when they cannot be derived from the filesystem alone.
-func mapAttributes(kind knowledge.SourceItemKind, path string, info os.FileInfo) util.JSONMap {
+func mapAttributes(kind knowledge.SourceItemKind, path string, info os.FileInfo) jsonx.JSONMap {
 	mediaType := detectMediaType(path)
 	size := info.Size()
 
@@ -51,12 +51,12 @@ func mapAttributes(kind knowledge.SourceItemKind, path string, info os.FileInfo)
 			Size:      size,
 		}
 	default:
-		return util.JSONMap{}
+		return jsonx.JSONMap{}
 	}
 
-	m, err := util.ToJSONMap(attrs)
+	m, err := jsonx.ToJSONMap(attrs)
 	if err != nil {
-		return util.JSONMap{}
+		return jsonx.JSONMap{}
 	}
 	return m
 }

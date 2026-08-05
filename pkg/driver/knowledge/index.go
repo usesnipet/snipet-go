@@ -3,15 +3,15 @@ package knowledge
 import (
 	"context"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // KnowledgeIndexRecord is a single match returned from an index query: the
 // indexed content plus whatever metadata the index stored alongside it.
 type KnowledgeIndexRecord struct {
 	Content  any
-	Metadata util.JSONMap
+	Metadata jsonx.JSONMap
 }
 
 // IKnowledgeIndexReader queries an already-populated index (e.g. a vector or
@@ -37,6 +37,6 @@ type IKnowledgeIndexWriter interface {
 type IIndexDriver interface {
 	driver.IDriver
 
-	Reader(config util.JSONMap) (IKnowledgeIndexReader, error)
-	Writer(config util.JSONMap) (IKnowledgeIndexWriter, error)
+	Reader(config jsonx.JSONMap) (IKnowledgeIndexReader, error)
+	Writer(config jsonx.JSONMap) (IKnowledgeIndexWriter, error)
 }

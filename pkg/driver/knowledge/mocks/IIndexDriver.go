@@ -9,9 +9,9 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // NewMockIIndexDriver creates a new instance of MockIIndexDriver. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -86,7 +86,7 @@ func (_c *MockIIndexDriver_Info_Call) RunAndReturn(run func() driver.Info) *Mock
 }
 
 // Reader provides a mock function for the type MockIIndexDriver
-func (_mock *MockIIndexDriver) Reader(config util.JSONMap) (knowledge.IKnowledgeIndexReader, error) {
+func (_mock *MockIIndexDriver) Reader(config jsonx.JSONMap) (knowledge.IKnowledgeIndexReader, error) {
 	ret := _mock.Called(config)
 
 	if len(ret) == 0 {
@@ -95,17 +95,17 @@ func (_mock *MockIIndexDriver) Reader(config util.JSONMap) (knowledge.IKnowledge
 
 	var r0 knowledge.IKnowledgeIndexReader
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(util.JSONMap) (knowledge.IKnowledgeIndexReader, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(jsonx.JSONMap) (knowledge.IKnowledgeIndexReader, error)); ok {
 		return returnFunc(config)
 	}
-	if returnFunc, ok := ret.Get(0).(func(util.JSONMap) knowledge.IKnowledgeIndexReader); ok {
+	if returnFunc, ok := ret.Get(0).(func(jsonx.JSONMap) knowledge.IKnowledgeIndexReader); ok {
 		r0 = returnFunc(config)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(knowledge.IKnowledgeIndexReader)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(util.JSONMap) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(jsonx.JSONMap) error); ok {
 		r1 = returnFunc(config)
 	} else {
 		r1 = ret.Error(1)
@@ -119,16 +119,16 @@ type MockIIndexDriver_Reader_Call struct {
 }
 
 // Reader is a helper method to define mock.On call
-//   - config util.JSONMap
+//   - config jsonx.JSONMap
 func (_e *MockIIndexDriver_Expecter) Reader(config any) *MockIIndexDriver_Reader_Call {
 	return &MockIIndexDriver_Reader_Call{Call: _e.mock.On("Reader", config)}
 }
 
-func (_c *MockIIndexDriver_Reader_Call) Run(run func(config util.JSONMap)) *MockIIndexDriver_Reader_Call {
+func (_c *MockIIndexDriver_Reader_Call) Run(run func(config jsonx.JSONMap)) *MockIIndexDriver_Reader_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 util.JSONMap
+		var arg0 jsonx.JSONMap
 		if args[0] != nil {
-			arg0 = args[0].(util.JSONMap)
+			arg0 = args[0].(jsonx.JSONMap)
 		}
 		run(
 			arg0,
@@ -142,13 +142,13 @@ func (_c *MockIIndexDriver_Reader_Call) Return(iKnowledgeIndexReader knowledge.I
 	return _c
 }
 
-func (_c *MockIIndexDriver_Reader_Call) RunAndReturn(run func(config util.JSONMap) (knowledge.IKnowledgeIndexReader, error)) *MockIIndexDriver_Reader_Call {
+func (_c *MockIIndexDriver_Reader_Call) RunAndReturn(run func(config jsonx.JSONMap) (knowledge.IKnowledgeIndexReader, error)) *MockIIndexDriver_Reader_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // TestConnection provides a mock function for the type MockIIndexDriver
-func (_mock *MockIIndexDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
+func (_mock *MockIIndexDriver) TestConnection(ctx context.Context, config jsonx.JSONMap) error {
 	ret := _mock.Called(ctx, config)
 
 	if len(ret) == 0 {
@@ -156,7 +156,7 @@ func (_mock *MockIIndexDriver) TestConnection(ctx context.Context, config util.J
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, util.JSONMap) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, jsonx.JSONMap) error); ok {
 		r0 = returnFunc(ctx, config)
 	} else {
 		r0 = ret.Error(0)
@@ -171,20 +171,20 @@ type MockIIndexDriver_TestConnection_Call struct {
 
 // TestConnection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - config util.JSONMap
+//   - config jsonx.JSONMap
 func (_e *MockIIndexDriver_Expecter) TestConnection(ctx any, config any) *MockIIndexDriver_TestConnection_Call {
 	return &MockIIndexDriver_TestConnection_Call{Call: _e.mock.On("TestConnection", ctx, config)}
 }
 
-func (_c *MockIIndexDriver_TestConnection_Call) Run(run func(ctx context.Context, config util.JSONMap)) *MockIIndexDriver_TestConnection_Call {
+func (_c *MockIIndexDriver_TestConnection_Call) Run(run func(ctx context.Context, config jsonx.JSONMap)) *MockIIndexDriver_TestConnection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 util.JSONMap
+		var arg1 jsonx.JSONMap
 		if args[1] != nil {
-			arg1 = args[1].(util.JSONMap)
+			arg1 = args[1].(jsonx.JSONMap)
 		}
 		run(
 			arg0,
@@ -199,13 +199,13 @@ func (_c *MockIIndexDriver_TestConnection_Call) Return(err error) *MockIIndexDri
 	return _c
 }
 
-func (_c *MockIIndexDriver_TestConnection_Call) RunAndReturn(run func(ctx context.Context, config util.JSONMap) error) *MockIIndexDriver_TestConnection_Call {
+func (_c *MockIIndexDriver_TestConnection_Call) RunAndReturn(run func(ctx context.Context, config jsonx.JSONMap) error) *MockIIndexDriver_TestConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Writer provides a mock function for the type MockIIndexDriver
-func (_mock *MockIIndexDriver) Writer(config util.JSONMap) (knowledge.IKnowledgeIndexWriter, error) {
+func (_mock *MockIIndexDriver) Writer(config jsonx.JSONMap) (knowledge.IKnowledgeIndexWriter, error) {
 	ret := _mock.Called(config)
 
 	if len(ret) == 0 {
@@ -214,17 +214,17 @@ func (_mock *MockIIndexDriver) Writer(config util.JSONMap) (knowledge.IKnowledge
 
 	var r0 knowledge.IKnowledgeIndexWriter
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(util.JSONMap) (knowledge.IKnowledgeIndexWriter, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(jsonx.JSONMap) (knowledge.IKnowledgeIndexWriter, error)); ok {
 		return returnFunc(config)
 	}
-	if returnFunc, ok := ret.Get(0).(func(util.JSONMap) knowledge.IKnowledgeIndexWriter); ok {
+	if returnFunc, ok := ret.Get(0).(func(jsonx.JSONMap) knowledge.IKnowledgeIndexWriter); ok {
 		r0 = returnFunc(config)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(knowledge.IKnowledgeIndexWriter)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(util.JSONMap) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(jsonx.JSONMap) error); ok {
 		r1 = returnFunc(config)
 	} else {
 		r1 = ret.Error(1)
@@ -238,16 +238,16 @@ type MockIIndexDriver_Writer_Call struct {
 }
 
 // Writer is a helper method to define mock.On call
-//   - config util.JSONMap
+//   - config jsonx.JSONMap
 func (_e *MockIIndexDriver_Expecter) Writer(config any) *MockIIndexDriver_Writer_Call {
 	return &MockIIndexDriver_Writer_Call{Call: _e.mock.On("Writer", config)}
 }
 
-func (_c *MockIIndexDriver_Writer_Call) Run(run func(config util.JSONMap)) *MockIIndexDriver_Writer_Call {
+func (_c *MockIIndexDriver_Writer_Call) Run(run func(config jsonx.JSONMap)) *MockIIndexDriver_Writer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 util.JSONMap
+		var arg0 jsonx.JSONMap
 		if args[0] != nil {
-			arg0 = args[0].(util.JSONMap)
+			arg0 = args[0].(jsonx.JSONMap)
 		}
 		run(
 			arg0,
@@ -261,7 +261,7 @@ func (_c *MockIIndexDriver_Writer_Call) Return(iKnowledgeIndexWriter knowledge.I
 	return _c
 }
 
-func (_c *MockIIndexDriver_Writer_Call) RunAndReturn(run func(config util.JSONMap) (knowledge.IKnowledgeIndexWriter, error)) *MockIIndexDriver_Writer_Call {
+func (_c *MockIIndexDriver_Writer_Call) RunAndReturn(run func(config jsonx.JSONMap) (knowledge.IKnowledgeIndexWriter, error)) *MockIIndexDriver_Writer_Call {
 	_c.Call.Return(run)
 	return _c
 }

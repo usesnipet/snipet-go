@@ -1,5 +1,5 @@
 // Package jsonschema provides small helpers to load JSON documents into
-// util.JSONMap and validate one JSON document against another treated as a
+// jsonx.JSONMap and validate one JSON document against another treated as a
 // JSON Schema, on top of github.com/xeipuuv/gojsonschema.
 package jsonschema
 
@@ -7,13 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// Load unmarshals a JSON document into a util.JSONMap.
-func Load(schemaJSON []byte) (util.JSONMap, error) {
-	var schema util.JSONMap
+// Load unmarshals a JSON document into a jsonx.JSONMap.
+func Load(schemaJSON []byte) (jsonx.JSONMap, error) {
+	var schema jsonx.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
 		return nil, fmt.Errorf("parse schema: %w", err)
 	}
@@ -22,7 +22,7 @@ func Load(schemaJSON []byte) (util.JSONMap, error) {
 
 // MustLoad is like Load but panics on error. It is meant for schemas known
 // at compile time (e.g. embedded via //go:embed).
-func MustLoad(schemaJSON []byte) util.JSONMap {
+func MustLoad(schemaJSON []byte) jsonx.JSONMap {
 	schema, err := Load(schemaJSON)
 	if err != nil {
 		panic(err)
@@ -32,7 +32,7 @@ func MustLoad(schemaJSON []byte) util.JSONMap {
 
 // Validate checks that json satisfies the JSON Schema described by schema,
 // returning an error describing the first violation found, if any.
-func Validate(schema util.JSONMap, data util.JSONMap) error {
+func Validate(schema jsonx.JSONMap, data jsonx.JSONMap) error {
 	referenceLoader := gojsonschema.NewGoLoader(schema)
 	jsonLoader := gojsonschema.NewGoLoader(data)
 
@@ -51,12 +51,12 @@ func Validate(schema util.JSONMap, data util.JSONMap) error {
 
 // ParseAndValidate validates data against schema and, if valid, decodes it
 // into a value of type T.
-func ParseAndValidate[T any](schema util.JSONMap, data util.JSONMap) (*T, error) {
+func ParseAndValidate[T any](schema jsonx.JSONMap, data jsonx.JSONMap) (*T, error) {
 	if err := Validate(schema, data); err != nil {
 		return nil, err
 	}
 
-	parsed, err := util.ParseJSONMap[T](data)
+	parsed, err := jsonx.ParseJSONMap[T](data)
 	if err != nil {
 		return nil, err
 	}

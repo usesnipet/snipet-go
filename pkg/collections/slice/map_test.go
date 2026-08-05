@@ -1,15 +1,15 @@
-package util_test
+package slice_test
 
 import (
 	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/collections/slice"
 )
 
 func TestMapTransformsEachElement(t *testing.T) {
-	result := util.Map([]int{1, 2, 3}, func(n int) string {
+	result := slice.Map([]int{1, 2, 3}, func(n int) string {
 		return strconv.Itoa(n)
 	})
 
@@ -17,7 +17,7 @@ func TestMapTransformsEachElement(t *testing.T) {
 }
 
 func TestMapReturnsEmptySliceForEmptyInput(t *testing.T) {
-	result := util.Map([]int{}, func(n int) int {
+	result := slice.Map([]int{}, func(n int) int {
 		return n * 2
 	})
 
@@ -26,7 +26,7 @@ func TestMapReturnsEmptySliceForEmptyInput(t *testing.T) {
 }
 
 func TestMapPreservesOrder(t *testing.T) {
-	result := util.Map([]string{"c", "a", "b"}, func(s string) string {
+	result := slice.Map([]string{"c", "a", "b"}, func(s string) string {
 		return s + s
 	})
 
@@ -38,7 +38,7 @@ func TestMapSupportsTypeConversion(t *testing.T) {
 		Name string
 	}
 
-	result := util.Map([]user{
+	result := slice.Map([]user{
 		{Name: "Alice"},
 		{Name: "Bob"},
 	}, func(u user) string {
@@ -51,7 +51,7 @@ func TestMapSupportsTypeConversion(t *testing.T) {
 func TestMapResultHasSameLengthAsInput(t *testing.T) {
 	input := []int{10, 20, 30, 40, 50}
 
-	result := util.Map(input, func(n int) int {
+	result := slice.Map(input, func(n int) int {
 		return n + 1
 	})
 

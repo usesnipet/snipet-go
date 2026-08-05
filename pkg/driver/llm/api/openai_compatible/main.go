@@ -3,8 +3,8 @@ package openaicompatible
 import (
 	"context"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // New returns an llm.API that talks to an OpenAI-compatible Chat Completions
@@ -13,13 +13,13 @@ import (
 // baseURL at request time.
 func New(baseURL string) llm.API {
 	return llm.API{
-		TestConnection: func(ctx context.Context, config util.JSONMap) error {
+		TestConnection: func(ctx context.Context, config jsonx.JSONMap) error {
 			return testConnection(ctx, baseURL, config)
 		},
-		Stream: func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
+		Stream: func(ctx context.Context, config jsonx.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
 			return stream(ctx, baseURL, config, options)
 		},
-		Generate: func(ctx context.Context, config util.JSONMap, options llm.GenerateOptions) (llm.GenerateResult, error) {
+		Generate: func(ctx context.Context, config jsonx.JSONMap, options llm.GenerateOptions) (llm.GenerateResult, error) {
 			return generate(ctx, baseURL, config, options)
 		},
 	}

@@ -3,19 +3,19 @@ package llm
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type CreateLLMDTO struct {
-	Name          string       `json:"name" validate:"required,max=255"`
-	Provider      string       `json:"provider" validate:"required,max=255"`
-	Configuration util.JSONMap `json:"configuration" validate:"required"`
+	Name          string        `json:"name" validate:"required,max=255"`
+	Provider      string        `json:"provider" validate:"required,max=255"`
+	Configuration jsonx.JSONMap `json:"configuration" validate:"required"`
 }
 
 type UpdateLLMDTO struct {
-	Name          *string      `json:"name" validate:"omitempty,max=255"`
-	Provider      *string      `json:"provider" validate:"omitempty,max=255"`
-	Configuration util.JSONMap `json:"configuration" validate:"omitempty"`
+	Name          *string       `json:"name" validate:"omitempty,max=255"`
+	Provider      *string       `json:"provider" validate:"omitempty,max=255"`
+	Configuration jsonx.JSONMap `json:"configuration" validate:"omitempty"`
 }
 
 type FindLLMsFilterDTO struct {

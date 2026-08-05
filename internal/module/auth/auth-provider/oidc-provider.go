@@ -10,7 +10,7 @@ import (
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 const OIDCProviderName ProviderName = "oidc"
@@ -108,7 +108,7 @@ func (p *OIDCProvider) Authenticate(
 		return nil, apperr.BadRequest("invalid oidc claims")
 	}
 
-	metadata, err := util.ToJSONMap(claims)
+	metadata, err := jsonx.ToJSONMap(claims)
 	if err != nil {
 		return nil, apperr.BadRequest("provider metadata conversion failed")
 	}

@@ -7,15 +7,15 @@ import (
 	"strings"
 
 	"github.com/openai/openai-go/v3"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // stream opens a chat completions SSE stream via openai-go and returns an
 // llm.StreamIterator that translates chunks into llm.StreamEvent values as
 // the caller pulls them via Next.
-func stream(ctx context.Context, defaultBaseURL string, config util.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
+func stream(ctx context.Context, defaultBaseURL string, config jsonx.JSONMap, options llm.GenerateOptions) (llm.StreamIterator, error) {
 	cfg, err := NewConfig(config)
 	if err != nil {
 		return nil, err

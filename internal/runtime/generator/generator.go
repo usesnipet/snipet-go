@@ -8,9 +8,9 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/runtime/execution"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
@@ -58,7 +58,7 @@ func stream(
 	ctx context.Context,
 	exe *execution.Execution,
 	llmInstance llm.Driver,
-	config util.JSONMap,
+	config jsonx.JSONMap,
 	options llm.GenerateOptions,
 	logger *logger.Logger,
 ) (msg.Message, error) {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Reader struct {
@@ -37,7 +37,7 @@ func (r *Reader) Read(ctx context.Context, query string, limit int) ([]knowledge
 
 	records := make([]knowledge.KnowledgeIndexRecord, 0, len(results))
 	for _, result := range results {
-		metadata := util.JSONMap{
+		metadata := jsonx.JSONMap{
 			"indexed_item_id": result.IndexedItemID,
 			"seq_id":          result.Chunk.SeqID,
 			"start":           result.Chunk.Start,

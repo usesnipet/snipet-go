@@ -22,16 +22,16 @@ import (
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
 	knowledgemocks "github.com/usesnipet/snipet/pkg/driver/knowledge/mocks"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
-var testConfigSchema = util.JSONMap{
+var testConfigSchema = jsonx.JSONMap{
 	"type": "object",
-	"properties": util.JSONMap{
-		"index": util.JSONMap{"type": "string"},
+	"properties": jsonx.JSONMap{
+		"index": jsonx.JSONMap{"type": "string"},
 	},
 	"required": []any{"index"},
 }
@@ -98,7 +98,7 @@ type testServiceOptions struct {
 	pool      queue.IPool
 }
 
-func newMockSource(t *testing.T, name string, schema util.JSONMap) *knowledgemocks.MockISourceDriver {
+func newMockSource(t *testing.T, name string, schema jsonx.JSONMap) *knowledgemocks.MockISourceDriver {
 	t.Helper()
 
 	source := knowledgemocks.NewMockISourceDriver(t)
@@ -155,7 +155,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 	t.Parallel()
 
-	config := util.JSONMap{"index": "docs"}
+	config := jsonx.JSONMap{"index": "docs"}
 	var stored *model.Knowledge
 
 	source := newMockSource(t, "pinecone", testConfigSchema)
@@ -201,7 +201,7 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 func TestCreateReturnsRepositoryError(t *testing.T) {
 	t.Parallel()
 
-	config := util.JSONMap{"index": "docs"}
+	config := jsonx.JSONMap{"index": "docs"}
 	expectedErr := errors.New("create failed")
 
 	source := newMockSource(t, "pinecone", testConfigSchema)
@@ -225,7 +225,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 func TestCreateReturnsBadRequestWhenConnectionFails(t *testing.T) {
 	t.Parallel()
 
-	config := util.JSONMap{"index": "docs"}
+	config := jsonx.JSONMap{"index": "docs"}
 	connectionErr := errors.New("connection refused")
 
 	source := newMockSource(t, "pinecone", testConfigSchema)
@@ -318,7 +318,7 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 func TestTestConnectionSucceedsWhenDriverValidatesAndConnects(t *testing.T) {
 	t.Parallel()
 
-	config := util.JSONMap{"index": "docs"}
+	config := jsonx.JSONMap{"index": "docs"}
 	source := newMockSource(t, "pinecone", testConfigSchema)
 	source.EXPECT().TestConnection(mock.Anything, config).Return(nil)
 
@@ -333,7 +333,7 @@ func TestTestConnectionReturnsNotFoundForUnknownDriver(t *testing.T) {
 
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), nil)
 
-	err := svc.TestConnection(context.Background(), "unknown", util.JSONMap{"index": "docs"})
+	err := svc.TestConnection(context.Background(), "unknown", jsonx.JSONMap{"index": "docs"})
 	assertAppError(t, err, http.StatusNotFound, driver.ErrDriverNotFound.Error())
 }
 
@@ -343,7 +343,7 @@ func TestTestConnectionReturnsBadRequestWhenConfigurationInvalid(t *testing.T) {
 	source := newMockSource(t, "pinecone", testConfigSchema)
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	err := svc.TestConnection(context.Background(), "pinecone", util.JSONMap{})
+	err := svc.TestConnection(context.Background(), "pinecone", jsonx.JSONMap{})
 	var appErr *apperr.Error
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, http.StatusBadRequest, appErr.StatusCode)
@@ -353,7 +353,7 @@ func TestTestConnectionReturnsBadRequestWhenConfigurationInvalid(t *testing.T) {
 func TestTestConnectionReturnsDriverConnectionError(t *testing.T) {
 	t.Parallel()
 
-	config := util.JSONMap{"index": "docs"}
+	config := jsonx.JSONMap{"index": "docs"}
 	connectionErr := errors.New("connection refused")
 
 	source := newMockSource(t, "pinecone", testConfigSchema)
@@ -373,7 +373,7 @@ func TestTestConnectionReturnsDriverConnectionError(t *testing.T) {
 func TestListDriversReturnsSourceDrivers(t *testing.T) {
 	t.Parallel()
 
-	sourceSchema := util.JSONMap{"type": "object"}
+	sourceSchema := jsonx.JSONMap{"type": "object"}
 	source := newMockSource(t, "fs", sourceSchema)
 
 	svc := newTestService(

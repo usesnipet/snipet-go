@@ -3,8 +3,8 @@ package knowledge
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type FilterKnowledgeItemDTO struct {
@@ -32,10 +32,10 @@ func (dto *FilterKnowledgeDTO) ToFilter() *filter.Options[model.Knowledge] {
 }
 
 type CreateKnowledgeDTO struct {
-	Name          string       `json:"name" validate:"required,max=255"`
-	Description   string       `json:"description" validate:"omitempty"`
-	Driver        string       `json:"driver" validate:"required,max=255"`
-	Configuration util.JSONMap `json:"configuration" validate:"required"`
+	Name          string        `json:"name" validate:"required,max=255"`
+	Description   string        `json:"description" validate:"omitempty"`
+	Driver        string        `json:"driver" validate:"required,max=255"`
+	Configuration jsonx.JSONMap `json:"configuration" validate:"required"`
 }
 
 type UpdateKnowledgeDTO struct {
@@ -44,8 +44,8 @@ type UpdateKnowledgeDTO struct {
 }
 
 type TestConnectionDTO struct {
-	Driver        string       `json:"driver" validate:"required,max=255"`
-	Configuration util.JSONMap `json:"configuration" validate:"required"`
+	Driver        string        `json:"driver" validate:"required,max=255"`
+	Configuration jsonx.JSONMap `json:"configuration" validate:"required"`
 }
 
 type SyncKnowledgeQueryDTO struct {

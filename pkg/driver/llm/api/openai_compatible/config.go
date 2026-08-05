@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"strings"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 //go:embed schema.json
@@ -26,8 +26,8 @@ type Config struct {
 // NewConfig parses and validates a driver config map into a Config. It fails
 // if the map doesn't match Config's shape or required fields (e.g. Model)
 // are missing.
-func NewConfig(config util.JSONMap) (Config, error) {
-	cfg, err := util.ParseJSONMap[Config](config)
+func NewConfig(config jsonx.JSONMap) (Config, error) {
+	cfg, err := jsonx.ParseJSONMap[Config](config)
 	if err != nil {
 		return Config{}, ErrFailedToParseConfig
 	}

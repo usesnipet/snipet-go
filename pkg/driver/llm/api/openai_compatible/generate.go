@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // generate performs a non-streaming chat completion and returns the
 // assistant text plus any tool calls from the first choice.
-func generate(ctx context.Context, defaultBaseURL string, config util.JSONMap, options llm.GenerateOptions) (llm.GenerateResult, error) {
+func generate(ctx context.Context, defaultBaseURL string, config jsonx.JSONMap, options llm.GenerateOptions) (llm.GenerateResult, error) {
 	cfg, err := NewConfig(config)
 	if err != nil {
 		return llm.GenerateResult{}, err

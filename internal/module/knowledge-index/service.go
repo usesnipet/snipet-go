@@ -11,9 +11,9 @@ import (
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Service struct {
@@ -94,7 +94,7 @@ func (s *Service) ListDrivers(ctx context.Context) (*DriversDTO, error) {
 	}, nil
 }
 
-func (s *Service) TestConnection(ctx context.Context, key string, config util.JSONMap) error {
+func (s *Service) TestConnection(ctx context.Context, key string, config jsonx.JSONMap) error {
 	_, err := s.indexManager.Prepare(ctx, key, config)
 	if err != nil {
 		if errors.Is(err, driver.ErrDriverNotFound) {

@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Item struct {
 	Path         string
 	Name         string
-	Metadata     util.JSONMap
+	Metadata     jsonx.JSONMap
 	LastModified *time.Time
 	Hash         string
 }

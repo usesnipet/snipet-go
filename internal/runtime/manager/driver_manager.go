@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	jsonschema "github.com/usesnipet/snipet/pkg/json_schema"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Driver[T driver.IDriver] struct {
@@ -31,11 +31,11 @@ func (m *Driver[T]) Names() []string {
 	return m.registry.Names()
 }
 
-func (m *Driver[T]) ValidateConfiguration(schema util.JSONMap, config util.JSONMap) error {
+func (m *Driver[T]) ValidateConfiguration(schema jsonx.JSONMap, config jsonx.JSONMap) error {
 	return jsonschema.Validate(schema, config)
 }
 
-func (m *Driver[T]) ValidateConfigurations(schema util.JSONMap, configs ...util.JSONMap) error {
+func (m *Driver[T]) ValidateConfigurations(schema jsonx.JSONMap, configs ...jsonx.JSONMap) error {
 	for _, config := range configs {
 		if err := jsonschema.Validate(schema, config); err != nil {
 			return err
@@ -44,7 +44,7 @@ func (m *Driver[T]) ValidateConfigurations(schema util.JSONMap, configs ...util.
 	return nil
 }
 
-func (m *Driver[T]) ValidateConfigurationByKey(key string, config util.JSONMap) error {
+func (m *Driver[T]) ValidateConfigurationByKey(key string, config jsonx.JSONMap) error {
 	driver, err := m.GetDriver(key)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (m *Driver[T]) ValidateConfigurationByKey(key string, config util.JSONMap) 
 	return m.ValidateConfiguration(driver.Info().ConfigurationSchema, config)
 }
 
-func (m *Driver[T]) ValidateConfigurationsByKey(key string, configs ...util.JSONMap) error {
+func (m *Driver[T]) ValidateConfigurationsByKey(key string, configs ...jsonx.JSONMap) error {
 	driver, err := m.GetDriver(key)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (m *Driver[T]) ValidateMultipleConfigurationsByKey(configs ...Configuration
 	return nil
 }
 
-func (m *Driver[T]) Prepare(ctx context.Context, driverKey string, config util.JSONMap) (T, error) {
+func (m *Driver[T]) Prepare(ctx context.Context, driverKey string, config jsonx.JSONMap) (T, error) {
 	driverInstance, err := m.GetDriver(driverKey)
 	if err != nil {
 		return driverInstance, err

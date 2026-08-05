@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // sourceItemFromFile builds a SourceItem from a local file path.
@@ -31,7 +31,7 @@ func sourceItemFromFile(path string) (*knowledge.SourceItem, string, error) {
 		Kind:         kind,
 		LastModified: &lastModified,
 		Attributes:   mapAttributes(kind, path, info),
-		Metadata: util.JSONMap{
+		Metadata: jsonx.JSONMap{
 			"size":          info.Size(),
 			"last_modified": lastModified,
 			"path":          path,

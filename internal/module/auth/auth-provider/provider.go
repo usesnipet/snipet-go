@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/usesnipet/snipet/internal/model"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type ProviderName string
 
 type Identity struct {
-	Provider   ProviderName `json:"provider"`
-	ExternalID string       `json:"external_id"`
-	Name       *string      `json:"name"`
-	Metadata   util.JSONMap `json:"metadata"`
+	Provider   ProviderName  `json:"provider"`
+	ExternalID string        `json:"external_id"`
+	Name       *string       `json:"name"`
+	Metadata   jsonx.JSONMap `json:"metadata"`
 }
 
 type IProvider interface {

@@ -14,7 +14,7 @@ import (
 	"github.com/usesnipet/snipet/internal/model"
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 	"gorm.io/gorm"
 )
 
@@ -48,7 +48,7 @@ func NewService(
 	}
 }
 
-func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.User, metadata util.JSONMap) (*AuthenticateResponse, error) {
+func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.User, metadata jsonx.JSONMap) (*AuthenticateResponse, error) {
 	accessToken, accessTokenExpiresAt, _, err := s.jwtService.GenerateToken(clientCode, user)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (s *Service) issueTokens(ctx context.Context, clientCode string, user *mode
 	}
 
 	if metadata == nil {
-		metadata = util.JSONMap{}
+		metadata = jsonx.JSONMap{}
 	}
 
 	record := &model.RefreshToken{
@@ -82,7 +82,7 @@ func (s *Service) issueTokens(ctx context.Context, clientCode string, user *mode
 	}, nil
 }
 
-func (s *Service) Authenticate(ctx context.Context, clientCode string, providerName auth_provider.ProviderName, req *http.Request, refreshMetadata util.JSONMap) (*AuthenticateResponse, error) {
+func (s *Service) Authenticate(ctx context.Context, clientCode string, providerName auth_provider.ProviderName, req *http.Request, refreshMetadata jsonx.JSONMap) (*AuthenticateResponse, error) {
 	client, err := s.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (s *Service) generateAnonymousName() string {
 	return fmt.Sprintf("Anonymous %s", uuid.New().String()[:8])
 }
 
-func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, dto AuthenticateAnonymousDTO, refreshMetadata util.JSONMap) (*AuthenticateResponse, error) {
+func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, dto AuthenticateAnonymousDTO, refreshMetadata jsonx.JSONMap) (*AuthenticateResponse, error) {
 	client, err := s.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, 
 	}
 	metadata := dto.Metadata
 	if metadata == nil {
-		metadata = util.JSONMap{}
+		metadata = jsonx.JSONMap{}
 	}
 	user := &model.User{
 		Name:     name,
@@ -137,7 +137,7 @@ func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, 
 	return s.issueTokens(ctx, clientCode, user, refreshMetadata)
 }
 
-func (s *Service) Refresh(ctx context.Context, clientCode string, dto RefreshDTO, refreshMetadata util.JSONMap) (*AuthenticateResponse, error) {
+func (s *Service) Refresh(ctx context.Context, clientCode string, dto RefreshDTO, refreshMetadata jsonx.JSONMap) (*AuthenticateResponse, error) {
 	hash := s.refreshTokenService.HashRefreshToken(dto.RefreshToken)
 	token, err := s.refreshTokenRepo.FindByHash(ctx, hash)
 	if err != nil {

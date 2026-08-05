@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 const baseURL = "https://swapi.info/api"
@@ -24,7 +24,7 @@ func NewAPI() tool.API {
 	}
 }
 
-func testConnection(ctx context.Context, _ util.JSONMap) error {
+func testConnection(ctx context.Context, _ jsonx.JSONMap) error {
 	_, err := get(ctx, baseURL)
 	if err != nil {
 		return fmt.Errorf("swapi connection failed: %w", err)

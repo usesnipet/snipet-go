@@ -2,10 +2,6 @@ package set
 
 type Set[T comparable] map[T]struct{}
 
-func new[T comparable]() Set[T] {
-	return make(Set[T])
-}
-
 func (s Set[T]) Add(value T) {
 	s[value] = struct{}{}
 }
@@ -24,7 +20,7 @@ func (s Set[T]) Size() int {
 }
 
 func New[T comparable](values ...T) Set[T] {
-	s := new[T]()
+	s := make(Set[T])
 	for _, value := range values {
 		s.Add(value)
 	}

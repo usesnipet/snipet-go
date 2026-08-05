@@ -9,7 +9,7 @@ import (
 	"github.com/usesnipet/snipet/drivers/index/rag/store"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 //go:embed schema.json
@@ -34,16 +34,16 @@ func (d *Driver) Info() driver.Info {
 	}
 }
 
-func (d *Driver) configurationSchema() (util.JSONMap, error) {
-	var schema util.JSONMap
+func (d *Driver) configurationSchema() (jsonx.JSONMap, error) {
+	var schema jsonx.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
 		return nil, fmt.Errorf("rag: parse schema: %w", err)
 	}
 	return schema, nil
 }
 
-func (d *Driver) TestConnection(ctx context.Context, configJson util.JSONMap) error {
-	cfg, err := util.ParseJSONMap[Config](configJson)
+func (d *Driver) TestConnection(ctx context.Context, configJson jsonx.JSONMap) error {
+	cfg, err := jsonx.ParseJSONMap[Config](configJson)
 	if err != nil {
 		return err
 	}
@@ -62,16 +62,16 @@ func (d *Driver) TestConnection(ctx context.Context, configJson util.JSONMap) er
 	return s.Ping(ctx)
 }
 
-func (d *Driver) Reader(config util.JSONMap) (knowledge.IKnowledgeIndexReader, error) {
-	cfg, err := util.ParseJSONMap[Config](config)
+func (d *Driver) Reader(config jsonx.JSONMap) (knowledge.IKnowledgeIndexReader, error) {
+	cfg, err := jsonx.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
 	}
 	return NewReader(context.Background(), cfg)
 }
 
-func (d *Driver) Writer(config util.JSONMap) (knowledge.IKnowledgeIndexWriter, error) {
-	cfg, err := util.ParseJSONMap[Config](config)
+func (d *Driver) Writer(config jsonx.JSONMap) (knowledge.IKnowledgeIndexWriter, error) {
+	cfg, err := jsonx.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
 	}

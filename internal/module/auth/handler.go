@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/internal/api"
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Handler struct {
@@ -31,9 +31,9 @@ func (h *Handler) clientCode(r *http.Request) string {
 	return chi.URLParam(r, "client_code")
 }
 
-func requestMetadata(r *http.Request) util.JSONMap {
+func requestMetadata(r *http.Request) jsonx.JSONMap {
 	ip := clientIP(r)
-	return util.JSONMap{
+	return jsonx.JSONMap{
 		"ip":         ip,
 		"user_agent": r.UserAgent(),
 	}

@@ -9,7 +9,7 @@ import (
 
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
-	"github.com/usesnipet/snipet/internal/util"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 //go:embed schema.json
@@ -34,16 +34,16 @@ func (d *Driver) Info() driver.Info {
 	}
 }
 
-func (d *Driver) configurationSchema() (util.JSONMap, error) {
-	var schema util.JSONMap
+func (d *Driver) configurationSchema() (jsonx.JSONMap, error) {
+	var schema jsonx.JSONMap
 	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
 		return nil, fmt.Errorf("fs: parse schema: %w", err)
 	}
 	return schema, nil
 }
 
-func (d *Driver) TestConnection(ctx context.Context, config util.JSONMap) error {
-	cfg, err := util.ParseJSONMap[Config](config)
+func (d *Driver) TestConnection(ctx context.Context, config jsonx.JSONMap) error {
+	cfg, err := jsonx.ParseJSONMap[Config](config)
 	if err != nil {
 		return err
 	}
@@ -63,8 +63,8 @@ func (d *Driver) TestConnection(ctx context.Context, config util.JSONMap) error 
 	return nil
 }
 
-func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (knowledge.IKnowledgeIterator, error) {
-	cfg, err := util.ParseJSONMap[Config](config)
+func (d *Driver) Iterator(ctx context.Context, config jsonx.JSONMap) (knowledge.IKnowledgeIterator, error) {
+	cfg, err := jsonx.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +76,6 @@ func (d *Driver) Iterator(ctx context.Context, config util.JSONMap) (knowledge.I
 	return NewIterator(files), nil
 }
 
-func (d *Driver) Reader(ctx context.Context, config util.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
+func (d *Driver) Reader(ctx context.Context, config jsonx.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
 	return NewReader(config, itemID)
 }

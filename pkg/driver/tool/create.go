@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type options struct {
@@ -45,9 +45,9 @@ func WithTags(tags ...string) Option {
 	}
 }
 
-// WithConfigurationSchema sets the raw JSON Schema (as a util.JSONMap) used
+// WithConfigurationSchema sets the raw JSON Schema (as a jsonx.JSONMap) used
 // to validate config passed to the driver.
-func WithConfigurationSchema(schema util.JSONMap) Option {
+func WithConfigurationSchema(schema jsonx.JSONMap) Option {
 	return func(o *options) {
 		o.info.ConfigurationSchema = schema
 	}
@@ -101,7 +101,7 @@ func (d *toolDriver) Info() driver.Info {
 	return d.info
 }
 
-func (d *toolDriver) TestConnection(ctx context.Context, config util.JSONMap) error {
+func (d *toolDriver) TestConnection(ctx context.Context, config jsonx.JSONMap) error {
 	if d.api.TestConnection == nil {
 		return fmt.Errorf("test connection not configured")
 	}

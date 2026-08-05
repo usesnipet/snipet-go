@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 func newFakeToolDriver(name string, toolName string, call func(context.Context, tool.Call) (tool.Result, error)) tool.Driver {
@@ -17,7 +17,7 @@ func newFakeToolDriver(name string, toolName string, call func(context.Context, 
 		tool.WithDescription(name),
 		tool.WithToolSet(tool.NewToolset(tool.NewTool(toolName, toolName, nil))),
 		tool.WithAPI(tool.API{
-			TestConnection: func(context.Context, util.JSONMap) error { return nil },
+			TestConnection: func(context.Context, jsonx.JSONMap) error { return nil },
 			Call:           call,
 		}),
 	)

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
+	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 // SourceItemKind classifies the content of a SourceItem, determining which
@@ -30,8 +30,8 @@ type SourceItem struct {
 	ID           string
 	Name         string
 	Kind         SourceItemKind
-	Metadata     util.JSONMap
-	Attributes   util.JSONMap
+	Metadata     jsonx.JSONMap
+	Attributes   jsonx.JSONMap
 	LastModified *time.Time
 }
 
@@ -63,6 +63,6 @@ type IKnowledgeReader interface {
 type ISourceDriver interface {
 	driver.IDriver
 
-	Iterator(ctx context.Context, config util.JSONMap) (IKnowledgeIterator, error)
-	Reader(ctx context.Context, config util.JSONMap, itemID string) (IKnowledgeReader, error)
+	Iterator(ctx context.Context, config jsonx.JSONMap) (IKnowledgeIterator, error)
+	Reader(ctx context.Context, config jsonx.JSONMap, itemID string) (IKnowledgeReader, error)
 }
