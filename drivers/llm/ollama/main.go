@@ -21,5 +21,6 @@ func New() llm.Driver {
 		llm.WithTags("language", "model", "llm", "local"),
 		llm.WithConfigurationSchema(driver.MustConfigurationSchema(schemaJSON)),
 		llm.WithAPI(openaicompatible.New(baseURL)),
+		llm.WithModelLoader(modelLoader),
 	)
 }

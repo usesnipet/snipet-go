@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/usesnipet/snipet/internal/api"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/execution"
 )
 
 type SSEEvent string
@@ -29,25 +29,25 @@ func NewSSE(w http.ResponseWriter) *SSE {
 	return &SSE{w: w}
 }
 
-func (s *SSE) Handle(ctx context.Context, event runtime.IEvent) error {
+func (s *SSE) Handle(ctx context.Context, event execution.IEvent) error {
 	if err := s.ensureSSE(); err != nil {
 		return err
 	}
 
 	switch event := event.(type) {
-	case runtime.ExecutionMessageAddedEvent:
+	case execution.MessageAddedEvent:
 		return s.sse.Write(string(SSEEventExecutionMessageAdded), event)
-	case runtime.ExecutionTurnCompletedEvent:
+	case execution.TurnCompletedEvent:
 		return s.sse.Write(string(SSEEventExecutionTurnCompleted), event)
-	case runtime.ExecutionStatusChangedEvent:
+	case execution.StatusChangedEvent:
 		return s.sse.Write(string(SSEEventExecutionStatusChanged), event)
-	case runtime.ExecutionFinishedEvent:
+	case execution.FinishedEvent:
 		return s.sse.Write(string(SSEEventExecutionFinished), map[string]string{"status": "done"})
-	case runtime.ExecutionMessageDeltaEvent:
+	case execution.MessageDeltaEvent:
 		return s.sse.Write(string(SSEEventExecutionMessageDelta), event)
-	case runtime.ExecutionToolCallStartedEvent:
+	case execution.ToolCallStartedEvent:
 		return s.sse.Write(string(SSEEventExecutionToolCallStarted), event)
-	case runtime.ExecutionToolResultEvent:
+	case execution.ToolResultEvent:
 		return s.sse.Write(string(SSEEventExecutionToolResult), event)
 	}
 	return nil

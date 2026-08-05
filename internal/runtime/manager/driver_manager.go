@@ -60,11 +60,6 @@ func (m *Driver[T]) ValidateConfigurationsByKey(key string, configs ...util.JSON
 	return m.ValidateConfigurations(driver.Info().ConfigurationSchema, configs...)
 }
 
-type Configuration struct {
-	Key    string       `json:"key"`
-	Config util.JSONMap `json:"config"`
-}
-
 func (m *Driver[T]) ValidateMultipleConfigurationsByKey(configs ...Configuration) error {
 	for _, c := range configs {
 		if err := m.ValidateConfigurationByKey(c.Key, c.Config); err != nil {

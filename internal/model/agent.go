@@ -3,7 +3,7 @@ package model
 import (
 	"sort"
 
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/execution"
 )
 
 type Agent struct {
@@ -17,23 +17,23 @@ type Agent struct {
 	AgentToKnowledge []AgentToKnowledge `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
-func (a Agent) ToRuntimeAgent() *runtime.Agent {
-	llms := make([]runtime.LLMConfig, 0, len(a.AgentToLLMs))
+func (a Agent) ToRuntimeAgent() *execution.Agent {
+	llms := make([]execution.LLMConfig, 0, len(a.AgentToLLMs))
 	rels := append([]AgentToLLM(nil), a.AgentToLLMs...)
 	sort.SliceStable(rels, func(i, j int) bool {
 		return rels[i].Priority < rels[j].Priority
 	})
 	for _, rel := range rels {
-		llms = append(llms, runtime.LLMConfig{
+		llms = append(llms, execution.LLMConfig{
 			Key:    rel.LLM.Provider,
 			Config: rel.LLM.Configuration,
 		})
 	}
-	return runtime.NewAgent(
+	return execution.NewAgent(
 		a.Name,
 		a.Description,
 		a.Instructions,
-		llms,
+		llms[0],
 	)
 }
 

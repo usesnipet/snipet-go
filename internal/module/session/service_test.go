@@ -21,6 +21,7 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
@@ -48,8 +49,8 @@ func (it *fakeStreamIterator) Next(_ context.Context) bool {
 }
 
 func (it *fakeStreamIterator) Event() llm.StreamEvent { return it.events[it.idx-1] }
-func (it *fakeStreamIterator) Err() error              { return nil }
-func (it *fakeStreamIterator) Close() error            { return nil }
+func (it *fakeStreamIterator) Err() error             { return nil }
+func (it *fakeStreamIterator) Close() error           { return nil }
 
 func apiKeyContext() context.Context {
 	id := "api-key-id"
@@ -220,8 +221,8 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
-			runtime.NewDriverManager(llmReg),
-			runtime.NewToolManager(runtime.NewDriverManager(registry.New[tool.Driver]())),
+			manager.NewDriver(llmReg),
+			manager.NewTool(manager.NewDriver(registry.New[tool.Driver]())),
 			logger.NewLogger(logger.LevelError),
 		),
 		executionRepo,

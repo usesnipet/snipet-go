@@ -17,7 +17,7 @@ import (
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
@@ -87,10 +87,10 @@ func newTestService(
 	for name, d := range drivers {
 		reg.MustRegister(name, d)
 	}
-	indexManager := runtime.NewDriverManager(reg)
+	indexManager := manager.NewDriver(reg)
 	syncWorker := knowledgeindex.NewSyncIndexWorker(
 		indexManager,
-		runtime.NewDriverManager(registry.New[knowledge.ISourceDriver]()),
+		manager.NewDriver(registry.New[knowledge.ISourceDriver]()),
 		mocks.NewMockIKnowledgeRepository(t),
 		mocks.NewMockIKnowledgeItemRepository(t),
 		repo,

@@ -3,7 +3,9 @@ package runtime
 import "errors"
 
 var (
-	ErrNoLLMConfigured     = errors.New("no llm configured")
+	ErrAgentNotConfigured = errors.New("agent not configured")
+	ErrNoLLMConfigured    = errors.New("llm not configured")
+
 	ErrLLMGenerationFailed = errors.New("llm generation failed")
 
 	ErrToolNotFound = errors.New("tool not found")

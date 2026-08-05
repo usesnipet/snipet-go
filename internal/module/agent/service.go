@@ -11,6 +11,7 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/execution"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
@@ -119,7 +120,7 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	return s.agentRepo.DeleteByID(ctx, id)
 }
 
-func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...runtime.Subscriber) error {
+func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...execution.Subscriber) error {
 	agent, err := s.agentRepo.FindByID(ctx, input.AgentID)
 	if err != nil {
 		return err
@@ -140,31 +141,31 @@ func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...runtim
 	userMessage := msg.NewMessage(msg.RoleUser, input.Message)
 	initialMessages = append(initialMessages, userMessage)
 
-	execution := &model.Execution{
+	executionModel := &model.Execution{
 		SessionID:    input.SessionID,
 		AgentID:      agent.ID,
-		Status:       runtime.ExecutionStatusRunning,
+		Status:       execution.StatusRunning,
 		ErrorMessage: "",
 		Turns:        0,
 		Metadata:     util.JSONMap{},
 	}
-	executionRuntime, err := execution.ToRuntimeExecution(
-		runtime.WithAgent(agent.ToRuntimeAgent()),
-		runtime.WithInitialMessages(initialMessages...),
+	executionRuntime, err := executionModel.ToRuntimeExecution(
+		execution.WithAgent(agent.ToRuntimeAgent()),
+		execution.WithInitialMessages(initialMessages...),
 	)
 	if err != nil {
 		return err
 	}
-	if err := s.executionRepo.Create(ctx, execution); err != nil {
+	if err := s.executionRepo.Create(ctx, executionModel); err != nil {
 		return err
 	}
-	err = s.executionMessageRepo.CreateInExecution(ctx, execution.ID, model.ExecutionMessage{Message: userMessage})
+	err = s.executionMessageRepo.CreateInExecution(ctx, executionModel.ID, model.ExecutionMessage{Message: userMessage})
 	if err != nil {
 		return err
 	}
 
 	executionRuntime.Subscribe(
-		subscriber.NewPersistence(s.executionRepo, s.executionMessageRepo, s.logger, execution.ID),
+		subscriber.NewPersistence(s.executionRepo, s.executionMessageRepo, s.logger, executionModel.ID),
 	)
 	executionRuntime.Subscribe(subscribers...)
 

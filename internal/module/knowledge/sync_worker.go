@@ -9,7 +9,7 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/manager"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
 
@@ -24,7 +24,7 @@ type SyncResult struct {
 type IndexSyncFunc func(ctx context.Context, knowledgeID, indexID string) error
 
 type SyncWorker struct {
-	sourceManager      *runtime.DriverManager[kdriver.ISourceDriver]
+	sourceManager      *manager.Driver[kdriver.ISourceDriver]
 	knowledgeRepo      repository.IKnowledgeRepository
 	knowledgeItemRepo  repository.IKnowledgeItemRepository
 	knowledgeIndexRepo repository.IKnowledgeIndexRepository
@@ -34,7 +34,7 @@ type SyncWorker struct {
 }
 
 func NewSyncWorker(
-	sourceManager *runtime.DriverManager[kdriver.ISourceDriver],
+	sourceManager *manager.Driver[kdriver.ISourceDriver],
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	knowledgeIndexRepo repository.IKnowledgeIndexRepository,

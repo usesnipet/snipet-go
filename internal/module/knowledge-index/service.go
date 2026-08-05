@@ -10,7 +10,7 @@ import (
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/driver"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
@@ -19,7 +19,7 @@ import (
 type Service struct {
 	repo                     repository.IKnowledgeIndexRepository
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository
-	indexManager             *runtime.DriverManager[kdriver.IIndexDriver]
+	indexManager             *manager.Driver[kdriver.IIndexDriver]
 	pool                     queue.IPool
 	syncWorker               *SyncIndexWorker
 	txManager                repository.ITxManager
@@ -28,7 +28,7 @@ type Service struct {
 func NewService(
 	repo repository.IKnowledgeIndexRepository,
 	indexedKnowledgeItemRepo repository.IIndexedKnowledgeItemRepository,
-	indexManager *runtime.DriverManager[kdriver.IIndexDriver],
+	indexManager *manager.Driver[kdriver.IIndexDriver],
 	pool queue.IPool,
 	syncWorker *SyncIndexWorker,
 	txManager repository.ITxManager,

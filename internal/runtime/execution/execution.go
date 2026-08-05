@@ -5,8 +5,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/usesnipet/snipet/internal/runtime/event"
-	"github.com/usesnipet/snipet/internal/runtime/publisher"
 	"github.com/usesnipet/snipet/internal/util"
 	"github.com/usesnipet/snipet/pkg/msg"
 )
@@ -24,15 +22,15 @@ const (
 	StatusCancelled Status = "cancelled" // the execution was cancelled via context
 )
 
-type ExecutionConfig struct {
+type Config struct {
 	MaxTurns int          `json:"max_turns" validate:"omitempty"`
 	Metadata util.JSONMap `json:"metadata" validate:"omitempty"`
 }
 
 type Execution struct {
-	agent     *Agent
-	publisher publisher.IPublisher
-	Config    ExecutionConfig
+	Agent     *Agent
+	publisher IPublisher
+	Config    Config
 
 	ErrorMessage string        `json:"error_message,omitempty" validate:"omitempty,max=255"`
 	Status       Status        `json:"status" validate:"required,oneof=pending running completed failed max_turns cancelled"`
@@ -42,9 +40,9 @@ type Execution struct {
 
 func NewExecution(options ...ExecutionOption) (*Execution, error) {
 	execution := &Execution{
-		agent:     nil,
-		publisher: publisher.NewLocal(),
-		Config:    ExecutionConfig{MaxTurns: 10, Metadata: util.JSONMap{}},
+		Agent:     nil,
+		publisher: NewLocalPublisher(),
+		Config:    Config{MaxTurns: 10, Metadata: util.JSONMap{}},
 		Status:    StatusPending,
 		Messages:  []msg.Message{},
 		Turns:     0,
@@ -74,22 +72,22 @@ func (e *Execution) AddMessage(ctx context.Context, msg msg.Message) error {
 	}
 	msg.Sequence = len(e.Messages)
 	e.Messages = append(e.Messages, msg)
-	return e.publish(ctx, event.ExecutionMessageAddedEvent{Message: msg})
+	return e.Publish(ctx, MessageAddedEvent{Message: msg})
 }
 
 func (e *Execution) CompleteTurn(ctx context.Context) error {
 	e.Turns++
-	return e.publish(ctx, event.ExecutionTurnCompletedEvent{Turn: e.Turns})
+	return e.Publish(ctx, TurnCompletedEvent{Turn: e.Turns})
 }
 
 func (e *Execution) Finish(ctx context.Context) error {
 	e.Status = StatusCompleted
-	return e.publish(ctx, event.ExecutionFinishedEvent{})
+	return e.Publish(ctx, FinishedEvent{})
 }
 
 func (e *Execution) SetStatus(ctx context.Context, status Status) error {
 	e.Status = status
-	return e.publish(ctx, event.ExecutionStatusChangedEvent{
+	return e.Publish(ctx, StatusChangedEvent{
 		Status: status,
 	})
 }
@@ -97,23 +95,23 @@ func (e *Execution) SetStatus(ctx context.Context, status Status) error {
 func (e *Execution) SetError(ctx context.Context, errorMessage string) error {
 	e.ErrorMessage = errorMessage
 	e.Status = StatusFailed
-	return e.publish(ctx, event.ExecutionStatusChangedEvent{Status: e.Status, ErrorMessage: e.ErrorMessage})
+	return e.Publish(ctx, StatusChangedEvent{Status: e.Status, ErrorMessage: e.ErrorMessage})
 }
 
 func (e *Execution) SetMaxTurnsReachedError(ctx context.Context) error {
 	e.ErrorMessage = "Maximum number of turns reached"
 	e.Status = StatusMaxTurns
-	return e.publish(ctx, event.ExecutionStatusChangedEvent{Status: e.Status, ErrorMessage: e.ErrorMessage})
+	return e.Publish(ctx, StatusChangedEvent{Status: e.Status, ErrorMessage: e.ErrorMessage})
 }
 
 func (e *Execution) Cancel(ctx context.Context) error {
 	return e.SetStatus(ctx, StatusCancelled)
 }
 
-func (e *Execution) publish(ctx context.Context, event event.IEvent) error {
+func (e *Execution) Publish(ctx context.Context, event IEvent) error {
 	return e.publisher.Publish(ctx, event)
 }
 
-func (e *Execution) Subscribe(subscribers ...publisher.Subscriber) {
+func (e *Execution) Subscribe(subscribers ...Subscriber) {
 	e.publisher.Subscribe(subscribers...)
 }

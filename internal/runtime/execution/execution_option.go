@@ -24,7 +24,7 @@ func WithMetadata(key string, value any) ExecutionOption {
 
 func WithAgent(agent *Agent) ExecutionOption {
 	return func(execution *Execution) {
-		execution.agent = agent
+		execution.Agent = agent
 	}
 }
 

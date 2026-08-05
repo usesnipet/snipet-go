@@ -30,7 +30,7 @@ func TestToolManagerToolsetNamespacesByDriver(t *testing.T) {
 	reg.MustRegister("alpha", newFakeToolDriver("Alpha", "search", nil))
 	reg.MustRegister("beta", newFakeToolDriver("Beta", "search", nil))
 
-	manager := manager.NewToolManager(manager.NewDriver(reg))
+	manager := manager.NewTool(manager.NewDriver(reg))
 
 	toolset, err := manager.Toolset()
 	require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestToolManagerCallDispatchesToOwningDriver(t *testing.T) {
 		return tool.Result{Tool: call.Tool, Arguments: call.Arguments, Result: "ok"}, nil
 	}))
 
-	manager := manager.NewToolManager(manager.NewDriver(reg))
+	manager := manager.NewTool(manager.NewDriver(reg))
 
 	result, err := manager.Call(context.Background(), tool.Call{
 		Tool:      "alpha__search",
@@ -66,7 +66,7 @@ func TestToolManagerCallDispatchesToOwningDriver(t *testing.T) {
 func TestToolManagerCallUnknownToolReturnsErrToolNotFound(t *testing.T) {
 	t.Parallel()
 
-	toolManager := manager.NewToolManager(manager.NewDriver(registry.New[tool.Driver]()))
+	toolManager := manager.NewTool(manager.NewDriver(registry.New[tool.Driver]()))
 
 	_, err := toolManager.Call(context.Background(), tool.Call{Tool: "missing__tool"})
 	require.ErrorIs(t, err, manager.ErrToolNotFound)

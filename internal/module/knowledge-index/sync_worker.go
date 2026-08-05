@@ -8,7 +8,7 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/manager"
 	"github.com/usesnipet/snipet/internal/util"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
@@ -21,8 +21,8 @@ type SyncIndexResult struct {
 }
 
 type SyncIndexWorker struct {
-	sourceManager            *runtime.DriverManager[kdriver.ISourceDriver]
-	indexManager             *runtime.DriverManager[kdriver.IIndexDriver]
+	sourceManager            *manager.Driver[kdriver.ISourceDriver]
+	indexManager             *manager.Driver[kdriver.IIndexDriver]
 	knowledgeRepo            repository.IKnowledgeRepository
 	knowledgeItemRepo        repository.IKnowledgeItemRepository
 	indexRepo                repository.IKnowledgeIndexRepository
@@ -31,8 +31,8 @@ type SyncIndexWorker struct {
 }
 
 func NewSyncIndexWorker(
-	indexManager *runtime.DriverManager[kdriver.IIndexDriver],
-	sourceManager *runtime.DriverManager[kdriver.ISourceDriver],
+	indexManager *manager.Driver[kdriver.IIndexDriver],
+	sourceManager *manager.Driver[kdriver.ISourceDriver],
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	indexRepo repository.IKnowledgeIndexRepository,

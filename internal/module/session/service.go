@@ -11,7 +11,7 @@ import (
 	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/execution"
 )
 
 type Service struct {
@@ -186,7 +186,7 @@ func (s *Service) Run(
 	clientCode string,
 	sessionID string,
 	dto RunSessionDTO,
-	subscribers ...runtime.Subscriber,
+	subscribers ...execution.Subscriber,
 ) error {
 	clientID, err := s.resolveClientID(ctx, clientCode)
 	if err != nil {

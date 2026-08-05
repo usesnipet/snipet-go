@@ -6,7 +6,7 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
-	"github.com/usesnipet/snipet/internal/runtime"
+	"github.com/usesnipet/snipet/internal/runtime/execution"
 )
 
 type Persistence struct {
@@ -31,15 +31,15 @@ func NewPersistence(
 	}
 }
 
-func (p *Persistence) Handle(ctx context.Context, event runtime.IEvent) error {
+func (p *Persistence) Handle(ctx context.Context, event execution.IEvent) error {
 	switch event := event.(type) {
-	case runtime.ExecutionMessageAddedEvent:
+	case execution.MessageAddedEvent:
 		return p.handleExecutionMessageAddedEvent(ctx, event)
-	case runtime.ExecutionTurnCompletedEvent:
+	case execution.TurnCompletedEvent:
 		return p.handleExecutionTurnCompletedEvent(ctx, event)
-	case runtime.ExecutionStatusChangedEvent:
+	case execution.StatusChangedEvent:
 		return p.handleExecutionStatusChangedEvent(ctx, event)
-	case runtime.ExecutionFinishedEvent:
+	case execution.FinishedEvent:
 		return p.handleExecutionFinishedEvent(ctx)
 	}
 
@@ -48,14 +48,14 @@ func (p *Persistence) Handle(ctx context.Context, event runtime.IEvent) error {
 
 func (p *Persistence) handleExecutionTurnCompletedEvent(
 	ctx context.Context,
-	event runtime.ExecutionTurnCompletedEvent,
+	event execution.TurnCompletedEvent,
 ) error {
 	return p.executionRepo.UpdateByID(ctx, p.executionID, &model.Execution{Turns: event.Turn})
 }
 
 func (p *Persistence) handleExecutionMessageAddedEvent(
 	ctx context.Context,
-	event runtime.ExecutionMessageAddedEvent,
+	event execution.MessageAddedEvent,
 ) error {
 	message := model.ExecutionMessage{Message: event.Message, ExecutionID: p.executionID}
 	return p.executionMessageRepo.CreateInExecution(ctx, p.executionID, message)
@@ -63,7 +63,7 @@ func (p *Persistence) handleExecutionMessageAddedEvent(
 
 func (p *Persistence) handleExecutionStatusChangedEvent(
 	ctx context.Context,
-	event runtime.ExecutionStatusChangedEvent,
+	event execution.StatusChangedEvent,
 ) error {
 	return p.executionRepo.UpdateByID(ctx, p.executionID, &model.Execution{
 		Status:       event.Status,
@@ -73,6 +73,6 @@ func (p *Persistence) handleExecutionStatusChangedEvent(
 
 func (p *Persistence) handleExecutionFinishedEvent(ctx context.Context) error {
 	return p.executionRepo.UpdateByID(ctx, p.executionID, &model.Execution{
-		Status: runtime.ExecutionStatusCompleted,
+		Status: execution.StatusCompleted,
 	})
 }
