@@ -1,13 +1,23 @@
 {
   "mcpServers": {
-      "prompt-kit": {
+    "prompt-kit": {
       "description": "prompt-kit registry",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "shadcn@canary", "mcp"],
+      "args": [
+        "-y",
+        "shadcn@canary",
+        "mcp"
+      ],
       "env": {
-          "REGISTRY_URL": "https://www.prompt-kit.com/c/registry.json"
-          }
+        "REGISTRY_URL": "https://www.prompt-kit.com/c/registry.json"
       }
+    },
+    "graft": {
+      "command": "graft",
+      "args": [
+        "mcp"
+      ]
+    }
   }
 }
