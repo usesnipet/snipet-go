@@ -53,6 +53,15 @@ func (h *Handler) clientCode(r *http.Request) string {
 	return chi.URLParam(r, "client_code")
 }
 
+// @Summary		Get current user
+// @Description	Returns the authenticated user for the given client.
+// @Tags			user
+// @Produce		json
+// @Security		BearerAuth
+// @Param			client_code	path		string	true	"Client code"
+// @Success		200			{object}	UserResponse
+// @Failure		401			{object}	api.Error
+// @Router			/client/{client_code}/user/me [get]
 func (h *Handler) me(w http.ResponseWriter, r *http.Request) error {
 	data, err := h.service.Me(r.Context(), h.clientCode(r))
 	if err != nil {
@@ -61,6 +70,19 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteJSON(w, http.StatusOK, data)
 }
 
+// @Summary		List users
+// @Description	Lists users of a client, with optional ordering/pagination.
+// @Tags			user
+// @Produce		json
+// @Security		BearerAuth
+// @Security		ApiKeyAuth
+// @Param			client_code	path		string	true	"Client code"
+// @Param			name_order	query		string	false	"Order by name"	Enums(asc, desc)
+// @Param			take		query		int		false	"Page size"
+// @Param			skip		query		int		false	"Page offset"
+// @Success		200			{object}	UsersPage
+// @Failure		400			{object}	api.Error
+// @Router			/client/{client_code}/user [get]
 func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
 	var query FindUsersFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
@@ -73,6 +95,16 @@ func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteJSON(w, http.StatusOK, data)
 }
 
+// @Summary		Create anonymous user
+// @Description	Creates an anonymous user for a client.
+// @Tags			user
+// @Accept			json
+// @Produce		json
+// @Param			client_code	path	string							true	"Client code"
+// @Param			body		body	CreateAnonymousClientUserDTO	true	"Anonymous user data"
+// @Success		201
+// @Failure		400	{object}	api.Error
+// @Router			/client/{client_code}/user/anonymous [post]
 func (h *Handler) createAnonymous(w http.ResponseWriter, r *http.Request) error {
 	var body CreateAnonymousClientUserDTO
 	if err := api.ParseBody(r, &body); err != nil {
@@ -85,6 +117,17 @@ func (h *Handler) createAnonymous(w http.ResponseWriter, r *http.Request) error 
 	return api.WriteJSON(w, http.StatusCreated, nil)
 }
 
+// @Summary		Create authenticated user
+// @Description	Creates a client user via API key (server-to-server).
+// @Tags			user
+// @Accept			json
+// @Produce		json
+// @Security		ApiKeyAuth
+// @Param			client_code	path	string								true	"Client code"
+// @Param			body		body	CreateAuthenticatedClientUserDTO	true	"User data"
+// @Success		201
+// @Failure		400	{object}	api.Error
+// @Router			/client/{client_code}/user/authenticated [post]
 func (h *Handler) createAuthenticated(w http.ResponseWriter, r *http.Request) error {
 	var body CreateAuthenticatedClientUserDTO
 	if err := api.ParseBody(r, &body); err != nil {

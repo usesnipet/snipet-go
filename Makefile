@@ -1,9 +1,10 @@
-.PHONY: test install dev dev-api dev-web build build-prod db-generate db-hash mocks fix
+.PHONY: test install dev dev-api dev-web build build-prod db-generate db-hash mocks fix swagger
 
 GO ?= go
 ATLAS ?= atlas
 ATLAS_ENV ?= local
 PNPM ?= pnpm
+SWAG ?= swag
 
 MIGRATION_NAME ?= $(strip $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS)))
 RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -49,3 +50,6 @@ db-hash:
 
 fix:
 	$(GO) fix ./...
+
+swagger:
+	$(SWAG) init -g cmd/api/main.go -o docs/swagger --parseDependency --parseInternal --useStructName

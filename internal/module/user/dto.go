@@ -3,8 +3,15 @@ package user
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
+
+// UserResponse and UsersPage exist so swagger annotations in this package can
+// reference them without importing internal/model or internal/page directly.
+type UserResponse = model.User
+
+type UsersPage = page.Paginated[model.User]
 
 type CreateAnonymousClientUserDTO struct {
 	Name     *string       `json:"name" validate:"omitempty,max=255"`

@@ -10,6 +10,16 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 )
 
+// @title						Snipet API
+// @version					1.0
+// @description				API for the Snipet platform.
+// @BasePath					/api
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						X-API-Key
+// @securityDefinitions.jwt	BearerAuth
+// @in							header
+// @name						Authorization
 func main() {
 	cfg, err := config.Load()
 	if err != nil {

@@ -8,6 +8,10 @@ import (
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 )
 
+// Error is an alias for apperr.Error, exposed here so handler packages can
+// reference it in swagger annotations without importing internal/app-err directly.
+type Error = apperr.Error
+
 func WriteJSON(w http.ResponseWriter, status int, data any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

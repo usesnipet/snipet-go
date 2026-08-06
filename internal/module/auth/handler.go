@@ -54,6 +54,15 @@ func clientIP(r *http.Request) string {
 	return host
 }
 
+// @Summary		Authenticate with provider
+// @Description	Authenticates a client user through the given auth provider (e.g. google, github).
+// @Tags			auth
+// @Produce		json
+// @Param			client_code		path		string	true	"Client code"
+// @Param			provider_name	path		string	true	"Auth provider name"
+// @Success		200				{object}	AuthenticateResponse
+// @Failure		400				{object}	api.Error
+// @Router			/client/{client_code}/authenticate/{provider_name} [post]
 func (h *Handler) authenticate(w http.ResponseWriter, r *http.Request) error {
 	providerName := auth_provider.ProviderName(chi.URLParam(r, "provider_name"))
 	res, err := h.service.Authenticate(r.Context(), h.clientCode(r), providerName, r, requestMetadata(r))
@@ -63,6 +72,16 @@ func (h *Handler) authenticate(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteJSON(w, http.StatusOK, res)
 }
 
+// @Summary		Authenticate anonymously
+// @Description	Creates or authenticates an anonymous client user.
+// @Tags			auth
+// @Accept			json
+// @Produce		json
+// @Param			client_code	path		string					true	"Client code"
+// @Param			body		body		AuthenticateAnonymousDTO	true	"Anonymous user data"
+// @Success		200			{object}	AuthenticateResponse
+// @Failure		400			{object}	api.Error
+// @Router			/client/{client_code}/authenticate/anonymous [post]
 func (h *Handler) authenticateAnonymous(w http.ResponseWriter, r *http.Request) error {
 	var dto AuthenticateAnonymousDTO
 	if err := api.ParseBody(r, &dto); err != nil {
@@ -75,6 +94,16 @@ func (h *Handler) authenticateAnonymous(w http.ResponseWriter, r *http.Request) 
 	return api.WriteJSON(w, http.StatusOK, res)
 }
 
+// @Summary		Refresh access token
+// @Description	Exchanges a refresh token for a new access/refresh token pair.
+// @Tags			auth
+// @Accept			json
+// @Produce		json
+// @Param			client_code	path		string		true	"Client code"
+// @Param			body		body		RefreshDTO	true	"Refresh token"
+// @Success		200			{object}	AuthenticateResponse
+// @Failure		400			{object}	api.Error
+// @Router			/client/{client_code}/refresh [post]
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) error {
 	var dto RefreshDTO
 	if err := api.ParseBody(r, &dto); err != nil {

@@ -1,6 +1,10 @@
 package api
 
 import (
+	"fmt"
+	"net/http"
+
+	scalar "github.com/MarceloPetrucio/go-scalar-api-reference"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -16,6 +20,22 @@ func New() *Api {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.ClientIPFromRemoteAddr)
+
+	r.Get("/reference", func(w http.ResponseWriter, r *http.Request) {
+		htmlContent, err := scalar.ApiReferenceHTML(&scalar.Options{
+			SpecURL: "./docs/swagger/swagger.json",
+			CustomOptions: scalar.CustomOptions{
+				PageTitle: "Snipet API",
+			},
+			DarkMode: true,
+		})
+
+		if err != nil {
+			fmt.Printf("%v", err)
+		}
+
+		fmt.Fprintln(w, htmlContent)
+	})
 
 	return &Api{
 		Router: r,

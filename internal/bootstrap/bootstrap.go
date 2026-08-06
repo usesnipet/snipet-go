@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/config"
+	_ "github.com/usesnipet/snipet/docs/swagger"
 	"github.com/usesnipet/snipet/drivers/index"
 	"github.com/usesnipet/snipet/drivers/llm"
 	"github.com/usesnipet/snipet/drivers/source"

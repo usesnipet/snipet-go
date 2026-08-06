@@ -1,0 +1,345 @@
+basePath: /api
+definitions:
+  AuthenticateAnonymousDTO:
+    properties:
+      email:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        maxLength: 255
+        type: string
+      picture:
+        type: string
+    type: object
+  AuthenticateResponse:
+    properties:
+      access_token:
+        type: string
+      access_token_expires_at:
+        type: string
+      refresh_token:
+        type: string
+      refresh_token_expires_at:
+        type: string
+      user:
+        $ref: '#/definitions/User'
+    type: object
+  CreateAnonymousClientUserDTO:
+    properties:
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        maxLength: 255
+        type: string
+    type: object
+  CreateAuthenticatedClientUserDTO:
+    properties:
+      email:
+        type: string
+      external_id:
+        maxLength: 255
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        maxLength: 255
+        type: string
+      picture:
+        type: string
+    required:
+    - email
+    - external_id
+    type: object
+  Error:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+      statusCode:
+        type: integer
+    type: object
+  JSONMap:
+    additionalProperties: {}
+    type: object
+  RefreshDTO:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  User:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        type: string
+      picture:
+        type: string
+    type: object
+  UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        type: string
+      picture:
+        type: string
+    type: object
+  UsersPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/User'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: API for the Snipet platform.
+  title: Snipet API
+  version: "1.0"
+paths:
+  /client/{client_code}/authenticate/{provider_name}:
+    post:
+      description: Authenticates a client user through the given auth provider (e.g.
+        google, github).
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Auth provider name
+        in: path
+        name: provider_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthenticateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Authenticate with provider
+      tags:
+      - auth
+  /client/{client_code}/authenticate/anonymous:
+    post:
+      consumes:
+      - application/json
+      description: Creates or authenticates an anonymous client user.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Anonymous user data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/AuthenticateAnonymousDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthenticateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Authenticate anonymously
+      tags:
+      - auth
+  /client/{client_code}/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a refresh token for a new access/refresh token pair.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RefreshDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthenticateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Refresh access token
+      tags:
+      - auth
+  /client/{client_code}/user:
+    get:
+      description: Lists users of a client, with optional ordering/pagination.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Order by name
+        enum:
+        - asc
+        - desc
+        in: query
+        name: name_order
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/UsersPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: List users
+      tags:
+      - user
+  /client/{client_code}/user/anonymous:
+    post:
+      consumes:
+      - application/json
+      description: Creates an anonymous user for a client.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Anonymous user data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAnonymousClientUserDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Create anonymous user
+      tags:
+      - user
+  /client/{client_code}/user/authenticated:
+    post:
+      consumes:
+      - application/json
+      description: Creates a client user via API key (server-to-server).
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: User data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAuthenticatedClientUserDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create authenticated user
+      tags:
+      - user
+  /client/{client_code}/user/me:
+    get:
+      description: Returns the authenticated user for the given client.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - user
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-API-Key
+    type: apiKey
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
