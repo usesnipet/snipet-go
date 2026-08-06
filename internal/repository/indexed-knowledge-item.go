@@ -80,6 +80,13 @@ type IIndexedKnowledgeItemRepository interface {
 		indexID string,
 		id string,
 	) error
+
+	DeleteByIDsInIndex(
+		ctx context.Context,
+		knowledgeID string,
+		indexID string,
+		ids []string,
+	) error
 }
 
 type IndexedKnowledgeItemRepository struct {
@@ -245,6 +252,24 @@ func (r *IndexedKnowledgeItemRepository) DeleteInIndex(
 	}
 	if affected == 0 {
 		return apperr.NotFound("indexed knowledge item not found")
+	}
+	return nil
+}
+
+func (r *IndexedKnowledgeItemRepository) DeleteByIDsInIndex(
+	ctx context.Context,
+	knowledgeID string,
+	indexID string,
+	ids []string,
+) error {
+	if err := r.ensureIndexInKnowledge(ctx, knowledgeID, indexID); err != nil {
+		return err
+	}
+	_, err := gorm.G[model.IndexedKnowledgeItem](r.db(ctx)).
+		Where("index_id = ? AND id IN (?)", indexID, ids).
+		Delete(ctx)
+	if err != nil {
+		return err
 	}
 	return nil
 }

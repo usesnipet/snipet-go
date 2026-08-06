@@ -130,10 +130,8 @@ func (s *SyncIndexWorker) Sync(ctx context.Context, knowledgeID, indexID string)
 		if err := writer.DeleteMany(ctx, toDeleteIDs); err != nil {
 			return err
 		}
-		for _, id := range toDeleteIDs {
-			if err := s.indexedKnowledgeItemRepo.DeleteInIndex(ctx, knowledgeID, indexID, id); err != nil {
-				return err
-			}
+		if err := s.indexedKnowledgeItemRepo.DeleteByIDsInIndex(ctx, knowledgeID, indexID, toDeleteIDs); err != nil {
+			return err
 		}
 	}
 

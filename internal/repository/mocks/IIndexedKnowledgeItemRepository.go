@@ -179,6 +179,75 @@ func (_c *MockIIndexedKnowledgeItemRepository_CreateManyInIndex_Call) RunAndRetu
 	return _c
 }
 
+// DeleteByIDsInIndex provides a mock function for the type MockIIndexedKnowledgeItemRepository
+func (_mock *MockIIndexedKnowledgeItemRepository) DeleteByIDsInIndex(ctx context.Context, knowledgeID string, indexID string, ids []string) error {
+	ret := _mock.Called(ctx, knowledgeID, indexID, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteByIDsInIndex")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string) error); ok {
+		r0 = returnFunc(ctx, knowledgeID, indexID, ids)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByIDsInIndex'
+type MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call struct {
+	*mock.Call
+}
+
+// DeleteByIDsInIndex is a helper method to define mock.On call
+//   - ctx context.Context
+//   - knowledgeID string
+//   - indexID string
+//   - ids []string
+func (_e *MockIIndexedKnowledgeItemRepository_Expecter) DeleteByIDsInIndex(ctx any, knowledgeID any, indexID any, ids any) *MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call {
+	return &MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call{Call: _e.mock.On("DeleteByIDsInIndex", ctx, knowledgeID, indexID, ids)}
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call) Run(run func(ctx context.Context, knowledgeID string, indexID string, ids []string)) *MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call) Return(err error) *MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call) RunAndReturn(run func(ctx context.Context, knowledgeID string, indexID string, ids []string) error) *MockIIndexedKnowledgeItemRepository_DeleteByIDsInIndex_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteInIndex provides a mock function for the type MockIIndexedKnowledgeItemRepository
 func (_mock *MockIIndexedKnowledgeItemRepository) DeleteInIndex(ctx context.Context, knowledgeID string, indexID string, id string) error {
 	ret := _mock.Called(ctx, knowledgeID, indexID, id)
