@@ -1,3 +1,9 @@
+// Package llm defines the driver contract for LLM provider integrations
+// (Driver), the inputs/outputs of a generation call (GenerateOptions,
+// GenerateResult, Prompt), streaming (StreamIterator, StreamEvent) and model
+// discovery (Model, ModelLoader). Concrete providers are built with
+// CreateDriver from an API implementation (see the api subpackages, e.g.
+// openai_compatible).
 package llm
 
 import (
