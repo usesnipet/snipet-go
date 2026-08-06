@@ -1,23 +1,33 @@
 import { http } from "@/lib/http";
 
 import {
+  createKnowledgeIndexSchema,
   createKnowledgeResponseSchema,
   createKnowledgeSchema,
+  knowledgeIndexSchema,
   knowledgeSchema,
   listKnowledgeDriversSchema,
+  listKnowledgeIndexDriversSchema,
+  paginatedKnowledgeIndexSchema,
   paginatedKnowledgeItemSchema,
   paginatedKnowledgeSchema,
+  updateKnowledgeIndexSchema,
   updateKnowledgeSchema,
 } from "./schemas";
 
 import type {
   CreateKnowledge,
+  CreateKnowledgeIndex,
   CreateKnowledgeResponse,
   Knowledge,
+  KnowledgeIndex,
   ListKnowledgeDrivers,
+  ListKnowledgeIndexDrivers,
   PaginatedKnowledge,
+  PaginatedKnowledgeIndex,
   PaginatedKnowledgeItem,
   UpdateKnowledge,
+  UpdateKnowledgeIndex,
 } from "./schemas";
 import type {
   ServiceDeleteOptions,
@@ -141,4 +151,99 @@ export const knowledgeService = {
   listDrivers,
   sync,
   delete: remove,
+};
+
+const listIndexes = async (
+  knowledgeID: string,
+  opts?: ServiceGetOptions<PaginatedKnowledgeIndex>,
+): Promise<PaginatedKnowledgeIndex> => {
+  return http.get({
+    url: `${KNOWLEDGE_URL}/{knowledge_id}/index`,
+    params: { knowledge_id: knowledgeID },
+    schemas: {
+      response: paginatedKnowledgeIndexSchema,
+    },
+    ...opts,
+  });
+};
+
+const findIndexByID = async (
+  knowledgeID: string,
+  id: string,
+  opts?: ServiceGetOptions<KnowledgeIndex>,
+): Promise<KnowledgeIndex> => {
+  return http.get({
+    url: `${KNOWLEDGE_URL}/{knowledge_id}/index/{id}`,
+    params: { knowledge_id: knowledgeID, id },
+    schemas: {
+      response: knowledgeIndexSchema,
+    },
+    ...opts,
+  });
+};
+
+const createIndex = async (
+  knowledgeID: string,
+  body: CreateKnowledgeIndex,
+  opts?: ServicePostOptions<CreateKnowledgeIndex, KnowledgeIndex>,
+): Promise<KnowledgeIndex> => {
+  return http.post({
+    url: `${KNOWLEDGE_URL}/{knowledge_id}/index`,
+    params: { knowledge_id: knowledgeID },
+    body,
+    schemas: {
+      body: createKnowledgeIndexSchema,
+      response: knowledgeIndexSchema,
+    },
+    ...opts,
+  });
+};
+
+const updateIndex = async (
+  knowledgeID: string,
+  id: string,
+  body: UpdateKnowledgeIndex,
+  opts?: ServicePutOptions<UpdateKnowledgeIndex, void>,
+): Promise<void> => {
+  return http.put({
+    url: `${KNOWLEDGE_URL}/{knowledge_id}/index/{id}`,
+    params: { knowledge_id: knowledgeID, id },
+    body,
+    schemas: {
+      body: updateKnowledgeIndexSchema,
+    },
+    ...opts,
+  });
+};
+
+const deleteIndex = async (
+  knowledgeID: string,
+  id: string,
+  opts?: ServiceDeleteOptions<void>,
+): Promise<void> => {
+  return http.delete({
+    url: `${KNOWLEDGE_URL}/{knowledge_id}/index/{id}`,
+    params: { knowledge_id: knowledgeID, id },
+    ...opts,
+  });
+};
+
+const listIndexDrivers = async (
+  opts?: ServiceGetOptions<ListKnowledgeIndexDrivers>,
+): Promise<DriverInfo[]> => {
+  const response = await http.get({
+    url: `${KNOWLEDGE_URL}/index/drivers`,
+    schemas: { response: listKnowledgeIndexDriversSchema },
+    ...opts,
+  });
+  return response.index_drivers;
+};
+
+export const knowledgeIndexService = {
+  list: listIndexes,
+  findByID: findIndexByID,
+  create: createIndex,
+  update: updateIndex,
+  delete: deleteIndex,
+  listDrivers: listIndexDrivers,
 };

@@ -94,3 +94,44 @@ export const listKnowledgeDriversSchema = z
   .strict();
 
 export type ListKnowledgeDrivers = z.infer<typeof listKnowledgeDriversSchema>;
+
+export const knowledgeIndexSchema = z
+  .object({
+    id: z.uuid(),
+    name: z.string().min(1).max(255),
+    driver: z.string().min(1).max(100),
+    configuration: z.record(z.string(), z.unknown()),
+    knowledge_id: z.uuid(),
+  })
+  .strict();
+
+export type KnowledgeIndex = z.infer<typeof knowledgeIndexSchema>;
+
+export const paginatedKnowledgeIndexSchema = paginatedSchema(knowledgeIndexSchema);
+export type PaginatedKnowledgeIndex = z.infer<typeof paginatedKnowledgeIndexSchema>;
+
+export const createKnowledgeIndexSchema = z
+  .object({
+    name: z.string().min(1).max(255),
+    driver: z.string().min(1).max(100),
+    configuration: z.record(z.string(), z.unknown()),
+  })
+  .strict();
+
+export type CreateKnowledgeIndex = z.infer<typeof createKnowledgeIndexSchema>;
+
+export const updateKnowledgeIndexSchema = z
+  .object({
+    name: z.string().min(1).max(255),
+  })
+  .strict();
+
+export type UpdateKnowledgeIndex = z.infer<typeof updateKnowledgeIndexSchema>;
+
+export const listKnowledgeIndexDriversSchema = z
+  .object({
+    index_drivers: z.array(driverInfoSchema),
+  })
+  .strict();
+
+export type ListKnowledgeIndexDrivers = z.infer<typeof listKnowledgeIndexDriversSchema>;

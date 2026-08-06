@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+import { KnowledgeIndexesSection } from "./knowledge-indexes-section";
 import { SyncStatusBadge } from "./sync-status-badge";
 
 import type { Knowledge } from "../schemas";
@@ -52,6 +53,8 @@ export function KnowledgeDetails({ knowledge }: { knowledge: Knowledge }) {
         </Card>
 
         <JsonViewer title={`Configuration (${knowledge.driver})`} value={knowledge.configuration} />
+
+        <KnowledgeIndexesSection knowledgeID={knowledge.id} />
       </div>
     </ScrollArea>
   );

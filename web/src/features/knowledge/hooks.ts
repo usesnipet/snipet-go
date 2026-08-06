@@ -2,16 +2,21 @@ import { toast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/query-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { knowledgeService } from "./service";
+import { knowledgeIndexService, knowledgeService } from "./service";
 
 import type {
   CreateKnowledge,
+  CreateKnowledgeIndex,
   CreateKnowledgeResponse,
   Knowledge,
+  KnowledgeIndex,
   ListKnowledgeDrivers,
+  ListKnowledgeIndexDrivers,
   PaginatedKnowledge,
+  PaginatedKnowledgeIndex,
   PaginatedKnowledgeItem,
   UpdateKnowledge,
+  UpdateKnowledgeIndex,
 } from "./schemas";
 import type {
   ServiceDeleteOptions,
@@ -189,5 +194,126 @@ export const useDeleteKnowledge = (
         variant: "destructive",
       });
     },
+  });
+};
+
+const INDEX_QUERY_KEY = "knowledge-index";
+
+export const listKnowledgeIndexesQueryKey = (knowledgeID: string) =>
+  [INDEX_QUERY_KEY, knowledgeID] as const;
+export const useListKnowledgeIndexes = (
+  knowledgeID: string,
+  opts?: ServiceGetOptions<PaginatedKnowledgeIndex>,
+): UseQueryResult<PaginatedKnowledgeIndex, Error> => {
+  return useQuery({
+    queryKey: listKnowledgeIndexesQueryKey(knowledgeID),
+    queryFn: () =>
+      knowledgeIndexService.list(knowledgeID, { ...opts, auth: "api-key" }),
+    enabled: Boolean(knowledgeID),
+  });
+};
+
+export const knowledgeIndexQueryKey = (knowledgeID: string, id: string) =>
+  [INDEX_QUERY_KEY, knowledgeID, id] as const;
+export const useKnowledgeIndex = (
+  knowledgeID: string,
+  id: string,
+  opts?: ServiceGetOptions<KnowledgeIndex>,
+): UseQueryResult<KnowledgeIndex, Error> => {
+  return useQuery({
+    queryKey: knowledgeIndexQueryKey(knowledgeID, id),
+    queryFn: () =>
+      knowledgeIndexService.findByID(knowledgeID, id, { ...opts, auth: "api-key" }),
+    enabled: Boolean(knowledgeID) && Boolean(id),
+  });
+};
+
+export const createKnowledgeIndexQueryKey = () => [INDEX_QUERY_KEY, "create"] as const;
+export const useCreateKnowledgeIndex = (
+  opts?: ServicePostOptions<CreateKnowledgeIndex, KnowledgeIndex>,
+): UseMutationResult<KnowledgeIndex, Error, { knowledgeID: string; data: CreateKnowledgeIndex }> => {
+  return useMutation({
+    mutationKey: createKnowledgeIndexQueryKey(),
+    mutationFn: ({ knowledgeID, data }) =>
+      knowledgeIndexService.create(knowledgeID, data, { ...opts, auth: "api-key" }),
+    onSuccess: (_data, { knowledgeID }) => {
+      toast({
+        title: "Index created successfully",
+        description: "The knowledge index has been created successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(knowledgeID) });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to create index",
+        description: "The knowledge index has not been created successfully",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const updateKnowledgeIndexQueryKey = () => [INDEX_QUERY_KEY, "update"] as const;
+export const useUpdateKnowledgeIndex = (
+  opts?: ServicePutOptions<UpdateKnowledgeIndex, void>,
+): UseMutationResult<
+  void,
+  Error,
+  { knowledgeID: string; id: string; data: UpdateKnowledgeIndex }
+> => {
+  return useMutation({
+    mutationKey: updateKnowledgeIndexQueryKey(),
+    mutationFn: ({ knowledgeID, id, data }) =>
+      knowledgeIndexService.update(knowledgeID, id, data, { ...opts, auth: "api-key" }),
+    onSuccess: (_data, { knowledgeID, id }) => {
+      toast({
+        title: "Index updated successfully",
+        description: "The knowledge index has been updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: knowledgeIndexQueryKey(knowledgeID, id) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(knowledgeID) });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to update index",
+        description: "The knowledge index has not been updated successfully",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const deleteKnowledgeIndexQueryKey = () => [INDEX_QUERY_KEY, "delete"] as const;
+export const useDeleteKnowledgeIndex = (
+  opts?: ServiceDeleteOptions<void>,
+): UseMutationResult<void, Error, { knowledgeID: string; id: string }> => {
+  return useMutation({
+    mutationKey: deleteKnowledgeIndexQueryKey(),
+    mutationFn: ({ knowledgeID, id }) =>
+      knowledgeIndexService.delete(knowledgeID, id, { ...opts, auth: "api-key" }),
+    onSuccess: (_data, { knowledgeID }) => {
+      toast({
+        title: "Index deleted successfully",
+        description: "The knowledge index has been deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(knowledgeID) });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to delete index",
+        description: "The knowledge index has not been deleted successfully",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const listKnowledgeIndexDriversQueryKey = () => [INDEX_QUERY_KEY, "drivers"] as const;
+export const useListKnowledgeIndexDrivers = (
+  opts?: ServiceGetOptions<ListKnowledgeIndexDrivers>,
+): UseQueryResult<DriverInfo[], Error> => {
+  return useQuery({
+    queryKey: listKnowledgeIndexDriversQueryKey(),
+    queryFn: () => knowledgeIndexService.listDrivers({ ...opts, auth: "api-key" }),
   });
 };
