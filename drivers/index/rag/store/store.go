@@ -22,17 +22,23 @@ type Hit struct {
 	Distance      float64
 }
 
+// maxVectorHNSWDims is pgvector's dimension limit for an HNSW index on the
+// `vector` type. Beyond it, the column must use `halfvec` instead, which
+// supports HNSW up to 4000 dimensions.
+const maxVectorHNSWDims = 2000
+
 type Store struct {
 	cfg     Config
 	pool    *pgxpool.Pool
 	started bool
+	halfVec bool
 }
 
 func NewStore(cfg Config) (*Store, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
-	return &Store{cfg: cfg}, nil
+	return &Store{cfg: cfg, halfVec: cfg.Length > maxVectorHNSWDims}, nil
 }
 
 func (s *Store) Start(ctx context.Context) error {
@@ -139,7 +145,7 @@ func (s *Store) Search(ctx context.Context, query []float32, limit int) ([]Hit, 
 		LIMIT $2
 	`, table)
 
-	rows, err := s.pool.Query(ctx, sql, pgvector.NewVector(query), limit)
+	rows, err := s.pool.Query(ctx, sql, s.encodeVector(query), limit)
 	if err != nil {
 		return nil, fmt.Errorf("store: search: %w", err)
 	}
@@ -150,21 +156,30 @@ func (s *Store) Search(ctx context.Context, query []float32, limit int) ([]Hit, 
 		var (
 			hit      Hit
 			vector   pgvector.Vector
+			halfVec  pgvector.HalfVector
 			metadata []byte
 		)
+		dest := any(&vector)
+		if s.halfVec {
+			dest = &halfVec
+		}
 		if err := rows.Scan(
 			&hit.IndexedItemID,
 			&hit.Chunk.SeqID,
 			&hit.Chunk.Content,
 			&hit.Chunk.Start,
 			&hit.Chunk.End,
-			&vector,
+			dest,
 			&metadata,
 			&hit.Distance,
 		); err != nil {
 			return nil, fmt.Errorf("store: search scan: %w", err)
 		}
-		hit.Embedding = vector.Slice()
+		if s.halfVec {
+			hit.Embedding = halfVec.Slice()
+		} else {
+			hit.Embedding = vector.Slice()
+		}
 		if len(metadata) > 0 {
 			if err := json.Unmarshal(metadata, &hit.Metadata); err != nil {
 				return nil, fmt.Errorf("store: unmarshal metadata: %w", err)
@@ -230,7 +245,7 @@ func (s *Store) copyEmbeddings(ctx context.Context, dest copySource, indexedItem
 			emb.Chunk.Content,
 			emb.Chunk.Start,
 			emb.Chunk.End,
-			pgvector.NewVector(emb.Embedding),
+			s.encodeVector(emb.Embedding),
 			metadata,
 		})
 	}
@@ -259,9 +274,23 @@ func (s *Store) copyEmbeddings(ctx context.Context, dest copySource, indexedItem
 	return nil
 }
 
+// encodeVector wraps an embedding in the pgvector type matching the store's
+// column type: `halfvec` above maxVectorHNSWDims, `vector` otherwise.
+func (s *Store) encodeVector(vec []float32) any {
+	if s.halfVec {
+		return pgvector.NewHalfVector(vec)
+	}
+	return pgvector.NewVector(vec)
+}
+
 func (s *Store) ensureSchema(ctx context.Context) error {
 	if _, err := s.pool.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS vector`); err != nil {
 		return fmt.Errorf("store: create extension: %w", err)
+	}
+
+	columnType := "vector"
+	if s.halfVec {
+		columnType = "halfvec"
 	}
 
 	table := pgx.Identifier{s.cfg.Table}.Sanitize()
@@ -273,11 +302,11 @@ func (s *Store) ensureSchema(ctx context.Context) error {
 			content TEXT NOT NULL,
 			start_offset INT NOT NULL,
 			end_offset INT NOT NULL,
-			embedding vector(%d) NOT NULL,
+			embedding %s(%d) NOT NULL,
 			metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		)
-	`, table, s.cfg.Length)
+	`, table, columnType, s.cfg.Length)
 	if _, err := s.pool.Exec(ctx, createTable); err != nil {
 		return fmt.Errorf("store: create table: %w", err)
 	}
@@ -291,10 +320,15 @@ func (s *Store) ensureSchema(ctx context.Context) error {
 		return fmt.Errorf("store: create item index: %w", err)
 	}
 
+	cosineOps := "vector_cosine_ops"
+	if s.halfVec {
+		cosineOps = "halfvec_cosine_ops"
+	}
 	embeddingIndex := fmt.Sprintf(
-		`CREATE INDEX IF NOT EXISTS %s ON %s USING hnsw (embedding vector_cosine_ops)`,
+		`CREATE INDEX IF NOT EXISTS %s ON %s USING hnsw (embedding %s)`,
 		pgx.Identifier{s.cfg.Table + "_embedding_hnsw_idx"}.Sanitize(),
 		table,
+		cosineOps,
 	)
 	if _, err := s.pool.Exec(ctx, embeddingIndex); err != nil {
 		return fmt.Errorf("store: create embedding index: %w", err)
