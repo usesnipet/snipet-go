@@ -3,8 +3,18 @@ package session
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
+
+// SessionResponse, SessionsPage and SessionMessagesPage exist so swagger
+// annotations in this package can reference them without importing
+// internal/model or internal/page directly.
+type SessionResponse = model.Session
+
+type SessionsPage = page.Paginated[model.Session]
+
+type SessionMessagesPage = page.Paginated[model.ExecutionMessage]
 
 type RunSessionDTO struct {
 	Message string `json:"message" validate:"required"`

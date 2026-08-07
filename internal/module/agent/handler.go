@@ -41,6 +41,14 @@ func (h *Handler) agentID(r *http.Request) string {
 	return chi.URLParam(r, "id")
 }
 
+// @Summary		List agents
+// @Description	Lists agents.
+// @Tags			agent
+// @Produce		json
+// @Security		ApiKeyAuth
+// @Success		200	{object}	AgentsPage
+// @Failure		400	{object}	api.Error
+// @Router			/agent [get]
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 	data, err := h.service.Filter(r.Context())
 	if err != nil {
@@ -49,6 +57,15 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteJSON(w, http.StatusOK, data)
 }
 
+// @Summary		Get agent
+// @Description	Returns an agent by ID.
+// @Tags			agent
+// @Produce		json
+// @Security		ApiKeyAuth
+// @Param			id	path		string	true	"Agent ID"
+// @Success		200	{object}	AgentResponse
+// @Failure		404	{object}	api.Error
+// @Router			/agent/{id} [get]
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 	data, err := h.service.FindByID(r.Context(), h.agentID(r))
 	if err != nil {
@@ -57,6 +74,16 @@ func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteJSON(w, http.StatusOK, data)
 }
 
+// @Summary		Create agent
+// @Description	Creates a new agent.
+// @Tags			agent
+// @Accept			json
+// @Produce		json
+// @Security		ApiKeyAuth
+// @Param			body	body		CreateAgentDTO	true	"Agent data"
+// @Success		201		{object}	AgentResponse
+// @Failure		400		{object}	api.Error
+// @Router			/agent [post]
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	var dto CreateAgentDTO
 	if err := api.ParseBody(r, &dto); err != nil {
@@ -69,6 +96,17 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteJSON(w, http.StatusCreated, data)
 }
 
+// @Summary		Update agent
+// @Description	Updates an agent by ID.
+// @Tags			agent
+// @Accept			json
+// @Produce		json
+// @Security		ApiKeyAuth
+// @Param			id		path	string			true	"Agent ID"
+// @Param			body	body	UpdateAgentDTO	true	"Agent data"
+// @Success		204
+// @Failure		400	{object}	api.Error
+// @Router			/agent/{id} [put]
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 	var dto UpdateAgentDTO
 	if err := api.ParseBody(r, &dto); err != nil {
@@ -81,6 +119,14 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteNoContent(w)
 }
 
+// @Summary		Delete agent
+// @Description	Deletes an agent by ID.
+// @Tags			agent
+// @Security		ApiKeyAuth
+// @Param			id	path	string	true	"Agent ID"
+// @Success		204
+// @Failure		404	{object}	api.Error
+// @Router			/agent/{id} [delete]
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 	if err := h.service.DeleteByID(r.Context(), h.agentID(r)); err != nil {
 		return err
@@ -88,6 +134,17 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 	return api.WriteNoContent(w)
 }
 
+// @Summary		Run agent
+// @Description	Runs an agent in playground mode, streaming the execution via SSE.
+// @Tags			agent
+// @Accept			json
+// @Produce		text/event-stream
+// @Security		ApiKeyAuth
+// @Param			id		path	string		true	"Agent ID"
+// @Param			body	body	RunAgentDTO	true	"Run input"
+// @Success		200
+// @Failure		400	{object}	api.Error
+// @Router			/agent/{id}/run [post]
 func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 	var dto RunAgentDTO
 	if err := api.ParseBody(r, &dto); err != nil {

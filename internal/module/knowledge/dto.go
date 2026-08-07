@@ -3,9 +3,19 @@ package knowledge
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
+
+// KnowledgeResponse, KnowledgesPage and KnowledgeItemsPage exist so swagger
+// annotations in this package can reference them without importing
+// internal/model or internal/page directly.
+type KnowledgeResponse = model.Knowledge
+
+type KnowledgesPage = page.Paginated[model.Knowledge]
+
+type KnowledgeItemsPage = page.Paginated[model.KnowledgeItem]
 
 type FilterKnowledgeItemDTO struct {
 	Take *int `form:"take" validate:"omitempty,min=1"`
@@ -54,4 +64,8 @@ type SyncKnowledgeQueryDTO struct {
 
 type DriversDTO struct {
 	SourceDrivers []driver.Info `json:"source_drivers"`
+}
+
+type CreateKnowledgeResponseDTO struct {
+	Knowledge KnowledgeResponse `json:"knowledge"`
 }

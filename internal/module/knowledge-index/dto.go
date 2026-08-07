@@ -3,9 +3,19 @@ package knowledgeindex
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
+
+// KnowledgeIndexResponse, KnowledgeIndexesPage and IndexedKnowledgeItemsPage
+// exist so swagger annotations in this package can reference them without
+// importing internal/model or internal/page directly.
+type KnowledgeIndexResponse = model.KnowledgeIndex
+
+type KnowledgeIndexesPage = page.Paginated[model.KnowledgeIndex]
+
+type IndexedKnowledgeItemsPage = page.Paginated[model.IndexedKnowledgeItem]
 
 type CreateKnowledgeIndexDTO struct {
 	Name          string        `json:"name" validate:"required,max=255"`

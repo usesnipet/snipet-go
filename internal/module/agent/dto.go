@@ -1,5 +1,16 @@
 package agent
 
+import (
+	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
+)
+
+// AgentResponse and AgentsPage exist so swagger annotations in this package can
+// reference them without importing internal/model or internal/page directly.
+type AgentResponse = model.Agent
+
+type AgentsPage = page.Paginated[model.Agent]
+
 type CreateAgentDTO struct {
 	Name         string   `json:"name" validate:"required,max=255"`
 	Description  string   `json:"description" validate:"max=1000"`

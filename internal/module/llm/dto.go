@@ -3,8 +3,19 @@ package llm
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
+	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
+
+// LLMResponse, LLMsPage and DriverInfo exist so swagger annotations in this
+// package can reference them without importing internal/model, internal/page
+// or pkg/driver directly.
+type LLMResponse = model.LLM
+
+type LLMsPage = page.Paginated[model.LLM]
+
+type DriverInfo = driver.Info
 
 type CreateLLMDTO struct {
 	Name          string        `json:"name" validate:"required,max=255"`

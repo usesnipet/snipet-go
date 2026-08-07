@@ -5,7 +5,14 @@ import (
 
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
 )
+
+// APIKeyResponse and APIKeysPage exist so swagger annotations in this package
+// can reference them without importing internal/model or internal/page directly.
+type APIKeyResponse = model.APIKey
+
+type APIKeysPage = page.Paginated[model.APIKey]
 
 type CreateAPIKeyDTO struct {
 	Name      string     `json:"name" validate:"required,max=255"`

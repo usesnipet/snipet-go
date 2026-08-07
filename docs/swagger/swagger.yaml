@@ -1,5 +1,132 @@
 basePath: /api
 definitions:
+  APIKey:
+    properties:
+      active:
+        type: boolean
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      key_id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  APIKeyResponse:
+    properties:
+      active:
+        type: boolean
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      key_id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  APIKeyWithSecret:
+    properties:
+      active:
+        type: boolean
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      key:
+        type: string
+      key_id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  APIKeysPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/APIKey'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  Agent:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      instructions:
+        type: string
+      llms:
+        items:
+          $ref: '#/definitions/AgentToLLM'
+        type: array
+      name:
+        type: string
+    type: object
+  AgentResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      instructions:
+        type: string
+      llms:
+        items:
+          $ref: '#/definitions/AgentToLLM'
+        type: array
+      name:
+        type: string
+    type: object
+  AgentToLLM:
+    properties:
+      llm:
+        $ref: '#/definitions/LLM'
+      llm_id:
+        type: string
+      priority:
+        type: integer
+    type: object
+  AgentsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Agent'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  AppConfigDTO:
+    properties:
+      inherit_client:
+        type: boolean
+      inherit_client_code:
+        type: string
+      inherit_client_name:
+        type: string
+    type: object
   AuthenticateAnonymousDTO:
     properties:
       email:
@@ -23,7 +150,128 @@ definitions:
       refresh_token_expires_at:
         type: string
       user:
-        $ref: '#/definitions/User'
+        $ref: '#/definitions/UserResponse'
+    type: object
+  Call:
+    properties:
+      arguments:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      tool:
+        type: string
+    type: object
+  Client:
+    properties:
+      code:
+        type: string
+      config:
+        $ref: '#/definitions/ClientConfig'
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  ClientAgentsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Agent'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  ClientConfig:
+    properties:
+      anonymous:
+        properties:
+          enabled:
+            type: boolean
+        type: object
+      oidc:
+        properties:
+          audience:
+            type: string
+          enabled:
+            type: boolean
+          issuer:
+            type: string
+        type: object
+      webhook:
+        properties:
+          enabled:
+            type: boolean
+          url:
+            type: string
+        type: object
+    type: object
+  ClientPublicDTO:
+    properties:
+      allow_anonymous:
+        type: boolean
+      code:
+        type: string
+      name:
+        type: string
+    type: object
+  ClientResponse:
+    properties:
+      code:
+        type: string
+      config:
+        $ref: '#/definitions/ClientConfig'
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  ClientsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Client'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  CreateAPIKeyDTO:
+    properties:
+      expires_at:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - name
+    type: object
+  CreateAgentDTO:
+    properties:
+      description:
+        maxLength: 1000
+        type: string
+      instructions:
+        maxLength: 1000
+        type: string
+      llm_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - llm_ids
+    - name
     type: object
   CreateAnonymousClientUserDTO:
     properties:
@@ -51,6 +299,105 @@ definitions:
     - email
     - external_id
     type: object
+  CreateClientDTO:
+    properties:
+      config:
+        $ref: '#/definitions/ClientConfig'
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - config
+    - name
+    type: object
+  CreateKnowledgeDTO:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      description:
+        type: string
+      driver:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - configuration
+    - driver
+    - name
+    type: object
+  CreateKnowledgeIndexDTO:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      driver:
+        maxLength: 100
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - configuration
+    - driver
+    - name
+    type: object
+  CreateKnowledgeResponseDTO:
+    properties:
+      knowledge:
+        $ref: '#/definitions/KnowledgeResponse'
+    type: object
+  CreateLLMDTO:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      name:
+        maxLength: 255
+        type: string
+      provider:
+        maxLength: 255
+        type: string
+    required:
+    - configuration
+    - name
+    - provider
+    type: object
+  CreateSessionDTO:
+    properties:
+      agent_id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+    required:
+    - agent_id
+    type: object
+  DriverInfo:
+    properties:
+      configuration_schema:
+        $ref: '#/definitions/JSONMap'
+      description:
+        type: string
+      icon:
+        type: string
+      key:
+        type: string
+      name:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    required:
+    - description
+    - name
+    type: object
+  DriversDTO:
+    properties:
+      source_drivers:
+        items:
+          $ref: '#/definitions/Info'
+        type: array
+    type: object
   Error:
     properties:
       details:
@@ -61,8 +408,261 @@ definitions:
       statusCode:
         type: integer
     type: object
+  ExecutionMessage:
+    properties:
+      content:
+        type: string
+      execution_id:
+        type: string
+      final:
+        type: boolean
+      id:
+        type: string
+      role:
+        $ref: '#/definitions/Role'
+      sequence:
+        type: integer
+      timestamp:
+        type: string
+      tool_call_id:
+        description: ToolCallID links a RoleTool message back to the tool.Call.ID
+          it answers.
+        type: string
+      tool_calls:
+        description: ToolCalls is set on assistant messages that requested tool calls.
+        items:
+          $ref: '#/definitions/Call'
+        type: array
+    type: object
+  IndexStatus:
+    enum:
+    - pending
+    - syncing
+    - indexed
+    - skipped
+    - error
+    type: string
+    x-enum-varnames:
+    - IndexedStatusPending
+    - IndexedStatusSyncing
+    - IndexedStatusIndexed
+    - IndexedStatusSkipped
+    - IndexedStatusError
+  IndexedKnowledgeItem:
+    properties:
+      hash:
+        type: string
+      id:
+        type: string
+      index_id:
+        type: string
+      indexed_at:
+        type: string
+      knowledge_item_id:
+        type: string
+      last_error:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      reason:
+        type: string
+      status:
+        $ref: '#/definitions/IndexStatus'
+    type: object
+  IndexedKnowledgeItemsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/IndexedKnowledgeItem'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  Info:
+    properties:
+      configuration_schema:
+        $ref: '#/definitions/JSONMap'
+      description:
+        type: string
+      icon:
+        type: string
+      key:
+        type: string
+      name:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    required:
+    - description
+    - name
+    type: object
   JSONMap:
     additionalProperties: {}
+    type: object
+  Knowledge:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      description:
+        type: string
+      driver:
+        type: string
+      id:
+        type: string
+      last_synced_at:
+        type: string
+      name:
+        type: string
+      sync_error:
+        type: string
+      sync_status:
+        $ref: '#/definitions/SyncStatus'
+    type: object
+  KnowledgeIndex:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      driver:
+        type: string
+      id:
+        type: string
+      knowledge_id:
+        type: string
+      name:
+        type: string
+    type: object
+  KnowledgeIndexResponse:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      driver:
+        type: string
+      id:
+        type: string
+      knowledge_id:
+        type: string
+      name:
+        type: string
+    type: object
+  KnowledgeIndexesPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/KnowledgeIndex'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  KnowledgeItem:
+    properties:
+      attributes:
+        $ref: '#/definitions/JSONMap'
+      external_id:
+        type: string
+      hash:
+        type: string
+      id:
+        type: string
+      kind:
+        $ref: '#/definitions/SourceItemKind'
+      knowledge_id:
+        type: string
+      last_modified:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        type: string
+    type: object
+  KnowledgeItemsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/KnowledgeItem'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  KnowledgeResponse:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      description:
+        type: string
+      driver:
+        type: string
+      id:
+        type: string
+      last_synced_at:
+        type: string
+      name:
+        type: string
+      sync_error:
+        type: string
+      sync_status:
+        $ref: '#/definitions/SyncStatus'
+    type: object
+  KnowledgesPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Knowledge'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  LLM:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      id:
+        type: string
+      name:
+        type: string
+      provider:
+        type: string
+    type: object
+  LLMResponse:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      id:
+        type: string
+      name:
+        type: string
+      provider:
+        type: string
+    type: object
+  LLMsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/LLM'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
     type: object
   RefreshDTO:
     properties:
@@ -70,6 +670,192 @@ definitions:
         type: string
     required:
     - refresh_token
+    type: object
+  Role:
+    enum:
+    - system
+    - user
+    - assistant
+    - tool
+    type: string
+    x-enum-varnames:
+    - RoleSystem
+    - RoleUser
+    - RoleAssistant
+    - RoleTool
+  RunAgentDTO:
+    properties:
+      message:
+        type: string
+    required:
+    - message
+    type: object
+  RunSessionDTO:
+    properties:
+      message:
+        type: string
+    required:
+    - message
+    type: object
+  Session:
+    properties:
+      agent:
+        $ref: '#/definitions/Agent'
+      agent_id:
+        type: string
+      client_id:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+    type: object
+  SessionMessagesPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/ExecutionMessage'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  SessionResponse:
+    properties:
+      agent:
+        $ref: '#/definitions/Agent'
+      agent_id:
+        type: string
+      client_id:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+    type: object
+  SessionsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Session'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  SourceItemKind:
+    enum:
+    - text
+    - document
+    - image
+    - audio
+    - video
+    - structured
+    - unknown
+    type: string
+    x-enum-varnames:
+    - SourceItemKindText
+    - SourceItemKindDocument
+    - SourceItemKindImage
+    - SourceItemKindAudio
+    - SourceItemKindVideo
+    - SourceItemKindStructured
+    - SourceItemKindUnknown
+  SyncStatus:
+    enum:
+    - pending
+    - in_progress
+    - failed
+    - success
+    type: string
+    x-enum-varnames:
+    - SyncStatusPending
+    - SyncStatusInProgress
+    - SyncStatusFailed
+    - SyncStatusSuccess
+  SystemInfoDTO:
+    properties:
+      version:
+        type: string
+    type: object
+  TestConnectionDTO:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      driver:
+        maxLength: 255
+        type: string
+    required:
+    - configuration
+    - driver
+    type: object
+  UpdateAgentDTO:
+    properties:
+      description:
+        maxLength: 1000
+        type: string
+      instructions:
+        maxLength: 1000
+        type: string
+      llm_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      name:
+        maxLength: 255
+        type: string
+    type: object
+  UpdateClientDTO:
+    properties:
+      config:
+        $ref: '#/definitions/ClientConfig'
+      name:
+        maxLength: 255
+        type: string
+    type: object
+  UpdateExpirationDTO:
+    properties:
+      expires_at:
+        type: string
+    type: object
+  UpdateKnowledgeDTO:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    type: object
+  UpdateKnowledgeIndexDTO:
+    properties:
+      name:
+        maxLength: 255
+        type: string
+    type: object
+  UpdateLLMDTO:
+    properties:
+      configuration:
+        $ref: '#/definitions/JSONMap'
+      name:
+        maxLength: 255
+        type: string
+      provider:
+        maxLength: 255
+        type: string
+    type: object
+  UpdateSessionDTO:
+    properties:
+      agent_id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
     type: object
   User:
     properties:
@@ -116,6 +902,401 @@ info:
   title: Snipet API
   version: "1.0"
 paths:
+  /agent:
+    get:
+      description: Lists agents.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AgentsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: List agents
+      tags:
+      - agent
+    post:
+      consumes:
+      - application/json
+      description: Creates a new agent.
+      parameters:
+      - description: Agent data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAgentDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/AgentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create agent
+      tags:
+      - agent
+  /agent/{id}:
+    delete:
+      description: Deletes an agent by ID.
+      parameters:
+      - description: Agent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete agent
+      tags:
+      - agent
+    get:
+      description: Returns an agent by ID.
+      parameters:
+      - description: Agent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AgentResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get agent
+      tags:
+      - agent
+    put:
+      consumes:
+      - application/json
+      description: Updates an agent by ID.
+      parameters:
+      - description: Agent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Agent data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateAgentDTO'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update agent
+      tags:
+      - agent
+  /agent/{id}/run:
+    post:
+      consumes:
+      - application/json
+      description: Runs an agent in playground mode, streaming the execution via SSE.
+      parameters:
+      - description: Agent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Run input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RunAgentDTO'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Run agent
+      tags:
+      - agent
+  /api-key:
+    get:
+      description: Lists API keys, with optional pagination.
+      parameters:
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/APIKeysPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: List API keys
+      tags:
+      - api-key
+    post:
+      consumes:
+      - application/json
+      description: Creates a new API key. The plaintext key is only returned once,
+        on creation.
+      parameters:
+      - description: API key data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAPIKeyDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/APIKeyWithSecret'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create API key
+      tags:
+      - api-key
+  /api-key/{id}:
+    delete:
+      description: Deletes an API key by ID.
+      parameters:
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete API key
+      tags:
+      - api-key
+    get:
+      description: Returns an API key by ID.
+      parameters:
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/APIKeyResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get API key
+      tags:
+      - api-key
+  /api-key/{id}/active:
+    put:
+      description: Marks an API key as active.
+      parameters:
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Activate API key
+      tags:
+      - api-key
+  /api-key/{id}/disabled:
+    put:
+      description: Marks an API key as disabled.
+      parameters:
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Disable API key
+      tags:
+      - api-key
+  /api-key/{id}/expiration:
+    put:
+      consumes:
+      - application/json
+      description: Updates the expiration date of an API key.
+      parameters:
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Expiration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateExpirationDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update API key expiration
+      tags:
+      - api-key
+  /api-key/{id}/roll:
+    post:
+      description: Rotates an API key, invalidating the previous secret. The new plaintext
+        key is only returned once.
+      parameters:
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/APIKeyWithSecret'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Roll API key
+      tags:
+      - api-key
+  /api-key/me:
+    get:
+      description: Returns the API key used to authenticate the current request.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/APIKeyResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get current API key
+      tags:
+      - api-key
+  /app/config:
+    get:
+      description: Returns public application configuration.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AppConfigDTO'
+      summary: Get app config
+      tags:
+      - app
+  /app/system-info:
+    get:
+      description: Returns application system information.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SystemInfoDTO'
+      summary: Get system info
+      tags:
+      - app
   /client/{client_code}/authenticate/{provider_name}:
     post:
       description: Authenticates a client user through the given auth provider (e.g.
@@ -207,6 +1388,265 @@ paths:
       summary: Refresh access token
       tags:
       - auth
+  /client/{client_code}/session:
+    get:
+      description: Lists sessions of a client, with optional pagination and includes.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      - collectionFormat: csv
+        description: Related resources to include
+        in: query
+        items:
+          enum:
+          - agent
+          type: string
+        name: include
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: List sessions
+      tags:
+      - session
+    post:
+      consumes:
+      - application/json
+      description: Creates a new session for a client.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Session data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateSessionDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/SessionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Create session
+      tags:
+      - session
+  /client/{client_code}/session/{id}:
+    delete:
+      description: Deletes a session by ID.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Delete session
+      tags:
+      - session
+    get:
+      description: Returns a session by ID.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: Related resources to include
+        in: query
+        items:
+          enum:
+          - agent
+          type: string
+        name: include
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Get session
+      tags:
+      - session
+    put:
+      consumes:
+      - application/json
+      description: Updates a session by ID.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateSessionDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Update session
+      tags:
+      - session
+  /client/{client_code}/session/{id}/messages:
+    get:
+      description: Lists the execution messages of a session, with optional ordering/pagination.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Order by timestamp
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionMessagesPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: List session messages
+      tags:
+      - session
+  /client/{client_code}/session/{id}/run:
+    post:
+      consumes:
+      - application/json
+      description: Runs an agent within a session, streaming the execution via SSE.
+      parameters:
+      - description: Client code
+        in: path
+        name: client_code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Run input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RunSessionDTO'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Run session
+      tags:
+      - session
   /client/{client_code}/user:
     get:
       description: Lists users of a client, with optional ordering/pagination.
@@ -333,13 +1773,765 @@ paths:
       summary: Get current user
       tags:
       - user
+  /clients:
+    get:
+      description: Lists clients, with optional pagination.
+      parameters:
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ClientsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: List clients
+      tags:
+      - client
+    post:
+      consumes:
+      - application/json
+      description: Creates a new client.
+      parameters:
+      - description: Client data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateClientDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ClientResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create client
+      tags:
+      - client
+  /clients/{code}:
+    delete:
+      description: Deletes a client by code.
+      parameters:
+      - description: Client code
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete client
+      tags:
+      - client
+    get:
+      description: Returns a client by code.
+      parameters:
+      - description: Client code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ClientResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get client
+      tags:
+      - client
+    put:
+      consumes:
+      - application/json
+      description: Updates a client by code.
+      parameters:
+      - description: Client code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Client data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateClientDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update client
+      tags:
+      - client
+  /clients/{code}/agents:
+    get:
+      description: Lists agents linked to a client, with optional pagination.
+      parameters:
+      - description: Client code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ClientAgentsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: List client agents
+      tags:
+      - client
+  /clients/{code}/public:
+    get:
+      description: Returns public information for a client by code.
+      parameters:
+      - description: Client code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ClientPublicDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get public client info
+      tags:
+      - client
+  /knowledge:
+    get:
+      description: Lists knowledge bases, with optional pagination.
+      parameters:
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/KnowledgesPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: List knowledge bases
+      tags:
+      - knowledge
+    post:
+      consumes:
+      - application/json
+      description: Creates a new knowledge base.
+      parameters:
+      - description: Knowledge data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateKnowledgeDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/CreateKnowledgeResponseDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Create knowledge base
+      tags:
+      - knowledge
+  /knowledge/{id}:
+    delete:
+      description: Deletes a knowledge base by ID.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete knowledge base
+      tags:
+      - knowledge
+    get:
+      description: Returns a knowledge base by ID.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/KnowledgeResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get knowledge base
+      tags:
+      - knowledge
+    put:
+      consumes:
+      - application/json
+      description: Updates a knowledge base by ID.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Knowledge data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateKnowledgeDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Update knowledge base
+      tags:
+      - knowledge
+  /knowledge/{id}/items:
+    get:
+      description: Lists items of a knowledge base, with optional pagination.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/KnowledgeItemsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: List knowledge items
+      tags:
+      - knowledge
+  /knowledge/{id}/sync:
+    post:
+      description: Triggers a sync of a knowledge base's items from its source.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Force a full resync
+        in: query
+        name: force
+        type: boolean
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Sync knowledge base
+      tags:
+      - knowledge
+  /knowledge/{knowledge_id}/index:
+    get:
+      description: Lists indexes of a knowledge base, with optional pagination.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: knowledge_id
+        required: true
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/KnowledgeIndexesPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: List knowledge indexes
+      tags:
+      - knowledge-index
+    post:
+      consumes:
+      - application/json
+      description: Creates a new index for a knowledge base.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: knowledge_id
+        required: true
+        type: string
+      - description: Index data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateKnowledgeIndexDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/KnowledgeIndexResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create knowledge index
+      tags:
+      - knowledge-index
+  /knowledge/{knowledge_id}/index/{id}:
+    delete:
+      description: Deletes a knowledge index by ID.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: knowledge_id
+        required: true
+        type: string
+      - description: Index ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete knowledge index
+      tags:
+      - knowledge-index
+    get:
+      description: Returns a knowledge index by ID.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: knowledge_id
+        required: true
+        type: string
+      - description: Index ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/KnowledgeIndexResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get knowledge index
+      tags:
+      - knowledge-index
+    put:
+      consumes:
+      - application/json
+      description: Updates a knowledge index by ID.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: knowledge_id
+        required: true
+        type: string
+      - description: Index ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Index data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateKnowledgeIndexDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update knowledge index
+      tags:
+      - knowledge-index
+  /knowledge/{knowledge_id}/index/{id}/items:
+    get:
+      description: Lists items of a knowledge index, with optional pagination.
+      parameters:
+      - description: Knowledge ID
+        in: path
+        name: knowledge_id
+        required: true
+        type: string
+      - description: Index ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/IndexedKnowledgeItemsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: List indexed knowledge items
+      tags:
+      - knowledge-index
+  /knowledge/drivers:
+    get:
+      description: Lists the available knowledge source drivers.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/DriversDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: List knowledge source drivers
+      tags:
+      - knowledge
+  /knowledge/index/drivers:
+    get:
+      description: Lists the available knowledge index drivers.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/DriversDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: List knowledge index drivers
+      tags:
+      - knowledge-index
+  /knowledge/test-connection:
+    post:
+      consumes:
+      - application/json
+      description: Tests a knowledge source driver configuration without persisting
+        it.
+      parameters:
+      - description: Connection data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TestConnectionDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Test knowledge connection
+      tags:
+      - knowledge
+  /llm:
+    get:
+      description: Lists configured LLMs, with optional pagination.
+      parameters:
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/LLMsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: List LLMs
+      tags:
+      - llm
+    post:
+      consumes:
+      - application/json
+      description: Creates a new LLM configuration.
+      parameters:
+      - description: LLM data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateLLMDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/LLMResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create LLM
+      tags:
+      - llm
+  /llm/{id}:
+    delete:
+      description: Deletes an LLM by ID.
+      parameters:
+      - description: LLM ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete LLM
+      tags:
+      - llm
+    get:
+      description: Returns an LLM by ID.
+      parameters:
+      - description: LLM ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/LLMResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get LLM
+      tags:
+      - llm
+    put:
+      consumes:
+      - application/json
+      description: Updates an LLM by ID.
+      parameters:
+      - description: LLM ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: LLM data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateLLMDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update LLM
+      tags:
+      - llm
+  /llm/drivers:
+    get:
+      description: Lists the available LLM provider drivers.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/DriverInfo'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - ApiKeyAuth: []
+      summary: List LLM drivers
+      tags:
+      - llm
 securityDefinitions:
   ApiKeyAuth:
     in: header
     name: X-API-Key
-    type: apiKey
-  BearerAuth:
-    in: header
-    name: Authorization
     type: apiKey
 swagger: "2.0"

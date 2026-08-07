@@ -3,7 +3,17 @@ package client
 import (
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
 )
+
+// ClientResponse, ClientsPage and ClientAgentsPage exist so swagger annotations
+// in this package can reference them without importing internal/model or
+// internal/page directly.
+type ClientResponse = model.Client
+
+type ClientsPage = page.Paginated[model.Client]
+
+type ClientAgentsPage = page.Paginated[model.Agent]
 
 type CreateClientDTO struct {
 	Name   string             `json:"name" validate:"required,max=255"`
