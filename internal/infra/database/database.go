@@ -10,8 +10,6 @@ import (
 
 	"github.com/usesnipet/snipet/config"
 	"github.com/usesnipet/snipet/internal/logger"
-
-	_ "ariga.io/atlas-provider-gorm/gormschema"
 )
 
 // NewDatabase connects to Postgres and runs pending migrations. When
