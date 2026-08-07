@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -39,10 +42,21 @@ import (
 
 func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// database
-	db, _, err := database.NewDatabase(cfg, logger)
+	db, _, embeddedDB, err := database.NewDatabase(cfg, logger)
 	if err != nil {
 		logger.Errorf("failed to create database: %v", err)
 		return err
+	}
+
+	if embeddedDB != nil {
+		defer func() {
+			logger.Infof("stopping embedded database...")
+			if err := embeddedDB.Stop(); err != nil {
+				logger.Errorf("failed to stop embedded database: %v", err)
+				return
+			}
+			logger.Infof("embedded database stopped successfully")
+		}()
 	}
 
 	// repositories
@@ -188,11 +202,28 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	})
 
 	logger.Infof("sync worker pool started with %d workers", cfg.Sync.Workers)
-	logger.Infof("server started on port %d", cfg.Server.Port)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Server.Port), api.Router)
-	if err != nil {
-		logger.Errorf("failed to start server: %v", err)
-		return err
+
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Handler: api.Router,
+	}
+
+	go func() {
+		logger.Infof("server started on port %d", cfg.Server.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Errorf("failed to start server: %v", err)
+		}
+	}()
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	<-ctx.Done()
+
+	logger.Infof("shutting down server...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Errorf("failed to shutdown server: %v", err)
 	}
 
 	return nil
