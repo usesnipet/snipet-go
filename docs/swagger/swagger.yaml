@@ -1045,6 +1045,7 @@ paths:
       responses:
         "200":
           description: OK
+          schema: {}
         "400":
           description: Bad Request
           schema:
@@ -1637,6 +1638,7 @@ paths:
       responses:
         "200":
           description: OK
+          schema: {}
         "400":
           description: Bad Request
           schema:

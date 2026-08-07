@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/module/agent/subscriber"
+	_ "github.com/usesnipet/snipet/internal/runtime/execution"
 )
 
 type Handler struct {
@@ -142,7 +143,7 @@ func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
 // @Security		ApiKeyAuth
 // @Param			id		path	string		true	"Agent ID"
 // @Param			body	body	RunAgentDTO	true	"Run input"
-// @Success		200
+// @Success		200 {object}  any
 // @Failure		400	{object}	api.Error
 // @Router			/agent/{id}/run [post]
 func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {

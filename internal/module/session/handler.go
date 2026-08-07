@@ -50,7 +50,7 @@ func (h *Handler) sessionID(r *http.Request) string {
 // @Param			client_code	path	string			true	"Client code"
 // @Param			id			path	string			true	"Session ID"
 // @Param			body		body	RunSessionDTO	true	"Run input"
-// @Success		200
+// @Success		200 {object}  any
 // @Failure		400	{object}	api.Error
 // @Router			/client/{client_code}/session/{id}/run [post]
 func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
