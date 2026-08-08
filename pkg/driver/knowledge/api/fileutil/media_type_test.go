@@ -59,6 +59,13 @@ func TestDetectMediaTypeByContentSurvivesPartialReads(t *testing.T) {
 	assert.Equal(t, "image/png", mimeType)
 }
 
+func TestDetectMediaTypeByContentDetectsJSONWithoutExtension(t *testing.T) {
+	mimeType, ok := DetectMediaTypeByContent(strings.NewReader(`{"key": "value", "n": 1}`))
+
+	assert.True(t, ok)
+	assert.Equal(t, "application/json", mimeType)
+}
+
 func TestDetectMediaTypeByExtensionKnownExtension(t *testing.T) {
 	mimeType, ok := DetectMediaTypeByExtension("report.json")
 

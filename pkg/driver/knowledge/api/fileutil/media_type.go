@@ -3,15 +3,24 @@ package fileutil
 import (
 	"io"
 	"mime"
-	"net/http"
 	"path"
+
+	"github.com/gabriel-vasile/mimetype"
 )
 
-// DetectMediaTypeByContent sniffs r's leading bytes. Unlike a plain single
-// Read, it uses io.ReadFull so partial reads from non-local readers (e.g.
-// network streams) don't cause a false "undetected" result.
+// contentSniffLength matches mimetype's own default read limit, balancing
+// detection accuracy (some formats, e.g. docx, need more than a few bytes)
+// against how much of a remote-backed reader (s3, gdrive) gets pulled just
+// to classify a file.
+const contentSniffLength = 4096
+
+// DetectMediaTypeByContent sniffs r's leading bytes for a magic-number or
+// text-shape match (images, audio, video, archives, JSON/XML/HTML/plain
+// text, etc). Unlike a plain single Read, it uses io.ReadFull so partial
+// reads from non-local readers (e.g. network streams) don't cause a false
+// "undetected" result.
 func DetectMediaTypeByContent(r io.Reader) (string, bool) {
-	buffer := make([]byte, 512)
+	buffer := make([]byte, contentSniffLength)
 	n, err := io.ReadFull(r, buffer)
 	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
 		return "", false
@@ -19,7 +28,7 @@ func DetectMediaTypeByContent(r io.Reader) (string, bool) {
 	if n == 0 {
 		return "", false
 	}
-	return http.DetectContentType(buffer[:n]), true
+	return mimetype.Detect(buffer[:n]).String(), true
 }
 
 // DetectMediaTypeByExtension resolves a MIME type from name's file extension.
