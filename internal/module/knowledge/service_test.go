@@ -21,7 +21,6 @@ import (
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
-	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/pkg/driver"
 	kdriver "github.com/usesnipet/snipet/pkg/driver/knowledge"
 	knowledgemocks "github.com/usesnipet/snipet/pkg/driver/knowledge/mocks"
@@ -69,9 +68,9 @@ func newTestService(
 		opt(&options)
 	}
 
-	reg := registry.New[kdriver.ISourceDriver]()
-	for name, d := range drivers {
-		reg.MustRegister(name, d)
+	reg := driver.NewRegistry[kdriver.ISourceDriver](logger.NewLogger(logger.LevelError))
+	for _, d := range drivers {
+		reg.MustRegister(d, nil)
 	}
 	sourceManager := manager.NewDriver(reg)
 	syncWorker := knowledge.NewSyncWorker(
@@ -103,10 +102,12 @@ func newMockSource(t *testing.T, name string, schema jsonx.JSONMap) *knowledgemo
 
 	source := knowledgemocks.NewMockISourceDriver(t)
 	source.EXPECT().Info().Return(driver.Info{
+		Key:                 name,
 		Name:                name,
 		Description:         name,
 		ConfigurationSchema: schema,
 	})
+	source.EXPECT().Validate().Return(nil)
 	return source
 }
 

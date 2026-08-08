@@ -204,6 +204,50 @@ func (_c *MockIIndexDriver_TestConnection_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// Validate provides a mock function for the type MockIIndexDriver
+func (_mock *MockIIndexDriver) Validate() error {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Validate")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func() error); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIIndexDriver_Validate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Validate'
+type MockIIndexDriver_Validate_Call struct {
+	*mock.Call
+}
+
+// Validate is a helper method to define mock.On call
+func (_e *MockIIndexDriver_Expecter) Validate() *MockIIndexDriver_Validate_Call {
+	return &MockIIndexDriver_Validate_Call{Call: _e.mock.On("Validate")}
+}
+
+func (_c *MockIIndexDriver_Validate_Call) Run(run func()) *MockIIndexDriver_Validate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockIIndexDriver_Validate_Call) Return(err error) *MockIIndexDriver_Validate_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIIndexDriver_Validate_Call) RunAndReturn(run func() error) *MockIIndexDriver_Validate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Writer provides a mock function for the type MockIIndexDriver
 func (_mock *MockIIndexDriver) Writer(config jsonx.JSONMap) (knowledge.IKnowledgeIndexWriter, error) {
 	ret := _mock.Called(config)

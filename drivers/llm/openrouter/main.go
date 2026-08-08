@@ -7,8 +7,9 @@ import (
 
 const baseURL = "https://openrouter.ai/api/v1"
 
-func New() llm.Driver {
+func New() (llm.Driver, error) {
 	return llm.CreateDriver(
+		llm.WithKey("openrouter"),
 		llm.WithName("OpenRouter"),
 		llm.WithDescription("OpenRouter multi-provider models."),
 		llm.WithIcon("https://openrouter.ai/favicon.ico"),

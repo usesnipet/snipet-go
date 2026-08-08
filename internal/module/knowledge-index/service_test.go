@@ -18,7 +18,6 @@ import (
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
-	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	knowledgemocks "github.com/usesnipet/snipet/pkg/driver/knowledge/mocks"
@@ -60,10 +59,12 @@ func newMockIndex(t *testing.T, name string, schema jsonx.JSONMap) *knowledgemoc
 
 	indexDriver := knowledgemocks.NewMockIIndexDriver(t)
 	indexDriver.EXPECT().Info().Return(driver.Info{
+		Key:                 name,
 		Name:                name,
 		Description:         name,
 		ConfigurationSchema: schema,
 	})
+	indexDriver.EXPECT().Validate().Return(nil)
 	return indexDriver
 }
 
@@ -83,14 +84,14 @@ func newTestService(
 		opt(&options)
 	}
 
-	reg := registry.New[knowledge.IIndexDriver]()
-	for name, d := range drivers {
-		reg.MustRegister(name, d)
+	reg := driver.NewRegistry[knowledge.IIndexDriver](logger.NewLogger(logger.LevelError))
+	for _, d := range drivers {
+		reg.MustRegister(d, nil)
 	}
 	indexManager := manager.NewDriver(reg)
 	syncWorker := knowledgeindex.NewSyncIndexWorker(
 		indexManager,
-		manager.NewDriver(registry.New[knowledge.ISourceDriver]()),
+		manager.NewDriver(driver.NewRegistry[knowledge.ISourceDriver](logger.NewLogger(logger.LevelError))),
 		mocks.NewMockIKnowledgeRepository(t),
 		mocks.NewMockIKnowledgeItemRepository(t),
 		repo,

@@ -5,10 +5,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 	llmdrivers "github.com/usesnipet/snipet/drivers/llm"
+	"github.com/usesnipet/snipet/internal/logger"
 )
 
 func TestRegistryRegistersProviders(t *testing.T) {
-	reg := llmdrivers.Registry()
+	reg := llmdrivers.Registry(logger.NewLogger(logger.LevelError))
 	want := []string{"openai", "groq", "ollama", "mistral", "openrouter"}
 	require.ElementsMatch(t, want, reg.Names())
 

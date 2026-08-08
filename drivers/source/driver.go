@@ -2,13 +2,14 @@ package source
 
 import (
 	"github.com/usesnipet/snipet/drivers/source/fs"
-	"github.com/usesnipet/snipet/internal/runtime/registry"
+	"github.com/usesnipet/snipet/internal/logger"
+	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
 
-func Registry() *registry.R[knowledge.ISourceDriver] {
-	registry := registry.New[knowledge.ISourceDriver]()
-	registry.MustRegister("fs", fs.NewDriver())
+func Registry(log *logger.Logger) *driver.Registry[knowledge.ISourceDriver] {
+	r := driver.NewRegistry[knowledge.ISourceDriver](log)
+	r.Register(fs.NewDriver(), nil)
 
-	return registry
+	return r
 }

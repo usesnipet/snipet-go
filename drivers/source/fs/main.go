@@ -27,11 +27,20 @@ func (d *Driver) Info() driver.Info {
 		panic(err)
 	}
 	return driver.Info{
+		Key:                 "fs",
 		Name:                "Filesystem",
 		Description:         "Reads knowledge items from a local filesystem path.",
 		Tags:                []string{"source", "filesystem"},
 		ConfigurationSchema: schema,
 	}
+}
+
+// Validate checks Info is well-formed. Driver implements knowledge.ISourceDriver
+// directly (not via knowledge.CreateSourceDriver), so unlike a builder-made
+// driver its behavior isn't validated here — the compiler already guarantees
+// every ISourceDriver method is implemented.
+func (d *Driver) Validate() error {
+	return d.Info().Validate()
 }
 
 func (d *Driver) configurationSchema() (jsonx.JSONMap, error) {

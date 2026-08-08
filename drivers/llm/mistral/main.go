@@ -7,8 +7,9 @@ import (
 
 const baseURL = "https://api.mistral.ai/v1"
 
-func New() llm.Driver {
+func New() (llm.Driver, error) {
 	return llm.CreateDriver(
+		llm.WithKey("mistral"),
 		llm.WithName("Mistral"),
 		llm.WithDescription("Mistral language models."),
 		llm.WithIcon("https://mistral.ai/favicon.ico"),

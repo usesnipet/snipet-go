@@ -5,30 +5,40 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
-	"github.com/usesnipet/snipet/internal/runtime/registry"
+	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/tool"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
-func newFakeToolDriver(name string, toolName string, call func(context.Context, tool.Call) (tool.Result, error)) tool.Driver {
-	return tool.CreateDriver(
-		tool.WithName(name),
-		tool.WithDescription(name),
+func newFakeToolDriver(t *testing.T, key string, displayName string, toolName string, call func(context.Context, tool.Call) (tool.Result, error)) tool.Driver {
+	t.Helper()
+
+	if call == nil {
+		call = func(context.Context, tool.Call) (tool.Result, error) { return tool.Result{}, nil }
+	}
+
+	driver, err := tool.CreateDriver(
+		tool.WithKey(key),
+		tool.WithName(displayName),
+		tool.WithDescription(displayName),
 		tool.WithToolSet(tool.NewToolset(tool.NewTool(toolName, toolName, nil))),
 		tool.WithAPI(tool.API{
 			TestConnection: func(context.Context, jsonx.JSONMap) error { return nil },
 			Call:           call,
 		}),
 	)
+	require.NoError(t, err)
+	return driver
 }
 
 func TestToolManagerToolsetNamespacesByDriver(t *testing.T) {
 	t.Parallel()
 
-	reg := registry.New[tool.Driver]()
-	reg.MustRegister("alpha", newFakeToolDriver("Alpha", "search", nil))
-	reg.MustRegister("beta", newFakeToolDriver("Beta", "search", nil))
+	reg := driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError))
+	reg.MustRegister(newFakeToolDriver(t, "alpha", "Alpha", "search", nil), nil)
+	reg.MustRegister(newFakeToolDriver(t, "beta", "Beta", "search", nil), nil)
 
 	manager := manager.NewTool(manager.NewDriver(reg))
 
@@ -45,11 +55,11 @@ func TestToolManagerCallDispatchesToOwningDriver(t *testing.T) {
 	t.Parallel()
 
 	var gotCall tool.Call
-	reg := registry.New[tool.Driver]()
-	reg.MustRegister("alpha", newFakeToolDriver("Alpha", "search", func(_ context.Context, call tool.Call) (tool.Result, error) {
+	reg := driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError))
+	reg.MustRegister(newFakeToolDriver(t, "alpha", "Alpha", "search", func(_ context.Context, call tool.Call) (tool.Result, error) {
 		gotCall = call
 		return tool.Result{Tool: call.Tool, Arguments: call.Arguments, Result: "ok"}, nil
-	}))
+	}), nil)
 
 	manager := manager.NewTool(manager.NewDriver(reg))
 
@@ -66,7 +76,7 @@ func TestToolManagerCallDispatchesToOwningDriver(t *testing.T) {
 func TestToolManagerCallUnknownToolReturnsErrToolNotFound(t *testing.T) {
 	t.Parallel()
 
-	toolManager := manager.NewTool(manager.NewDriver(registry.New[tool.Driver]()))
+	toolManager := manager.NewTool(manager.NewDriver(driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError))))
 
 	_, err := toolManager.Call(context.Background(), tool.Call{Tool: "missing__tool"})
 	require.ErrorIs(t, err, manager.ErrToolNotFound)

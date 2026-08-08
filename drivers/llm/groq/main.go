@@ -7,8 +7,9 @@ import (
 
 const baseURL = "https://api.groq.com/openai/v1"
 
-func New() llm.Driver {
+func New() (llm.Driver, error) {
 	return llm.CreateDriver(
+		llm.WithKey("groq"),
 		llm.WithName("Groq"),
 		llm.WithDescription("Groq high-speed inference models."),
 		llm.WithIcon("https://groq.com/favicon.ico"),

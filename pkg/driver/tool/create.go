@@ -2,7 +2,6 @@ package tool
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/jsonx"
@@ -16,6 +15,15 @@ type options struct {
 
 // Option configures a Driver created via CreateDriver.
 type Option func(*options)
+
+// WithKey sets the driver's registry identity (driver.Info.Key). It's
+// required — CreateDriver fails without it — since R.Register derives the
+// driver's registry key from it.
+func WithKey(key string) Option {
+	return func(o *options) {
+		o.info.Key = key
+	}
+}
 
 // WithName sets the driver's display name (driver.Info.Name).
 func WithName(name string) Option {
@@ -74,10 +82,11 @@ func WithToolSetSchema(schemaJSON []byte) Option {
 	}
 }
 
-// CreateDriver builds a Driver from the given Options. The actual behavior
-// (TestConnection/Call) comes from WithAPI; any method whose underlying func
-// is nil returns an error when called.
-func CreateDriver(opts ...Option) Driver {
+// CreateDriver builds a Driver from the given Options. Key, TestConnection,
+// and Call (the latter two set via WithAPI) are required; CreateDriver
+// returns an error instead of a Driver if any of them is missing, so a
+// misconfigured driver never gets registered.
+func CreateDriver(opts ...Option) (Driver, error) {
 	o := &options{
 		toolset: Toolset{},
 		info:    driver.Info{},
@@ -86,7 +95,12 @@ func CreateDriver(opts ...Option) Driver {
 		opt(o)
 	}
 
-	return &toolDriver{info: o.info, toolset: o.toolset, api: o.api}
+	d := &toolDriver{info: o.info, toolset: o.toolset, api: o.api}
+	if err := d.Validate(); err != nil {
+		return nil, err
+	}
+
+	return d, nil
 }
 
 // toolDriver is the concrete Driver built by CreateDriver, delegating each
@@ -101,10 +115,23 @@ func (d *toolDriver) Info() driver.Info {
 	return d.info
 }
 
-func (d *toolDriver) TestConnection(ctx context.Context, config jsonx.JSONMap) error {
-	if d.api.TestConnection == nil {
-		return fmt.Errorf("test connection not configured")
+// Validate checks Info is well-formed and TestConnection and Call are both
+// configured. It's called by CreateDriver and again by R.Register, so a
+// driver missing either never enters a registry.
+func (d *toolDriver) Validate() error {
+	if err := d.info.Validate(); err != nil {
+		return err
 	}
+	if d.api.TestConnection == nil {
+		return ErrTestConnectionNotConfigured
+	}
+	if d.api.Call == nil {
+		return ErrCallNotConfigured
+	}
+	return nil
+}
+
+func (d *toolDriver) TestConnection(ctx context.Context, config jsonx.JSONMap) error {
 	return d.api.TestConnection(ctx, config)
 }
 
@@ -113,8 +140,5 @@ func (d *toolDriver) ToolSet() Toolset {
 }
 
 func (d *toolDriver) Call(ctx context.Context, call Call) (Result, error) {
-	if d.api.Call == nil {
-		return Result{}, fmt.Errorf("call not configured")
-	}
 	return d.api.Call(ctx, call)
 }

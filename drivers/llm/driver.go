@@ -6,17 +6,22 @@ import (
 	"github.com/usesnipet/snipet/drivers/llm/ollama"
 	"github.com/usesnipet/snipet/drivers/llm/openai"
 	"github.com/usesnipet/snipet/drivers/llm/openrouter"
-	"github.com/usesnipet/snipet/internal/runtime/registry"
+	"github.com/usesnipet/snipet/internal/logger"
+	"github.com/usesnipet/snipet/pkg/driver"
 	llmDriver "github.com/usesnipet/snipet/pkg/driver/llm"
 )
 
-func Registry() *registry.R[llmDriver.Driver] {
-	registry := registry.New[llmDriver.Driver]()
-	registry.MustRegister("openai", openai.New())
-	registry.MustRegister("groq", groq.New())
-	registry.MustRegister("ollama", ollama.New())
-	registry.MustRegister("mistral", mistral.New())
-	registry.MustRegister("openrouter", openrouter.New())
+// Registry builds the LLM driver registry. A driver that fails to
+// construct (e.g. a required option wasn't set) is logged and skipped
+// rather than crashing the whole registry.
+func Registry(log *logger.Logger) *driver.Registry[llmDriver.Driver] {
+	r := driver.NewRegistry[llmDriver.Driver](log)
 
-	return registry
+	r.Register(openai.New())
+	r.Register(groq.New())
+	r.Register(ollama.New())
+	r.Register(mistral.New())
+	r.Register(openrouter.New())
+
+	return r
 }

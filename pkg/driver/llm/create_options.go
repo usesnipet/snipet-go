@@ -14,6 +14,15 @@ func WithInfo(info driver.Info) Option {
 	}
 }
 
+// WithKey sets the driver's registry identity (driver.Info.Key). It's
+// required — CreateDriver fails without it — since R.Register derives the
+// driver's registry key from it.
+func WithKey(key string) Option {
+	return func(o *llmDriver) {
+		o.info.Key = key
+	}
+}
+
 // WithName sets the driver's display name (driver.Info.Name).
 func WithName(name string) Option {
 	return func(o *llmDriver) {

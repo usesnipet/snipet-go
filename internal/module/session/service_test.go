@@ -22,7 +22,6 @@ import (
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
-	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
@@ -206,23 +205,25 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 
 	primary := llmmocks.NewMockDriver(t)
 	primary.EXPECT().Info().Return(driver.Info{
+		Key:                 "primary",
 		Name:                "primary",
 		Description:         "primary",
 		ConfigurationSchema: jsonx.JSONMap{"type": "object"},
 	})
+	primary.EXPECT().Validate().Return(nil)
 	primary.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(llm.TextDeltaEvent{Text: "ok"}), nil)
 
-	llmReg := registry.New[llm.Driver]()
-	llmReg.MustRegister("primary", primary)
+	llmReg := driver.NewRegistry[llm.Driver](logger.NewLogger(logger.LevelError))
+	llmReg.MustRegister(primary, nil)
 	agentSvc := agent.NewService(
 		agentRepo,
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
 			manager.NewDriver(llmReg),
-			manager.NewTool(manager.NewDriver(registry.New[tool.Driver]())),
+			manager.NewTool(manager.NewDriver(driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError)))),
 			logger.NewLogger(logger.LevelError),
 		),
 		executionRepo,

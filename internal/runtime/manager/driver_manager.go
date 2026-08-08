@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/pkg/driver"
 	jsonschema "github.com/usesnipet/snipet/pkg/json_schema"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
 type Driver[T driver.IDriver] struct {
-	registry *registry.R[T]
+	registry *driver.Registry[T]
 }
 
-func NewDriver[T driver.IDriver](registry *registry.R[T]) *Driver[T] {
+func NewDriver[T driver.IDriver](registry *driver.Registry[T]) *Driver[T] {
 	return &Driver[T]{registry: registry}
 }
 
@@ -93,9 +92,7 @@ func (m *Driver[T]) ListDrivers(ctx context.Context) ([]driver.Info, error) {
 		if err != nil {
 			return nil, err
 		}
-		info := driver.Info()
-		info.Key = name
-		drivers = append(drivers, info)
+		drivers = append(drivers, driver.Info())
 	}
 
 	return drivers, nil

@@ -9,8 +9,9 @@ import (
 //go:embed tools.json
 var toolsJSON []byte
 
-func New() tool.Driver {
+func New() (tool.Driver, error) {
 	return tool.CreateDriver(
+		tool.WithKey("swapi"),
 		tool.WithName("SWAPI"),
 		tool.WithDescription("Star Wars API tool"),
 		tool.WithIcon("https://swapi.info/favicon.ico"),

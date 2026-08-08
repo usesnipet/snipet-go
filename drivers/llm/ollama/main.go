@@ -13,8 +13,9 @@ var schemaJSON []byte
 
 const baseURL = "http://localhost:11434/v1"
 
-func New() llm.Driver {
+func New() (llm.Driver, error) {
 	return llm.CreateDriver(
+		llm.WithKey("ollama"),
 		llm.WithName("Ollama"),
 		llm.WithDescription("Local Ollama models."),
 		llm.WithIcon("https://ollama.com/public/icon.png"),

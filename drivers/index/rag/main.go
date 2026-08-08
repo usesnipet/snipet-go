@@ -27,11 +27,20 @@ func (d *Driver) Info() driver.Info {
 		panic(err)
 	}
 	return driver.Info{
+		Key:                 "rag",
 		Name:                "RAG",
 		Description:         "Indexes and retrieves knowledge with embeddings.",
 		Tags:                []string{"index", "rag"},
 		ConfigurationSchema: schema,
 	}
+}
+
+// Validate checks Info is well-formed. Driver implements knowledge.IIndexDriver
+// directly (not via a builder), so unlike a builder-made driver its behavior
+// isn't validated here — the compiler already guarantees every IIndexDriver
+// method is implemented.
+func (d *Driver) Validate() error {
+	return d.Info().Validate()
 }
 
 func (d *Driver) configurationSchema() (jsonx.JSONMap, error) {

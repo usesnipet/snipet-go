@@ -76,16 +76,16 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	messageRepo := repository.NewExecutionMessageRepository(db)
 
 	// runtime
-	sourceRegistry := source.Registry()
+	sourceRegistry := source.Registry(logger)
 	sourceManager := manager.NewDriver(sourceRegistry)
 
-	indexRegistry := index.Registry()
+	indexRegistry := index.Registry(logger)
 	indexManager := manager.NewDriver(indexRegistry)
 
-	llmRegistry := llm.Registry()
+	llmRegistry := llm.Registry(logger)
 	llmManager := manager.NewDriver(llmRegistry)
 
-	toolRegistry := tool.Registry()
+	toolRegistry := tool.Registry(logger)
 	toolManager := manager.NewTool(manager.NewDriver(toolRegistry))
 
 	engine := runtime.NewEngine(llmManager, toolManager, logger)

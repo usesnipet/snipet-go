@@ -14,7 +14,6 @@ import (
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 	"github.com/usesnipet/snipet/internal/runtime"
 	"github.com/usesnipet/snipet/internal/runtime/manager"
-	"github.com/usesnipet/snipet/internal/runtime/registry"
 	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/llm"
 	llmmocks "github.com/usesnipet/snipet/pkg/driver/llm/mocks"
@@ -45,10 +44,10 @@ func (it *fakeStreamIterator) Event() llm.StreamEvent { return it.events[it.idx-
 func (it *fakeStreamIterator) Err() error             { return nil }
 func (it *fakeStreamIterator) Close() error           { return nil }
 
-func newTestEngine(llmReg *registry.R[llm.Driver]) *runtime.Engine {
+func newTestEngine(llmReg *driver.Registry[llm.Driver]) *runtime.Engine {
 	return runtime.NewEngine(
 		manager.NewDriver(llmReg),
-		manager.NewTool(manager.NewDriver(registry.New[tool.Driver]())),
+		manager.NewTool(manager.NewDriver(driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError)))),
 		logger.NewLogger(logger.LevelError),
 	)
 }
@@ -77,10 +76,12 @@ func newPrimaryLLM(t *testing.T) *llmmocks.MockDriver {
 
 	d := llmmocks.NewMockDriver(t)
 	d.EXPECT().Info().Return(driver.Info{
+		Key:                 "primary",
 		Name:                "primary",
 		Description:         "primary",
 		ConfigurationSchema: jsonx.JSONMap{"type": "object"},
 	})
+	d.EXPECT().Validate().Return(nil)
 	return d
 }
 
@@ -121,8 +122,8 @@ func TestRunPlaygroundCreatesExecutionWithoutSession(t *testing.T) {
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(llm.TextDeltaEvent{Text: "done"}), nil)
 
-	llmReg := registry.New[llm.Driver]()
-	llmReg.MustRegister("primary", primary)
+	llmReg := driver.NewRegistry[llm.Driver](logger.NewLogger(logger.LevelError))
+	llmReg.MustRegister(primary, nil)
 
 	svc := agent.NewService(
 		agentRepo,
@@ -201,8 +202,8 @@ func TestRunWithSessionLoadsHistoryAndSkipsRePersistingIt(t *testing.T) {
 			return streamOf(llm.TextDeltaEvent{Text: "done"}), nil
 		})
 
-	llmReg := registry.New[llm.Driver]()
-	llmReg.MustRegister("primary", primary)
+	llmReg := driver.NewRegistry[llm.Driver](logger.NewLogger(logger.LevelError))
+	llmReg.MustRegister(primary, nil)
 
 	svc := agent.NewService(
 		agentRepo,
