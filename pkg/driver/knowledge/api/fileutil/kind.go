@@ -1,16 +1,16 @@
-package fs
+package fileutil
 
 import (
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 )
 
-func mapKind(filePath string) knowledge.SourceItemKind {
-	normalized := detectMediaType(filePath)
-	if normalized == "" {
+// MapKind classifies an already-normalized media type into a SourceItemKind.
+func MapKind(mediaType string) knowledge.SourceItemKind {
+	if mediaType == "" {
 		return knowledge.SourceItemKindUnknown
 	}
 
-	switch normalized {
+	switch mediaType {
 	case "text/plain":
 		return knowledge.SourceItemKindText
 	case "application/pdf", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel.sheet.binary.macroEnabled.12":

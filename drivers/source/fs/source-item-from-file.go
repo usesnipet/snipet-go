@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
+	"github.com/usesnipet/snipet/pkg/driver/knowledge/api/fileutil"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
@@ -17,12 +18,13 @@ func sourceItemFromFile(path string) (*knowledge.SourceItem, string, error) {
 		return nil, "", err
 	}
 
-	hash, err := fileHash(path)
+	hash, err := hashFile(path)
 	if err != nil {
 		return nil, "", err
 	}
 
-	kind := mapKind(path)
+	mediaType := detectFileMediaType(path)
+	kind := fileutil.MapKind(mediaType)
 
 	lastModified := info.ModTime()
 	item := &knowledge.SourceItem{
@@ -30,7 +32,7 @@ func sourceItemFromFile(path string) (*knowledge.SourceItem, string, error) {
 		Name:         info.Name(),
 		Kind:         kind,
 		LastModified: &lastModified,
-		Attributes:   mapAttributes(kind, path, info),
+		Attributes:   mapAttributes(kind, mediaType, path, info),
 		Metadata: jsonx.JSONMap{
 			"size":          info.Size(),
 			"last_modified": lastModified,
@@ -39,4 +41,24 @@ func sourceItemFromFile(path string) (*knowledge.SourceItem, string, error) {
 		},
 	}
 	return item, hash, nil
+}
+
+func hashFile(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	return fileutil.Hash(file)
+}
+
+func detectFileMediaType(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	return fileutil.DetectMediaType(path, file)
 }
