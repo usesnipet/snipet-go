@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/usesnipet/snipet/pkg/driver"
+	jsonschema "github.com/usesnipet/snipet/pkg/json_schema"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
@@ -64,9 +65,12 @@ func WithSourceTags(tags ...string) SourceOption {
 
 // WithSourceConfigurationSchema sets the raw JSON Schema (as a
 // jsonx.JSONMap) used to validate config passed to the driver.
-func WithSourceConfigurationSchema(schema jsonx.JSONMap) SourceOption {
+func WithSourceConfigurationSchema(schemaJSON []byte) SourceOption {
 	return func(d *sourceDriver) {
-		d.info.ConfigurationSchema = schema
+		schema, err := jsonschema.Load(schemaJSON)
+		if err == nil {
+			d.info.ConfigurationSchema = schema
+		}
 	}
 }
 

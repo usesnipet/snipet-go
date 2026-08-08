@@ -9,7 +9,8 @@ import (
 
 func Registry(log *logger.Logger) *driver.Registry[knowledge.ISourceDriver] {
 	r := driver.NewRegistry[knowledge.ISourceDriver](log)
-	r.Register(fs.NewDriver(), nil)
+
+	r.Register(fs.NewDriver())
 
 	return r
 }

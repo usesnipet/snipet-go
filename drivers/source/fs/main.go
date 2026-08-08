@@ -3,11 +3,9 @@ package fs
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"os"
 
-	"github.com/usesnipet/snipet/pkg/driver"
 	"github.com/usesnipet/snipet/pkg/driver/knowledge"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
@@ -15,43 +13,20 @@ import (
 //go:embed schema.json
 var schemaJSON []byte
 
-type Driver struct{}
-
-func NewDriver() knowledge.ISourceDriver {
-	return &Driver{}
+func NewDriver() (knowledge.ISourceDriver, error) {
+	return knowledge.CreateSourceDriver(
+		knowledge.WithSourceKey("fs"),
+		knowledge.WithSourceName("Filesystem"),
+		knowledge.WithSourceDescription("Reads knowledge items from a local filesystem path."),
+		knowledge.WithSourceTags("source", "filesystem"),
+		knowledge.WithSourceConfigurationSchema(schemaJSON),
+		knowledge.WithTestConnection(testConnection),
+		knowledge.WithIterator(iterator),
+		knowledge.WithReader(reader),
+	)
 }
 
-func (d *Driver) Info() driver.Info {
-	schema, err := d.configurationSchema()
-	if err != nil {
-		panic(err)
-	}
-	return driver.Info{
-		Key:                 "fs",
-		Name:                "Filesystem",
-		Description:         "Reads knowledge items from a local filesystem path.",
-		Tags:                []string{"source", "filesystem"},
-		ConfigurationSchema: schema,
-	}
-}
-
-// Validate checks Info is well-formed. Driver implements knowledge.ISourceDriver
-// directly (not via knowledge.CreateSourceDriver), so unlike a builder-made
-// driver its behavior isn't validated here — the compiler already guarantees
-// every ISourceDriver method is implemented.
-func (d *Driver) Validate() error {
-	return d.Info().Validate()
-}
-
-func (d *Driver) configurationSchema() (jsonx.JSONMap, error) {
-	var schema jsonx.JSONMap
-	if err := json.Unmarshal(schemaJSON, &schema); err != nil {
-		return nil, fmt.Errorf("fs: parse schema: %w", err)
-	}
-	return schema, nil
-}
-
-func (d *Driver) TestConnection(ctx context.Context, config jsonx.JSONMap) error {
+func testConnection(ctx context.Context, config jsonx.JSONMap) error {
 	cfg, err := jsonx.ParseJSONMap[Config](config)
 	if err != nil {
 		return err
@@ -72,7 +47,7 @@ func (d *Driver) TestConnection(ctx context.Context, config jsonx.JSONMap) error
 	return nil
 }
 
-func (d *Driver) Iterator(ctx context.Context, config jsonx.JSONMap) (knowledge.IKnowledgeIterator, error) {
+func iterator(ctx context.Context, config jsonx.JSONMap) (knowledge.IKnowledgeIterator, error) {
 	cfg, err := jsonx.ParseJSONMap[Config](config)
 	if err != nil {
 		return nil, err
@@ -85,6 +60,6 @@ func (d *Driver) Iterator(ctx context.Context, config jsonx.JSONMap) (knowledge.
 	return NewIterator(files), nil
 }
 
-func (d *Driver) Reader(ctx context.Context, config jsonx.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
+func reader(ctx context.Context, config jsonx.JSONMap, itemID string) (knowledge.IKnowledgeReader, error) {
 	return NewReader(config, itemID)
 }
