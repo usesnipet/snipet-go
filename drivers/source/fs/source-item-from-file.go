@@ -9,22 +9,27 @@ import (
 )
 
 // sourceItemFromFile builds a SourceItem from a local file path.
-// The item ID is the absolute path, Kind is inferred from content/extension,
-// and Metadata includes size, last_modified, path, and name.
-// The second return value is a content hash used for change detection.
+// The item ID is the absolute path, Kind and Attributes are inferred from
+// content/extension, and Metadata includes size, last_modified, path, and
+// name. The second return value is a content hash used for change detection.
 func sourceItemFromFile(path string) (*knowledge.SourceItem, string, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, "", err
 	}
 
-	hash, err := hashFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, "", err
 	}
+	defer file.Close()
 
-	mediaType := detectFileMediaType(path)
-	kind := fileutil.MapKind(mediaType)
+	kind, attributes, rest := fileutil.Inspect(path, info.Size(), file)
+
+	hash, err := fileutil.Hash(rest)
+	if err != nil {
+		return nil, "", err
+	}
 
 	lastModified := info.ModTime()
 	item := &knowledge.SourceItem{
@@ -32,7 +37,7 @@ func sourceItemFromFile(path string) (*knowledge.SourceItem, string, error) {
 		Name:         info.Name(),
 		Kind:         kind,
 		LastModified: &lastModified,
-		Attributes:   mapAttributes(kind, mediaType, path, info),
+		Attributes:   attributes,
 		Metadata: jsonx.JSONMap{
 			"size":          info.Size(),
 			"last_modified": lastModified,
@@ -41,24 +46,4 @@ func sourceItemFromFile(path string) (*knowledge.SourceItem, string, error) {
 		},
 	}
 	return item, hash, nil
-}
-
-func hashFile(path string) (string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	return fileutil.Hash(file)
-}
-
-func detectFileMediaType(path string) string {
-	file, err := os.Open(path)
-	if err != nil {
-		return ""
-	}
-	defer file.Close()
-
-	return fileutil.DetectMediaType(path, file)
 }

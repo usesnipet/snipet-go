@@ -13,9 +13,11 @@ type DocumentAttributes struct {
 // TextAttributes describes a SourceItemKindText item: plain text content
 // with optional bibliographic metadata.
 type TextAttributes struct {
-	Language *string `json:"language" validate:"omitempty,len=2"`
-	Title    *string `json:"title" validate:"omitempty,max=255"`
-	Author   *string `json:"author" validate:"omitempty,max=255"`
+	MediaType string  `json:"media_type" validate:"required"`
+	Size      int64   `json:"size" validate:"required"`
+	Language  *string `json:"language" validate:"omitempty,len=2"`
+	Title     *string `json:"title" validate:"omitempty,max=255"`
+	Author    *string `json:"author" validate:"omitempty,max=255"`
 }
 
 // ImageAttributes describes a SourceItemKindImage item: media type, size,
