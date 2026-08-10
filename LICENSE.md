@@ -1,7 +1,7 @@
 # Snipet Sustainable Use License
 
 **Version 1.0**
-Copyright (c) 2025-present [Seu Nome / Sua Empresa]
+Copyright (c) 2025-present Mayron Gonçalves Fernandes
 
 This repository, including all "Enterprise Components" as defined below, is licensed under the terms of this Snipet Sustainable Use License (the "License"), unless a file explicitly states otherwise (see "Third-Party Components" below).
 
@@ -13,7 +13,7 @@ By using, copying, modifying, or distributing the Software, you agree to be boun
 
 - **"Software"** means the source code, object code, and documentation made available in this repository (the "Snipet" project), including the Enterprise Components.
 - **"Enterprise Components"** means any source file whose file name contains the substring `.ee.`, or that resides within a directory named `ee`, or within a directory whose name ends with the suffix `.ee` (e.g., `internal/tenant.ee/`). Enterprise Components are part of the Software and are licensed to you under this same License, subject to Section 5 below.
-- **"Licensor"** means [Seu Nome / Sua Empresa], the copyright holder of the Software.
+- **"Licensor"** means Mayron Gonçalves Fernandes, an individual residing in Sete Lagoas, State of Minas Gerais, Brazil, the copyright holder of the Software.
 - **"You"** means the individual or entity exercising rights under this License.
 - **"Internal Business Purposes"** means use of the Software to operate your own products, services, or internal tooling — including offering those products or services commercially to your own end customers — where the Software itself is not the product or service being offered.
 
@@ -69,8 +69,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## 9. Governing Law
 
-This License shall be governed by the laws of [sua jurisdição — ex: Brazil / State of ___], without regard to its conflict-of-laws principles.
+This License shall be governed by and construed in accordance with the laws of the Federative Republic of Brazil, without regard to its conflict-of-laws principles. Any dispute arising out of or related to this License shall be submitted to the exclusive jurisdiction of the courts of the Comarca of Sete Lagoas, State of Minas Gerais, Brazil, with express waiver of any other jurisdiction, however privileged it may be.
 
 ---
 
-*If you are unsure whether your intended use qualifies as an Internal Business Purpose under Section 3(a), contact [seu e-mail/contato] before proceeding.*
+*If you are unsure whether your intended use qualifies as an Internal Business Purpose under Section 3(a), contact [mayron.g.fernandes@gmail.com] before proceeding.*
