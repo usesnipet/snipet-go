@@ -41,117 +41,93 @@ func (_m *MockIUserRepository) EXPECT() *MockIUserRepository_Expecter {
 	return &MockIUserRepository_Expecter{mock: &_m.Mock}
 }
 
-// CreateInClient provides a mock function for the type MockIUserRepository
-func (_mock *MockIUserRepository) CreateInClient(ctx context.Context, clientCode string, user *model.ClientUser, externalID *string) error {
-	ret := _mock.Called(ctx, clientCode, user, externalID)
+// Create provides a mock function for the type MockIUserRepository
+func (_mock *MockIUserRepository) Create(ctx context.Context, model1 *model.User) error {
+	ret := _mock.Called(ctx, model1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateInClient")
+		panic("no return value specified for Create")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.ClientUser, *string) error); ok {
-		r0 = returnFunc(ctx, clientCode, user, externalID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.User) error); ok {
+		r0 = returnFunc(ctx, model1)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// MockIUserRepository_CreateInClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInClient'
-type MockIUserRepository_CreateInClient_Call struct {
+// MockIUserRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockIUserRepository_Create_Call struct {
 	*mock.Call
 }
 
-// CreateInClient is a helper method to define mock.On call
+// Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
-//   - user *model.User
-//   - externalID *string
-func (_e *MockIUserRepository_Expecter) CreateInClient(ctx any, clientCode any, user any, externalID any) *MockIUserRepository_CreateInClient_Call {
-	return &MockIUserRepository_CreateInClient_Call{Call: _e.mock.On("CreateInClient", ctx, clientCode, user, externalID)}
+//   - model1 *model.User
+func (_e *MockIUserRepository_Expecter) Create(ctx any, model1 any) *MockIUserRepository_Create_Call {
+	return &MockIUserRepository_Create_Call{Call: _e.mock.On("Create", ctx, model1)}
 }
 
-func (_c *MockIUserRepository_CreateInClient_Call) Run(run func(ctx context.Context, clientCode string, user *model.ClientUser, externalID *string)) *MockIUserRepository_CreateInClient_Call {
+func (_c *MockIUserRepository_Create_Call) Run(run func(ctx context.Context, model1 *model.User)) *MockIUserRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 *model.User
 		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 *model.ClientUser
-		if args[2] != nil {
-			arg2 = args[2].(*model.ClientUser)
-		}
-		var arg3 *string
-		if args[3] != nil {
-			arg3 = args[3].(*string)
+			arg1 = args[1].(*model.User)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *MockIUserRepository_CreateInClient_Call) Return(err error) *MockIUserRepository_CreateInClient_Call {
+func (_c *MockIUserRepository_Create_Call) Return(err error) *MockIUserRepository_Create_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockIUserRepository_CreateInClient_Call) RunAndReturn(run func(ctx context.Context, clientCode string, user *model.ClientUser, externalID *string) error) *MockIUserRepository_CreateInClient_Call {
+func (_c *MockIUserRepository_Create_Call) RunAndReturn(run func(ctx context.Context, model1 *model.User) error) *MockIUserRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// FilterInClient provides a mock function for the type MockIUserRepository
-func (_mock *MockIUserRepository) FilterInClient(ctx context.Context, clientCode string, filter1 *filter.Options[model.ClientUser]) (*page.Paginated[model.ClientUser], error) {
-	ret := _mock.Called(ctx, clientCode, filter1)
+// DeleteByID provides a mock function for the type MockIUserRepository
+func (_mock *MockIUserRepository) DeleteByID(ctx context.Context, id string) error {
+	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FilterInClient")
+		panic("no return value specified for DeleteByID")
 	}
 
-	var r0 *page.Paginated[model.ClientUser]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *filter.Options[model.ClientUser]) (*page.Paginated[model.ClientUser], error)); ok {
-		return returnFunc(ctx, clientCode, filter1)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *filter.Options[model.ClientUser]) *page.Paginated[model.ClientUser]); ok {
-		r0 = returnFunc(ctx, clientCode, filter1)
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*page.Paginated[model.ClientUser])
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *filter.Options[model.ClientUser]) error); ok {
-		r1 = returnFunc(ctx, clientCode, filter1)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
-// MockIUserRepository_FilterInClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FilterInClient'
-type MockIUserRepository_FilterInClient_Call struct {
+// MockIUserRepository_DeleteByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByID'
+type MockIUserRepository_DeleteByID_Call struct {
 	*mock.Call
 }
 
-// FilterInClient is a helper method to define mock.On call
+// DeleteByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
-//   - filter1 *filter.Options[model.ClientUser]
-func (_e *MockIUserRepository_Expecter) FilterInClient(ctx any, clientCode any, filter1 any) *MockIUserRepository_FilterInClient_Call {
-	return &MockIUserRepository_FilterInClient_Call{Call: _e.mock.On("FilterInClient", ctx, clientCode, filter1)}
+//   - id string
+func (_e *MockIUserRepository_Expecter) DeleteByID(ctx any, id any) *MockIUserRepository_DeleteByID_Call {
+	return &MockIUserRepository_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
 }
 
-func (_c *MockIUserRepository_FilterInClient_Call) Run(run func(ctx context.Context, clientCode string, filter1 *filter.Options[model.ClientUser])) *MockIUserRepository_FilterInClient_Call {
+func (_c *MockIUserRepository_DeleteByID_Call) Run(run func(ctx context.Context, id string)) *MockIUserRepository_DeleteByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -161,71 +137,133 @@ func (_c *MockIUserRepository_FilterInClient_Call) Run(run func(ctx context.Cont
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *filter.Options[model.ClientUser]
-		if args[2] != nil {
-			arg2 = args[2].(*filter.Options[model.ClientUser])
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockIUserRepository_FilterInClient_Call) Return(paginated *page.Paginated[model.ClientUser], err error) *MockIUserRepository_FilterInClient_Call {
+func (_c *MockIUserRepository_DeleteByID_Call) Return(err error) *MockIUserRepository_DeleteByID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIUserRepository_DeleteByID_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockIUserRepository_DeleteByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Filter provides a mock function for the type MockIUserRepository
+func (_mock *MockIUserRepository) Filter(ctx context.Context, filter1 *filter.Options[model.User]) (*page.Paginated[model.User], error) {
+	ret := _mock.Called(ctx, filter1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Filter")
+	}
+
+	var r0 *page.Paginated[model.User]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.User]) (*page.Paginated[model.User], error)); ok {
+		return returnFunc(ctx, filter1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.User]) *page.Paginated[model.User]); ok {
+		r0 = returnFunc(ctx, filter1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*page.Paginated[model.User])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *filter.Options[model.User]) error); ok {
+		r1 = returnFunc(ctx, filter1)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIUserRepository_Filter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Filter'
+type MockIUserRepository_Filter_Call struct {
+	*mock.Call
+}
+
+// Filter is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filter1 *filter.Options[model.User]
+func (_e *MockIUserRepository_Expecter) Filter(ctx any, filter1 any) *MockIUserRepository_Filter_Call {
+	return &MockIUserRepository_Filter_Call{Call: _e.mock.On("Filter", ctx, filter1)}
+}
+
+func (_c *MockIUserRepository_Filter_Call) Run(run func(ctx context.Context, filter1 *filter.Options[model.User])) *MockIUserRepository_Filter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *filter.Options[model.User]
+		if args[1] != nil {
+			arg1 = args[1].(*filter.Options[model.User])
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIUserRepository_Filter_Call) Return(paginated *page.Paginated[model.User], err error) *MockIUserRepository_Filter_Call {
 	_c.Call.Return(paginated, err)
 	return _c
 }
 
-func (_c *MockIUserRepository_FilterInClient_Call) RunAndReturn(run func(ctx context.Context, clientCode string, filter1 *filter.Options[model.ClientUser]) (*page.Paginated[model.ClientUser], error)) *MockIUserRepository_FilterInClient_Call {
+func (_c *MockIUserRepository_Filter_Call) RunAndReturn(run func(ctx context.Context, filter1 *filter.Options[model.User]) (*page.Paginated[model.User], error)) *MockIUserRepository_Filter_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// FindByExternalIDInClient provides a mock function for the type MockIUserRepository
-func (_mock *MockIUserRepository) FindByExternalIDInClient(ctx context.Context, clientCode string, externalID string) (*model.ClientUser, error) {
-	ret := _mock.Called(ctx, clientCode, externalID)
+// FindByEmail provides a mock function for the type MockIUserRepository
+func (_mock *MockIUserRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	ret := _mock.Called(ctx, email)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindByExternalIDInClient")
+		panic("no return value specified for FindByEmail")
 	}
 
-	var r0 *model.ClientUser
+	var r0 *model.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*model.ClientUser, error)); ok {
-		return returnFunc(ctx, clientCode, externalID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.User, error)); ok {
+		return returnFunc(ctx, email)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *model.ClientUser); ok {
-		r0 = returnFunc(ctx, clientCode, externalID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.User); ok {
+		r0 = returnFunc(ctx, email)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.ClientUser)
+			r0 = ret.Get(0).(*model.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, clientCode, externalID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, email)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockIUserRepository_FindByExternalIDInClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByExternalIDInClient'
-type MockIUserRepository_FindByExternalIDInClient_Call struct {
+// MockIUserRepository_FindByEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByEmail'
+type MockIUserRepository_FindByEmail_Call struct {
 	*mock.Call
 }
 
-// FindByExternalIDInClient is a helper method to define mock.On call
+// FindByEmail is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
-//   - externalID string
-func (_e *MockIUserRepository_Expecter) FindByExternalIDInClient(ctx any, clientCode any, externalID any) *MockIUserRepository_FindByExternalIDInClient_Call {
-	return &MockIUserRepository_FindByExternalIDInClient_Call{Call: _e.mock.On("FindByExternalIDInClient", ctx, clientCode, externalID)}
+//   - email string
+func (_e *MockIUserRepository_Expecter) FindByEmail(ctx any, email any) *MockIUserRepository_FindByEmail_Call {
+	return &MockIUserRepository_FindByEmail_Call{Call: _e.mock.On("FindByEmail", ctx, email)}
 }
 
-func (_c *MockIUserRepository_FindByExternalIDInClient_Call) Run(run func(ctx context.Context, clientCode string, externalID string)) *MockIUserRepository_FindByExternalIDInClient_Call {
+func (_c *MockIUserRepository_FindByEmail_Call) Run(run func(ctx context.Context, email string)) *MockIUserRepository_FindByEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -235,71 +273,65 @@ func (_c *MockIUserRepository_FindByExternalIDInClient_Call) Run(run func(ctx co
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockIUserRepository_FindByExternalIDInClient_Call) Return(user *model.ClientUser, err error) *MockIUserRepository_FindByExternalIDInClient_Call {
+func (_c *MockIUserRepository_FindByEmail_Call) Return(user *model.User, err error) *MockIUserRepository_FindByEmail_Call {
 	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockIUserRepository_FindByExternalIDInClient_Call) RunAndReturn(run func(ctx context.Context, clientCode string, externalID string) (*model.ClientUser, error)) *MockIUserRepository_FindByExternalIDInClient_Call {
+func (_c *MockIUserRepository_FindByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (*model.User, error)) *MockIUserRepository_FindByEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// FindByIDInClient provides a mock function for the type MockIUserRepository
-func (_mock *MockIUserRepository) FindByIDInClient(ctx context.Context, clientCode string, id string) (*model.ClientUser, error) {
-	ret := _mock.Called(ctx, clientCode, id)
+// FindByID provides a mock function for the type MockIUserRepository
+func (_mock *MockIUserRepository) FindByID(ctx context.Context, id string) (*model.User, error) {
+	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindByIDInClient")
+		panic("no return value specified for FindByID")
 	}
 
-	var r0 *model.ClientUser
+	var r0 *model.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*model.ClientUser, error)); ok {
-		return returnFunc(ctx, clientCode, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.User, error)); ok {
+		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *model.ClientUser); ok {
-		r0 = returnFunc(ctx, clientCode, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.User); ok {
+		r0 = returnFunc(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.ClientUser)
+			r0 = ret.Get(0).(*model.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, clientCode, id)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockIUserRepository_FindByIDInClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByIDInClient'
-type MockIUserRepository_FindByIDInClient_Call struct {
+// MockIUserRepository_FindByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByID'
+type MockIUserRepository_FindByID_Call struct {
 	*mock.Call
 }
 
-// FindByIDInClient is a helper method to define mock.On call
+// FindByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientCode string
 //   - id string
-func (_e *MockIUserRepository_Expecter) FindByIDInClient(ctx any, clientCode any, id any) *MockIUserRepository_FindByIDInClient_Call {
-	return &MockIUserRepository_FindByIDInClient_Call{Call: _e.mock.On("FindByIDInClient", ctx, clientCode, id)}
+func (_e *MockIUserRepository_Expecter) FindByID(ctx any, id any) *MockIUserRepository_FindByID_Call {
+	return &MockIUserRepository_FindByID_Call{Call: _e.mock.On("FindByID", ctx, id)}
 }
 
-func (_c *MockIUserRepository_FindByIDInClient_Call) Run(run func(ctx context.Context, clientCode string, id string)) *MockIUserRepository_FindByIDInClient_Call {
+func (_c *MockIUserRepository_FindByID_Call) Run(run func(ctx context.Context, id string)) *MockIUserRepository_FindByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -309,9 +341,67 @@ func (_c *MockIUserRepository_FindByIDInClient_Call) Run(run func(ctx context.Co
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIUserRepository_FindByID_Call) Return(user *model.User, err error) *MockIUserRepository_FindByID_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *MockIUserRepository_FindByID_Call) RunAndReturn(run func(ctx context.Context, id string) (*model.User, error)) *MockIUserRepository_FindByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateByID provides a mock function for the type MockIUserRepository
+func (_mock *MockIUserRepository) UpdateByID(ctx context.Context, id string, model1 *model.User) error {
+	ret := _mock.Called(ctx, id, model1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateByID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.User) error); ok {
+		r0 = returnFunc(ctx, id, model1)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIUserRepository_UpdateByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateByID'
+type MockIUserRepository_UpdateByID_Call struct {
+	*mock.Call
+}
+
+// UpdateByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - model1 *model.User
+func (_e *MockIUserRepository_Expecter) UpdateByID(ctx any, id any, model1 any) *MockIUserRepository_UpdateByID_Call {
+	return &MockIUserRepository_UpdateByID_Call{Call: _e.mock.On("UpdateByID", ctx, id, model1)}
+}
+
+func (_c *MockIUserRepository_UpdateByID_Call) Run(run func(ctx context.Context, id string, model1 *model.User)) *MockIUserRepository_UpdateByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 *model.User
 		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg2 = args[2].(*model.User)
 		}
 		run(
 			arg0,
@@ -322,12 +412,12 @@ func (_c *MockIUserRepository_FindByIDInClient_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockIUserRepository_FindByIDInClient_Call) Return(user *model.ClientUser, err error) *MockIUserRepository_FindByIDInClient_Call {
-	_c.Call.Return(user, err)
+func (_c *MockIUserRepository_UpdateByID_Call) Return(err error) *MockIUserRepository_UpdateByID_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockIUserRepository_FindByIDInClient_Call) RunAndReturn(run func(ctx context.Context, clientCode string, id string) (*model.ClientUser, error)) *MockIUserRepository_FindByIDInClient_Call {
+func (_c *MockIUserRepository_UpdateByID_Call) RunAndReturn(run func(ctx context.Context, id string, model1 *model.User) error) *MockIUserRepository_UpdateByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
