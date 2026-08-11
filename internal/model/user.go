@@ -1,32 +1,28 @@
 package model
 
-import "github.com/usesnipet/snipet/pkg/jsonx"
+import "time"
 
-type ClientUser struct {
+type Challenge string
+
+const (
+	ChallengeActiveAccount  Challenge = "active_account"
+	ChallengeChangePassword Challenge = "change_password"
+)
+
+type User struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	Name     string        `gorm:"type:varchar(255);not null" json:"name"`
-	Picture  *string       `gorm:"type:text" json:"picture"`
-	Email    *string       `gorm:"type:text" json:"email"`
-	Metadata jsonx.JSONMap `gorm:"type:jsonb;not null" json:"metadata"`
+	Name         string      `gorm:"type:varchar(255);not null" json:"name"`
+	Email        string      `gorm:"type:varchar(255);not null;unique" json:"email"`
+	PasswordHash *string     `gorm:"type:varchar(255)" json:"-"`
+	Picture      *string     `gorm:"type:varchar(255)" json:"picture"`
+	IsAdmin      bool        `gorm:"type:boolean;not null;default:false" json:"is_admin"`
+	Challenges   []Challenge `gorm:"type:jsonb;not null;serializer:json" json:"challenges"`
 
-	ClientUserToSessions []ClientUserToSession `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientToClientUsers  []ClientToClientUser  `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-}
+	CreatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
+	UpdatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 
-type ClientToClientUser struct {
-	ClientID     string  `gorm:"primaryKey" json:"client_id"`
-	ClientUserID string  `gorm:"primaryKey" json:"client_user_id"`
-	ExternalID   *string `gorm:"type:varchar(255);index" json:"external_id"`
-
-	Client     Client     `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientUser ClientUser `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-}
-
-type ClientUserToSession struct {
-	ClientUserID string `gorm:"primaryKey" json:"user_id"`
-	SessionID    string `gorm:"primaryKey" json:"session_id"`
-
-	ClientUser ClientUser `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Session    Session    `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Accounts []Account `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
+	Tokens   []Token   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
+	Members  []Member  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
 }

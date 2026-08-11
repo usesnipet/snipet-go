@@ -9,6 +9,7 @@ import (
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	clientauth "github.com/usesnipet/snipet/internal/module/auth"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 )
@@ -62,9 +63,13 @@ func (s *Service) Me(ctx context.Context, clientCode string) (*model.ClientUser,
 	if !ok || principal.GetType() != auth.PrincipalTypeJWT || principal.GetJWTClaims() == nil {
 		return nil, apperr.Unauthorized("unauthorized")
 	}
-	claims := principal.GetJWTClaims()
-	if claims.ClientCode != clientCode {
+	claims, ok := principal.GetJWTClaims().(*clientauth.UserClaims)
+	if !ok || claims.ClientCode != clientCode {
 		return nil, apperr.Forbidden("client code mismatch")
 	}
-	return s.userRepo.FindByIDInClient(ctx, clientCode, claims.Subject)
+	subject, err := claims.GetSubject()
+	if err != nil {
+		return nil, apperr.Unauthorized("unauthorized")
+	}
+	return s.userRepo.FindByIDInClient(ctx, clientCode, subject)
 }

@@ -1,4 +1,4 @@
-package auth
+package clientauth
 
 import (
 	"context"
@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/usesnipet/snipet/config"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
-	"github.com/usesnipet/snipet/internal/auth"
+	coreauth "github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/model"
-	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
+	auth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 	"gorm.io/gorm"
@@ -23,8 +23,8 @@ type Service struct {
 	clientRepo          repository.IClientRepository
 	userRepo            repository.IClientUserRepository
 	refreshTokenRepo    repository.IRefreshTokenRepository
-	jwtService          *auth.JWTService
-	refreshTokenService *auth.RefreshTokenService
+	jwtService          *coreauth.JWTService[*UserClaims]
+	refreshTokenService *coreauth.TokenService
 	authConfig          config.AuthConfig
 }
 
@@ -33,8 +33,8 @@ func NewService(
 	clientRepo repository.IClientRepository,
 	userRepo repository.IClientUserRepository,
 	refreshTokenRepo repository.IRefreshTokenRepository,
-	jwtService *auth.JWTService,
-	refreshTokenService *auth.RefreshTokenService,
+	jwtService *coreauth.JWTService[*UserClaims],
+	refreshTokenService *coreauth.TokenService,
 	authConfig config.AuthConfig,
 ) *Service {
 	return &Service{
@@ -49,12 +49,16 @@ func NewService(
 }
 
 func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.ClientUser, metadata jsonx.JSONMap) (*AuthenticateResponse, error) {
-	accessToken, accessTokenExpiresAt, _, err := s.jwtService.GenerateToken(clientCode, user)
+	claims := &UserClaims{
+		BaseClaims: coreauth.NewBaseClaims(s.authConfig, user.ID),
+		ClientCode: clientCode,
+	}
+	accessToken, accessTokenExpiresAt, err := s.jwtService.GenerateToken(claims)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, refreshTokenExpiresAt, err := s.refreshTokenService.GenerateRefreshToken()
+	refreshToken, refreshTokenExpiresAt, err := s.refreshTokenService.GenerateToken()
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +68,7 @@ func (s *Service) issueTokens(ctx context.Context, clientCode string, user *mode
 	}
 
 	record := &model.RefreshToken{
-		Hash:      s.refreshTokenService.HashRefreshToken(refreshToken),
+		Hash:      s.refreshTokenService.HashToken(refreshToken),
 		UserID:    user.ID,
 		ExpiresAt: refreshTokenExpiresAt,
 		Metadata:  metadata,
@@ -138,7 +142,7 @@ func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, 
 }
 
 func (s *Service) Refresh(ctx context.Context, clientCode string, dto RefreshDTO, refreshMetadata jsonx.JSONMap) (*AuthenticateResponse, error) {
-	hash := s.refreshTokenService.HashRefreshToken(dto.RefreshToken)
+	hash := s.refreshTokenService.HashToken(dto.RefreshToken)
 	token, err := s.refreshTokenRepo.FindByHash(ctx, hash)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

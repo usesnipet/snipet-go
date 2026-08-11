@@ -1,4 +1,4 @@
-package auth
+package clientauth
 
 import (
 	"net"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/usesnipet/snipet/internal/api"
-	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
+	auth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 

@@ -115,9 +115,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// services
 	apiKeyGenerator := auth.NewAPIKeyGenerator()
 	apiKeyHasher := auth.NewKeyHasher()
-	jwtService := auth.NewJWTService(cfg.Auth)
+	jwtService := auth.NewJWTService(cfg.Auth, func() *auth_module.UserClaims { return &auth_module.UserClaims{} })
 
-	refreshTokenService := auth.NewRefreshTokenService(cfg.Auth)
+	refreshTokenService := auth.NewTokenService(cfg.Auth)
 
 	authRegistry := auth_provider.NewRegistry()
 

@@ -52,7 +52,10 @@ func (s *Service) ensureSessionUserAccess(ctx context.Context, clientID string, 
 		return nil
 	}
 
-	userId := principal.GetJWTClaims().Subject
+	userId, err := principal.GetJWTClaims().GetSubject()
+	if err != nil {
+		return apperr.Unauthorized("unauthorized")
+	}
 	hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientID, userId, sessionID)
 	if err != nil {
 		return err
@@ -75,10 +78,14 @@ func (s *Service) Filter(ctx context.Context, clientCode string, filter *filter.
 	if principal.GetType() == auth.PrincipalTypeAPIKey {
 		return s.sessionRepo.FilterInClient(ctx, clientID, filter)
 	}
+	userId, err := principal.GetJWTClaims().GetSubject()
+	if err != nil {
+		return nil, apperr.Unauthorized("unauthorized")
+	}
 	return s.sessionRepo.FilterInClientWithUser(
 		ctx,
 		clientID,
-		principal.GetJWTClaims().Subject,
+		userId,
 		filter,
 	)
 }
@@ -117,8 +124,12 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 		return nil, apperr.Unauthorized("unauthorized")
 	}
 	if principal.GetType() == auth.PrincipalTypeJWT {
+		userId, err := principal.GetJWTClaims().GetSubject()
+		if err != nil {
+			return nil, apperr.Unauthorized("unauthorized")
+		}
 		session.ClientUserToSessions = append(session.ClientUserToSessions, model.ClientUserToSession{
-			ClientUserID: principal.GetJWTClaims().Subject,
+			ClientUserID: userId,
 		})
 	}
 	if err := s.sessionRepo.Create(ctx, session); err != nil {

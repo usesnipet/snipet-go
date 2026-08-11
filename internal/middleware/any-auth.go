@@ -10,9 +10,10 @@ import (
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
+	clientauth "github.com/usesnipet/snipet/internal/module/auth"
 )
 
-func jwtAuth(jwtService *auth.JWTService, next http.Handler, w http.ResponseWriter, r *http.Request) {
+func jwtAuth(jwtService *auth.JWTService[*clientauth.UserClaims], next http.Handler, w http.ResponseWriter, r *http.Request) {
 	token := r.Header.Get("Authorization")
 	if !strings.HasPrefix(token, "Bearer ") {
 		api.WriteError(w, http.StatusUnauthorized, errors.New("unauthorized"))
@@ -54,7 +55,7 @@ func apiKeyAuth(apiKeyService *apikey.Service, apiKeyCache cache.ICache, next ht
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
 
-func AnyAuth(jwtService *auth.JWTService, apiKeyService *apikey.Service, apiKeyCache cache.ICache) api.MiddlewareFunc {
+func AnyAuth(jwtService *auth.JWTService[*clientauth.UserClaims], apiKeyService *apikey.Service, apiKeyCache cache.ICache) api.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			jwt := r.Header.Get("Authorization")

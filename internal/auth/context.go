@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type PrincipalType string
@@ -15,10 +17,10 @@ type Principal struct {
 	Type PrincipalType
 
 	APIKeyID  *string
-	JWTClaims *UserClaims
+	JWTClaims jwt.Claims
 }
 
-func NewPrincipal(t PrincipalType, apiKeyID *string, jwtClaims *UserClaims) *Principal {
+func NewPrincipal(t PrincipalType, apiKeyID *string, jwtClaims jwt.Claims) *Principal {
 	return &Principal{
 		Type:      t,
 		APIKeyID:  apiKeyID,
@@ -34,7 +36,7 @@ func (p *Principal) GetAPIKeyID() *string {
 	return p.APIKeyID
 }
 
-func (p *Principal) GetJWTClaims() *UserClaims {
+func (p *Principal) GetJWTClaims() jwt.Claims {
 	return p.JWTClaims
 }
 
