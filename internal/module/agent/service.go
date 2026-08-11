@@ -129,13 +129,20 @@ func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...execut
 	initialMessages := make([]msg.Message, 0)
 
 	if input.SessionID != nil {
-		// history, err := s.executionMessageRepo.ListBySessionID(ctx, *input.SessionID)
-		// if err != nil {
-		// 	return err
-		// }
-		// for _, em := range history {
-		// 	initialMessages = append(initialMessages, em.Message)
-		// }
+		history, err := s.executionMessageRepo.FilterInSession(
+			ctx,
+			*input.SessionID,
+			filter.New[model.ExecutionMessage](
+				filter.OrderDesc("created_at"),
+				filter.Take(20),
+			),
+		)
+		if err != nil {
+			return err
+		}
+		for _, em := range history.Data {
+			initialMessages = append(initialMessages, em.Message)
+		}
 	}
 
 	userMessage := msg.NewMessage(msg.RoleUser, input.Message)

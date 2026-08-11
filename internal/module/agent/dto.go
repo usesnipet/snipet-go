@@ -31,13 +31,15 @@ type LinkClientToAgentDTO struct {
 }
 
 type RunAgentDTO struct {
-	Message string `json:"message" validate:"required"`
+	Message        string `json:"message" validate:"required"`
+	StreamMessages bool   `json:"stream_messages" validate:"omitempty,boolean"`
 }
 
 // RunInput is the internal input for starting an agent execution.
 // SessionID nil means playground run (no session history).
 type RunInput struct {
-	AgentID   string
-	SessionID *string
-	Message   string
+	StreamMessages bool
+	AgentID        string
+	SessionID      *string
+	Message        string
 }

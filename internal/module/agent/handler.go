@@ -154,7 +154,11 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 
 	sse := subscriber.NewSSE(w)
 
-	err := h.service.Run(r.Context(), RunInput{AgentID: h.agentID(r), Message: dto.Message}, sse)
+	err := h.service.Run(
+		r.Context(),
+		RunInput{AgentID: h.agentID(r), Message: dto.Message, StreamMessages: dto.StreamMessages},
+		sse,
+	)
 	if err != nil {
 		return sse.HandleError(err)
 	}
