@@ -3,7 +3,7 @@
 **Version 1.0**
 Copyright (c) 2025-present Mayron Gonçalves Fernandes
 
-This repository, including all "Enterprise Components" as defined below, is licensed under the terms of this Snipet Sustainable Use License (the "License"), unless a file explicitly states otherwise (see "Third-Party Components" below).
+This repository is licensed under the terms of this Snipet Sustainable Use License (the "License"), unless a file explicitly states otherwise (see "Third-Party Components" below).
 
 By using, copying, modifying, or distributing the Software, you agree to be bound by the terms of this License.
 
@@ -11,11 +11,12 @@ By using, copying, modifying, or distributing the Software, you agree to be boun
 
 ## 1. Definitions
 
-- **"Software"** means the source code, object code, and documentation made available in this repository (the "Snipet" project), including the Enterprise Components.
-- **"Enterprise Components"** means any source file whose file name contains the substring `.ee.`, or that resides within a directory named `ee`, or within a directory whose name ends with the suffix `.ee` (e.g., `internal/tenant.ee/`). Enterprise Components are part of the Software and are licensed to you under this same License, subject to Section 5 below.
+- **"Software"** means the source code, object code, and documentation made available in this repository (the "Snipet" project).
 - **"Licensor"** means Mayron Gonçalves Fernandes, an individual residing in Sete Lagoas, State of Minas Gerais, Brazil, the copyright holder of the Software.
 - **"You"** means the individual or entity exercising rights under this License.
 - **"Internal Business Purposes"** means use of the Software to operate your own products, services, or internal tooling — including offering those products or services commercially to your own end customers — where the Software itself is not the product or service being offered.
+- **"Multi-Tenant Use"** means creating, activating, or operating more than one `Tenant` record within a single running instance of the Software.
+- **"Snipet Enterprise License"** means the separate, paid license under which the Licensor grants the right to operate the Software in Multi-Tenant Use, as described in Section 5.
 
 ## 2. Grant of Rights
 
@@ -45,15 +46,15 @@ d. **Trademarks.** This License does not grant You any right to use the Licensor
 
 Any code You contribute to this repository is licensed to the Licensor and to all other users under the same terms as this License, unless otherwise agreed in writing with the Licensor.
 
-## 5. Enterprise Components — Reservation of Rights
+## 5. Multi-Tenant Use — Licensed Capability
 
-Enterprise Components (as defined in Section 1) are licensed to You under this License as of the effective date of the version of the Software You obtained.
+The Software is a single codebase: there is no separate "enterprise" source tree, module, or build. The same source, unmodified, is used whether the Software is operated for a single Tenant or for Multi-Tenant Use.
 
-The Licensor reserves the right to release future versions of existing Enterprise Components, or new Enterprise Components, under a separate license (the **"Snipet Enterprise License"**), which may impose additional conditions on their use — including, without limitation, a requirement to hold a paid subscription to use such components in production.
+Multi-Tenant Use is not granted to You under Section 2. Operating the Software in Multi-Tenant Use requires a valid Snipet Enterprise License and a valid license key issued by the Licensor.
 
-Any such change will:
-- apply only prospectively, to versions of the Enterprise Components released on or after the effective date of the new license;
-- not retroactively revoke or modify the rights already granted to You under this License for versions of the Software You obtained prior to that date.
+You retain Your rights under Section 2(b) to copy, modify, and create derivative works of the Software, including any technical limitation that restricts the Software to a single Tenant. Removing, disabling, or circumventing such a limitation does not, by itself, grant You the right to operate the modified Software in Multi-Tenant Use. Operating the Software in Multi-Tenant Use without a valid Snipet Enterprise License — whether or not any technical limitation has been modified or removed — is a breach of this License under Section 7.
+
+The Licensor may change the terms, pricing, or availability of the Snipet Enterprise License at any time. Such a change does not retroactively revoke a license key already issued to You for its stated term.
 
 ## 6. Third-Party Components
 
