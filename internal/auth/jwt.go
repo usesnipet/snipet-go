@@ -24,7 +24,7 @@ func NewJWTService(config config.AuthConfig) *JWTService {
 	return &JWTService{config: config}
 }
 
-func (s *JWTService) GenerateToken(clientCode string, user *model.User) (string, time.Time, UserClaims, error) {
+func (s *JWTService) GenerateToken(clientCode string, user *model.ClientUser) (string, time.Time, UserClaims, error) {
 	expiresAt := time.Now().Add(s.config.JWTExpiration)
 	claims := UserClaims{
 		ClientCode: clientCode,

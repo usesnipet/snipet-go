@@ -1,4 +1,4 @@
-package user
+package clientuser
 
 import (
 	"context"
@@ -14,10 +14,10 @@ import (
 )
 
 type Service struct {
-	userRepo repository.IUserRepository
+	userRepo repository.IClientUserRepository
 }
 
-func NewService(userRepo repository.IUserRepository) *Service {
+func NewService(userRepo repository.IClientUserRepository) *Service {
 	return &Service{userRepo: userRepo}
 }
 
@@ -30,7 +30,7 @@ func (s *Service) CreateAnonymous(ctx context.Context, clientCode string, dto Cr
 	if dto.Name != nil {
 		name = *dto.Name
 	}
-	user := &model.User{
+	user := &model.ClientUser{
 		Name:     name,
 		Metadata: dto.Metadata,
 	}
@@ -41,7 +41,7 @@ func (s *Service) CreateAnonymous(ctx context.Context, clientCode string, dto Cr
 }
 
 func (s *Service) CreateAuthenticated(ctx context.Context, clientCode string, dto CreateAuthenticatedClientUserDTO) error {
-	user := &model.User{
+	user := &model.ClientUser{
 		Name:     dto.Name,
 		Metadata: dto.Metadata,
 		Email:    &dto.Email,
@@ -53,11 +53,11 @@ func (s *Service) CreateAuthenticated(ctx context.Context, clientCode string, dt
 	return nil
 }
 
-func (s *Service) FilterInClient(ctx context.Context, clientCode string, filter *filter.Options[model.User]) (*page.Paginated[model.User], error) {
+func (s *Service) FilterInClient(ctx context.Context, clientCode string, filter *filter.Options[model.ClientUser]) (*page.Paginated[model.ClientUser], error) {
 	return s.userRepo.FilterInClient(ctx, clientCode, filter)
 }
 
-func (s *Service) Me(ctx context.Context, clientCode string) (*model.User, error) {
+func (s *Service) Me(ctx context.Context, clientCode string) (*model.ClientUser, error) {
 	principal, ok := auth.GetPrincipal(ctx)
 	if !ok || principal.GetType() != auth.PrincipalTypeJWT || principal.GetJWTClaims() == nil {
 		return nil, apperr.Unauthorized("unauthorized")

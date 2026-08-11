@@ -9,7 +9,7 @@ import (
 
 // UserResponse exists so swagger annotations in this package can reference it
 // without importing internal/model directly.
-type UserResponse = model.User
+type UserResponse = model.ClientUser
 
 type AuthenticateResponse struct {
 	AccessToken           string       `json:"access_token"`

@@ -21,8 +21,8 @@ func testAuthConfig() config.AuthConfig {
 	}
 }
 
-func testUser() *model.User {
-	return &model.User{
+func testUser() *model.ClientUser {
+	return &model.ClientUser{
 		ID:   "11111111-1111-1111-1111-111111111111",
 		Name: "Test User",
 	}

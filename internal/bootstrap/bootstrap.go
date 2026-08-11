@@ -28,11 +28,11 @@ import (
 	auth_module "github.com/usesnipet/snipet/internal/module/auth"
 	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/client"
+	"github.com/usesnipet/snipet/internal/module/clientuser"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
 	"github.com/usesnipet/snipet/internal/module/session"
-	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
@@ -70,7 +70,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeIndexRepo := repository.NewKnowledgeIndexRepository(db)
 	knowledgeItemRepo := repository.NewKnowledgeItemRepository(db)
 	indexedKnowledgeItemRepo := repository.NewIndexedKnowledgeItemRepository(db)
-	userRepo := repository.NewUserRepository(db, clientRepo)
+	clientUserRepo := repository.NewClientUserRepository(db, clientRepo)
 	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
 	executionRepo := repository.NewExecutionRepository(db)
 	messageRepo := repository.NewExecutionMessageRepository(db)
@@ -124,7 +124,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	authService := auth_module.NewService(
 		authRegistry,
 		clientRepo,
-		userRepo,
+		clientUserRepo,
 		refreshTokenRepo,
 		jwtService,
 		refreshTokenService,
@@ -162,7 +162,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	sessionService := session.NewService(sessionRepo, messageRepo, clientService, agentService)
 
-	userService := user.NewService(userRepo)
+	clientUserService := clientuser.NewService(clientUserRepo)
 	appService := app_module.NewService(&cfg.App)
 
 	// cache
@@ -183,7 +183,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
-	userHandler := user.NewHandler(userService, apiKeyMiddleware, anyAuthMiddleware, jwtMiddleware)
+	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyAuthMiddleware, jwtMiddleware)
 
 	// register routes
 	api := api.New()
@@ -198,7 +198,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		sessionHandler.RegisterRoutes(r, api.Serve)
 		knowledgeHandler.RegisterRoutes(r, api.Serve)
 		knowledgeIndexHandler.RegisterRoutes(r, api.Serve)
-		userHandler.RegisterRoutes(r, api.Serve)
+		clientUserHandler.RegisterRoutes(r, api.Serve)
 	})
 
 	logger.Infof("sync worker pool started with %d workers", cfg.Sync.Workers)

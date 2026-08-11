@@ -117,8 +117,8 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 		return nil, apperr.Unauthorized("unauthorized")
 	}
 	if principal.GetType() == auth.PrincipalTypeJWT {
-		session.UserToSessions = append(session.UserToSessions, model.UserToSession{
-			UserID: principal.GetJWTClaims().Subject,
+		session.ClientUserToSessions = append(session.ClientUserToSessions, model.ClientUserToSession{
+			ClientUserID: principal.GetJWTClaims().Subject,
 		})
 	}
 	if err := s.sessionRepo.Create(ctx, session); err != nil {

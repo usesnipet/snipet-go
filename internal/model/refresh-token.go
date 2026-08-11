@@ -16,5 +16,5 @@ type RefreshToken struct {
 	RevokedAt *time.Time    `gorm:"type:timestamp" json:"revoked_at"`
 	Metadata  jsonx.JSONMap `gorm:"type:jsonb;not null" json:"metadata"`
 
-	User User `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	User ClientUser `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }

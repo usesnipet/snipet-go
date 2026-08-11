@@ -21,7 +21,7 @@ import (
 type Service struct {
 	registry            *auth_provider.Registry
 	clientRepo          repository.IClientRepository
-	userRepo            repository.IUserRepository
+	userRepo            repository.IClientUserRepository
 	refreshTokenRepo    repository.IRefreshTokenRepository
 	jwtService          *auth.JWTService
 	refreshTokenService *auth.RefreshTokenService
@@ -31,7 +31,7 @@ type Service struct {
 func NewService(
 	registry *auth_provider.Registry,
 	clientRepo repository.IClientRepository,
-	userRepo repository.IUserRepository,
+	userRepo repository.IClientUserRepository,
 	refreshTokenRepo repository.IRefreshTokenRepository,
 	jwtService *auth.JWTService,
 	refreshTokenService *auth.RefreshTokenService,
@@ -48,7 +48,7 @@ func NewService(
 	}
 }
 
-func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.User, metadata jsonx.JSONMap) (*AuthenticateResponse, error) {
+func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.ClientUser, metadata jsonx.JSONMap) (*AuthenticateResponse, error) {
 	accessToken, accessTokenExpiresAt, _, err := s.jwtService.GenerateToken(clientCode, user)
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, 
 	if metadata == nil {
 		metadata = jsonx.JSONMap{}
 	}
-	user := &model.User{
+	user := &model.ClientUser{
 		Name:     name,
 		Picture:  dto.Picture,
 		Email:    dto.Email,

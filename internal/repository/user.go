@@ -10,59 +10,59 @@ import (
 	"gorm.io/gorm"
 )
 
-type IUserRepository interface {
+type IClientUserRepository interface {
 	FilterInClient(
 		ctx context.Context,
 		clientCode string,
-		filter *filter.Options[model.User],
-	) (*page.Paginated[model.User], error)
+		filter *filter.Options[model.ClientUser],
+	) (*page.Paginated[model.ClientUser], error)
 	FindByIDInClient(
 		ctx context.Context,
 		clientCode string,
 		id string,
-	) (*model.User, error)
+	) (*model.ClientUser, error)
 	FindByExternalIDInClient(
 		ctx context.Context,
 		clientCode string,
 		externalID string,
-	) (*model.User, error)
+	) (*model.ClientUser, error)
 
 	CreateInClient(
 		ctx context.Context,
 		clientCode string,
-		user *model.User,
+		user *model.ClientUser,
 		externalID *string,
 	) error
 }
 
-type UserRepository struct {
-	*Repository[model.User]
+type ClientUserRepository struct {
+	*Repository[model.ClientUser]
 	clientRepo IClientRepository
 }
 
-func NewUserRepository(db *gorm.DB, clientRepo IClientRepository) IUserRepository {
-	return &UserRepository{
-		Repository: NewRepository[model.User](db),
+func NewClientUserRepository(db *gorm.DB, clientRepo IClientRepository) IClientUserRepository {
+	return &ClientUserRepository{
+		Repository: NewRepository[model.ClientUser](db),
 		clientRepo: clientRepo,
 	}
 }
 
-func (r *UserRepository) FindByExternalIDInClient(
+func (r *ClientUserRepository) FindByExternalIDInClient(
 	ctx context.Context,
 	clientCode string,
 	externalID string,
-) (*model.User, error) {
+) (*model.ClientUser, error) {
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return nil, err
 	}
 
-	userIDs := gorm.G[model.ClientToUser](r.db(ctx)).
+	userIDs := gorm.G[model.ClientToClientUser](r.db(ctx)).
 		Where("client_id = ?", client.ID).
 		Where("external_id = ?", externalID).
 		Select("user_id")
 
-	user, err := gorm.G[model.User](r.db(ctx)).
+	user, err := gorm.G[model.ClientUser](r.db(ctx)).
 		Where("id IN (?)", userIDs).
 		First(ctx)
 
@@ -72,31 +72,31 @@ func (r *UserRepository) FindByExternalIDInClient(
 	return &user, nil
 }
 
-func (r *UserRepository) FilterInClient(
+func (r *ClientUserRepository) FilterInClient(
 	ctx context.Context,
 	clientCode string,
-	userFilter *filter.Options[model.User],
-) (*page.Paginated[model.User], error) {
+	userFilter *filter.Options[model.ClientUser],
+) (*page.Paginated[model.ClientUser], error) {
 	if userFilter == nil {
-		userFilter = filter.Default[model.User]()
+		userFilter = filter.Default[model.ClientUser]()
 	}
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
 	if err != nil {
 		return nil, err
 	}
 
-	userIDs := gorm.G[model.ClientToUser](r.db(ctx)).
+	userIDs := gorm.G[model.ClientToClientUser](r.db(ctx)).
 		Where("client_id = ?", client.ID).
 		Select("user_id")
 
-	total, err := gorm.G[model.User](r.db(ctx)).
+	total, err := gorm.G[model.ClientUser](r.db(ctx)).
 		Where("id IN (?)", userIDs).
 		Count(ctx, "1 = 1")
 	if err != nil {
 		return nil, err
 	}
 
-	chain, err := userFilter.ToGorm(gorm.G[model.User](r.db(ctx)))
+	chain, err := userFilter.ToGorm(gorm.G[model.ClientUser](r.db(ctx)))
 	if err != nil {
 		return nil, err
 	}
@@ -108,15 +108,15 @@ func (r *UserRepository) FilterInClient(
 	return page.NewPaginated(data, total, int64(userFilter.Skip), int64(userFilter.Take)), err
 }
 
-func (r *UserRepository) FindByIDInClient(
+func (r *ClientUserRepository) FindByIDInClient(
 	ctx context.Context,
 	clientCode string,
 	id string,
-) (*model.User, error) {
+) (*model.ClientUser, error) {
 	paginated, err := r.FilterInClient(
 		ctx,
 		clientCode,
-		filter.New[model.User](filter.WhereEq("id", id)),
+		filter.New[model.ClientUser](filter.WhereEq("id", id)),
 	)
 	if err != nil {
 		return nil, err
@@ -127,10 +127,10 @@ func (r *UserRepository) FindByIDInClient(
 	return paginated.First(), nil
 }
 
-func (r *UserRepository) CreateInClient(
+func (r *ClientUserRepository) CreateInClient(
 	ctx context.Context,
 	clientCode string,
-	user *model.User,
+	user *model.ClientUser,
 	externalID *string,
 ) error {
 	client, err := r.clientRepo.FindByCode(ctx, clientCode)
@@ -138,13 +138,13 @@ func (r *UserRepository) CreateInClient(
 		return err
 	}
 	return WithTransaction(ctx, r.DB, func(ctx context.Context) error {
-		if err := gorm.G[model.User](r.db(ctx)).Create(ctx, user); err != nil {
+		if err := gorm.G[model.ClientUser](r.db(ctx)).Create(ctx, user); err != nil {
 			return err
 		}
-		return gorm.G[model.ClientToUser](r.db(ctx)).Create(ctx, &model.ClientToUser{
-			ClientID:   client.ID,
-			UserID:     user.ID,
-			ExternalID: externalID,
+		return gorm.G[model.ClientToClientUser](r.db(ctx)).Create(ctx, &model.ClientToClientUser{
+			ClientID:     client.ID,
+			ClientUserID: user.ID,
+			ExternalID:   externalID,
 		})
 	})
 }

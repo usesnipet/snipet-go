@@ -1,4 +1,4 @@
-package user
+package clientuser
 
 import (
 	"net/http"
@@ -84,7 +84,7 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) error {
 // @Failure		400			{object}	api.Error
 // @Router			/client/{client_code}/user [get]
 func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {
-	var query FindUsersFilterDTO
+	var query FindClientUsersFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}

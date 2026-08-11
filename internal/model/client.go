@@ -22,6 +22,6 @@ type Client struct {
 	Name   string       `gorm:"type:varchar(255);not null" json:"name"`
 	Config ClientConfig `gorm:"type:jsonb;not null;serializer:json" json:"config"`
 
-	Sessions      []Session      `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientToUsers []ClientToUser `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Sessions      []Session            `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ClientToUsers []ClientToClientUser `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
