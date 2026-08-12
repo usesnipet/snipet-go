@@ -17,6 +17,7 @@ type Config struct {
 	Auth     AuthConfig     `env:", prefix=AUTH_"`
 	SMTP     SMTPConfig     `env:", prefix=SMTP_"`
 	Sync     SyncConfig     `env:", prefix=SYNC_"`
+	User     UserConfig     `env:""`
 	Env      string         `env:"ENV, default=development"`
 	DevProxy string         `env:"DEV_PROXY, default=http://localhost:5173"`
 }

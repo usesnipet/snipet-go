@@ -10,6 +10,7 @@ import (
 	"github.com/usesnipet/snipet/config"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/module/clientauth"
 )
 
 func testAuthConfig() config.AuthConfig {
@@ -31,7 +32,7 @@ func testUser() *model.ClientUser {
 func TestGenerateTokenReturnsBearerToken(t *testing.T) {
 	t.Parallel()
 
-	service := auth.NewJWTService(testAuthConfig())
+	service := auth.NewJWTService(testAuthConfig(), func() *clientauth.UserClaims { return &clientauth.UserClaims{} })
 	token, _, _, err := service.GenerateToken("client-abc", testUser())
 	require.NoError(t, err)
 
