@@ -35,6 +35,7 @@ import (
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
 	"github.com/usesnipet/snipet/internal/module/session"
+	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
@@ -185,6 +186,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sessionService := session.NewService(sessionRepo, messageRepo, clientService, agentService)
 
 	clientUserService := clientuser.NewService(clientUserRepo)
+	userService := user.NewService(userRepo, cfg.User)
 	appService := app_module.NewService(&cfg.App)
 
 	// cache
@@ -213,6 +215,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
 	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, clientJWTMiddleware)
+	userHandler := user.NewHandler(userService, platformJWTMiddleware)
 
 	// register routes
 	api := api.New()
@@ -229,6 +232,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		knowledgeHandler.RegisterRoutes(r, api.Serve)
 		knowledgeIndexHandler.RegisterRoutes(r, api.Serve)
 		clientUserHandler.RegisterRoutes(r, api.Serve)
+		userHandler.RegisterRoutes(r, api.Serve)
 	})
 
 	logger.Infof("sync worker pool started with %d workers", cfg.Sync.Workers)

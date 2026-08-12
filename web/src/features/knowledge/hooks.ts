@@ -35,7 +35,7 @@ export const useListKnowledge = (
 ): UseQueryResult<PaginatedKnowledge, Error> => {
   return useQuery({
     queryKey: listKnowledgeQueryKey(),
-    queryFn: () => knowledgeService.list({ ...opts, auth: "api-key" }),
+    queryFn: () => knowledgeService.list(opts),
     refetchInterval: (query) => {
       const knowledgeList = query.state.data?.data ?? [];
       const isPending = knowledgeList.some(k => k.sync_status === "pending");
@@ -53,7 +53,7 @@ export const useKnowledge = (
 ): UseQueryResult<Knowledge, Error> => {
   return useQuery({
     queryKey: knowledgeQueryKey(id),
-    queryFn: () => knowledgeService.findByID(id, { ...opts, auth: "api-key" }),
+    queryFn: () => knowledgeService.findByID(id, opts),
     enabled: Boolean(id),
     refetchInterval: (query) => {
       const knowledge = query.state.data;
@@ -74,7 +74,7 @@ export const useListKnowledgeItems = (
 ): UseQueryResult<PaginatedKnowledgeItem, Error> => {
   return useQuery({
     queryKey: [...listKnowledgeItemsQueryKey(id), opts?.searchParams],
-    queryFn: () => knowledgeService.listItems(id, { ...opts, auth: "api-key" }),
+    queryFn: () => knowledgeService.listItems(id, opts),
     enabled: Boolean(id),
   });
 };
@@ -86,7 +86,7 @@ export const useCreateKnowledge = (
   return useMutation({
     mutationKey: createKnowledgeQueryKey(),
     mutationFn: (data: CreateKnowledge) =>
-      knowledgeService.create(data, { ...opts, auth: "api-key" }),
+      knowledgeService.create(data, opts),
     onSuccess: ({ knowledge }) => {
       toast({
         title: "Knowledge created successfully",
@@ -112,7 +112,7 @@ export const useUpdateKnowledge = (
   return useMutation({
     mutationKey: updateKnowledgeQueryKey(),
     mutationFn: ({ id, data }: { id: string; data: UpdateKnowledge }) =>
-      knowledgeService.update(id, data, { ...opts, auth: "api-key" }),
+      knowledgeService.update(id, data, opts),
     onSuccess: (_data, { id }) => {
       toast({
         title: "Knowledge updated successfully",
@@ -138,7 +138,7 @@ export const useListKnowledgeDrivers = (
 ): UseQueryResult<DriverInfo[], Error> => {
   return useQuery({
     queryKey: listKnowledgeDriversQueryKey(),
-    queryFn: () => knowledgeService.listDrivers({ ...opts, auth: "api-key" }),
+    queryFn: () => knowledgeService.listDrivers(opts),
   });
 };
 
@@ -149,7 +149,7 @@ export const useSyncKnowledge = (
   return useMutation({
     mutationKey: syncKnowledgeQueryKey(),
     mutationFn: ({ id, force = false }) =>
-      knowledgeService.sync(id, force, { ...opts, auth: "api-key" }),
+      knowledgeService.sync(id, force, opts),
     onSuccess: (_data, { id, force }) => {
       toast({
         title: force ? "Full resync started" : "Sync started",
@@ -178,7 +178,7 @@ export const useDeleteKnowledge = (
   return useMutation({
     mutationKey: deleteKnowledgeQueryKey(),
     mutationFn: (id: string) =>
-      knowledgeService.delete(id, { ...opts, auth: "api-key" }),
+      knowledgeService.delete(id, opts),
     onSuccess: (_data, id) => {
       toast({
         title: "Knowledge deleted successfully",
@@ -208,7 +208,7 @@ export const useListKnowledgeIndexes = (
   return useQuery({
     queryKey: listKnowledgeIndexesQueryKey(knowledgeID),
     queryFn: () =>
-      knowledgeIndexService.list(knowledgeID, { ...opts, auth: "api-key" }),
+      knowledgeIndexService.list(knowledgeID, opts),
     enabled: Boolean(knowledgeID),
   });
 };
@@ -223,7 +223,7 @@ export const useKnowledgeIndex = (
   return useQuery({
     queryKey: knowledgeIndexQueryKey(knowledgeID, id),
     queryFn: () =>
-      knowledgeIndexService.findByID(knowledgeID, id, { ...opts, auth: "api-key" }),
+      knowledgeIndexService.findByID(knowledgeID, id, opts),
     enabled: Boolean(knowledgeID) && Boolean(id),
   });
 };
@@ -235,7 +235,7 @@ export const useCreateKnowledgeIndex = (
   return useMutation({
     mutationKey: createKnowledgeIndexQueryKey(),
     mutationFn: ({ knowledgeID, data }) =>
-      knowledgeIndexService.create(knowledgeID, data, { ...opts, auth: "api-key" }),
+      knowledgeIndexService.create(knowledgeID, data, opts),
     onSuccess: (_data, { knowledgeID }) => {
       toast({
         title: "Index created successfully",
@@ -264,7 +264,7 @@ export const useUpdateKnowledgeIndex = (
   return useMutation({
     mutationKey: updateKnowledgeIndexQueryKey(),
     mutationFn: ({ knowledgeID, id, data }) =>
-      knowledgeIndexService.update(knowledgeID, id, data, { ...opts, auth: "api-key" }),
+      knowledgeIndexService.update(knowledgeID, id, data, opts),
     onSuccess: (_data, { knowledgeID, id }) => {
       toast({
         title: "Index updated successfully",
@@ -290,7 +290,7 @@ export const useDeleteKnowledgeIndex = (
   return useMutation({
     mutationKey: deleteKnowledgeIndexQueryKey(),
     mutationFn: ({ knowledgeID, id }) =>
-      knowledgeIndexService.delete(knowledgeID, id, { ...opts, auth: "api-key" }),
+      knowledgeIndexService.delete(knowledgeID, id, opts),
     onSuccess: (_data, { knowledgeID }) => {
       toast({
         title: "Index deleted successfully",
@@ -314,6 +314,6 @@ export const useListKnowledgeIndexDrivers = (
 ): UseQueryResult<DriverInfo[], Error> => {
   return useQuery({
     queryKey: listKnowledgeIndexDriversQueryKey(),
-    queryFn: () => knowledgeIndexService.listDrivers({ ...opts, auth: "api-key" }),
+    queryFn: () => knowledgeIndexService.listDrivers(opts),
   });
 };

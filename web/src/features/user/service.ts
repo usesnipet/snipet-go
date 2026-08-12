@@ -1,40 +1,35 @@
 import { http } from "@/lib/http";
 
-import { listUserSearchParamsSchema, paginatedUserSchema, userSchema } from "./schemas";
+import { updateProfilePictureSchema, userSchema } from "./schemas";
 
-import type { ListUserSearchParams, PaginatedUser, User } from "./schemas";
-import type { ServiceGetOptions } from "@/lib/services";
+import type { UpdateProfilePicture, User } from "./schemas";
+import type { ServiceGetOptions, ServicePutOptions } from "@/lib/services";
 
-const userUrl = (clientCode: string) => `/api/client/${clientCode}/user`;
+const USERS_URL = "/api/users";
 
-const list = async (
-  clientCode: string,
-  opts: ServiceGetOptions<PaginatedUser, ListUserSearchParams>,
-): Promise<PaginatedUser> => {
-  const { searchParams, ...rest } = opts;
+const me = async (opts: ServiceGetOptions<User> = {}): Promise<User> => {
   return http.get({
-    url: userUrl(clientCode),
-    searchParams,
-    schemas: {
-      response: paginatedUserSchema,
-      searchParams: listUserSearchParamsSchema,
-    },
-    ...rest,
-  })
-}
-
-const me = async (
-  clientCode: string,
-  opts?: ServiceGetOptions<User>,
-): Promise<User> => {
-  return http.get({
-    url: `${userUrl(clientCode)}/me`,
+    url: `${USERS_URL}/me`,
     schemas: { response: userSchema },
     ...opts,
-  })
-}
+  });
+};
+
+const updatePicture = async (
+  body: UpdateProfilePicture,
+  opts: ServicePutOptions<UpdateProfilePicture, void> = {},
+): Promise<void> => {
+  return http.put({
+    url: `${USERS_URL}/me/picture`,
+    body,
+    schemas: {
+      body: updateProfilePictureSchema,
+    },
+    ...opts,
+  });
+};
 
 export const userService = {
-  list,
   me,
-}
+  updatePicture,
+};

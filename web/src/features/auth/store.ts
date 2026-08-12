@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
-import { authTokensSchema } from "./schemas";
+import { authenticateResponseSchema } from "./schemas";
 
-import type { AuthTokens } from "./schemas";
+import type { AuthenticateResponse } from "./schemas";
 
 const KEYS = {
   accessToken: "snipet@access-token",
@@ -27,7 +27,7 @@ type AuthStore = {
   accessTokenExpiresAt: Date | null;
   refreshToken: string | null;
   refreshTokenExpiresAt: Date | null;
-  setTokens: (tokens: AuthTokens) => void;
+  setTokens: (tokens: AuthenticateResponse) => void;
   clear: () => void;
 };
 
@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   refreshTokenExpiresAt: readDate(KEYS.refreshTokenExpiresAt),
 
   setTokens: (tokens) => {
-    const parsed = authTokensSchema.parse(tokens);
+    const parsed = authenticateResponseSchema.parse(tokens);
 
     localStorage.setItem(KEYS.accessToken, parsed.access_token);
     writeDate(KEYS.accessTokenExpiresAt, parsed.access_token_expires_at);

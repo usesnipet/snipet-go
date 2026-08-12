@@ -21,7 +21,7 @@ export const useListClient = (
 ): UseQueryResult<PaginatedClient, Error> => {
   return useQuery({
     queryKey: listClientQueryKey(),
-    queryFn: () => clientService.list({ ...opts, auth: "api-key" }),
+    queryFn: () => clientService.list(opts),
   })
 }
 
@@ -45,7 +45,7 @@ export const useFindByCodeClient = (
   return useQuery({
     queryKey: findByCodeClientQueryKey(code),
     queryFn: (): Promise<Client> =>
-      clientService.findByCode(code, { ...opts, auth: "api-key" }),
+      clientService.findByCode(code, opts),
   })
 }
 
@@ -58,7 +58,7 @@ export const useFindPublicByCodeClient = (
   return useQuery({
     queryKey: findPublicByCodeClientQueryKey(code),
     queryFn: (): Promise<ClientPublic> =>
-      clientService.findPublicByCode(code, { ...opts, auth: false }),
+      clientService.findPublicByCode(code, opts),
   })
 }
 
@@ -69,7 +69,7 @@ export const useCreateClient = (
   return useMutation({
     mutationKey: createClientQueryKey(),
     mutationFn: (data: CreateClient) =>
-      clientService.create(data, { ...opts, auth: "api-key" }),
+      clientService.create(data, opts),
     onSuccess: () => {
       toast({
         title: "Client created successfully",
@@ -94,7 +94,7 @@ export const useUpdateClient = (
   return useMutation({
     mutationKey: updateClientQueryKey(),
     mutationFn: ({ code, data }: { code: string; data: UpdateClient }) =>
-      clientService.update(code, data, { ...opts, auth: "api-key" }),
+      clientService.update(code, data, opts),
     onSuccess: (_data, { code }) => {
       toast({
         title: "Client updated successfully",
@@ -120,7 +120,7 @@ export const useDeleteClient = (
   return useMutation({
     mutationKey: deleteClientQueryKey(),
     mutationFn: (code: string) =>
-      clientService.delete(code, { ...opts, auth: "api-key" }),
+      clientService.delete(code, opts),
     onSuccess: (_data, code) => {
       toast({
         title: "Client deleted successfully",

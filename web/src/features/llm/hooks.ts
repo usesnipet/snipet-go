@@ -23,7 +23,7 @@ export const useListLlm = (
 ): UseQueryResult<PaginatedLlm, Error> => {
   return useQuery({
     queryKey: [...listLlmQueryKey(), opts?.searchParams],
-    queryFn: () => llmService.list({ ...opts, auth: "api-key" }),
+    queryFn: () => llmService.list(opts),
   });
 };
 
@@ -34,7 +34,7 @@ export const useCreateLlm = (
   return useMutation({
     mutationKey: createLlmQueryKey(),
     mutationFn: (data: CreateLlm) =>
-      llmService.create(data, { ...opts, auth: "api-key" }),
+      llmService.create(data, opts),
     onSuccess: () => {
       toast({
         title: "LLM created successfully",
@@ -59,7 +59,7 @@ export const useUpdateLlm = (
   return useMutation({
     mutationKey: updateLlmQueryKey(),
     mutationFn: ({ id, data }: { id: string; data: UpdateLlm }) =>
-      llmService.update(id, data, { ...opts, auth: "api-key" }),
+      llmService.update(id, data, opts),
     onSuccess: () => {
       toast({
         title: "LLM updated successfully",
@@ -84,7 +84,7 @@ export const useDeleteLlm = (
   return useMutation({
     mutationKey: deleteLlmQueryKey(),
     mutationFn: (id: string) =>
-      llmService.delete(id, { ...opts, auth: "api-key" }),
+      llmService.delete(id, opts),
     onSuccess: () => {
       toast({
         title: "LLM deleted successfully",
@@ -108,6 +108,6 @@ export const useListLlmDrivers = (
 ): UseQueryResult<ListDrivers, Error> => {
   return useQuery({
     queryKey: listLlmDriversQueryKey(),
-    queryFn: () => llmService.listDrivers({ ...opts, auth: "api-key" }),
+    queryFn: () => llmService.listDrivers(opts),
   });
 };

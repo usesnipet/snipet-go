@@ -24,7 +24,7 @@ export const useListApiKey = (
 ): UseQueryResult<PaginatedApiKey, Error> => {
   return useQuery({
     queryKey: [...listApiKeyQueryKey(), opts?.searchParams],
-    queryFn: () => apiKeyService.list({ ...opts, auth: "api-key" }),
+    queryFn: () => apiKeyService.list(opts),
   })
 }
 
@@ -35,7 +35,7 @@ export const useCreateApiKey = (
   return useMutation({
     mutationKey: createApiKeyQueryKey(),
     mutationFn: (data: CreateApiKey) =>
-      apiKeyService.create(data, { ...opts, auth: "api-key" }),
+      apiKeyService.create(data, opts),
     onSuccess: () => {
       toast({
         title: "API Key created successfully",
@@ -60,7 +60,7 @@ export const useMeApiKey = (
   return useQuery({
     queryKey: meApiKeyQueryKey(),
     queryFn: (): Promise<ApiKey> =>
-      apiKeyService.me({ ...opts, auth: "api-key" }),
+      apiKeyService.me(opts),
   })
 }
 
@@ -72,7 +72,7 @@ export const useFindByIdApiKey = (
   return useQuery({
     queryKey: findByIdApiKeyQueryKey(id),
     queryFn: (): Promise<ApiKey> =>
-      apiKeyService.findById(id, { ...opts, auth: "api-key" }),
+      apiKeyService.findById(id, opts),
   })
 }
 
@@ -83,7 +83,7 @@ export const useRollApiKey = (
   return useMutation({
     mutationKey: rollApiKeyQueryKey(),
     mutationFn: (id: string) =>
-      apiKeyService.roll(id, { ...opts, auth: "api-key" }),
+      apiKeyService.roll(id, opts),
     onSuccess: (_data, id) => {
       toast({
         title: "API Key rolled successfully",
@@ -110,7 +110,7 @@ export const useUpdateExpirationApiKey = (
   return useMutation({
     mutationKey: updateExpirationApiKeyQueryKey(),
     mutationFn: ({ id, data }: { id: string; data: UpdateApiKeyExpiration }) =>
-      apiKeyService.updateExpiration(id, data, { ...opts, auth: "api-key" }),
+      apiKeyService.updateExpiration(id, data, opts),
     onSuccess: (_data, { id }) => {
       toast({
         title: "API Key expiration updated successfully",
@@ -137,7 +137,7 @@ export const useDeleteApiKey = (
   return useMutation({
     mutationKey: deleteApiKeyQueryKey(),
     mutationFn: (id: string) =>
-      apiKeyService.delete(id, { ...opts, auth: "api-key" }),
+      apiKeyService.delete(id, opts),
     onSuccess: (_data, id) => {
       toast({
         title: "API Key deleted successfully",

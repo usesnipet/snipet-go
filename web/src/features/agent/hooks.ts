@@ -18,7 +18,7 @@ export const useListAgent = (
 ): UseQueryResult<PaginatedAgent, Error> => {
   return useQuery({
     queryKey: listAgentQueryKey(),
-    queryFn: () => agentService.list({ ...opts, auth: "api-key" }),
+    queryFn: () => agentService.list(opts),
   });
 };
 
@@ -31,7 +31,7 @@ export const useFindByIdAgent = (
   return useQuery({
     queryKey: findByIdAgentQueryKey(id),
     queryFn: (): Promise<Agent> =>
-      agentService.findById(id, { ...opts, auth: "api-key" }),
+      agentService.findById(id, opts),
     enabled: !!id,
   });
 };
@@ -43,7 +43,7 @@ export const useCreateAgent = (
   return useMutation({
     mutationKey: createAgentQueryKey(),
     mutationFn: (data: CreateAgent) =>
-      agentService.create(data, { ...opts, auth: "api-key" }),
+      agentService.create(data, opts),
     onSuccess: () => {
       toast({
         title: "Agent created successfully",
@@ -68,7 +68,7 @@ export const useUpdateAgent = (
   return useMutation({
     mutationKey: updateAgentQueryKey(),
     mutationFn: ({ id, data }: { id: string; data: UpdateAgent }) =>
-      agentService.update(id, data, { ...opts, auth: "api-key" }),
+      agentService.update(id, data, opts),
     onSuccess: (_data, { id }) => {
       toast({
         title: "Agent updated successfully",
@@ -94,7 +94,7 @@ export const useDeleteAgent = (
   return useMutation({
     mutationKey: deleteAgentQueryKey(),
     mutationFn: (id: string) =>
-      agentService.delete(id, { ...opts, auth: "api-key" }),
+      agentService.delete(id, opts),
     onSuccess: (_data, id) => {
       toast({
         title: "Agent deleted successfully",

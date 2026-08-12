@@ -1,4 +1,3 @@
-import { useApiKeyStore } from "@/features/api-key/store";
 import { useAuthStore } from "@/features/auth/store";
 import { z, ZodType } from "zod";
 
@@ -14,8 +13,6 @@ export type SearchParamsRecord = Record<
 
 export type PathParamsRecord = Record<string, string | number | boolean>;
 
-export type AuthMode = "api-key" | "jwt" | false;
-
 export type ApiRequestOptions<
   TBody = unknown,
   TResponse = unknown,
@@ -24,8 +21,6 @@ export type ApiRequestOptions<
   THeaders = Record<string, string>
 > = {
   method: ApiMethod;
-  /** Defaults to `false` when omitted (e.g. when spreading optional service opts). */
-  auth?: AuthMode;
   url: string;
   body?: TBody;
   headers?: THeaders;
@@ -73,31 +68,17 @@ export function applySearchParams(
 export async function httpx<TResponse = unknown, TBody = unknown, TSearchParams = SearchParamsRecord, TPathParams = PathParamsRecord, THeaders = Record<string, string>>(
   options: ApiRequestOptions<TBody, TResponse, TSearchParams, TPathParams, THeaders>,
 ): Promise<TResponse> {
-  const { url, method, schemas, auth = false } = options;
+  const { url, method, schemas } = options;
   let { body, headers, params, searchParams } = options;
   const pathUrl = params ? applyPathParams(url, params as PathParamsRecord) : url;
 
-  const apiKey = useApiKeyStore.getState().key;
   const accessToken = useAuthStore.getState().accessToken;
 
-  switch (auth) {
-    case "api-key":
-      if (!apiKey) logger.warn("You are using the api-key auth mode without setting an api key");
-
-      headers = {
-        ...(headers as Record<string, string | null | undefined> | undefined),
-        "X-API-Key": apiKey,
-      } as THeaders;
-      break;
-    case "jwt": {
-      if (!accessToken) logger.warn("You are using the jwt auth mode without setting an access token");
-
-      headers = {
-        ...(headers as Record<string, string | null | undefined> | undefined),
-        ...(accessToken ? { Authorization: accessToken } : {}),
-      } as THeaders;
-      break;
-    }
+  if (accessToken) {
+    headers = {
+      ...(headers as Record<string, string | null | undefined> | undefined),
+      Authorization: accessToken,
+    } as THeaders;
   }
 
   try {

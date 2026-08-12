@@ -2,31 +2,27 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router";
 
 import { LoadingFallback } from "./components/loading-fallback";
-import { ApiKeyGuard } from "./features/api-key/components/api-key-guard";
-import { ChatGuard } from "./features/chat/components/chat-guard";
+import { AuthGuard } from "./features/auth/components/auth-guard";
 import { ROUTES } from "./routes";
 
 import type { RoutePath } from "./routes";
 
-const AdminLayout = lazy(() =>
-  import("./routes/admin/layout").then((m) => ({ default: m.AdminLayout })));
-const AdminPage = lazy(() =>
-  import("./routes/admin/page").then((m) => ({ default: m.AdminPage })));
-const AdminAgentsPage = lazy(() =>
-  import("./routes/admin/agents/page").then((m) => ({ default: m.AdminAgentsPage })));
-const AdminApiKeysPage = lazy(() =>
-  import("./routes/admin/api-keys/page").then((m) => ({ default: m.AdminApiKeysPage })));
-const AdminClientsPage = lazy(() =>
-  import("./routes/admin/clients/page").then((m) => ({ default: m.AdminClientsPage })));
-const AdminKnowledgePage = lazy(() =>
-  import("./routes/admin/knowledge/page").then((m) => ({ default: m.AdminKnowledgePage })));
-const AdminKnowledgeDetailPage = lazy(() =>
-  import("./routes/admin/knowledge/detail/page").then((m) => ({ default: m.AdminKnowledgeDetailPage })));
-const AdminLlmsPage = lazy(() =>
-  import("./routes/admin/llms/page").then((m) => ({ default: m.AdminLlmsPage })));
-
-const ApiKeyLoginPage = lazy(() =>
-  import("./routes/auth/api-key/page").then((m) => ({ default: m.ApiKeyLoginPage })));
+const Layout = lazy(() =>
+  import("./routes/layout").then((m) => ({ default: m.Layout })));
+const HomePage = lazy(() =>
+  import("./routes/page").then((m) => ({ default: m.HomePage })));
+const AgentsPage = lazy(() =>
+  import("./routes/agents/page").then((m) => ({ default: m.AgentsPage })));
+const ApiKeysPage = lazy(() =>
+  import("./routes/api-keys/page").then((m) => ({ default: m.ApiKeysPage })));
+const ClientsPage = lazy(() =>
+  import("./routes/clients/page").then((m) => ({ default: m.ClientsPage })));
+const KnowledgePage = lazy(() =>
+  import("./routes/knowledge/page").then((m) => ({ default: m.KnowledgePage })));
+const KnowledgeDetailPage = lazy(() =>
+  import("./routes/knowledge/detail/page").then((m) => ({ default: m.KnowledgeDetailPage })));
+const LLMPage = lazy(() =>
+  import("./routes/llms/page").then((m) => ({ default: m.LLMPage })));
 
 const ClientAdminLayout = lazy(() =>
   import("./routes/client/(private)/layout").then((m) => ({ default: m.ClientAdminLayout })));
@@ -39,17 +35,10 @@ const ClientSettingsPage = lazy(() =>
 const ClientUsersPage = lazy(() =>
   import("./routes/client/(private)/users/page").then((m) => ({ default: m.ClientUsersPage })));
 
-const ClientChatLayout = lazy(() =>
-  import("./routes/client/chat/layout").then((m) => ({ default: m.ClientChatLayout })));
-const ClientChatPage = lazy(() =>
-  import("./routes/client/chat/page").then((m) => ({ default: m.ClientChatPage })));
-const ClientChatSessionPage = lazy(() =>
-  import("./routes/client/chat/session/{sessionId}/page").then((m) => ({ default: m.ClientChatSessionPage })));
-const ClientChatLoginAnonymousPage = lazy(() =>
-  import("./routes/client/chat/login-anonymous/page").then((m) => ({ default: m.ClientChatLoginAnonymousPage })));
-
-const HomePage = lazy(() =>
-  import("./routes/page").then((m) => ({ default: m.HomePage })));
+const AuthLoginPage = lazy(() =>
+  import("./routes/auth/login/page").then((m) => ({ default: m.AuthLoginPage })));
+const AuthRegisterPage = lazy(() =>
+  import("./routes/auth/register/page").then((m) => ({ default: m.AuthRegisterPage })));
 
 const toReactRouterPath = (path: RoutePath) => {
   return path.replaceAll(/{([^}]+)}/g, (_, p1) => `:${p1}`);
@@ -60,38 +49,28 @@ export const Router = () => {
     <BrowserRouter>
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
-          <Route path={toReactRouterPath(ROUTES.home)} element={<HomePage />} />
-          <Route
-            path={toReactRouterPath(ROUTES.clientChatLoginAnonymous)}
-            element={<ClientChatLoginAnonymousPage />}
-          />
-          <Route element={<ChatGuard />}>
-            <Route element={<ClientChatLayout />}>
-              <Route path={toReactRouterPath(ROUTES.clientChat)} element={<ClientChatPage />} />
-              <Route path={toReactRouterPath(ROUTES.clientChatSession)} element={<ClientChatSessionPage />} />
-            </Route>
-          </Route>
-          <Route element={<ApiKeyGuard />}>
+          <Route path={toReactRouterPath(ROUTES.authLogin)} element={<AuthLoginPage />} />
+          <Route path={toReactRouterPath(ROUTES.authRegister)} element={<AuthRegisterPage />} />
+          <Route element={<AuthGuard />}>
             <Route element={<ClientAdminLayout />}>
               <Route path={toReactRouterPath(ROUTES.client)} element={<ClientPage />} />
               <Route path={toReactRouterPath(ROUTES.clientUsers)} element={<ClientUsersPage />} />
               <Route path={toReactRouterPath(ROUTES.clientSessions)} element={<ClientSessionsPage />} />
               <Route path={toReactRouterPath(ROUTES.clientSettings)} element={<ClientSettingsPage />} />
             </Route>
-            <Route element={<AdminLayout />}>
-              <Route path={toReactRouterPath(ROUTES.admin)} element={<AdminPage />} />
-              <Route path={toReactRouterPath(ROUTES.adminClients)} element={<AdminClientsPage />} />
-              <Route path={toReactRouterPath(ROUTES.adminAgent)} element={<AdminAgentsPage />} />
-              <Route path={toReactRouterPath(ROUTES.adminKnowledge)} element={<AdminKnowledgePage />} />
+            <Route element={<Layout />}>
+              <Route path={toReactRouterPath(ROUTES.home)} element={<HomePage />} />
+              <Route path={toReactRouterPath(ROUTES.clients)} element={<ClientsPage />} />
+              <Route path={toReactRouterPath(ROUTES.agent)} element={<AgentsPage />} />
+              <Route path={toReactRouterPath(ROUTES.knowledge)} element={<KnowledgePage />} />
               <Route
-                path={toReactRouterPath(ROUTES.adminKnowledgeDetail)}
-                element={<AdminKnowledgeDetailPage />}
+                path={toReactRouterPath(ROUTES.knowledgeDetail)}
+                element={<KnowledgeDetailPage />}
               />
-              <Route path={toReactRouterPath(ROUTES.adminLlms)} element={<AdminLlmsPage />} />
-              <Route path={toReactRouterPath(ROUTES.adminApiKeys)} element={<AdminApiKeysPage />} />
+              <Route path={toReactRouterPath(ROUTES.llms)} element={<LLMPage />} />
+              <Route path={toReactRouterPath(ROUTES.apiKeys)} element={<ApiKeysPage />} />
             </Route>
           </Route>
-          <Route path={toReactRouterPath(ROUTES.authApiKey)} element={<ApiKeyLoginPage />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

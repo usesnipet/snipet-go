@@ -14,7 +14,7 @@ export const useListLlm = (
 ): UseQueryResult<PaginatedLlm, Error> => {
   return useQuery({
     queryKey: [...listLlmQueryKey(), opts?.searchParams],
-    queryFn: () => llmService.list({ ...opts, auth: "api-key" }),
+    queryFn: () => llmService.list(opts),
   });
 };
 
@@ -24,7 +24,7 @@ export const useCreateLlm = (
 ): UseMutationResult<Llm, Error, CreateLlm> => {
   return useMutation({
     mutationKey: createLlmQueryKey(),
-    mutationFn: (data: CreateLlm) => llmService.create(data, { ...opts, auth: "api-key" }),
+    mutationFn: (data: CreateLlm) => llmService.create(data, opts),
     onSuccess: () => {
       toast({ title: "LLM created successfully", description: "..." });
       queryClient.invalidateQueries({ queryKey: listLlmQueryKey() });

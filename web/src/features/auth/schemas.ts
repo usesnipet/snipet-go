@@ -1,8 +1,11 @@
-import { userMetadataSchema, userSchema } from "@/features/user/schemas";
+import { userSchema } from "@/features/user/schemas";
 import { z } from "zod";
 
-export const authProviderSchema = z.enum(["oidc", "webhook"]);
+export const authProviderSchema = z.enum(["google", "github"]);
 export type AuthProvider = z.infer<typeof authProviderSchema>;
+
+export type { Challenge, User as AuthUser } from "@/features/user/schemas";
+export { challengeSchema } from "@/features/user/schemas";
 
 export const authenticateResponseSchema = z
   .object({
@@ -27,16 +30,32 @@ export const authTokensSchema = authenticateResponseSchema
 
 export type AuthTokens = z.infer<typeof authTokensSchema>;
 
-export const authenticateAnonymousSchema = z
+export const registerResponseSchema = z
   .object({
-    name: z.string().max(255).optional(),
-    picture: z.url().optional(),
-    email: z.email().optional(),
-    metadata: userMetadataSchema.optional(),
+    user: userSchema,
   })
   .strict();
 
-export type AuthenticateAnonymous = z.infer<typeof authenticateAnonymousSchema>;
+export type RegisterResponse = z.infer<typeof registerResponseSchema>;
+
+export const registerSchema = z
+  .object({
+    name: z.string().min(1).max(255),
+    email: z.email().max(255),
+    password: z.string().min(8),
+  })
+  .strict();
+
+export type Register = z.infer<typeof registerSchema>;
+
+export const loginSchema = z
+  .object({
+    email: z.email().max(255),
+    password: z.string().min(1),
+  })
+  .strict();
+
+export type Login = z.infer<typeof loginSchema>;
 
 export const refreshSchema = z
   .object({
@@ -45,3 +64,61 @@ export const refreshSchema = z
   .strict();
 
 export type Refresh = z.infer<typeof refreshSchema>;
+
+export const setPasswordSchema = z
+  .object({
+    new_password: z.string().min(8),
+  })
+  .strict();
+
+export type SetPassword = z.infer<typeof setPasswordSchema>;
+
+export const forgotPasswordSchema = z
+  .object({
+    email: z.email().max(255),
+  })
+  .strict();
+
+export type ForgotPassword = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1),
+    new_password: z.string().min(8),
+  })
+  .strict();
+
+export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+
+export const activateAccountSchema = z
+  .object({
+    token: z.string().min(1),
+  })
+  .strict();
+
+export type ActivateAccount = z.infer<typeof activateAccountSchema>;
+
+export const resendActivationSchema = z
+  .object({
+    email: z.email().max(255),
+  })
+  .strict();
+
+export type ResendActivation = z.infer<typeof resendActivationSchema>;
+
+export const authorizationUrlResponseSchema = z
+  .object({
+    url: z.url(),
+  })
+  .strict();
+
+export type AuthorizationUrlResponse = z.infer<typeof authorizationUrlResponseSchema>;
+
+export const providerCallbackQuerySchema = z
+  .object({
+    code: z.string().min(1),
+    state: z.string().min(1),
+  })
+  .strict();
+
+export type ProviderCallbackQuery = z.infer<typeof providerCallbackQuerySchema>;

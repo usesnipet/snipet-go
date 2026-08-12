@@ -1,13 +1,13 @@
 import { DataTable } from "@/components/data-table";
-import { useListUser } from "@/features/user/hooks";
+import { useListClientUser } from "@/features/client-user/hooks";
 import { useParams } from "react-router";
 
 import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
-import type { User } from "@/features/user/schemas";
+import type { User } from "@/features/client-user/schemas";
 
 function useClientUsersTableQuery(pagination: DataTablePagination) {
   const { clientCode = "" } = useParams();
-  return useListUser(clientCode, { searchParams: pagination })
+  return useListClientUser(clientCode, { searchParams: pagination })
 }
 
 export function ClientUsersTable() {

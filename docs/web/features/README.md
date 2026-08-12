@@ -58,7 +58,7 @@ store.ts  ← read/written directly by anything that needs it
 ## Cross-feature access
 
 Importing another feature's `service`/`hooks`/`store`/`schemas` directly is
-normal and expected — e.g. `lib/http` reads `features/auth/store` and
+normal and expected — e.g. `lib/http` reads `features/client-auth/store` and
 `features/api-key/store` to attach auth headers, and a page composes
 components from several features. What's discouraged is reaching into
 another feature's `components/` for something that isn't meant to be

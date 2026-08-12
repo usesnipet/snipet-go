@@ -33,7 +33,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 }));
 ```
 
-(`features/auth/store.ts`, trimmed.)
+(`features/client-auth/store.ts`, trimmed.)
 
 ## Store vs. TanStack Query
 
@@ -45,7 +45,7 @@ Not every piece of state is a store:
   outside a component** (a request interceptor, a route guard before any
   component mounts)? → a Zustand store.
 
-`features/auth/store.ts` and `features/api-key/store.ts` are the reference
+`features/client-auth/store.ts` and `features/api-key/store.ts` are the reference
 examples: they hold tokens, persist them to `localStorage` on every write,
 and validate incoming data with the feature's own `schemas.ts`
 (`authTokensSchema.parse(tokens)`) before storing it.

@@ -1,30 +1,27 @@
-import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
-export const userMetadataSchema = z.record(z.string(), z.unknown());
-export type UserMetadata = z.infer<typeof userMetadataSchema>;
+export const challengeSchema = z.enum(["active_account", "change_password"]);
+export type Challenge = z.infer<typeof challengeSchema>;
 
 export const userSchema = z
   .object({
     id: z.uuid(),
     name: z.string(),
+    email: z.email(),
     picture: z.string().nullable().optional(),
-    email: z.string().nullable().optional(),
-    metadata: userMetadataSchema,
+    is_admin: z.boolean(),
+    challenges: z.array(challengeSchema),
+    created_at: z.coerce.date(),
+    updated_at: z.coerce.date(),
   })
   .strict();
 
 export type User = z.infer<typeof userSchema>;
 
-export const paginatedUserSchema = paginatedSchema(userSchema);
-export type PaginatedUser = z.infer<typeof paginatedUserSchema>;
-
-export const listUserSearchParamsSchema = z
+export const updateProfilePictureSchema = z
   .object({
-    take: z.number().min(1).optional(),
-    skip: z.number().min(0).optional(),
-    name_order: z.enum(["asc", "desc"]).optional(),
+    picture: z.string().min(1).max(255),
   })
   .strict();
 
-export type ListUserSearchParams = z.infer<typeof listUserSearchParamsSchema>;
+export type UpdateProfilePicture = z.infer<typeof updateProfilePictureSchema>;

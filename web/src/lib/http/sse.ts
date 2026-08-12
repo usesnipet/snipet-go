@@ -1,4 +1,3 @@
-import { useApiKeyStore } from "@/features/api-key/store";
 import { useAuthStore } from "@/features/auth/store";
 import { z, ZodType } from "zod";
 
@@ -7,14 +6,13 @@ import { logger } from "../logger";
 import { handleApiError, parseZodErrors } from "./errors";
 import { applyPathParams, applySearchParams } from "./http";
 
-import type { ApiMethod, AuthMode, PathParamsRecord, SearchParamsRecord } from "./http";
+import type { ApiMethod, PathParamsRecord, SearchParamsRecord } from "./http";
 export type SseEventHandler = (event: string, data: unknown) => void;
 
 export type HttpSseOptions<TBody = unknown> = {
   url: string;
   method?: ApiMethod;
   body?: TBody;
-  auth?: AuthMode;
   headers?: Record<string, string>;
   params?: PathParamsRecord;
   searchParams?: SearchParamsRecord;
@@ -95,7 +93,6 @@ export async function httpSse<TBody = unknown>(
   const {
     url,
     method = "POST",
-    auth = false,
     schemas,
     signal,
     onEvent,
@@ -103,25 +100,13 @@ export async function httpSse<TBody = unknown>(
   const { params, searchParams } = options;
   let { body, headers } = options;
   const pathUrl = params ? applyPathParams(url, params) : url;
-
-  const apiKey = useApiKeyStore.getState().key;
   const accessToken = useAuthStore.getState().accessToken;
 
-  switch (auth) {
-    case "api-key":
-      if (!apiKey) logger.warn("You are using the api-key auth mode without setting an api key");
-      headers = {
-        ...headers,
-        "X-API-Key": apiKey ?? "",
-      };
-      break;
-    case "jwt":
-      if (!accessToken) logger.warn("You are using the jwt auth mode without setting an access token");
-      headers = {
-        ...headers,
-        ...(accessToken ? { Authorization: accessToken } : {}),
-      };
-      break;
+  if (accessToken) {
+    headers = {
+      ...(headers as Record<string, string | null | undefined> | undefined),
+      Authorization: accessToken,
+    };
   }
 
   try {

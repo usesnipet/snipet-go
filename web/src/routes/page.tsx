@@ -1,6 +1,15 @@
-export function HomePage() {
-  return <div>
-    <h1>Page</h1>
-    <p>This is the page content</p>
-  </div>;
+import { Page } from "@/components/page";
+
+export const HomePage = () => {
+  return (
+    <Page
+      title="Admin"
+      description="Overview of your Snipet workspace."
+      documentTitle="Admin"
+    >
+      <p className="text-sm text-muted-foreground">
+        Select a section from the sidebar to get started.
+      </p>
+    </Page>
+  )
 }
