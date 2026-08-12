@@ -12,6 +12,7 @@ import (
 	"github.com/usesnipet/snipet/config"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
+	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/module/email"
 	"github.com/usesnipet/snipet/internal/repository"
@@ -309,9 +310,67 @@ func (s *Service) ResetPassword(ctx context.Context, dto ResetPasswordDTO) error
 }
 
 func (s *Service) Activate(ctx context.Context, dto ActivateAccountDTO) error {
-	panic("not implemented")
+	invalidToken := apperr.BadRequest("invalid or expired activation token")
+
+	hash := s.tokenGen.HashToken(dto.Token)
+	token, err := s.tokenRepo.FindByHashAndType(ctx, hash, model.TokenTypeActivateAccount)
+	if err != nil {
+		var appErr *apperr.Error
+		if errors.As(err, &appErr) && appErr.StatusCode == http.StatusNotFound {
+			return invalidToken
+		}
+		return err
+	}
+	if token.RevokedAt != nil || token.ExpiresAt.Before(time.Now()) {
+		return invalidToken
+	}
+
+	found, err := s.userRepo.FindByID(ctx, token.UserID)
+	if err != nil {
+		return err
+	}
+
+	remaining := slices.DeleteFunc(found.Challenges, func(c model.Challenge) bool {
+		return c == model.ChallengeActiveAccount
+	})
+	if remaining == nil {
+		remaining = []model.Challenge{}
+	}
+	if err := s.userRepo.UpdateByID(ctx, found.ID, &model.User{Challenges: remaining}); err != nil {
+		return err
+	}
+
+	return s.tokenRepo.RevokeByID(ctx, token.ID)
 }
 
+// ResendActivation revokes any prior un-consumed activate_account token for
+// the user before issuing a new one, so valid tokens don't stack. Silently
+// no-ops for an unknown email, same enumeration-safety rationale as
+// ForgotPassword.
 func (s *Service) ResendActivation(ctx context.Context, dto ResendActivationDTO) error {
-	panic("not implemented")
+	found, err := s.userRepo.FindByEmail(ctx, dto.Email)
+	if err != nil {
+		var appErr *apperr.Error
+		if errors.As(err, &appErr) && appErr.StatusCode == http.StatusNotFound {
+			return nil
+		}
+		return err
+	}
+
+	pending, err := s.tokenRepo.Filter(ctx, filter.New[model.Token](
+		filter.WhereEq("user_id", found.ID),
+		filter.WhereEq("type", model.TokenTypeActivateAccount),
+	))
+	if err != nil {
+		return err
+	}
+	for _, t := range pending.Data {
+		if t.RevokedAt == nil {
+			if err := s.tokenRepo.RevokeByID(ctx, t.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return s.issueActivationToken(ctx, found)
 }
