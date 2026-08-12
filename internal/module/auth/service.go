@@ -19,13 +19,14 @@ import (
 )
 
 type Service struct {
-	config      config.AuthConfig
-	userRepo    repository.IUserRepository
-	accountRepo repository.IAccountRepository
-	tokenRepo   repository.ITokenRepository
-	jwtService  *auth.JWTService[*UserClaims]
-	tokenGen    *auth.TokenService
-	emailSvc    *email.Service
+	config           config.AuthConfig
+	userRepo         repository.IUserRepository
+	accountRepo      repository.IAccountRepository
+	tokenRepo        repository.ITokenRepository
+	jwtService       *auth.JWTService[*auth.PlatformUserClaims]
+	tokenGen         *auth.TokenService
+	emailSvc         *email.Service
+	providerRegistry *ProviderRegistry
 }
 
 func NewService(
@@ -33,18 +34,20 @@ func NewService(
 	userRepo repository.IUserRepository,
 	accountRepo repository.IAccountRepository,
 	tokenRepo repository.ITokenRepository,
-	jwtService *auth.JWTService[*UserClaims],
+	jwtService *auth.JWTService[*auth.PlatformUserClaims],
 	tokenGen *auth.TokenService,
 	emailSvc *email.Service,
+	providerRegistry *ProviderRegistry,
 ) *Service {
 	return &Service{
-		config:      config,
-		userRepo:    userRepo,
-		accountRepo: accountRepo,
-		tokenRepo:   tokenRepo,
-		jwtService:  jwtService,
-		tokenGen:    tokenGen,
-		emailSvc:    emailSvc,
+		config:           config,
+		userRepo:         userRepo,
+		accountRepo:      accountRepo,
+		tokenRepo:        tokenRepo,
+		jwtService:       jwtService,
+		tokenGen:         tokenGen,
+		emailSvc:         emailSvc,
+		providerRegistry: providerRegistry,
 	}
 }
 
@@ -140,7 +143,7 @@ func (s *Service) Login(ctx context.Context, dto LoginDTO) (*AuthenticateRespons
 }
 
 func (s *Service) issueTokens(ctx context.Context, u *model.User) (*AuthenticateResponse, error) {
-	claims := &UserClaims{BaseClaims: auth.NewBaseClaims(s.config, u.ID)}
+	claims := &auth.PlatformUserClaims{BaseClaims: auth.NewBaseClaims(s.config, u.ID)}
 	accessToken, accessTokenExpiresAt, err := s.jwtService.GenerateToken(claims)
 	if err != nil {
 		return nil, err
@@ -172,11 +175,83 @@ func (s *Service) issueTokens(ctx context.Context, u *model.User) (*Authenticate
 }
 
 func (s *Service) GetAuthorizationURL(ctx context.Context, provider ProviderName) (string, error) {
-	panic("not implemented")
+	p, err := s.providerRegistry.Get(provider)
+	if err != nil {
+		return "", err
+	}
+
+	state, err := s.tokenGen.GenerateToken()
+	if err != nil {
+		return "", err
+	}
+
+	return p.AuthorizationURL(state), nil
 }
 
+// AuthenticateCallback exchanges code for the provider identity. A matching
+// Account issues tokens for its User directly. No Account but a matching
+// email links a new Account to that existing User. Neither found creates
+// both — OAuth logins skip the activation gate entirely (no PasswordHash,
+// no active_account challenge) since the provider already verified the
+// email.
 func (s *Service) AuthenticateCallback(ctx context.Context, provider ProviderName, code string) (*AuthenticateResponse, error) {
-	panic("not implemented")
+	p, err := s.providerRegistry.Get(provider)
+	if err != nil {
+		return nil, err
+	}
+
+	identity, err := p.Exchange(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := s.accountRepo.FindByProviderAndExternalID(ctx, string(provider), identity.ExternalID)
+	if err == nil {
+		found, err := s.userRepo.FindByID(ctx, account.UserID)
+		if err != nil {
+			return nil, err
+		}
+		return s.issueTokens(ctx, found)
+	}
+	var appErr *apperr.Error
+	if !errors.As(err, &appErr) || appErr.StatusCode != http.StatusNotFound {
+		return nil, err
+	}
+
+	found, err := s.userRepo.FindByEmail(ctx, identity.Email)
+	if err != nil {
+		if !errors.As(err, &appErr) || appErr.StatusCode != http.StatusNotFound {
+			return nil, err
+		}
+
+		name := identity.Name
+		if name == "" {
+			name = identity.Email
+		}
+
+		found = &model.User{
+			Name:       name,
+			Email:      identity.Email,
+			Challenges: []model.Challenge{},
+		}
+		if identity.Picture != "" {
+			found.Picture = &identity.Picture
+		}
+		if err := s.userRepo.Create(ctx, found); err != nil {
+			return nil, err
+		}
+	}
+
+	newAccount := &model.Account{
+		UserID:     found.ID,
+		Provider:   string(provider),
+		ExternalID: identity.ExternalID,
+	}
+	if err := s.accountRepo.Create(ctx, newAccount); err != nil {
+		return nil, err
+	}
+
+	return s.issueTokens(ctx, found)
 }
 
 // findRefreshToken resolves a plaintext refresh token to its Token record,
@@ -228,17 +303,9 @@ func (s *Service) Logout(ctx context.Context, dto RefreshDTO) error {
 	return s.tokenRepo.RevokeByID(ctx, token.ID)
 }
 
-// currentUserID resolves the subject of the bearer JWT on ctx.
+// currentUserID resolves the subject of the platform JWT on ctx.
 func (s *Service) currentUserID(ctx context.Context) (string, error) {
-	principal, ok := auth.GetPrincipal(ctx)
-	if !ok || principal.GetType() != auth.PrincipalTypeJWT || principal.GetJWTClaims() == nil {
-		return "", apperr.Unauthorized("unauthorized")
-	}
-	subject, err := principal.GetJWTClaims().GetSubject()
-	if err != nil || subject == "" {
-		return "", apperr.Unauthorized("unauthorized")
-	}
-	return subject, nil
+	return auth.PlatformUserID(ctx)
 }
 
 // SetPassword is a "set", not a "change" — no current-password check,

@@ -135,8 +135,8 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 - Route group + `r.Use(...)` is where a module wires its auth requirement
   (see [auth-middleware.md](./auth-middleware.md)) — a module can mix
   middlewares per sub-group when some routes need different auth than
-  others (see `user`/`client` handlers using both `apiKeyMiddleware` and
-  `anyAuthMiddleware`).
+  others (see `client`/`clientuser` handlers using `RequireAPIKey`,
+  `RequireClientJWT`, and `Or(...)` compositions).
 - Every handler method has the shape `func(w, r) error` — parse with
   `api.ParseBody`/`api.ParseQuery`, call the service, write with
   `api.WriteJSON`/`api.WriteNoContent`, and just `return err` on failure.

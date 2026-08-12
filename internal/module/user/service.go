@@ -133,25 +133,17 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 }
 
 func (s *Service) Me(ctx context.Context) (*model.User, error) {
-	principal, ok := auth.GetPrincipal(ctx)
-	if !ok || principal.GetType() != auth.PrincipalTypeJWT || principal.GetJWTClaims() == nil {
-		return nil, apperr.Unauthorized("unauthorized")
-	}
-	subject, err := principal.GetJWTClaims().GetSubject()
-	if err != nil || subject == "" {
-		return nil, apperr.Unauthorized("unauthorized")
+	subject, err := auth.PlatformUserID(ctx)
+	if err != nil {
+		return nil, err
 	}
 	return s.userRepo.FindByID(ctx, subject)
 }
 
 func (s *Service) UpdateMyPicture(ctx context.Context, dto UpdateProfilePictureDTO) error {
-	principal, ok := auth.GetPrincipal(ctx)
-	if !ok || principal.GetType() != auth.PrincipalTypeJWT || principal.GetJWTClaims() == nil {
-		return apperr.Unauthorized("unauthorized")
-	}
-	subject, err := principal.GetJWTClaims().GetSubject()
-	if err != nil || subject == "" {
-		return apperr.Unauthorized("unauthorized")
+	subject, err := auth.PlatformUserID(ctx)
+	if err != nil {
+		return err
 	}
 	return s.userRepo.UpdateByID(ctx, subject, &model.User{Picture: &dto.Picture})
 }

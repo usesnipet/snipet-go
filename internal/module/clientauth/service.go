@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/usesnipet/snipet/config"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
-	coreauth "github.com/usesnipet/snipet/internal/auth"
+	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/model"
 	auth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
 	"github.com/usesnipet/snipet/internal/repository"
@@ -23,8 +23,8 @@ type Service struct {
 	clientRepo                 repository.IClientRepository
 	userRepo                   repository.IClientUserRepository
 	clientUserRefreshTokenRepo repository.IClientUserRefreshTokenRepository
-	jwtService                 *coreauth.JWTService[*UserClaims]
-	tokenService               *coreauth.TokenService
+	jwtService                 *auth.JWTService[*auth.ClientUserClaims]
+	tokenService               *auth.TokenService
 	authConfig                 config.AuthConfig
 }
 
@@ -33,8 +33,8 @@ func NewService(
 	clientRepo repository.IClientRepository,
 	userRepo repository.IClientUserRepository,
 	clientUserRefreshTokenRepo repository.IClientUserRefreshTokenRepository,
-	jwtService *coreauth.JWTService[*UserClaims],
-	refreshTokenService *coreauth.TokenService,
+	jwtService *auth.JWTService[*auth.ClientUserClaims],
+	refreshTokenService *auth.TokenService,
 	authConfig config.AuthConfig,
 ) *Service {
 	return &Service{
@@ -49,8 +49,8 @@ func NewService(
 }
 
 func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.ClientUser, metadata jsonx.JSONMap) (*AuthenticateResponse, error) {
-	claims := &UserClaims{
-		BaseClaims: coreauth.NewBaseClaims(s.authConfig, user.ID),
+	claims := &auth.ClientUserClaims{
+		BaseClaims: auth.NewBaseClaims(s.authConfig, user.ID),
 		ClientCode: clientCode,
 	}
 	accessToken, accessTokenExpiresAt, err := s.jwtService.GenerateToken(claims)

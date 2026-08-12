@@ -48,7 +48,7 @@ func GetAs[T any](c ICache, key string) (T, bool)  // typed Get, avoids a manual
 `MemoryCache` is the one implementation: an LRU-bounded (`maxEntries`),
 optionally-TTL'd in-memory map with a background janitor goroutine
 sweeping expired entries. It exists for **process-local, short-lived**
-caching — today its only consumer is `APIKeyMiddleware` (see
+caching — today its only consumer is `RequireAPIKey` (see
 [auth-middleware.md](./auth-middleware.md)), caching a verified API key's
 ID for a minute so every request doesn't re-hash and re-query. It is not a
 distributed cache — nothing here is safe to rely on being shared across

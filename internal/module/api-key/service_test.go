@@ -293,7 +293,7 @@ func TestMeRejectsJWTPrincipal(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(mocks.NewMockIApiKeyRepository(t))
-	ctx := auth.SetPrincipal(context.Background(), auth.NewPrincipal(auth.PrincipalTypeJWT, nil, &auth.BaseClaims{}))
+	ctx := auth.SetPrincipal(context.Background(), auth.NewPrincipal(auth.PrincipalTypeClientJWT, nil, &auth.BaseClaims{}))
 
 	_, err := svc.Me(ctx)
 	assertAppError(t, err, http.StatusUnauthorized, "unauthorized")

@@ -8,28 +8,22 @@ import (
 )
 
 // Handler routes tenant-staff user management under /users.
-//
-// bearerMiddleware/adminMiddleware are injected rather than constructed
-// here because they depend on the tenant-staff auth module (see
-// plan-ee/module/auth.md and plan-ee/module/middleware.md), which does not
-// exist yet. Bootstrap wiring of this handler is deferred until that module
-// lands.
 type Handler struct {
-	service          *Service
-	bearerMiddleware api.MiddlewareFunc
+	service               *Service
+	platformJWTMiddleware api.MiddlewareFunc
 }
 
-func NewHandler(service *Service, bearerMiddleware api.MiddlewareFunc) api.Handler {
+func NewHandler(service *Service, platformJWTMiddleware api.MiddlewareFunc) api.Handler {
 	return &Handler{
-		service:          service,
-		bearerMiddleware: bearerMiddleware,
+		service:               service,
+		platformJWTMiddleware: platformJWTMiddleware,
 	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/users", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(h.bearerMiddleware)
+			r.Use(h.platformJWTMiddleware)
 			r.Get("/me", serve(h.me))
 			r.Put("/me/picture", serve(h.updatePicture))
 		})

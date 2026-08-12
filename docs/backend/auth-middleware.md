@@ -1,75 +1,81 @@
 # `internal/auth` + `internal/middleware`
 
-Two auth mechanisms, both landing on the same `auth.Principal` abstraction
-so a handler doesn't need to know which one authenticated the caller.
+Three auth mechanisms. A request can carry **more than one** at once
+(e.g. `Or(RequireClientJWT, RequireAPIKey)` with both headers present) —
+every method that succeeds is stored in a principals list on the context.
 
-- **`internal/auth`** — the mechanism-specific primitives (JWT
-  signing/verification, API key hashing/generation, `Principal`).
-- **`internal/middleware`** — chi middleware that runs those primitives
-  against a request and puts a `Principal` on its context.
+- **`internal/auth`** — JWT signing/verification, claim types, API key
+  hashing/generation, `Principal` / `Principals`, context helpers.
+- **`internal/middleware`** — composable gates that run those primitives
+  and append successful authentications to the list.
 
-## The two mechanisms
+## Mechanisms + claim types
 
-- **JWT** (`internal/auth/jwt.go`) — short-lived user sessions.
-  `JWTService.GenerateToken` signs a `UserClaims` (embeds
-  `jwt.RegisteredClaims` + `ClientCode`) with HS256; `VerifyToken` parses
-  and validates a `"Bearer <token>"` header. Paired with
-  `internal/auth/refresh_token.go` for refreshing an expired access token
-  without re-authenticating.
-- **API key** (`internal/auth/apikey-generator.go` +
-  `internal/module/api-key`) — long-lived machine credentials. Keys are
-  generated once, shown to the user once, and stored **hashed**
-  (`internal/auth/hasher.go`) — verifying a request means hashing the
-  presented key and comparing, never storing/comparing plaintext.
+Both JWT flavours live in `internal/auth` (no type parameter at call
+sites):
 
-## `Principal` — the common result of authenticating
+| Mechanism | Credential | Principal type | Claims |
+|---|---|---|---|
+| Client JWT | `Authorization: Bearer` | `PrincipalTypeClientJWT` | `auth.ClientUserClaims` (`ClientCode`) |
+| Platform JWT | `Authorization: Bearer` | `PrincipalTypePlatformJWT` | `auth.PlatformUserClaims` |
+| API key | `X-API-Key` | `PrincipalTypeAPIKey` | — (`APIKeyID`) |
 
 ```go
-type PrincipalType string
-const (
-    PrincipalTypeAPIKey PrincipalType = "api_key"
-    PrincipalTypeJWT    PrincipalType = "jwt"
-)
-
 type Principal struct {
     Type      PrincipalType
     APIKeyID  *string
-    JWTClaims *UserClaims
+    JWTClaims jwt.Claims
 }
+
+type Principals []*Principal
 ```
 
-Stashed on the request context (`auth.SetPrincipal`/`auth.GetPrincipal`,
-`context.go`) by whichever middleware ran. A handler/service that needs to
-know who's calling reads `auth.GetPrincipal(ctx)` and checks `Type` rather
-than assuming which auth mode protected the route.
-
-## Middleware
+## Reading who's authenticated
 
 ```go
-apiKeyMiddleware := middleware.APIKeyMiddleware(apiKeyService, apiKeyCache)
-anyAuthMiddleware := middleware.AnyAuth(jwtService, apiKeyService, apiKeyCache)
-jwtMiddleware := middleware.JWT(jwtService)
+auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey)
+
+id, err := auth.APIKeyID(ctx)
+claims, err := auth.ClientJWTClaims(ctx)   // *auth.ClientUserClaims
+claims, err := auth.PlatformJWTClaims(ctx) // *auth.PlatformUserClaims
+uid, err := auth.ClientUserID(ctx)
+uid, err := auth.PlatformUserID(ctx)
 ```
 
-- **`APIKeyMiddleware`** — requires `X-API-Key`. Checks a short-TTL
-  in-memory cache first (`internal/infra/cache`, see
-  [infra.md](./infra.md)) before hitting `apiKeyService.VerifyAPIKey` (a
-  hash + DB lookup), and populates the cache on a hit — every API-key
-  protected request would otherwise hash+query on every call.
-- **`JWT`** — requires an `Authorization: Bearer <token>` header.
-- **`AnyAuth`** — accepts either header, preferring JWT when both are
-  present; used by routes reachable from both the admin (JWT) and
-  programmatic (API key) surfaces (e.g. `client`, `session`, `user`).
+Helpers look up the matching entry in the principals list — they do not
+require a type argument.
 
-All three are built once in `bootstrap.Bootstrap` (see
+## Middleware — require gates + `Or`
+
+```go
+requireAPIKey := middleware.RequireAPIKey(apiKeyService, apiKeyCache)
+requireClientJWT := middleware.RequireClientJWT(clientJWTService)
+requirePlatformJWT := middleware.RequirePlatformJWT(platformJWTService)
+anyClientAuth := middleware.Or(requireClientJWT, requireAPIKey)
+
+r.Use(requireAPIKey.Handler())
+r.Use(requirePlatformJWT.Handler())
+r.Use(anyClientAuth.Handler())
+```
+
+`Or` runs **every** gate:
+
+- credential **absent** → skip (`auth.ErrNotApplicable`)
+- credential **present but invalid** → hard 401 (does not fall through)
+- credential **valid** → append that `Principal` to the list
+
+At least one success is required. So a request with both a valid client
+JWT and a valid API key ends up with two principals on the context.
+
+All gates are built once in `bootstrap.Bootstrap` (see
 [bootstrap.md](./bootstrap.md)) and handed to modules as
-`api.MiddlewareFunc` — a module's `handler.go` decides which middleware(s)
-to `r.Use(...)` per route group, it doesn't build its own (see
+`api.MiddlewareFunc` via `.Handler()` — a module's `handler.go` decides
+which middleware(s) to `r.Use(...)` per route group (see
 [modules.md](./modules.md#handlergo)).
 
 ## Failure path
 
 Middleware runs *outside* the `HandlerFunc`/`api.Serve` flow (see
-[api.md](./api.md)) — on an auth failure it has to write the error response
-itself (`api.WriteError(w, http.StatusUnauthorized, ...)`) and never call
-`next`, rather than returning an error for `Serve` to translate.
+[api.md](./api.md)) — on an auth failure it writes the error response
+itself (`api.WriteError(w, http.StatusUnauthorized, ...)`) and never
+calls `next`.

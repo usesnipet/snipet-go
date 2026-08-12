@@ -25,10 +25,12 @@ import (
 	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	app_module "github.com/usesnipet/snipet/internal/module/app"
+	platformauth "github.com/usesnipet/snipet/internal/module/auth"
 	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/module/clientauth"
 	auth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/clientuser"
+	"github.com/usesnipet/snipet/internal/module/email"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
@@ -74,6 +76,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	refreshTokenRepo := repository.NewClientUserRefreshTokenRepository(db)
 	executionRepo := repository.NewExecutionRepository(db)
 	messageRepo := repository.NewExecutionMessageRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	accountRepo := repository.NewAccountRepository(db)
+	tokenRepo := repository.NewTokenRepository(db)
 
 	// runtime
 	sourceRegistry := source.Registry(logger)
@@ -115,7 +120,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// services
 	apiKeyGenerator := auth.NewAPIKeyGenerator()
 	apiKeyHasher := auth.NewKeyHasher()
-	jwtService := auth.NewJWTService(cfg.Auth, func() *clientauth.UserClaims { return &clientauth.UserClaims{} })
+	jwtService := auth.NewJWTService(cfg.Auth, func() *auth.ClientUserClaims { return &auth.ClientUserClaims{} })
 
 	refreshTokenService := auth.NewTokenService()
 
@@ -129,6 +134,23 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		jwtService,
 		refreshTokenService,
 		cfg.Auth,
+	)
+
+	platformJWTService := auth.NewJWTService(cfg.Auth, func() *auth.PlatformUserClaims { return &auth.PlatformUserClaims{} })
+	platformProviderRegistry := platformauth.NewProviderRegistry(
+		platformauth.NewGoogleProvider(cfg.Auth),
+		platformauth.NewGithubProvider(cfg.Auth),
+	)
+	emailService := email.NewService(cfg.SMTP)
+	platformAuthService := platformauth.NewService(
+		cfg.Auth,
+		userRepo,
+		accountRepo,
+		tokenRepo,
+		platformJWTService,
+		refreshTokenService,
+		emailService,
+		platformProviderRegistry,
 	)
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
@@ -169,27 +191,35 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyCache := cache.NewMemoryCache(1000, 1*time.Hour)
 
 	// middlewares
-	apiKeyMiddleware := middleware.APIKeyMiddleware(apiKeyService, apiKeyCache)
-	anyAuthMiddleware := middleware.AnyAuth(jwtService, apiKeyService, apiKeyCache)
-	jwtMiddleware := middleware.JWT(jwtService)
+	requireAPIKey := middleware.RequireAPIKey(apiKeyService, apiKeyCache)
+	requireClientJWT := middleware.RequireClientJWT(jwtService)
+	requirePlatformJWT := middleware.RequirePlatformJWT(platformJWTService)
+	anyClientAuth := middleware.Or(requireClientJWT, requireAPIKey)
+
+	apiKeyMiddleware := requireAPIKey.Handler()
+	clientJWTMiddleware := requireClientJWT.Handler()
+	platformJWTMiddleware := requirePlatformJWT.Handler()
+	anyClientAuthMiddleware := anyClientAuth.Handler()
 
 	// handlers
 	clientAuthHandler := clientauth.NewHandler(authService)
+	platformAuthHandler := platformauth.NewHandler(platformAuthService, platformJWTMiddleware)
 	appHandler := app_module.NewHandler(appService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
 	llmHandler := llmmodule.NewHandler(llmService, apiKeyMiddleware)
-	clientHandler := client.NewHandler(clientService, apiKeyMiddleware, anyAuthMiddleware)
-	sessionHandler := session.NewHandler(sessionService, anyAuthMiddleware)
+	clientHandler := client.NewHandler(clientService, apiKeyMiddleware, anyClientAuthMiddleware)
+	sessionHandler := session.NewHandler(sessionService, anyClientAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
-	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyAuthMiddleware, jwtMiddleware)
+	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, clientJWTMiddleware)
 
 	// register routes
 	api := api.New()
 	api.Router.Handle("/*", web.Handler())
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
 		clientAuthHandler.RegisterRoutes(r, api.Serve)
+		platformAuthHandler.RegisterRoutes(r, api.Serve)
 		appHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
 		agentHandler.RegisterRoutes(r, api.Serve)

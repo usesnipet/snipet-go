@@ -44,17 +44,16 @@ func (s *Service) resolveClientID(ctx context.Context, clientCode string) (strin
 }
 
 func (s *Service) ensureSessionUserAccess(ctx context.Context, clientID string, sessionID string) error {
-	principal, ok := auth.GetPrincipal(ctx)
-	if !ok {
+	if !auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey) && !auth.HasPrincipal(ctx, auth.PrincipalTypeClientJWT) {
 		return apperr.Unauthorized("unauthorized")
 	}
-	if principal.GetType() == auth.PrincipalTypeAPIKey {
+	if auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey) {
 		return nil
 	}
 
-	userId, err := principal.GetJWTClaims().GetSubject()
+	userId, err := auth.ClientUserID(ctx)
 	if err != nil {
-		return apperr.Unauthorized("unauthorized")
+		return err
 	}
 	hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientID, userId, sessionID)
 	if err != nil {
@@ -71,16 +70,12 @@ func (s *Service) Filter(ctx context.Context, clientCode string, filter *filter.
 	if err != nil {
 		return nil, err
 	}
-	principal, ok := auth.GetPrincipal(ctx)
-	if !ok {
-		return nil, apperr.Unauthorized("unauthorized")
-	}
-	if principal.GetType() == auth.PrincipalTypeAPIKey {
+	if auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey) {
 		return s.sessionRepo.FilterInClient(ctx, clientID, filter)
 	}
-	userId, err := principal.GetJWTClaims().GetSubject()
+	userId, err := auth.ClientUserID(ctx)
 	if err != nil {
-		return nil, apperr.Unauthorized("unauthorized")
+		return nil, err
 	}
 	return s.sessionRepo.FilterInClientWithUser(
 		ctx,
@@ -119,15 +114,10 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 		ClientID: clientID,
 	}
 
-	principal, ok := auth.GetPrincipal(ctx)
-	if !ok {
+	if !auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey) && !auth.HasPrincipal(ctx, auth.PrincipalTypeClientJWT) {
 		return nil, apperr.Unauthorized("unauthorized")
 	}
-	if principal.GetType() == auth.PrincipalTypeJWT {
-		userId, err := principal.GetJWTClaims().GetSubject()
-		if err != nil {
-			return nil, apperr.Unauthorized("unauthorized")
-		}
+	if userId, err := auth.ClientUserID(ctx); err == nil {
 		session.ClientUserToSessions = append(session.ClientUserToSessions, model.ClientUserToSession{
 			ClientUserID: userId,
 		})

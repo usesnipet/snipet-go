@@ -58,10 +58,12 @@ func apiKeyContext() context.Context {
 
 func jwtContext(userID string) context.Context {
 	return auth.SetPrincipal(context.Background(), auth.NewPrincipal(
-		auth.PrincipalTypeJWT,
+		auth.PrincipalTypeClientJWT,
 		nil,
-		&auth.UserClaims{
-			RegisteredClaims: jwt.RegisteredClaims{Subject: userID},
+		&auth.ClientUserClaims{
+			BaseClaims: auth.BaseClaims{
+				RegisteredClaims: jwt.RegisteredClaims{Subject: userID},
+			},
 		},
 	))
 }

@@ -77,8 +77,10 @@ one function:
    (`apiKeyService.Init`, `clientService.Init`).
 8. **Cache** — `cache.NewMemoryCache(...)` for anything a middleware needs
    (see [infra.md](./infra.md)).
-9. **Middleware** — `middleware.APIKeyMiddleware`/`AnyAuth`/`JWT`, built
-   from the services/cache above (see [auth-middleware.md](./auth-middleware.md)).
+9. **Middleware** — `RequireAPIKey` / `RequireClientJWT` /
+   `RequirePlatformJWT` (and `Or(...)` compositions), built from the
+   services/cache above; pass `.Handler()` into modules (see
+   [auth-middleware.md](./auth-middleware.md)).
 10. **Handlers** — one `<module>.NewHandler(service, middleware...)` per
     module.
 11. **Routes** — `api.New()`, mount the built SPA (`web.Handler()`) as the
