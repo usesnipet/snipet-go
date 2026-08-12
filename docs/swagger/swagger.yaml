@@ -66,6 +66,13 @@ definitions:
       total:
         type: integer
     type: object
+  ActivateAccountDTO:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
   Agent:
     properties:
       description:
@@ -162,6 +169,14 @@ definitions:
       tool:
         type: string
     type: object
+  Challenge:
+    enum:
+    - active_account
+    - change_password
+    type: string
+    x-enum-varnames:
+    - ChallengeActiveAccount
+    - ChallengeChangePassword
   Client:
     properties:
       code:
@@ -229,6 +244,45 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  ClientUser:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        type: string
+      picture:
+        type: string
+    type: object
+  ClientUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        type: string
+      picture:
+        type: string
+    type: object
+  ClientUsersPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/ClientUser'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
     type: object
   ClientsPage:
     properties:
@@ -389,6 +443,7 @@ definitions:
         type: array
     required:
     - description
+    - key
     - name
     type: object
   DriversDTO:
@@ -433,6 +488,14 @@ definitions:
         items:
           $ref: '#/definitions/Call'
         type: array
+    type: object
+  ForgotPasswordDTO:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+    required:
+    - email
     type: object
   IndexStatus:
     enum:
@@ -500,6 +563,7 @@ definitions:
         type: array
     required:
     - description
+    - key
     - name
     type: object
   JSONMap:
@@ -664,12 +728,63 @@ definitions:
       total:
         type: integer
     type: object
+  LoginDTO:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   RefreshDTO:
     properties:
       refresh_token:
         type: string
     required:
     - refresh_token
+    type: object
+  RegisterDTO:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  RegisterResponse:
+    properties:
+      user:
+        $ref: '#/definitions/UserResponse'
+    type: object
+  ResendActivationDTO:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+    required:
+    - email
+    type: object
+  ResetPasswordDTO:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
     type: object
   Role:
     enum:
@@ -687,6 +802,8 @@ definitions:
     properties:
       message:
         type: string
+      stream_messages:
+        type: boolean
     required:
     - message
     type: object
@@ -748,6 +865,14 @@ definitions:
         type: integer
       total:
         type: integer
+    type: object
+  SetPasswordDTO:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+    required:
+    - new_password
     type: object
   SourceItemKind:
     enum:
@@ -850,6 +975,14 @@ definitions:
         maxLength: 255
         type: string
     type: object
+  UpdateProfilePictureDTO:
+    properties:
+      picture:
+        maxLength: 255
+        type: string
+    required:
+    - picture
+    type: object
   UpdateSessionDTO:
     properties:
       agent_id:
@@ -857,44 +990,26 @@ definitions:
       metadata:
         $ref: '#/definitions/JSONMap'
     type: object
-  User:
-    properties:
-      email:
-        type: string
-      id:
-        type: string
-      metadata:
-        $ref: '#/definitions/JSONMap'
-      name:
-        type: string
-      picture:
-        type: string
-    type: object
   UserResponse:
     properties:
+      challenges:
+        items:
+          $ref: '#/definitions/Challenge'
+        type: array
+      created_at:
+        type: string
       email:
         type: string
       id:
         type: string
-      metadata:
-        $ref: '#/definitions/JSONMap'
+      is_admin:
+        type: boolean
       name:
         type: string
       picture:
         type: string
-    type: object
-  UsersPage:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/User'
-        type: array
-      skip:
-        type: integer
-      take:
-        type: integer
-      total:
-        type: integer
+      updated_at:
+        type: string
     type: object
 info:
   contact: {}
@@ -1298,6 +1413,277 @@ paths:
       summary: Get system info
       tags:
       - app
+  /auth/{provider}:
+    get:
+      description: Returns the authorization URL to start an OAuth login with the
+        given provider.
+      parameters:
+      - description: Provider name
+        enum:
+        - google
+        - github
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      summary: OAuth authorization URL
+      tags:
+      - auth
+  /auth/{provider}/callback:
+    get:
+      description: Completes an OAuth login/link for the given provider.
+      parameters:
+      - description: Provider name
+        enum:
+        - google
+        - github
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthenticateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: OAuth callback
+      tags:
+      - auth
+  /auth/activate:
+    post:
+      consumes:
+      - application/json
+      description: Activates an account via an emailed activation token.
+      parameters:
+      - description: Activation token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ActivateAccountDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Activate account
+      tags:
+      - auth
+  /auth/activate/resend:
+    post:
+      consumes:
+      - application/json
+      description: Always succeeds; re-issues the activation email if the email is
+        registered.
+      parameters:
+      - description: Email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ResendActivationDTO'
+      responses:
+        "204":
+          description: No Content
+      summary: Resend activation
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in with email + password. Blocked until the account is activated.
+      parameters:
+      - description: Credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/LoginDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthenticateResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revokes a refresh token.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RefreshDTO'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Logout
+      tags:
+      - auth
+  /auth/password:
+    put:
+      consumes:
+      - application/json
+      description: Sets the current user's password. No current-password check.
+      parameters:
+      - description: New password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/SetPasswordDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Set password
+      tags:
+      - auth
+  /auth/password/forgot:
+    post:
+      consumes:
+      - application/json
+      description: Always succeeds; emails a reset link if the email is registered.
+      parameters:
+      - description: Email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ForgotPasswordDTO'
+      responses:
+        "204":
+          description: No Content
+      summary: Forgot password
+      tags:
+      - auth
+  /auth/password/reset:
+    post:
+      consumes:
+      - application/json
+      description: Resets a password via an emailed reset token.
+      parameters:
+      - description: Reset token + new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ResetPasswordDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Reset password
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a refresh token for a new access/refresh token pair.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RefreshDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthenticateResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Refresh
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new tenant-staff user. Account starts inactive; an
+        activation email is sent.
+      parameters:
+      - description: Registration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RegisterDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Register
+      tags:
+      - auth
   /client/{client_code}/authenticate/{provider_name}:
     post:
       description: Authenticates a client user through the given auth provider (e.g.
@@ -1679,7 +2065,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/UsersPage'
+            $ref: '#/definitions/ClientUsersPage'
         "400":
           description: Bad Request
           schema:
@@ -1765,7 +2151,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/UserResponse'
+            $ref: '#/definitions/ClientUserResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2531,6 +2917,49 @@ paths:
       summary: List LLM drivers
       tags:
       - llm
+  /users/me:
+    get:
+      description: Returns the authenticated tenant-staff user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - user
+  /users/me/picture:
+    put:
+      consumes:
+      - application/json
+      description: Updates the authenticated user's profile picture.
+      parameters:
+      - description: Picture data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateProfilePictureDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Update my picture
+      tags:
+      - user
 securityDefinitions:
   ApiKeyAuth:
     in: header

@@ -59,7 +59,7 @@ func (h *Handler) clientCode(r *http.Request) string {
 // @Produce		json
 // @Security		BearerAuth
 // @Param			client_code	path		string	true	"Client code"
-// @Success		200			{object}	UserResponse
+// @Success		200			{object}	ClientUserResponse
 // @Failure		401			{object}	api.Error
 // @Router			/client/{client_code}/user/me [get]
 func (h *Handler) me(w http.ResponseWriter, r *http.Request) error {
@@ -80,7 +80,7 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) error {
 // @Param			name_order	query		string	false	"Order by name"	Enums(asc, desc)
 // @Param			take		query		int		false	"Page size"
 // @Param			skip		query		int		false	"Page offset"
-// @Success		200			{object}	UsersPage
+// @Success		200			{object}	ClientUsersPage
 // @Failure		400			{object}	api.Error
 // @Router			/client/{client_code}/user [get]
 func (h *Handler) filterBy(w http.ResponseWriter, r *http.Request) error {

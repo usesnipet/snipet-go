@@ -141,7 +141,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		platformauth.NewGoogleProvider(cfg.Auth),
 		platformauth.NewGithubProvider(cfg.Auth),
 	)
-	emailService := email.NewService(cfg.SMTP)
+	emailService := email.NewService(cfg.SMTP, logger)
 	platformAuthService := platformauth.NewService(
 		cfg.Auth,
 		userRepo,

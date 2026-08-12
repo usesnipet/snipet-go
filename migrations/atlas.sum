@@ -1,12 +1,2 @@
-h1:yz+3KWZm12KQyV5m5kV6YLkLgeX55pjmh1TkPbEiq1g=
-20260716181040_initial.up.sql h1:hxbax4Yc8GH0cBil2OKNyNMxjVf7KdQ2x+DPk+CKgcc=
-20260718024811_add_error_message_on_execution_table.up.sql h1:wA3ZNAx9FqHasr0/TUKGBO6aC2yZ2Hi4SQEf6+dsMuc=
-20260720211500_drop_session_messages.up.sql h1:gHWR1ttErC7ozc8w0FRuT+faRZzpHUwSiTnoRJMpnNs=
-20260722102828_add_refresh_tokens.up.sql h1:8Zuz9MFHRkq9RC3YqFq7eWWBsNesK3FnPQif+mNLT14=
-20260723165533_convert_client_code_to_varchar.up.sql h1:67e3/FTk1tOYZSUyW741pJJOTb1ZHGuVtSn63ZYXVmo=
-20260729152048_create_llms_table.up.sql h1:PMZ+LWsGa7+zE9CWf3zWeOAu4mjeMA5mG0N6yQp/vCw=
-20260729155446_associate_agent_llms.up.sql h1:q4OJ4OzfNnoaFvTyGQ70hahr2y2ojDHkjNtP+ZAD7OI=
-20260731155414_convert_created_at_to_timestamp_on_execution_message.up.sql h1:neh+n6DNNfDkM8tiLU64pYymmI430UnvsxTiUzGkm+o=
-20260803173701_add_message_tool_calls.up.sql h1:iY932LuPeSgiJqfofBDhSuWAXwugDa03/YwX497BV/U=
-20260811182403_rename_user_to_client_user.up.sql h1:Yb6zN01UjOaU+BXnnwgJj+8d022qoc6iO/kpfdzOcas=
-20260812094913_create_users_table.up.sql h1:CQvz/cZ3wWcG6tIU+GP4ZqPAED69lOsG7bItfKdGXtw=
+h1:9wtGQ1IpGkNgAfC5u6mz3TrdVnhv8BcO6A0+0HAaAbA=
+20260812185219_initial.up.sql h1:2midq2mvhlGgeVBcrhs2Ql/djCgLlkJaH/ijtn/wEwU=

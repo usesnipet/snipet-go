@@ -9,21 +9,29 @@ import (
 	"net/smtp"
 
 	"github.com/usesnipet/snipet/config"
+	"github.com/usesnipet/snipet/internal/logger"
 )
 
 type Service struct {
-	cfg config.SMTPConfig
+	cfg    config.SMTPConfig
+	logger *logger.Logger
 }
 
-func NewService(cfg config.SMTPConfig) *Service {
-	return &Service{cfg: cfg}
+func NewService(cfg config.SMTPConfig, logger *logger.Logger) *Service {
+	return &Service{cfg: cfg, logger: logger}
 }
 
 // SendTemplate renders the named template with data and sends it to to.
 func (s *Service) SendTemplate(ctx context.Context, to string, tmpl TemplateName, data any) error {
+	if !s.cfg.Enable {
+		s.logger.Infof("email: not enabled, skipping send, to: %s, template: %s, data: %v", to, tmpl, data)
+		return nil
+	}
+
 	var body bytes.Buffer
 	if err := templates.ExecuteTemplate(&body, string(tmpl)+".html", data); err != nil {
-		return fmt.Errorf("email: render template %q: %w", tmpl, err)
+		s.logger.Errorf("email: render template %q: %v", tmpl, err)
+		return ErrEmailSendingFailed
 	}
 
 	return s.Send(ctx, to, subjects[tmpl], body.String())
@@ -31,12 +39,18 @@ func (s *Service) SendTemplate(ctx context.Context, to string, tmpl TemplateName
 
 // Send dials the configured SMTP server and delivers a single HTML email.
 func (s *Service) Send(ctx context.Context, to, subject, htmlBody string) error {
+	if !s.cfg.Enable {
+		s.logger.Infof("email: not enabled, skipping send, to: %s, subject: %s", to, subject)
+		return nil
+	}
+
 	addr := fmt.Sprintf("%s:%d", s.cfg.Host, s.cfg.Port)
 
 	dialer := &net.Dialer{}
 	conn, err := dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
-		return fmt.Errorf("email: dial %s: %w", addr, err)
+		s.logger.Errorf("email: dial %s: %v", addr, err)
+		return ErrEmailSendingFailed
 	}
 
 	if s.cfg.UseTLS {
@@ -46,14 +60,16 @@ func (s *Service) Send(ctx context.Context, to, subject, htmlBody string) error 
 	client, err := smtp.NewClient(conn, s.cfg.Host)
 	if err != nil {
 		_ = conn.Close()
-		return fmt.Errorf("email: new smtp client: %w", err)
+		s.logger.Errorf("email: new smtp client: %v", err)
+		return ErrEmailSendingFailed
 	}
 	defer client.Close()
 
 	if !s.cfg.UseTLS {
 		if ok, _ := client.Extension("STARTTLS"); ok {
 			if err := client.StartTLS(&tls.Config{ServerName: s.cfg.Host}); err != nil {
-				return fmt.Errorf("email: starttls: %w", err)
+				s.logger.Errorf("email: starttls: %v", err)
+				return ErrEmailSendingFailed
 			}
 		}
 	}
@@ -61,28 +77,34 @@ func (s *Service) Send(ctx context.Context, to, subject, htmlBody string) error 
 	if s.cfg.Username != "" {
 		auth := smtp.PlainAuth("", s.cfg.Username, s.cfg.Password, s.cfg.Host)
 		if err := client.Auth(auth); err != nil {
-			return fmt.Errorf("email: auth: %w", err)
+			s.logger.Errorf("email: auth: %v", err)
+			return ErrEmailSendingFailed
 		}
 	}
 
 	if err := client.Mail(s.cfg.From); err != nil {
-		return fmt.Errorf("email: mail from: %w", err)
+		s.logger.Errorf("email: mail from: %v", err)
+		return ErrEmailSendingFailed
 	}
 	if err := client.Rcpt(to); err != nil {
-		return fmt.Errorf("email: rcpt to: %w", err)
+		s.logger.Errorf("email: rcpt to: %v", err)
+		return ErrEmailSendingFailed
 	}
 
 	w, err := client.Data()
 	if err != nil {
-		return fmt.Errorf("email: data: %w", err)
+		s.logger.Errorf("email: data: %v", err)
+		return ErrEmailSendingFailed
 	}
 
 	if _, err := w.Write(buildMessage(s.cfg.From, to, subject, htmlBody)); err != nil {
 		_ = w.Close()
-		return fmt.Errorf("email: write body: %w", err)
+		s.logger.Errorf("email: write body: %v", err)
+		return ErrEmailSendingFailed
 	}
 	if err := w.Close(); err != nil {
-		return fmt.Errorf("email: close body: %w", err)
+		s.logger.Errorf("email: close body: %v", err)
+		return ErrEmailSendingFailed
 	}
 
 	return client.Quit()

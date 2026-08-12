@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/usesnipet/snipet/config"
+	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/module/email"
 )
 
@@ -122,7 +123,7 @@ func TestSendDeliversHTMLMessage(t *testing.T) {
 	t.Parallel()
 
 	srv := startFakeSMTPServer(t)
-	svc := email.NewService(srv.config())
+	svc := email.NewService(srv.config(), logger.NewLogger(logger.LevelDebug))
 
 	err := svc.Send(context.Background(), "user@example.com", "Hello", "<p>Hi</p>")
 	require.NoError(t, err)
@@ -136,7 +137,7 @@ func TestSendDeliversHTMLMessage(t *testing.T) {
 func TestSendReturnsErrorWhenServerUnreachable(t *testing.T) {
 	t.Parallel()
 
-	svc := email.NewService(config.SMTPConfig{Host: "127.0.0.1", Port: 1, From: "no-reply@snipet.dev"})
+	svc := email.NewService(config.SMTPConfig{Host: "127.0.0.1", Port: 1, From: "no-reply@snipet.dev"}, logger.NewLogger(logger.LevelDebug))
 
 	err := svc.Send(context.Background(), "user@example.com", "Hello", "<p>Hi</p>")
 	require.Error(t, err)
@@ -184,7 +185,7 @@ func TestSendTemplateRendersAndDeliversEachTemplate(t *testing.T) {
 			t.Parallel()
 
 			srv := startFakeSMTPServer(t)
-			svc := email.NewService(srv.config())
+			svc := email.NewService(srv.config(), logger.NewLogger(logger.LevelDebug))
 
 			err := svc.SendTemplate(context.Background(), "user@example.com", tt.tmpl, tt.data)
 			require.NoError(t, err)

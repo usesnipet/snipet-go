@@ -51,5 +51,5 @@ db-hash:
 fix:
 	$(GO) fix ./...
 
-swagger:
+openapi:
 	$(SWAG) init -g cmd/api/main.go -o docs/swagger --parseDependency --parseInternal --useStructName
