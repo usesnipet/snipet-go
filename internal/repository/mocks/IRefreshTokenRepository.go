@@ -40,7 +40,7 @@ func (_m *MockIRefreshTokenRepository) EXPECT() *MockIRefreshTokenRepository_Exp
 }
 
 // Create provides a mock function for the type MockIRefreshTokenRepository
-func (_mock *MockIRefreshTokenRepository) Create(ctx context.Context, token *model.RefreshToken) error {
+func (_mock *MockIRefreshTokenRepository) Create(ctx context.Context, token *model.ClientUserRefreshToken) error {
 	ret := _mock.Called(ctx, token)
 
 	if len(ret) == 0 {
@@ -48,7 +48,7 @@ func (_mock *MockIRefreshTokenRepository) Create(ctx context.Context, token *mod
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.RefreshToken) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.ClientUserRefreshToken) error); ok {
 		r0 = returnFunc(ctx, token)
 	} else {
 		r0 = ret.Error(0)
@@ -68,15 +68,15 @@ func (_e *MockIRefreshTokenRepository_Expecter) Create(ctx any, token any) *Mock
 	return &MockIRefreshTokenRepository_Create_Call{Call: _e.mock.On("Create", ctx, token)}
 }
 
-func (_c *MockIRefreshTokenRepository_Create_Call) Run(run func(ctx context.Context, token *model.RefreshToken)) *MockIRefreshTokenRepository_Create_Call {
+func (_c *MockIRefreshTokenRepository_Create_Call) Run(run func(ctx context.Context, token *model.ClientUserRefreshToken)) *MockIRefreshTokenRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *model.RefreshToken
+		var arg1 *model.ClientUserRefreshToken
 		if args[1] != nil {
-			arg1 = args[1].(*model.RefreshToken)
+			arg1 = args[1].(*model.ClientUserRefreshToken)
 		}
 		run(
 			arg0,
@@ -91,29 +91,29 @@ func (_c *MockIRefreshTokenRepository_Create_Call) Return(err error) *MockIRefre
 	return _c
 }
 
-func (_c *MockIRefreshTokenRepository_Create_Call) RunAndReturn(run func(ctx context.Context, token *model.RefreshToken) error) *MockIRefreshTokenRepository_Create_Call {
+func (_c *MockIRefreshTokenRepository_Create_Call) RunAndReturn(run func(ctx context.Context, token *model.ClientUserRefreshToken) error) *MockIRefreshTokenRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FindByHash provides a mock function for the type MockIRefreshTokenRepository
-func (_mock *MockIRefreshTokenRepository) FindByHash(ctx context.Context, hash string) (*model.RefreshToken, error) {
+func (_mock *MockIRefreshTokenRepository) FindByHash(ctx context.Context, hash string) (*model.ClientUserRefreshToken, error) {
 	ret := _mock.Called(ctx, hash)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindByHash")
 	}
 
-	var r0 *model.RefreshToken
+	var r0 *model.ClientUserRefreshToken
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.RefreshToken, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.ClientUserRefreshToken, error)); ok {
 		return returnFunc(ctx, hash)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.RefreshToken); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.ClientUserRefreshToken); ok {
 		r0 = returnFunc(ctx, hash)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.RefreshToken)
+			r0 = ret.Get(0).(*model.ClientUserRefreshToken)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -154,12 +154,12 @@ func (_c *MockIRefreshTokenRepository_FindByHash_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockIRefreshTokenRepository_FindByHash_Call) Return(refreshToken *model.RefreshToken, err error) *MockIRefreshTokenRepository_FindByHash_Call {
+func (_c *MockIRefreshTokenRepository_FindByHash_Call) Return(refreshToken *model.ClientUserRefreshToken, err error) *MockIRefreshTokenRepository_FindByHash_Call {
 	_c.Call.Return(refreshToken, err)
 	return _c
 }
 
-func (_c *MockIRefreshTokenRepository_FindByHash_Call) RunAndReturn(run func(ctx context.Context, hash string) (*model.RefreshToken, error)) *MockIRefreshTokenRepository_FindByHash_Call {
+func (_c *MockIRefreshTokenRepository_FindByHash_Call) RunAndReturn(run func(ctx context.Context, hash string) (*model.ClientUserRefreshToken, error)) *MockIRefreshTokenRepository_FindByHash_Call {
 	_c.Call.Return(run)
 	return _c
 }

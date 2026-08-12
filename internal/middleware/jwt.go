@@ -5,7 +5,7 @@ import (
 
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
-	clientauth "github.com/usesnipet/snipet/internal/module/auth"
+	"github.com/usesnipet/snipet/internal/module/clientauth"
 )
 
 func JWT(jwtService *auth.JWTService[*clientauth.UserClaims]) api.MiddlewareFunc {

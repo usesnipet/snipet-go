@@ -25,9 +25,9 @@ import (
 	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	app_module "github.com/usesnipet/snipet/internal/module/app"
-	auth_module "github.com/usesnipet/snipet/internal/module/auth"
-	auth_provider "github.com/usesnipet/snipet/internal/module/auth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/client"
+	"github.com/usesnipet/snipet/internal/module/clientauth"
+	auth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/clientuser"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
@@ -71,7 +71,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeItemRepo := repository.NewKnowledgeItemRepository(db)
 	indexedKnowledgeItemRepo := repository.NewIndexedKnowledgeItemRepository(db)
 	clientUserRepo := repository.NewClientUserRepository(db, clientRepo)
-	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
+	refreshTokenRepo := repository.NewClientUserRefreshTokenRepository(db)
 	executionRepo := repository.NewExecutionRepository(db)
 	messageRepo := repository.NewExecutionMessageRepository(db)
 
@@ -115,13 +115,13 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// services
 	apiKeyGenerator := auth.NewAPIKeyGenerator()
 	apiKeyHasher := auth.NewKeyHasher()
-	jwtService := auth.NewJWTService(cfg.Auth, func() *auth_module.UserClaims { return &auth_module.UserClaims{} })
+	jwtService := auth.NewJWTService(cfg.Auth, func() *clientauth.UserClaims { return &clientauth.UserClaims{} })
 
-	refreshTokenService := auth.NewTokenService(cfg.Auth)
+	refreshTokenService := auth.NewTokenService()
 
 	authRegistry := auth_provider.NewRegistry()
 
-	authService := auth_module.NewService(
+	authService := clientauth.NewService(
 		authRegistry,
 		clientRepo,
 		clientUserRepo,
@@ -174,7 +174,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	jwtMiddleware := middleware.JWT(jwtService)
 
 	// handlers
-	authHandler := auth_module.NewHandler(authService)
+	clientAuthHandler := clientauth.NewHandler(authService)
 	appHandler := app_module.NewHandler(appService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
@@ -189,7 +189,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	api := api.New()
 	api.Router.Handle("/*", web.Handler())
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
-		authHandler.RegisterRoutes(r, api.Serve)
+		clientAuthHandler.RegisterRoutes(r, api.Serve)
 		appHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
 		agentHandler.RegisterRoutes(r, api.Serve)

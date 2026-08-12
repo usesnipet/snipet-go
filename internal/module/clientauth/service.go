@@ -19,32 +19,32 @@ import (
 )
 
 type Service struct {
-	registry            *auth_provider.Registry
-	clientRepo          repository.IClientRepository
-	userRepo            repository.IClientUserRepository
-	refreshTokenRepo    repository.IRefreshTokenRepository
-	jwtService          *coreauth.JWTService[*UserClaims]
-	refreshTokenService *coreauth.TokenService
-	authConfig          config.AuthConfig
+	registry                   *auth_provider.Registry
+	clientRepo                 repository.IClientRepository
+	userRepo                   repository.IClientUserRepository
+	clientUserRefreshTokenRepo repository.IClientUserRefreshTokenRepository
+	jwtService                 *coreauth.JWTService[*UserClaims]
+	tokenService               *coreauth.TokenService
+	authConfig                 config.AuthConfig
 }
 
 func NewService(
 	registry *auth_provider.Registry,
 	clientRepo repository.IClientRepository,
 	userRepo repository.IClientUserRepository,
-	refreshTokenRepo repository.IRefreshTokenRepository,
+	clientUserRefreshTokenRepo repository.IClientUserRefreshTokenRepository,
 	jwtService *coreauth.JWTService[*UserClaims],
 	refreshTokenService *coreauth.TokenService,
 	authConfig config.AuthConfig,
 ) *Service {
 	return &Service{
-		registry:            registry,
-		clientRepo:          clientRepo,
-		userRepo:            userRepo,
-		refreshTokenRepo:    refreshTokenRepo,
-		jwtService:          jwtService,
-		refreshTokenService: refreshTokenService,
-		authConfig:          authConfig,
+		registry:                   registry,
+		clientRepo:                 clientRepo,
+		userRepo:                   userRepo,
+		clientUserRefreshTokenRepo: clientUserRefreshTokenRepo,
+		jwtService:                 jwtService,
+		tokenService:               refreshTokenService,
+		authConfig:                 authConfig,
 	}
 }
 
@@ -58,7 +58,7 @@ func (s *Service) issueTokens(ctx context.Context, clientCode string, user *mode
 		return nil, err
 	}
 
-	refreshToken, refreshTokenExpiresAt, err := s.refreshTokenService.GenerateToken()
+	refreshToken, err := s.tokenService.GenerateToken()
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +67,13 @@ func (s *Service) issueTokens(ctx context.Context, clientCode string, user *mode
 		metadata = jsonx.JSONMap{}
 	}
 
-	record := &model.RefreshToken{
-		Hash:      s.refreshTokenService.HashToken(refreshToken),
-		UserID:    user.ID,
-		ExpiresAt: refreshTokenExpiresAt,
-		Metadata:  metadata,
+	record := &model.ClientUserRefreshToken{
+		Hash:         s.tokenService.HashToken(refreshToken),
+		ClientUserID: user.ID,
+		ExpiresAt:    time.Now().Add(s.authConfig.RefreshTokenExpiration),
+		Metadata:     metadata,
 	}
-	if err := s.refreshTokenRepo.Create(ctx, record); err != nil {
+	if err := s.clientUserRefreshTokenRepo.Create(ctx, record); err != nil {
 		return nil, err
 	}
 
@@ -81,7 +81,7 @@ func (s *Service) issueTokens(ctx context.Context, clientCode string, user *mode
 		AccessToken:           accessToken,
 		AccessTokenExpiresAt:  accessTokenExpiresAt,
 		RefreshToken:          refreshToken,
-		RefreshTokenExpiresAt: refreshTokenExpiresAt,
+		RefreshTokenExpiresAt: time.Now().Add(s.authConfig.RefreshTokenExpiration),
 		User:                  *user,
 	}, nil
 }
@@ -142,8 +142,8 @@ func (s *Service) AuthenticateAnonymous(ctx context.Context, clientCode string, 
 }
 
 func (s *Service) Refresh(ctx context.Context, clientCode string, dto RefreshDTO, refreshMetadata jsonx.JSONMap) (*AuthenticateResponse, error) {
-	hash := s.refreshTokenService.HashToken(dto.RefreshToken)
-	token, err := s.refreshTokenRepo.FindByHash(ctx, hash)
+	hash := s.tokenService.HashToken(dto.RefreshToken)
+	token, err := s.clientUserRefreshTokenRepo.FindByHash(ctx, hash)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, apperr.Unauthorized("invalid refresh token")
@@ -157,7 +157,7 @@ func (s *Service) Refresh(ctx context.Context, clientCode string, dto RefreshDTO
 		return nil, apperr.Unauthorized("refresh token expired")
 	}
 
-	user, err := s.userRepo.FindByIDInClient(ctx, clientCode, token.UserID)
+	user, err := s.userRepo.FindByIDInClient(ctx, clientCode, token.ClientUserID)
 	if err != nil {
 		var appErr *apperr.Error
 		if errors.As(err, &appErr) && appErr.StatusCode == http.StatusNotFound {
@@ -166,7 +166,7 @@ func (s *Service) Refresh(ctx context.Context, clientCode string, dto RefreshDTO
 		return nil, err
 	}
 
-	if err := s.refreshTokenRepo.RevokeByID(ctx, token.ID); err != nil {
+	if err := s.clientUserRefreshTokenRepo.RevokeByID(ctx, token.ID); err != nil {
 		return nil, err
 	}
 

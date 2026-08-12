@@ -9,7 +9,7 @@ import (
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
-	clientauth "github.com/usesnipet/snipet/internal/module/auth"
+	"github.com/usesnipet/snipet/internal/module/clientauth"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository"
 )

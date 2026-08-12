@@ -10,7 +10,7 @@ import (
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
-	clientauth "github.com/usesnipet/snipet/internal/module/auth"
+	"github.com/usesnipet/snipet/internal/module/clientauth"
 )
 
 func jwtAuth(jwtService *auth.JWTService[*clientauth.UserClaims], next http.Handler, w http.ResponseWriter, r *http.Request) {
