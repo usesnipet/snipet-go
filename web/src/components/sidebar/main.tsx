@@ -1,13 +1,21 @@
-import { useGetSystemInfo } from "@/features/app/hooks";
+import { useTheme } from "@/context/theme-provider";
 import { useLogout } from "@/features/auth/hooks";
+import { TenantCard } from "@/features/tenant/components/tenant-card";
+import { useFindMineTenant } from "@/features/tenant/hooks";
+import { useNavigate } from "@/hooks/use-navigate";
 import { ROUTES } from "@/routes";
-import { BookOpen, Bot, Cpu, Key, LogOutIcon, Settings, Shield, Users } from "lucide-react";
+import {
+  BookOpen, Bot, Building2Icon, ChevronsUpDownIcon, Cpu, Key, LogOutIcon, MoonIcon,
+  Settings, Shield, SunIcon, Users
+} from "lucide-react";
+import { useState } from "react";
+import { useParams } from "react-router";
 
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { Link } from "../ui/link";
-import { Sidebar, SidebarFooter, SidebarHeader } from "../ui/sidebar";
-import { Skeleton } from "../ui/skeleton";
-import { ToggleTheme } from "../ui/toggle-theme";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Separator } from "../ui/separator";
+import { Sidebar, SidebarHeader } from "../ui/sidebar";
 
 import { SidebarContent } from "./content";
 
@@ -51,36 +59,93 @@ const navItems: NavEntry[] = [
   },
 ]
 
-export function MainSidebar() {
-  const { data: systemInfo, isLoading } = useGetSystemInfo();
-  const { mutate: logout } = useLogout();
+const MAX_VISIBLE_TENANTS = 3;
 
+export function MainSidebar() {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
+  const { mutate: logout } = useLogout();
+  const { data } = useFindMineTenant();
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
+
+  const tenants = data?.data ?? [];
+  const currentTenant = tenants.find((tenant) => tenant.slug === tenantSlug) ?? null;
+  const visibleTenants = tenants.slice(0, MAX_VISIBLE_TENANTS);
+  const hasMoreTenants = tenants.length > MAX_VISIBLE_TENANTS;
+
+  const goToSelectTenant = () => {
+    setOpen(false);
+    navigate(ROUTES.selectTenant);
+  };
+
+  const handleToggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+
+  const handleLogout = () => {
+    setOpen(false);
+    logout({});
+  };
 
   return (
     <Sidebar>
-      <SidebarHeader className="flex flex-row justify-between items-center">
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
-        >
-          <img src="/favicon.svg" alt="Snipet" className="size-7 shrink-0" />
-          <div>
-            <p className="text-sm font-semibold">Snipet</p>
-            <span className="inline-flex gap-1 text-xs text-muted-foreground">
-              <strong>Version:</strong>
-              {isLoading ? <Skeleton className="w-20 h-4" /> : <p>{systemInfo?.version}</p>}
-            </span>
-          </div>
-        </Link>
-        <ToggleTheme />
+      <SidebarHeader>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-muted group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+            >
+              <Avatar size="sm">
+                {currentTenant?.icon && (
+                  <AvatarImage src={currentTenant.icon} alt={currentTenant.name} />
+                )}
+                <AvatarFallback>
+                  <Building2Icon className="size-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+                <p className="truncate text-sm font-semibold leading-tight">
+                  {currentTenant?.name ?? "Select tenant"}
+                </p>
+                {currentTenant && (
+                  <p className="truncate text-xs text-muted-foreground">{currentTenant.slug}</p>
+                )}
+              </div>
+              <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-72 p-2">
+            <div className="flex flex-col gap-2" onClick={() => setOpen(false)}>
+              {visibleTenants.length > 0 ? (
+                visibleTenants.map((tenant) => (
+                  <TenantCard key={tenant.id} tenant={tenant} compact />
+                ))
+              ) : (
+                <p className="px-2 py-1 text-sm text-muted-foreground">No tenants yet.</p>
+              )}
+              {hasMoreTenants && (
+                <Button variant="ghost" className="w-full justify-center" onClick={goToSelectTenant}>
+                  Show more
+                </Button>
+              )}
+            </div>
+            <Separator className="my-2" />
+            <Button variant="outline" className="w-full justify-start" onClick={handleToggleTheme}>
+              {theme === "dark" ? <SunIcon className="size-4" /> : <MoonIcon className="size-4" />}
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </Button>
+            <Button
+              variant="destructive"
+              className="mt-2 w-full justify-start"
+              onClick={handleLogout}
+            >
+              <LogOutIcon className="size-4" />
+              Logout
+            </Button>
+          </PopoverContent>
+        </Popover>
       </SidebarHeader>
       <SidebarContent navItems={navItems} />
-      <SidebarFooter>
-        <Button variant="destructive" onClick={() => logout({})}>
-          <LogOutIcon className="size-4" />
-          Logout
-        </Button>
-      </SidebarFooter>
     </Sidebar>
   )
 }
