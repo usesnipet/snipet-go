@@ -93,27 +93,44 @@ func (s *Service) currentUserID(ctx context.Context) (string, error) {
 	return auth.PlatformUserID(ctx)
 }
 
-// FindByID requires the caller to be a member of the tenant (any role) or a
-// platform admin — a weaker check than the admin-only authz.CanManageTenant
-// used by UpdateByID/DeleteByID below.
+// FindByID requires the caller to be a member of the tenant (any role)
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Tenant, error) {
 	userID, err := s.currentUserID(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := s.userRepo.FindByID(ctx, userID)
+	if _, err := s.memberRepo.FindByUserAndTenant(ctx, userID, id); err != nil {
+		return nil, err
+	}
+
+	return s.tenantRepo.FindByID(ctx, id)
+}
+
+// FindBySlug requires the caller to be a member of the tenant (any role)
+func (s *Service) FindBySlug(ctx context.Context, slug string) (*model.Tenant, error) {
+	userID, err := s.currentUserID(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if !user.IsAdmin {
-		if _, err := s.memberRepo.FindByUserAndTenant(ctx, userID, id); err != nil {
-			return nil, err
-		}
+	found, err := s.tenantRepo.Filter(ctx, filter.New[model.Tenant](
+		filter.WhereEq("slug", slug),
+		filter.Take(1),
+	))
+	if err != nil {
+		return nil, err
+	}
+	if found.IsEmpty() {
+		return nil, apperr.NotFound("tenant not found")
+	}
+	tenant := found.First()
+
+	if _, err := s.memberRepo.FindByUserAndTenant(ctx, userID, tenant.ID); err != nil {
+		return nil, err
 	}
 
-	return s.tenantRepo.FindByID(ctx, id)
+	return tenant, nil
 }
 
 // FindMine returns the tenants the current user is a member of.
@@ -212,8 +229,6 @@ func (s *Service) UpdateByID(ctx context.Context, id string, dto UpdateTenantDTO
 	return s.tenantRepo.UpdateByID(ctx, id, updates)
 }
 
-// DeleteByID cascades to Member/TenantInvitation rows at the DB level (FK
-// ON DELETE CASCADE).
 func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	if err := s.requireCanManage(ctx, id); err != nil {
 		return err
@@ -272,7 +287,7 @@ func (s *Service) Leave(ctx context.Context, tenantID string) error {
 			return err
 		}
 		if admins.Total <= 1 {
-			return apperr.Conflict("cannot leave: last admin of the tenant")
+			return apperr.Conflict("you are the last admin of the tenant and cannot leave")
 		}
 	}
 

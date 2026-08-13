@@ -26,6 +26,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 
 		r.Get("/me", serve(h.findMine))
 		r.Post("/", serve(h.create))
+		r.Get("/slug/{slug}", serve(h.findBySlug))
 		r.Get("/{id}", serve(h.findByID))
 		r.Put("/{id}", serve(h.update))
 		r.Delete("/{id}", serve(h.deleteByID))
@@ -50,7 +51,7 @@ func (h *Handler) findMine(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Get tenant
-// @Description	Returns a tenant. Caller must be a member (or platform admin).
+// @Description	Returns a tenant. Caller must be a member.
 // @Tags			tenant
 // @Produce		json
 // @Security		BearerAuth
@@ -62,6 +63,25 @@ func (h *Handler) findMine(w http.ResponseWriter, r *http.Request) error {
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 	data, err := h.service.FindByID(r.Context(), id)
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
+}
+
+// @Summary		Get tenant by slug
+// @Description	Returns a tenant by its slug. Caller must be a member.
+// @Tags			tenant
+// @Produce		json
+// @Security		BearerAuth
+// @Param			slug	path		string	true	"Tenant slug"
+// @Success		200	{object}	TenantResponse
+// @Failure		403	{object}	api.Error
+// @Failure		404	{object}	api.Error
+// @Router			/tenants/slug/{slug} [get]
+func (h *Handler) findBySlug(w http.ResponseWriter, r *http.Request) error {
+	slug := chi.URLParam(r, "slug")
+	data, err := h.service.FindBySlug(r.Context(), slug)
 	if err != nil {
 		return err
 	}
