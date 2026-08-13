@@ -20,6 +20,7 @@ import (
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	"github.com/usesnipet/snipet/internal/infra/database"
+	"github.com/usesnipet/snipet/internal/license"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/middleware"
 	"github.com/usesnipet/snipet/internal/module/agent"
@@ -35,6 +36,7 @@ import (
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
 	"github.com/usesnipet/snipet/internal/module/session"
+	"github.com/usesnipet/snipet/internal/module/tenant"
 	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
@@ -80,6 +82,8 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	userRepo := repository.NewUserRepository(db)
 	accountRepo := repository.NewAccountRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
+	tenantRepo := repository.NewTenantRepository(db)
+	memberRepo := repository.NewMemberRepository(db)
 
 	// runtime
 	sourceRegistry := source.Registry(logger)
@@ -189,6 +193,18 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	userService := user.NewService(userRepo, cfg.User)
 	appService := app_module.NewService(&cfg.App)
 
+	licenseService := license.NewService(cfg.License)
+	tenantService := tenant.NewService(tenantRepo, memberRepo, userRepo, txManager, cfg.Tenant, licenseService)
+
+	if err := userService.Init(context.Background()); err != nil {
+		logger.Errorf("failed to init user service: %v", err)
+		return err
+	}
+	if err := tenantService.Init(context.Background(), cfg.User.AdminEmail); err != nil {
+		logger.Errorf("failed to init tenant service: %v", err)
+		return err
+	}
+
 	// cache
 	apiKeyCache := cache.NewMemoryCache(1000, 1*time.Hour)
 
@@ -216,6 +232,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
 	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, clientJWTMiddleware)
 	userHandler := user.NewHandler(userService, platformJWTMiddleware)
+	tenantHandler := tenant.NewHandler(tenantService, platformJWTMiddleware)
 
 	// register routes
 	api := api.New()
@@ -233,6 +250,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		knowledgeIndexHandler.RegisterRoutes(r, api.Serve)
 		clientUserHandler.RegisterRoutes(r, api.Serve)
 		userHandler.RegisterRoutes(r, api.Serve)
+		tenantHandler.RegisterRoutes(r, api.Serve)
 	})
 
 	logger.Infof("sync worker pool started with %d workers", cfg.Sync.Workers)

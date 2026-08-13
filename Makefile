@@ -1,4 +1,4 @@
-.PHONY: test install dev dev-api dev-web build build-prod db-generate db-hash mocks fix swagger
+.PHONY: test install dev dev-api dev-web build build-prod build-license db-generate db-hash mocks fix swagger
 
 GO ?= go
 ATLAS ?= atlas
@@ -31,6 +31,9 @@ dev-web:
 
 build:
 	$(GO) build -o ./tmp/api ./cmd/api
+
+build-license:
+	$(GO) build -o ./tmp/license ./cmd/license
 
 build-prod:
 	cd web && pnpm build && cd .. && $(GO) build -ldflags "-s -w" -o ./out/api-prod ./cmd/api

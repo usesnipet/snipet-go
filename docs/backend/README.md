@@ -27,7 +27,8 @@ This folder explains the reasoning behind each layer it scaffolds.
 ## Layout
 
 ```
-cmd/api/main.go          entrypoint: load config, build logger, call bootstrap.Bootstrap
+cmd/api/main.go          API entrypoint: load config, build logger, call bootstrap.Bootstrap
+cmd/license/main.go      offline license issuer: gen-keys, issue
 config/                   env-driven configuration structs
 internal/
   bootstrap/               wires every layer together, registers routes

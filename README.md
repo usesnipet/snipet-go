@@ -30,7 +30,8 @@ Snipet exposes a REST API that lets external applications (websites, mobile apps
 
 ```
 snipet/
-├── cmd/api/              # Application entrypoint
+├── cmd/api/              # API entrypoint
+├── cmd/license/          # Offline license-key issuer (gen-keys, issue)
 ├── config/               # Environment-based configuration
 ├── docs/                 # Architecture documentation
 ├── internal/

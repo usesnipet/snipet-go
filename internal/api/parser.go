@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"regexp"
 
 	"github.com/go-playground/form/v4"
 	"github.com/go-playground/mold/v4/modifiers"
@@ -16,7 +17,17 @@ var (
 	validate    = validator.New()
 	conform     = modifiers.New()
 	formDecoder = form.NewDecoder()
+
+	alphanumDashPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
 )
+
+func init() {
+	// alphanum_dash: lowercase letters, digits, and dashes only — used for
+	// slug-like fields (e.g. tenant.Slug).
+	_ = validate.RegisterValidation("alphanum_dash", func(fl validator.FieldLevel) bool {
+		return alphanumDashPattern.MatchString(fl.Field().String())
+	})
+}
 
 func ParseBody[T any](r *http.Request, v *T) error {
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
