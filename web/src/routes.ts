@@ -1,12 +1,15 @@
 export const ROUTES = {
   home: "/",
-  knowledge: "/knowledge",
-  knowledgeDetail: "/knowledge/{id}",
-  agent: "/agent",
-  llms: "/llms",
-  apiKeys: "/api-keys",
-  settings: "/settings",
-  clients: "/clients",
+
+  selectTenant: "/tenant-select",
+  tenantHome: "/{tenantSlug}",
+  knowledge: "/{tenantSlug}/knowledge",
+  knowledgeDetail: "/{tenantSlug}/knowledge/{id}",
+  agent: "/{tenantSlug}/agent",
+  llms: "/{tenantSlug}/llms",
+  apiKeys: "/{tenantSlug}/api-keys",
+  settings: "/{tenantSlug}/settings",
+  clients: "/{tenantSlug}/clients",
 
   // auth routes
   authLogin: "/auth/login",

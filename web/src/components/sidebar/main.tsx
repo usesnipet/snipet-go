@@ -15,7 +15,7 @@ import type { NavEntry } from "./types";
 const navItems: NavEntry[] = [
   {
     title: "Home",
-    href: ROUTES.home,
+    href: ROUTES.tenantHome,
     icon: Shield,
     exact: true,
   },

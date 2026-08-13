@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 
 import { LoadingFallback } from "./components/loading-fallback";
 import { AuthGuard } from "./features/auth/components/auth-guard";
@@ -40,6 +40,9 @@ const AuthLoginPage = lazy(() =>
 const AuthRegisterPage = lazy(() =>
   import("./routes/auth/register/page").then((m) => ({ default: m.AuthRegisterPage })));
 
+const TenantSelectPage = lazy(() =>
+  import("./routes/tenant-select/page").then((m) => ({ default: m.TenantSelectPage })));
+
 const toReactRouterPath = (path: RoutePath) => {
   return path.replaceAll(/{([^}]+)}/g, (_, p1) => `:${p1}`);
 }
@@ -47,19 +50,15 @@ const toReactRouterPath = (path: RoutePath) => {
 export const Router = () => {
   return (
     <BrowserRouter>
-      <Suspense fallback={<LoadingFallback />}>
+      <Suspense fallback={<LoadingFallback className="min-h-svh" />}>
         <Routes>
+          <Route path={toReactRouterPath(ROUTES.home)} element={<Navigate to={toReactRouterPath(ROUTES.selectTenant)} replace />} />
           <Route path={toReactRouterPath(ROUTES.authLogin)} element={<AuthLoginPage />} />
           <Route path={toReactRouterPath(ROUTES.authRegister)} element={<AuthRegisterPage />} />
           <Route element={<AuthGuard />}>
-            <Route element={<ClientAdminLayout />}>
-              <Route path={toReactRouterPath(ROUTES.client)} element={<ClientPage />} />
-              <Route path={toReactRouterPath(ROUTES.clientUsers)} element={<ClientUsersPage />} />
-              <Route path={toReactRouterPath(ROUTES.clientSessions)} element={<ClientSessionsPage />} />
-              <Route path={toReactRouterPath(ROUTES.clientSettings)} element={<ClientSettingsPage />} />
-            </Route>
+            <Route path={toReactRouterPath(ROUTES.selectTenant)} element={<TenantSelectPage />} />
             <Route element={<Layout />}>
-              <Route path={toReactRouterPath(ROUTES.home)} element={<HomePage />} />
+              <Route path={toReactRouterPath(ROUTES.tenantHome)} element={<HomePage />} />
               <Route path={toReactRouterPath(ROUTES.clients)} element={<ClientsPage />} />
               <Route path={toReactRouterPath(ROUTES.agent)} element={<AgentsPage />} />
               <Route path={toReactRouterPath(ROUTES.knowledge)} element={<KnowledgePage />} />
@@ -69,6 +68,12 @@ export const Router = () => {
               />
               <Route path={toReactRouterPath(ROUTES.llms)} element={<LLMPage />} />
               <Route path={toReactRouterPath(ROUTES.apiKeys)} element={<ApiKeysPage />} />
+            </Route>
+            <Route element={<ClientAdminLayout />}>
+              <Route path={toReactRouterPath(ROUTES.client)} element={<ClientPage />} />
+              <Route path={toReactRouterPath(ROUTES.clientUsers)} element={<ClientUsersPage />} />
+              <Route path={toReactRouterPath(ROUTES.clientSessions)} element={<ClientSessionsPage />} />
+              <Route path={toReactRouterPath(ROUTES.clientSettings)} element={<ClientSettingsPage />} />
             </Route>
           </Route>
         </Routes>

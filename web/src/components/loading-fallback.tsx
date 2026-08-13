@@ -1,8 +1,10 @@
+import { cn } from "@/lib/utils";
+
 import { Loading } from "./ui/loading";
 
-export const LoadingFallback = () => {
+export const LoadingFallback = ({ className = "" }: { className?: string } ) => {
   return (
-    <div className="flex min-h-0 h-full flex-1 items-center justify-center">
+    <div className={cn("flex min-h-0 h-full flex-1 items-center justify-center", className)}>
       <Loading size="xl" />
     </div>
   )

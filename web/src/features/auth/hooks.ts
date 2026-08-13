@@ -75,7 +75,7 @@ export const useLogin = (
         title: "Signed in successfully",
         description: "You have been authenticated successfully",
       });
-      navigate(redirect ?? ROUTES.home);
+      navigate(redirect ?? ROUTES.tenantHome);
     },
     onError: (e) => {
       logger.error("Failed to login", { error: e });
