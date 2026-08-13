@@ -16,7 +16,7 @@ import type {
 const API_KEYS_URL = "/api/api-key";
 
 const list = async (
-  opts: ServiceGetOptions<PaginatedApiKey, ListApiKeySearchParams>,
+  opts: ServiceGetOptions<PaginatedApiKey, ListApiKeySearchParams> = {},
 ): Promise<PaginatedApiKey> => {
   return http.get({
     url: API_KEYS_URL,
@@ -30,7 +30,7 @@ const list = async (
 
 const create = async (
   body: CreateApiKey,
-  opts: ServicePostOptions<CreateApiKey, ApiKeyWithSecret>,
+  opts: ServicePostOptions<CreateApiKey, ApiKeyWithSecret> = {},
 ): Promise<ApiKeyWithSecret> => {
   return http.post({
     url: API_KEYS_URL,
@@ -46,7 +46,7 @@ const create = async (
 const updateExpiration = async (
   id: string,
   body: UpdateApiKeyExpiration,
-  opts: ServicePutOptions<UpdateApiKeyExpiration, void>,
+  opts: ServicePutOptions<UpdateApiKeyExpiration, void> = {},
 ): Promise<void> => {
   return http.put({
     url: `${API_KEYS_URL}/{id}/expiration`,
@@ -59,7 +59,7 @@ const updateExpiration = async (
   })
 }
 
-const me = async (opts: ServiceGetOptions<ApiKey>): Promise<ApiKey> => {
+const me = async (opts: ServiceGetOptions<ApiKey> = {}): Promise<ApiKey> => {
   return http.get({
     url: `${API_KEYS_URL}/me`,
     schemas: { response: apiKeySchema },
@@ -67,7 +67,7 @@ const me = async (opts: ServiceGetOptions<ApiKey>): Promise<ApiKey> => {
   })
 }
 
-const findById = async (id: string, opts: ServiceGetOptions<ApiKey>): Promise<ApiKey> => {
+const findById = async (id: string, opts: ServiceGetOptions<ApiKey> = {}): Promise<ApiKey> => {
   return http.get({
     url: `${API_KEYS_URL}/{id}`,
     params: { id },
@@ -78,7 +78,7 @@ const findById = async (id: string, opts: ServiceGetOptions<ApiKey>): Promise<Ap
 
 const roll = async (
   id: string,
-  opts: ServicePostOptions<undefined, ApiKeyWithSecret>,
+  opts: ServicePostOptions<undefined, ApiKeyWithSecret> = {},
 ): Promise<ApiKeyWithSecret> => {
   return http.post({
     url: `${API_KEYS_URL}/{id}/roll`,
@@ -90,7 +90,7 @@ const roll = async (
   })
 }
 
-const remove = async (id: string, opts: ServiceDeleteOptions<void>): Promise<void> => {
+const remove = async (id: string, opts: ServiceDeleteOptions<void> = {}): Promise<void> => {
   return http.delete({
     url: `${API_KEYS_URL}/{id}`,
     params: { id },

@@ -1,20 +1,17 @@
-import { useNavigate } from "@/hooks/use-navigate";
 import { toast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/query-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { apiKeyService } from "./service";
-import { useApiKeyStore } from "./store";
 
 import type {
-  ApiKey, ApiKeyKey, ApiKeyWithSecret, CreateApiKey, ListApiKeySearchParams, PaginatedApiKey,
+  ApiKey, ApiKeyWithSecret, CreateApiKey, ListApiKeySearchParams, PaginatedApiKey,
   UpdateApiKeyExpiration
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
-import type { RoutePath } from "@/routes";
 
 const BASE_QUERY_KEY = "api-key";
 
@@ -151,41 +148,6 @@ export const useDeleteApiKey = (
       toast({
         title: "Failed to delete API Key",
         description: "The API key has not been deleted successfully",
-        variant: "destructive",
-      });
-    }
-  })
-}
-
-export const apiKeyLoginQueryKey = () => [BASE_QUERY_KEY, "login"];
-export const useApiKeyLogin = (
-  redirect?: RoutePath,
-  opts?: ServiceGetOptions<ApiKey>
-): UseMutationResult<ApiKey, Error, ApiKeyKey> => {
-  const navigate = useNavigate();
-  const setApiKey = useApiKeyStore((state) => state.set)
-  return useMutation({
-    mutationKey: apiKeyLoginQueryKey(),
-    mutationFn: async (data: ApiKeyKey) => apiKeyService.me({
-      ...opts,
-      auth: false,
-      headers: {
-        "X-API-Key": data,
-        ...opts?.headers,
-      },
-    }),
-    onSuccess: (_, variables) => {
-      setApiKey(variables)
-      toast({
-        title: "API Key logged in successfully",
-        description: "The API key has been logged in successfully",
-      });
-      navigate(redirect ?? "/admin");
-    },
-    onError: () => {
-      toast({
-        title: "Failed to login API key",
-        description: "The API key has not been logged in successfully",
         variant: "destructive",
       });
     }
