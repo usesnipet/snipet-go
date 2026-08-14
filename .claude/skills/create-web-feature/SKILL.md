@@ -43,7 +43,7 @@ export type CreateFoo = z.infer<typeof createFooSchema>;
 ```typescript
 const FOO_URL = "/api/foo";
 
-const list = async (opts?: ServiceGetOptions<Paginated<Foo>>) =>
+const list = async (opts: ServiceGetOptions<Paginated<Foo>> = {}) =>
   http.get({ url: FOO_URL, schemas: { response: paginatedFooSchema }, ...opts });
 
 export const fooService = { list };
