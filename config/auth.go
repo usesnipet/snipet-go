@@ -11,6 +11,7 @@ type AuthConfig struct {
 	RefreshTokenExpiration         time.Duration `env:"REFRESH_TOKEN_EXPIRATION, default=720h"`
 	ActivateAccountTokenExpiration time.Duration `env:"ACTIVATE_ACCOUNT_TOKEN_EXPIRATION, default=24h"`
 	ResetPasswordTokenExpiration   time.Duration `env:"RESET_PASSWORD_TOKEN_EXPIRATION, default=1h"`
+	TenantInvitationExpiration     time.Duration `env:"TENANT_INVITATION_EXPIRATION, default=168h"`
 
 	AppURL string `env:"APP_URL, default=http://localhost:5173"`
 

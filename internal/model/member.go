@@ -20,6 +20,6 @@ type Member struct {
 	CreatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 
-	User   User   `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Tenant Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	User   User   `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"user"`
+	Tenant Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
 }

@@ -35,6 +35,7 @@ import (
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
+	"github.com/usesnipet/snipet/internal/module/member"
 	"github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/module/tenant"
 	"github.com/usesnipet/snipet/internal/module/user"
@@ -84,6 +85,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	tokenRepo := repository.NewTokenRepository(db)
 	tenantRepo := repository.NewTenantRepository(db)
 	memberRepo := repository.NewMemberRepository(db)
+	tenantInvitationRepo := repository.NewTenantInvitationRepository(db)
 
 	// runtime
 	sourceRegistry := source.Registry(logger)
@@ -195,6 +197,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	licenseService := license.NewService(cfg.License)
 	tenantService := tenant.NewService(tenantRepo, memberRepo, userRepo, txManager, cfg.Tenant, licenseService)
+	memberService := member.NewService(cfg.Auth, memberRepo, tenantInvitationRepo, tenantRepo, userRepo, txManager, refreshTokenService, emailService)
 
 	if err := userService.Init(context.Background()); err != nil {
 		logger.Errorf("failed to init user service: %v", err)
@@ -233,6 +236,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, clientJWTMiddleware)
 	userHandler := user.NewHandler(userService, platformJWTMiddleware)
 	tenantHandler := tenant.NewHandler(tenantService, platformJWTMiddleware)
+	memberHandler := member.NewHandler(memberService, platformJWTMiddleware)
 
 	// register routes
 	api := api.New()
@@ -251,6 +255,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		clientUserHandler.RegisterRoutes(r, api.Serve)
 		userHandler.RegisterRoutes(r, api.Serve)
 		tenantHandler.RegisterRoutes(r, api.Serve)
+		memberHandler.RegisterRoutes(r, api.Serve)
 	})
 
 	logger.Infof("sync worker pool started with %d workers", cfg.Sync.Workers)

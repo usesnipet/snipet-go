@@ -16,8 +16,8 @@ type User struct {
 	Email        string      `gorm:"type:varchar(255);not null;unique" json:"email"`
 	PasswordHash *string     `gorm:"type:varchar(255)" json:"-"`
 	Picture      *string     `gorm:"type:varchar(255)" json:"picture"`
-	IsAdmin      bool        `gorm:"type:boolean;not null;default:false" json:"is_admin"`
-	Challenges   []Challenge `gorm:"type:jsonb;not null;serializer:json" json:"challenges"`
+	IsAdmin      bool        `gorm:"type:boolean;not null;default:false" json:"-"`
+	Challenges   []Challenge `gorm:"type:jsonb;not null;serializer:json" json:"-"`
 
 	CreatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
