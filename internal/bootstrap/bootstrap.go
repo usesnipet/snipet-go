@@ -215,12 +215,21 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	requireAPIKey := middleware.RequireAPIKey(apiKeyService, apiKeyCache)
 	requireClientJWT := middleware.RequireClientJWT(jwtService)
 	requirePlatformJWT := middleware.RequirePlatformJWT(platformJWTService)
+	requireIdentity := middleware.RequireIdentity(userRepo, memberRepo)
 	anyClientAuth := middleware.Or(requireClientJWT, requireAPIKey)
 
 	apiKeyMiddleware := requireAPIKey.Handler()
 	clientJWTMiddleware := requireClientJWT.Handler()
 	platformJWTMiddleware := requirePlatformJWT.Handler()
+	identityMiddleware := requireIdentity.Handler()
 	anyClientAuthMiddleware := anyClientAuth.Handler()
+
+	// authenticatedMiddleware requires a valid platform JWT and loads the
+	// caller's profile + tenant memberships (auth.Identity) onto the
+	// context, for modules whose services act on tenant membership.
+	authenticatedMiddleware := func(next http.Handler) http.Handler {
+		return platformJWTMiddleware(identityMiddleware(next))
+	}
 
 	// handlers
 	clientAuthHandler := clientauth.NewHandler(authService)
@@ -234,9 +243,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
 	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, clientJWTMiddleware)
-	userHandler := user.NewHandler(userService, platformJWTMiddleware)
-	tenantHandler := tenant.NewHandler(tenantService, platformJWTMiddleware)
-	memberHandler := member.NewHandler(memberService, platformJWTMiddleware)
+	userHandler := user.NewHandler(userService, authenticatedMiddleware)
+	tenantHandler := tenant.NewHandler(tenantService, authenticatedMiddleware)
+	memberHandler := member.NewHandler(memberService, authenticatedMiddleware)
 
 	// register routes
 	api := api.New()

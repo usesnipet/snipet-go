@@ -50,49 +50,28 @@ func NewService(
 	}
 }
 
-func (s *Service) currentUserID(ctx context.Context) (string, error) {
-	return auth.PlatformUserID(ctx)
-}
-
 // requireMember ensures the caller belongs to the tenant, any role.
-func (s *Service) requireMember(ctx context.Context, tenantID string) (string, error) {
-	userID, err := s.currentUserID(ctx)
+func (s *Service) requireMember(ctx context.Context, tenantID string) (*auth.Identity, error) {
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	if _, err := s.memberRepo.FindByUserAndTenant(ctx, userID, tenantID); err != nil {
-		var appErr *apperr.Error
-		if errors.As(err, &appErr) && appErr.StatusCode == http.StatusNotFound {
-			return "", apperr.Forbidden("not a member of this tenant")
-		}
-		return "", err
+	if !identity.IsMemberOf(tenantID) {
+		return nil, apperr.Forbidden("not a member of this tenant")
 	}
-
-	return userID, nil
+	return identity, nil
 }
 
-// requireAdmin ensures the caller is an active tenant admin, or a platform
-// admin acting on any tenant.
-func (s *Service) requireAdmin(ctx context.Context, tenantID string) (string, error) {
-	userID, err := s.currentUserID(ctx)
+// requireAdmin ensures the caller is an active tenant admin.
+func (s *Service) requireAdmin(ctx context.Context, tenantID string) (*auth.Identity, error) {
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	member, err := s.memberRepo.FindByUserAndTenant(ctx, userID, tenantID)
-	if err != nil {
-		var appErr *apperr.Error
-		if errors.As(err, &appErr) && appErr.StatusCode == http.StatusNotFound {
-			return "", apperr.Forbidden("not allowed to manage members of this tenant")
-		}
-		return "", err
+	if !identity.IsTenantAdmin(tenantID) {
+		return nil, apperr.Forbidden("not allowed to manage members of this tenant")
 	}
-	if member.Role != model.RoleAdmin || !member.IsActive {
-		return "", apperr.Forbidden("not allowed to manage members of this tenant")
-	}
-
-	return userID, nil
+	return identity, nil
 }
 
 // Filter lists a tenant's members. Caller must be a member (any role).
@@ -111,10 +90,10 @@ func (s *Service) Filter(ctx context.Context, tenantID string, dto FindMembersFi
 	return (*MembersPage)(paginated), nil
 }
 
-// UpdateRole changes a member's role. Caller must be a tenant admin (or
-// platform admin) and cannot change their own role.
+// UpdateRole changes a member's role. Caller must be a tenant admin and
+// cannot change their own role.
 func (s *Service) UpdateRole(ctx context.Context, tenantID, memberID string, dto UpdateMemberRoleDTO) error {
-	callerID, err := s.requireAdmin(ctx, tenantID)
+	identity, err := s.requireAdmin(ctx, tenantID)
 	if err != nil {
 		return err
 	}
@@ -126,17 +105,17 @@ func (s *Service) UpdateRole(ctx context.Context, tenantID, memberID string, dto
 	if target.TenantID != tenantID {
 		return apperr.NotFound("member not found")
 	}
-	if target.UserID == callerID {
+	if target.UserID == identity.User.ID {
 		return apperr.Forbidden("cannot change your own role")
 	}
 
 	return s.memberRepo.UpdateByID(ctx, memberID, &model.Member{Role: dto.Role})
 }
 
-// Remove deletes a member from the tenant. Caller must be a tenant admin (or
-// platform admin) and cannot remove themselves.
+// Remove deletes a member from the tenant. Caller must be a tenant admin and
+// cannot remove themselves.
 func (s *Service) Remove(ctx context.Context, tenantID, memberID string) error {
-	callerID, err := s.requireAdmin(ctx, tenantID)
+	identity, err := s.requireAdmin(ctx, tenantID)
 	if err != nil {
 		return err
 	}
@@ -148,7 +127,7 @@ func (s *Service) Remove(ctx context.Context, tenantID, memberID string) error {
 	if target.TenantID != tenantID {
 		return apperr.NotFound("member not found")
 	}
-	if target.UserID == callerID {
+	if target.UserID == identity.User.ID {
 		return apperr.Forbidden("cannot remove yourself from the tenant")
 	}
 
@@ -156,18 +135,14 @@ func (s *Service) Remove(ctx context.Context, tenantID, memberID string) error {
 }
 
 // Invite creates a pending invitation for an email address and sends the
-// invitation email. Caller must be a tenant admin (or platform admin).
+// invitation email. Caller must be a tenant admin.
 func (s *Service) Invite(ctx context.Context, tenantID string, dto InviteMemberDTO) (*model.TenantInvitation, error) {
-	callerID, err := s.requireAdmin(ctx, tenantID)
+	identity, err := s.requireAdmin(ctx, tenantID)
 	if err != nil {
 		return nil, err
 	}
 
 	tenant, err := s.tenantRepo.FindByID(ctx, tenantID)
-	if err != nil {
-		return nil, err
-	}
-	inviter, err := s.userRepo.FindByID(ctx, callerID)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +190,7 @@ func (s *Service) Invite(ctx context.Context, tenantID string, dto InviteMemberD
 	link := fmt.Sprintf("%s/invite?token=%s", strings.TrimRight(s.config.AppURL, "/"), token)
 	if err := s.emailSvc.SendTemplate(ctx, normalizedEmail, email.TemplateTenantInvitation, email.TenantInvitationData{
 		TenantName:  tenant.Name,
-		InviterName: inviter.Name,
+		InviterName: identity.User.Name,
 		Link:        link,
 	}); err != nil {
 		return nil, err
@@ -225,7 +200,7 @@ func (s *Service) Invite(ctx context.Context, tenantID string, dto InviteMemberD
 }
 
 // CancelInvitation deletes a pending invitation. Caller must be a tenant
-// admin (or platform admin).
+// admin.
 func (s *Service) CancelInvitation(ctx context.Context, tenantID, invitationID string) error {
 	if _, err := s.requireAdmin(ctx, tenantID); err != nil {
 		return err
@@ -258,11 +233,7 @@ func (s *Service) FilterInvitations(ctx context.Context, tenantID string, dto Fi
 // with the role it was issued for. The token must belong to a pending,
 // unexpired invitation addressed to the caller's own email.
 func (s *Service) AcceptInvitation(ctx context.Context, dto AcceptInvitationDTO) (*model.Member, error) {
-	userID, err := s.currentUserID(ctx)
-	if err != nil {
-		return nil, err
-	}
-	user, err := s.userRepo.FindByID(ctx, userID)
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -278,21 +249,15 @@ func (s *Service) AcceptInvitation(ctx context.Context, dto AcceptInvitationDTO)
 	if invitation.ExpiresAt.Before(time.Now()) {
 		return nil, apperr.Conflict("invitation has expired")
 	}
-	if !strings.EqualFold(invitation.Email, user.Email) {
+	if !strings.EqualFold(invitation.Email, identity.User.Email) {
 		return nil, apperr.Forbidden("this invitation was sent to a different email address")
 	}
-
-	if _, err := s.memberRepo.FindByUserAndTenant(ctx, userID, invitation.TenantID); err == nil {
+	if identity.IsMemberOf(invitation.TenantID) {
 		return nil, apperr.Conflict("you are already a member of this tenant")
-	} else {
-		var appErr *apperr.Error
-		if !errors.As(err, &appErr) || appErr.StatusCode != http.StatusNotFound {
-			return nil, err
-		}
 	}
 
 	created := &model.Member{
-		UserID:   userID,
+		UserID:   identity.User.ID,
 		TenantID: invitation.TenantID,
 		Role:     invitation.Role,
 		IsActive: true,

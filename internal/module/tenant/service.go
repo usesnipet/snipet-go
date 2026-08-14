@@ -89,19 +89,14 @@ func (s *Service) Init(ctx context.Context, adminEmail string) error {
 	})
 }
 
-func (s *Service) currentUserID(ctx context.Context) (string, error) {
-	return auth.PlatformUserID(ctx)
-}
-
 // FindByID requires the caller to be a member of the tenant (any role)
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Tenant, error) {
-	userID, err := s.currentUserID(ctx)
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	if _, err := s.memberRepo.FindByUserAndTenant(ctx, userID, id); err != nil {
-		return nil, err
+	if !identity.IsMemberOf(id) {
+		return nil, apperr.Forbidden("not a member of this tenant")
 	}
 
 	return s.tenantRepo.FindByID(ctx, id)
@@ -109,7 +104,7 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.Tenant, error
 
 // FindBySlug requires the caller to be a member of the tenant (any role)
 func (s *Service) FindBySlug(ctx context.Context, slug string) (*model.Tenant, error) {
-	userID, err := s.currentUserID(ctx)
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +121,8 @@ func (s *Service) FindBySlug(ctx context.Context, slug string) (*model.Tenant, e
 	}
 	tenant := found.First()
 
-	if _, err := s.memberRepo.FindByUserAndTenant(ctx, userID, tenant.ID); err != nil {
-		return nil, err
+	if !identity.IsMemberOf(tenant.ID) {
+		return nil, apperr.Forbidden("not a member of this tenant")
 	}
 
 	return tenant, nil
@@ -135,21 +130,13 @@ func (s *Service) FindBySlug(ctx context.Context, slug string) (*model.Tenant, e
 
 // FindMine returns the tenants the current user is a member of.
 func (s *Service) FindMine(ctx context.Context) (*TenantsPage, error) {
-	userID, err := s.currentUserID(ctx)
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	members, err := s.memberRepo.Filter(ctx, filter.New[model.Member](
-		filter.WhereEq("user_id", userID),
-		filter.Take(1000),
-	))
-	if err != nil {
-		return nil, err
-	}
-
-	tenantIDs := make([]any, 0, len(members.Data))
-	for _, m := range members.Data {
+	tenantIDs := make([]any, 0, len(identity.Memberships))
+	for _, m := range identity.Memberships {
 		tenantIDs = append(tenantIDs, m.TenantID)
 	}
 	if len(tenantIDs) == 0 {
@@ -167,7 +154,7 @@ func (s *Service) FindMine(ctx context.Context) (*TenantsPage, error) {
 // MaxTenants cap is rejected once that cap is reached. The creator becomes
 // the new tenant's own admin automatically.
 func (s *Service) Create(ctx context.Context, dto CreateTenantDTO) (*model.Tenant, error) {
-	userID, err := s.currentUserID(ctx)
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +186,7 @@ func (s *Service) Create(ctx context.Context, dto CreateTenantDTO) (*model.Tenan
 			return err
 		}
 		return s.memberRepo.Create(ctx, &model.Member{
-			UserID:   userID,
+			UserID:   identity.User.ID,
 			TenantID: created.ID,
 			Role:     model.RoleAdmin,
 			IsActive: true,
@@ -237,44 +224,27 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 }
 
 func (s *Service) requireCanManage(ctx context.Context, tenantID string) error {
-	userID, err := s.currentUserID(ctx)
-	if err != nil {
-		return err
-	}
-	user, err := s.userRepo.FindByID(ctx, userID)
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
 		return err
 	}
 
-	if user.IsAdmin {
+	if identity.IsPlatformAdmin() || identity.IsTenantAdmin(tenantID) {
 		return nil
 	}
 
-	member, err := s.memberRepo.FindByUserAndTenant(ctx, userID, tenantID)
-	if err != nil {
-		var appErr *apperr.Error
-		if errors.As(err, &appErr) && appErr.StatusCode == http.StatusNotFound {
-			return apperr.Forbidden("not allowed to manage this tenant")
-		}
-		return err
-	}
-	if member.Role != model.RoleAdmin || !member.IsActive {
-		return apperr.Forbidden("not allowed to manage this tenant")
-	}
-
-	return nil
+	return apperr.Forbidden("not allowed to manage this tenant")
 }
 
 // Leave blocks if the caller is the tenant's last active admin.
 func (s *Service) Leave(ctx context.Context, tenantID string) error {
-	userID, err := s.currentUserID(ctx)
+	identity, err := auth.CurrentIdentity(ctx)
 	if err != nil {
 		return err
 	}
-
-	member, err := s.memberRepo.FindByUserAndTenant(ctx, userID, tenantID)
-	if err != nil {
-		return err
+	member, ok := identity.MembershipOf(tenantID)
+	if !ok {
+		return apperr.Forbidden("not a member of this tenant")
 	}
 
 	if member.Role == model.RoleAdmin {
