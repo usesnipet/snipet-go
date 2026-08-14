@@ -48,6 +48,7 @@ The `@/` import alias points at `web/src/`.
 |---|---|---|
 | `src/routes/` | One file per URL, mirrors the route tree | [routes.md](./routes.md) |
 | `src/features/` | One folder per business domain (schemas, service, hooks, store, components) | [features/README.md](./features/README.md) |
+| `src/models/` | Zod entity schemas with relations to other entities, one file per feature | [models.md](./models.md) |
 | `src/components/` | Shared UI used by more than one feature, plus design-system primitives | [components.md](./components.md) |
 | `src/context/` | App-wide React Context providers | [context.md](./context.md) |
 | `src/schemas/` | Zod schemas shared by more than one feature | [schemas.md](./schemas.md) |
@@ -58,8 +59,11 @@ The `@/` import alias points at `web/src/`.
 
 - Talks to the API, has its own domain (LLMs, sessions, knowledge, ...) →
   `src/features/<feature>/`.
+- That domain's core entity schema (has an `id`, relates to other
+  entities) → `src/models/<feature>.ts` (see [models.md](./models.md)),
+  re-exported from the feature's `schemas.ts`.
 - Pure UI reused by 2+ features, or a design-system primitive → `src/components/`.
-- A Zod schema reused by 2+ features → `src/schemas/`.
+- A Zod schema reused by 2+ features (generic shape, not an entity) → `src/schemas/`.
 - A new page → a folder under `src/routes/` + an entry in `src/router.tsx`
   (see [routes.md](./routes.md)).
 - Everything else (one feature's own UI, one feature's own state) stays

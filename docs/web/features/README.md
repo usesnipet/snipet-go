@@ -46,8 +46,12 @@ store.ts  ← read/written directly by anything that needs it
              (components, other features' lib code, route guards)
 ```
 
-- `schemas.ts` has no dependencies on the other layers — it's the shape
-  contract everything else builds on.
+- `schemas.ts` has no dependencies on the other feature layers — it's the
+  shape contract everything else builds on. It may depend on
+  `@/models/<feature>` (its own entity, if it has one) and
+  `@/models/<other>` (another feature's entity, for a relation) — see
+  [models.md](../models.md). It never depends on another feature's
+  `schemas.ts`.
 - `service.ts` depends only on `schemas.ts` and `@/lib/http`.
 - `hooks.ts` depends on `service.ts` and wires it into TanStack Query.
 - `components/` is the only layer allowed to depend on React Query's hook
@@ -57,13 +61,18 @@ store.ts  ← read/written directly by anything that needs it
 
 ## Cross-feature access
 
-Importing another feature's `service`/`hooks`/`store`/`schemas` directly is
-normal and expected — e.g. `lib/http` reads `features/client-auth/store` and
+Importing another feature's `service`/`hooks`/`store` directly is normal
+and expected — e.g. `lib/http` reads `features/client-auth/store` and
 `features/api-key/store` to attach auth headers, and a page composes
 components from several features. What's discouraged is reaching into
 another feature's `components/` for something that isn't meant to be
 reused — that's a sign the component belongs in `src/components/` instead
 (see [components.md](../components.md)).
+
+`schemas.ts` is the one exception: never import another feature's
+`schemas.ts` from your own. If you need another feature's entity for a
+relation, import it from `@/models/<other>` instead — see
+[models.md](../models.md) for why.
 
 ## Naming
 
