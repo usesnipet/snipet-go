@@ -11,15 +11,16 @@ import {
 import { useState } from "react";
 import { useParams } from "react-router";
 
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Separator } from "../ui/separator";
-import { Sidebar, SidebarFooter, SidebarHeader } from "../ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 
-import { SidebarContent } from "./content";
+import { SidebarContent } from "@/components/sidebar/content";
 
-import type { NavEntry } from "./types";
+import type { NavEntry } from "@/components/sidebar/types";
+
 const navItems: NavEntry[] = [
   {
     title: "Home",
@@ -61,7 +62,7 @@ const navItems: NavEntry[] = [
 
 const MAX_VISIBLE_TENANTS = 3;
 
-export function MainSidebar() {
+export function TenantSidebar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();

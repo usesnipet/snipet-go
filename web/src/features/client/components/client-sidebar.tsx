@@ -36,7 +36,7 @@ const navItems: NavEntry[] = [
   }
 ]
 
-export function ClientAdminSidebar() {
+export function ClientSidebar() {
   const { clientCode = "" } = useParams<{ clientCode: string }>();
   const { data: client, isLoading } = useFindByCodeClient(clientCode);
 
