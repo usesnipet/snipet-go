@@ -14,6 +14,7 @@ export const ROUTES = {
   agent: "/{tenantSlug}/agent",
   llms: "/{tenantSlug}/llms",
   clients: "/{tenantSlug}/clients",
+
   // auth routes
   authLogin: "/auth/login",
   authRegister: "/auth/register",

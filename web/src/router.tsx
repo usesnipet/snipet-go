@@ -53,8 +53,10 @@ export const Router = () => {
       <Suspense fallback={<LoadingFallback className="min-h-svh" />}>
         <Routes>
           <Route path={toReactRouterPath(ROUTES.home)} element={<Navigate to={toReactRouterPath(ROUTES.selectTenant)} replace />} />
-          <Route path={toReactRouterPath(ROUTES.authLogin)} element={<AuthLoginPage />} />
-          <Route path={toReactRouterPath(ROUTES.authRegister)} element={<AuthRegisterPage />} />
+          <Route element={<AuthGuard mode="public" />}>
+            <Route path={toReactRouterPath(ROUTES.authLogin)} element={<AuthLoginPage />} />
+            <Route path={toReactRouterPath(ROUTES.authRegister)} element={<AuthRegisterPage />} />
+          </Route>
           <Route element={<AuthGuard />}>
             <Route path={toReactRouterPath(ROUTES.selectTenant)} element={<TenantSelectPage />} />
             <Route element={<Layout />}>
@@ -62,10 +64,7 @@ export const Router = () => {
               <Route path={toReactRouterPath(ROUTES.clients)} element={<ClientsPage />} />
               <Route path={toReactRouterPath(ROUTES.agent)} element={<AgentsPage />} />
               <Route path={toReactRouterPath(ROUTES.knowledge)} element={<KnowledgePage />} />
-              <Route
-                path={toReactRouterPath(ROUTES.knowledgeDetail)}
-                element={<KnowledgeDetailPage />}
-              />
+              <Route path={toReactRouterPath(ROUTES.knowledgeDetail)} element={<KnowledgeDetailPage />}/>
               <Route path={toReactRouterPath(ROUTES.llms)} element={<LLMPage />} />
               <Route path={toReactRouterPath(ROUTES.apiKeys)} element={<ApiKeysPage />} />
             </Route>
