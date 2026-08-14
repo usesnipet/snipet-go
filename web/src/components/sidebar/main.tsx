@@ -1,11 +1,11 @@
 import { useTheme } from "@/context/theme-provider";
-import { useLogout } from "@/features/auth/hooks";
 import { TenantCard } from "@/features/tenant/components/tenant-card";
 import { useFindMineTenant } from "@/features/tenant/hooks";
+import { UserCard } from "@/features/user/components/user-card";
 import { useNavigate } from "@/hooks/use-navigate";
 import { ROUTES } from "@/routes";
 import {
-  BookOpen, Bot, Building2Icon, ChevronsUpDownIcon, Cpu, Key, LogOutIcon, MoonIcon,
+  BookOpen, Bot, Building2Icon, ChevronsUpDownIcon, Cpu, Key, MoonIcon,
   Settings, Shield, SunIcon, Users
 } from "lucide-react";
 import { useState } from "react";
@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Separator } from "../ui/separator";
-import { Sidebar, SidebarHeader } from "../ui/sidebar";
+import { Sidebar, SidebarFooter, SidebarHeader } from "../ui/sidebar";
 
 import { SidebarContent } from "./content";
 
@@ -65,7 +65,6 @@ export function MainSidebar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { mutate: logout } = useLogout();
   const { data } = useFindMineTenant();
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
 
@@ -80,11 +79,6 @@ export function MainSidebar() {
   };
 
   const handleToggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
-
-  const handleLogout = () => {
-    setOpen(false);
-    logout({});
-  };
 
   return (
     <Sidebar>
@@ -115,6 +109,7 @@ export function MainSidebar() {
             </button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-72 p-2">
+            <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Tenants</p>
             <div className="flex flex-col gap-2" onClick={() => setOpen(false)}>
               {visibleTenants.length > 0 ? (
                 visibleTenants.map((tenant) => (
@@ -130,22 +125,18 @@ export function MainSidebar() {
               )}
             </div>
             <Separator className="my-2" />
+            <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Theme</p>
             <Button variant="outline" className="w-full justify-start" onClick={handleToggleTheme}>
               {theme === "dark" ? <SunIcon className="size-4" /> : <MoonIcon className="size-4" />}
               {theme === "dark" ? "Light mode" : "Dark mode"}
-            </Button>
-            <Button
-              variant="destructive"
-              className="mt-2 w-full justify-start"
-              onClick={handleLogout}
-            >
-              <LogOutIcon className="size-4" />
-              Logout
             </Button>
           </PopoverContent>
         </Popover>
       </SidebarHeader>
       <SidebarContent navItems={navItems} />
+      <SidebarFooter>
+        <UserCard />
+      </SidebarFooter>
     </Sidebar>
   )
 }
