@@ -1,11 +1,11 @@
-import { userSchema } from "@/features/user/schemas";
+import { userSchema } from "@/models/user";
 import { z } from "zod";
 
 export const authProviderSchema = z.enum(["google", "github"]);
 export type AuthProvider = z.infer<typeof authProviderSchema>;
 
-export type { Challenge, User as AuthUser } from "@/features/user/schemas";
-export { challengeSchema } from "@/features/user/schemas";
+export type { Challenge, User as AuthUser } from "@/models/user";
+export { challengeSchema } from "@/models/user";
 
 export const authenticateResponseSchema = z
   .object({

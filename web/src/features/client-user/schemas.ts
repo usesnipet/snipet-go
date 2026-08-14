@@ -1,22 +1,17 @@
+import { clientUserSchema } from "@/models/client-user";
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
-export const userMetadataSchema = z.record(z.string(), z.unknown());
-export type UserMetadata = z.infer<typeof userMetadataSchema>;
+export {
+  clientUserMetadataSchema as userMetadataSchema,
+  clientUserSchema as userSchema,
+} from "@/models/client-user";
+export type {
+  ClientUser as User,
+  ClientUserMetadata as UserMetadata,
+} from "@/models/client-user";
 
-export const userSchema = z
-  .object({
-    id: z.uuid(),
-    name: z.string(),
-    picture: z.string().nullable().optional(),
-    email: z.string().nullable().optional(),
-    metadata: userMetadataSchema,
-  })
-  .strict();
-
-export type User = z.infer<typeof userSchema>;
-
-export const paginatedUserSchema = paginatedSchema(userSchema);
+export const paginatedUserSchema = paginatedSchema(clientUserSchema);
 export type PaginatedUser = z.infer<typeof paginatedUserSchema>;
 
 export const listUserSearchParamsSchema = z

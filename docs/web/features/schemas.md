@@ -1,21 +1,18 @@
 # `schemas.ts`
 
-Every type the feature works with — API request/response shapes,
-domain models — is defined as a Zod schema, with the TypeScript type
-derived from it via `z.infer`. The schema is the source of truth; the type
-is a byproduct.
+Every type the feature works with — API request/response shapes, DTOs
+derived from its entity — is defined as a Zod schema, with the TypeScript
+type derived from it via `z.infer`. The schema is the source of truth; the
+type is a byproduct.
+
+The entity itself (if the feature has one) isn't defined here — it lives in
+[`@/models/<feature>`](../models.md) and is re-exported:
 
 ```typescript
-export const llmSchema = z
-  .object({
-    id: z.uuid(),
-    name: z.string().min(1).max(255),
-    provider: z.string().min(1).max(255),
-    configuration: z.record(z.string(), z.unknown()),
-  })
-  .strict();
+import { llmSchema } from "@/models/llm";
 
-export type Llm = z.infer<typeof llmSchema>;
+export { llmSchema } from "@/models/llm";
+export type { Llm } from "@/models/llm";
 ```
 
 ## Conventions
@@ -23,9 +20,10 @@ export type Llm = z.infer<typeof llmSchema>;
 - **`.strict()`** on object schemas, so an unexpected field in an API
   response fails loudly instead of passing through silently — it means the
   backend contract drifted and the schema needs updating.
-- **Derive create/update DTOs from the base schema** rather than redefining
-  them: `.pick()` for a create payload, `.partial()` for an update payload,
-  `.extend()` when a DTO needs a field the read model doesn't.
+- **Derive create/update DTOs from the entity schema** (imported from
+  `@/models/<feature>`) rather than redefining them: `.pick()` for a create
+  payload, `.partial()` for an update payload, `.extend()` when a DTO needs
+  a field the read model doesn't.
   ```typescript
   export const createLlmSchema = llmSchema
     .pick({ name: true, provider: true, configuration: true })
