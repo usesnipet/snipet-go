@@ -50,7 +50,7 @@ export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
   };
 
   const goToDetail = () => {
-    navigate(ROUTES.adminKnowledgeDetail, { params: { id: knowledge.id } });
+    navigate(ROUTES.knowledgeDetail, { params: { id: knowledge.id } });
   };
 
   return (
@@ -76,7 +76,7 @@ export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+          <DropdownMenuContent align="end" onClick={(event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation()}>
             <DropdownMenuItem
               disabled={isSyncBusy || isSyncing}
               onClick={() => sync({ id: knowledge.id })}

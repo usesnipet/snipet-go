@@ -32,7 +32,7 @@ export const useListClientAgents = (
 ): UseQueryResult<PaginatedAgent, Error> => {
   return useQuery({
     queryKey: listClientAgentsQueryKey(code),
-    queryFn: () => clientService.listAgents(code, { auth: "jwt", ...opts }),
+    queryFn: () => clientService.listAgents(code, opts),
     enabled: !!code,
   })
 }
@@ -89,7 +89,7 @@ export const useCreateClient = (
 
 export const updateClientQueryKey = () => [BASE_QUERY_KEY, "update"];
 export const useUpdateClient = (
-  opts?: ServicePutOptions<UpdateClient, void>
+  opts: ServicePutOptions<UpdateClient, void> = {}
 ): UseMutationResult<void, Error, { code: string; data: UpdateClient }> => {
   return useMutation({
     mutationKey: updateClientQueryKey(),
@@ -115,7 +115,7 @@ export const useUpdateClient = (
 
 export const deleteClientQueryKey = () => [BASE_QUERY_KEY, "delete"];
 export const useDeleteClient = (
-  opts?: ServiceDeleteOptions<void>
+  opts: ServiceDeleteOptions<void> = {}
 ): UseMutationResult<void, Error, string> => {
   return useMutation({
     mutationKey: deleteClientQueryKey(),

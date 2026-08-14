@@ -13,7 +13,7 @@ import type {
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
-import type { AuthMode, SseEventHandler } from "@/lib/http";
+import type { SseEventHandler } from "@/lib/http";
 
 const sessionUrl = (clientCode: string) => `/api/client/${clientCode}/session`;
 
@@ -115,7 +115,6 @@ const findMessages = async (
 }
 
 export type RunSessionOptions = {
-  auth?: AuthMode;
   signal?: AbortSignal;
   onEvent: SseEventHandler;
 };
@@ -126,13 +125,12 @@ const run = async (
   body: RunSession,
   opts: RunSessionOptions,
 ): Promise<void> => {
-  const { onEvent, signal, auth = false } = opts;
+  const { onEvent, signal } = opts;
   return httpSse({
     url: `${sessionUrl(clientCode)}/{id}/run`,
     params: { id },
     method: "POST",
     body,
-    auth,
     signal,
     schemas: {
       body: runSessionSchema,

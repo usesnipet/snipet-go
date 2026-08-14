@@ -15,7 +15,7 @@ import type {
 } from "@/lib/services";
 const CLIENTS_URL = "/api/clients";
 
-const list = async (opts: ServiceGetOptions<PaginatedClient>): Promise<PaginatedClient> => {
+const list = async (opts?: ServiceGetOptions<PaginatedClient>): Promise<PaginatedClient> => {
   return http.get({
     url: CLIENTS_URL,
     schemas: {
@@ -24,7 +24,7 @@ const list = async (opts: ServiceGetOptions<PaginatedClient>): Promise<Paginated
     ...opts,
   })
 }
-const listAgents = async (code: string, opts: ServiceGetOptions<PaginatedAgent>): Promise<PaginatedAgent> => {
+const listAgents = async (code: string, opts?: ServiceGetOptions<PaginatedAgent>): Promise<PaginatedAgent> => {
   return http.get({
     url: `${CLIENTS_URL}/{code}/agents`,
     params: { code },
@@ -37,7 +37,7 @@ const listAgents = async (code: string, opts: ServiceGetOptions<PaginatedAgent>)
 
 const create = async (
   body: CreateClient,
-  opts: ServicePostOptions<CreateClient, Client>,
+  opts?: ServicePostOptions<CreateClient, Client>,
 ): Promise<Client> => {
   return http.post({
     url: CLIENTS_URL,
@@ -50,7 +50,7 @@ const create = async (
   })
 }
 
-const findByCode = async (code: string, opts: ServiceGetOptions<Client>): Promise<Client> => {
+const findByCode = async (code: string, opts?: ServiceGetOptions<Client>): Promise<Client> => {
   return http.get({
     url: `${CLIENTS_URL}/{code}`,
     params: { code },
@@ -61,7 +61,7 @@ const findByCode = async (code: string, opts: ServiceGetOptions<Client>): Promis
 
 const findPublicByCode = async (
   code: string,
-  opts: ServiceGetOptions<ClientPublic>,
+  opts?: ServiceGetOptions<ClientPublic>,
 ): Promise<ClientPublic> => {
   return http.get({
     url: `${CLIENTS_URL}/{code}/public`,

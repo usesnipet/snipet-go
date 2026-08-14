@@ -19,12 +19,12 @@ export const listSessionQueryKey = (clientCode: string) =>
   [BASE_QUERY_KEY, clientCode] as const;
 export const useListSession = (
   clientCode: string,
-  opts?: Partial<ServiceGetOptions<PaginatedSession, ListSessionSearchParams>>,
+  opts: Partial<ServiceGetOptions<PaginatedSession, ListSessionSearchParams>> = {},
 ): UseQueryResult<PaginatedSession, Error> => {
   return useQuery({
     queryKey: [...listSessionQueryKey(clientCode), opts?.searchParams],
     queryFn: () =>
-      sessionService.list(clientCode, { auth: "api-key", ...opts }),
+      sessionService.list(clientCode, opts),
     enabled: !!clientCode,
   })
 }
@@ -34,12 +34,12 @@ export const findByIdSessionQueryKey = (clientCode: string, id: string) =>
 export const useFindByIdSession = (
   clientCode: string,
   id: string,
-  opts?: Partial<ServiceGetOptions<Session, FindSessionSearchParams>>,
+  opts: Partial<ServiceGetOptions<Session, FindSessionSearchParams>> = {},
 ): UseQueryResult<Session, Error> => {
   return useQuery({
     queryKey: [...findByIdSessionQueryKey(clientCode, id), opts?.searchParams],
     queryFn: (): Promise<Session> =>
-      sessionService.findById(clientCode, id, { auth: "api-key", ...opts }),
+      sessionService.findById(clientCode, id, opts),
     enabled: !!clientCode && !!id,
   })
 }
@@ -49,19 +49,19 @@ export const findMessagesSessionQueryKey = (clientCode: string, id: string) =>
 export const useFindMessagesSession = (
   clientCode: string,
   id: string,
-  opts?: ServiceGetOptions<PaginatedExecutionMessage, ListMessagesSearchParams>,
+  opts: ServiceGetOptions<PaginatedExecutionMessage, ListMessagesSearchParams> = {},
 ): UseQueryResult<PaginatedExecutionMessage, Error> => {
   return useQuery({
     queryKey: [...findMessagesSessionQueryKey(clientCode, id), opts?.searchParams],
     queryFn: (): Promise<PaginatedExecutionMessage> =>
-      sessionService.findMessages(clientCode, id, { auth: "api-key", ...opts }),
+      sessionService.findMessages(clientCode, id, opts),
     enabled: !!clientCode && !!id,
   })
 }
 
 export const createSessionQueryKey = () => [BASE_QUERY_KEY, "create"] as const;
 export const useCreateSession = (
-  opts?: ServicePostOptions<CreateSession, Session>,
+  opts: ServicePostOptions<CreateSession, Session> = {},
 ): UseMutationResult<
   Session,
   Error,
@@ -70,7 +70,7 @@ export const useCreateSession = (
   return useMutation({
     mutationKey: createSessionQueryKey(),
     mutationFn: ({ clientCode, data }) =>
-      sessionService.create(clientCode, data, { auth: "api-key", ...opts }),
+      sessionService.create(clientCode, data, opts),
     onSuccess: (_data, { clientCode }) => {
       toast({
         title: "Session created successfully",
@@ -90,7 +90,7 @@ export const useCreateSession = (
 
 export const updateSessionQueryKey = () => [BASE_QUERY_KEY, "update"] as const;
 export const useUpdateSession = (
-  opts?: ServicePutOptions<UpdateSession, void>,
+  opts: ServicePutOptions<UpdateSession, void> = {},
 ): UseMutationResult<
   void,
   Error,
@@ -99,7 +99,7 @@ export const useUpdateSession = (
   return useMutation({
     mutationKey: updateSessionQueryKey(),
     mutationFn: ({ clientCode, id, data }) =>
-      sessionService.update(clientCode, id, data, { auth: "api-key", ...opts }),
+      sessionService.update(clientCode, id, data, opts),
     onSuccess: (_data, { clientCode, id }) => {
       toast({
         title: "Session updated successfully",
@@ -120,12 +120,12 @@ export const useUpdateSession = (
 
 export const deleteSessionQueryKey = () => [BASE_QUERY_KEY, "delete"] as const;
 export const useDeleteSession = (
-  opts?: ServiceDeleteOptions<void>,
+  opts: ServiceDeleteOptions<void> = {},
 ): UseMutationResult<void, Error, { clientCode: string; id: string }> => {
   return useMutation({
     mutationKey: deleteSessionQueryKey(),
     mutationFn: ({ clientCode, id }) =>
-      sessionService.delete(clientCode, id, { auth: "api-key", ...opts }),
+      sessionService.delete(clientCode, id, opts),
     onSuccess: (_data, { clientCode, id }) => {
       toast({
         title: "Session deleted successfully",

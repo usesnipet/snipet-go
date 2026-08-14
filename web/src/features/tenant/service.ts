@@ -11,7 +11,7 @@ import type {
 
 const TENANTS_URL = "/api/tenants";
 
-const findMine = async (opts: ServiceGetOptions<PaginatedTenant>): Promise<PaginatedTenant> => {
+const findMine = async (opts: ServiceGetOptions<PaginatedTenant> = {}): Promise<PaginatedTenant> => {
   return http.get({
     url: `${TENANTS_URL}/me`,
     schemas: { response: paginatedTenantSchema },
@@ -19,7 +19,7 @@ const findMine = async (opts: ServiceGetOptions<PaginatedTenant>): Promise<Pagin
   });
 };
 
-const findByID = async (id: string, opts: ServiceGetOptions<Tenant>): Promise<Tenant> => {
+const findByID = async (id: string, opts: ServiceGetOptions<Tenant> = {}): Promise<Tenant> => {
   return http.get({
     url: `${TENANTS_URL}/{id}`,
     params: { id },
@@ -28,7 +28,7 @@ const findByID = async (id: string, opts: ServiceGetOptions<Tenant>): Promise<Te
   });
 };
 
-const findBySlug = async (slug: string, opts: ServiceGetOptions<Tenant>): Promise<Tenant> => {
+const findBySlug = async (slug: string, opts: ServiceGetOptions<Tenant> = {}): Promise<Tenant> => {
   return http.get({
     url: `${TENANTS_URL}/slug/{slug}`,
     params: { slug },
@@ -39,7 +39,7 @@ const findBySlug = async (slug: string, opts: ServiceGetOptions<Tenant>): Promis
 
 const create = async (
   body: CreateTenant,
-  opts: ServicePostOptions<CreateTenant, Tenant>,
+  opts: ServicePostOptions<CreateTenant, Tenant> = {},
 ): Promise<Tenant> => {
   return http.post({
     url: TENANTS_URL,
@@ -55,7 +55,7 @@ const create = async (
 const update = async (
   id: string,
   body: UpdateTenant,
-  opts: ServicePutOptions<UpdateTenant, void>,
+  opts: ServicePutOptions<UpdateTenant, void> = {},
 ): Promise<void> => {
   return http.put({
     url: `${TENANTS_URL}/{id}`,
@@ -66,7 +66,7 @@ const update = async (
   });
 };
 
-const remove = async (id: string, opts: ServiceDeleteOptions<void>): Promise<void> => {
+const remove = async (id: string, opts: ServiceDeleteOptions<void> = {}): Promise<void> => {
   return http.delete({
     url: `${TENANTS_URL}/{id}`,
     params: { id },
@@ -74,7 +74,7 @@ const remove = async (id: string, opts: ServiceDeleteOptions<void>): Promise<voi
   });
 };
 
-const leave = async (id: string, opts: ServicePostOptions<void, void>): Promise<void> => {
+const leave = async (id: string, opts: ServicePostOptions<void, void> = {}): Promise<void> => {
   return http.post({
     url: `${TENANTS_URL}/{id}/leave`,
     params: { id },

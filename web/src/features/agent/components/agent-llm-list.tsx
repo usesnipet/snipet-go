@@ -3,10 +3,12 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Link } from "@/components/ui/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useListLlm } from "@/features/llm/hooks";
+import { applyPathParams } from "@/lib/http";
 import { ROUTES } from "@/routes";
 import { ArrowDownIcon, ArrowUpIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { useParams } from "react-router";
 
 import type { Llm } from "@/features/llm/schemas";
 
@@ -33,6 +35,8 @@ export function AgentLlmList({
   const llms = data?.data ?? [];
   const llmById = new Map(llms.map((llm) => [llm.id, llm]));
   const [selectKey, setSelectKey] = useState(0);
+  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
+  const llmsHref = applyPathParams(ROUTES.llms, { tenantSlug });
 
   return (
     <FormField
@@ -63,7 +67,7 @@ export function AgentLlmList({
                 ) : llms.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No LLMs configured yet.{" "}
-                    <Link href={ROUTES.adminLlms} className="underline underline-offset-2">
+                    <Link href={llmsHref} className="underline underline-offset-2">
                       Create one in LLMs
                     </Link>
                     .
