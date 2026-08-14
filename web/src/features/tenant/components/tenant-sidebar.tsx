@@ -49,14 +49,33 @@ const navItems: NavEntry[] = [
     icon: BookOpen,
   },
   {
-    title: "API Keys",
-    href: ROUTES.apiKeys,
-    icon: Key,
-  },
-  {
-    title: "Settings",
-    href: ROUTES.settings,
-    icon: Settings,
+    label: "Management",
+    items: [
+      {
+        title: "Members",
+        items: [
+          {
+            title: "Members",
+            href: ROUTES.members,
+          },
+          {
+            title: "Invite",
+            href: ROUTES.inviteMember,
+          }
+        ],
+        icon: Users,
+      },
+      {
+        title: "API Keys",
+        href: ROUTES.apiKeys,
+        icon: Key,
+      },
+      {
+        title: "Settings",
+        href: ROUTES.settings,
+        icon: Settings,
+      },
+    ]
   },
 ]
 

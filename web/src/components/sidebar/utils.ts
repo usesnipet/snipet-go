@@ -1,6 +1,10 @@
-import type { NavEntry, NavItemWithChildren, NavSubItem } from "./types";
+import type { NavEntry, NavGroup, NavItemWithChildren, NavLeafEntry, NavSubItem } from "./types";
 
-export function isNavItemWithChildren(item: NavEntry): item is NavItemWithChildren {
+export function isNavGroup(item: NavEntry): item is NavGroup {
+  return "label" in item
+}
+
+export function isNavItemWithChildren(item: NavLeafEntry): item is NavItemWithChildren {
   return "items" in item
 }
 

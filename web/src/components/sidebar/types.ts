@@ -20,4 +20,11 @@ export type NavItemWithChildren = {
   items: NavSubItem[]
 }
 
-export type NavEntry = NavItem | NavItemWithChildren
+export type NavLeafEntry = NavItem | NavItemWithChildren
+
+export type NavGroup = {
+  label: string
+  items: NavLeafEntry[]
+}
+
+export type NavEntry = NavLeafEntry | NavGroup
