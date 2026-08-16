@@ -23,6 +23,8 @@ const KnowledgeDetailPage = lazy(() =>
   import("./routes/knowledge/detail/page").then((m) => ({ default: m.KnowledgeDetailPage })));
 const LLMPage = lazy(() =>
   import("./routes/llms/page").then((m) => ({ default: m.LLMPage })));
+const MembersPage = lazy(() =>
+  import("./routes/members/page").then((m) => ({ default: m.MembersPage })));
 
 const ClientAdminLayout = lazy(() =>
   import("./routes/client/(private)/layout").then((m) => ({ default: m.ClientAdminLayout })));
@@ -66,6 +68,7 @@ export const Router = () => {
               <Route path={toReactRouterPath(ROUTES.knowledge)} element={<KnowledgePage />} />
               <Route path={toReactRouterPath(ROUTES.knowledgeDetail)} element={<KnowledgeDetailPage />}/>
               <Route path={toReactRouterPath(ROUTES.llms)} element={<LLMPage />} />
+              <Route path={toReactRouterPath(ROUTES.members)} element={<MembersPage />} />
               <Route path={toReactRouterPath(ROUTES.apiKeys)} element={<ApiKeysPage />} />
             </Route>
             <Route element={<ClientAdminLayout />}>

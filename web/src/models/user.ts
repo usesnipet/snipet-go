@@ -9,8 +9,6 @@ export const userSchema = z
     name: z.string(),
     email: z.email(),
     picture: z.string().nullable().optional(),
-    is_admin: z.boolean(),
-    challenges: z.array(challengeSchema),
     created_at: z.coerce.date(),
     updated_at: z.coerce.date(),
   })
