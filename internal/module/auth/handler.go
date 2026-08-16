@@ -8,12 +8,12 @@ import (
 )
 
 type Handler struct {
-	service               *Service
-	platformJWTMiddleware api.MiddlewareFunc
+	service        *Service
+	userMiddleware api.MiddlewareFunc
 }
 
-func NewHandler(service *Service, platformJWTMiddleware api.MiddlewareFunc) api.Handler {
-	return &Handler{service: service, platformJWTMiddleware: platformJWTMiddleware}
+func NewHandler(service *Service, userMiddleware api.MiddlewareFunc) api.Handler {
+	return &Handler{service: service, userMiddleware: userMiddleware}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
@@ -30,7 +30,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Post("/activate/resend", serve(h.resendActivation))
 
 		r.Group(func(r chi.Router) {
-			r.Use(h.platformJWTMiddleware)
+			r.Use(h.userMiddleware)
 			r.Put("/password", serve(h.setPassword))
 		})
 	})

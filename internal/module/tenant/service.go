@@ -91,7 +91,7 @@ func (s *Service) Init(ctx context.Context, adminEmail string) error {
 
 // FindByID requires the caller to be a member of the tenant (any role)
 func (s *Service) FindByID(ctx context.Context, id string) (*model.Tenant, error) {
-	identity, err := auth.CurrentIdentity(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.Tenant, error
 
 // FindBySlug requires the caller to be a member of the tenant (any role)
 func (s *Service) FindBySlug(ctx context.Context, slug string) (*model.Tenant, error) {
-	identity, err := auth.CurrentIdentity(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (s *Service) FindBySlug(ctx context.Context, slug string) (*model.Tenant, e
 
 // FindMine returns the tenants the current user is a member of.
 func (s *Service) FindMine(ctx context.Context) (*TenantsPage, error) {
-	identity, err := auth.CurrentIdentity(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (s *Service) FindMine(ctx context.Context) (*TenantsPage, error) {
 // MaxTenants cap is rejected once that cap is reached. The creator becomes
 // the new tenant's own admin automatically.
 func (s *Service) Create(ctx context.Context, dto CreateTenantDTO) (*model.Tenant, error) {
-	identity, err := auth.CurrentIdentity(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (s *Service) DeleteByID(ctx context.Context, id string) error {
 }
 
 func (s *Service) requireCanManage(ctx context.Context, tenantID string) error {
-	identity, err := auth.CurrentIdentity(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (s *Service) requireCanManage(ctx context.Context, tenantID string) error {
 
 // Leave blocks if the caller is the tenant's last active admin.
 func (s *Service) Leave(ctx context.Context, tenantID string) error {
-	identity, err := auth.CurrentIdentity(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return err
 	}

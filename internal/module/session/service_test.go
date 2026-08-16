@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -52,20 +51,11 @@ func (it *fakeStreamIterator) Err() error             { return nil }
 func (it *fakeStreamIterator) Close() error           { return nil }
 
 func apiKeyContext() context.Context {
-	id := "api-key-id"
-	return auth.SetPrincipal(context.Background(), auth.NewPrincipal(auth.PrincipalTypeAPIKey, &id, nil))
+	return auth.SetApiKeyIdentity(context.Background(), auth.ApiKeyIdentity{APIKeyID: "api-key-id"})
 }
 
 func jwtContext(userID string) context.Context {
-	return auth.SetPrincipal(context.Background(), auth.NewPrincipal(
-		auth.PrincipalTypeClientJWT,
-		nil,
-		&auth.ClientUserClaims{
-			BaseClaims: auth.BaseClaims{
-				RegisteredClaims: jwt.RegisteredClaims{Subject: userID},
-			},
-		},
-	))
+	return auth.SetClientUserIdentity(context.Background(), auth.ClientUserIdentity{UserID: userID})
 }
 
 func newSessionService(

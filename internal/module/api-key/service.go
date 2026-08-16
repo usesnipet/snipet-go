@@ -34,23 +34,6 @@ func NewService(
 	}
 }
 
-func (s *Service) Init(ctx context.Context) error {
-	apiKeys, err := s.repository.Filter(ctx, filter.Default[model.APIKey]())
-	if err != nil {
-		return err
-	}
-	if apiKeys.IsEmpty() {
-		s.logger.Infof("no api keys found, creating root api key")
-		created, err := s.Create(ctx, CreateAPIKeyDTO{Name: "Root"})
-		if err != nil {
-			s.logger.Errorf("failed to create root api key: %v", err)
-			return err
-		}
-		s.logger.Infof("root api key created: %s", created.Key)
-	}
-	return nil
-}
-
 func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) (*model.APIKey, error) {
 	keyID := s.generator.GetKeyID(apiKey)
 	paginatedApiKeys, err := s.repository.Filter(
@@ -90,11 +73,11 @@ func (s *Service) FindByID(ctx context.Context, id string) (*model.APIKey, error
 }
 
 func (s *Service) Me(ctx context.Context) (*model.APIKey, error) {
-	id, err := auth.APIKeyID(ctx)
+	identity, err := auth.CurrentApiKey(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return s.repository.FindByID(ctx, id)
+	return s.repository.FindByID(ctx, identity.APIKeyID)
 }
 
 func (s *Service) Create(ctx context.Context, dto CreateAPIKeyDTO) (*APIKeyWithSecret, error) {

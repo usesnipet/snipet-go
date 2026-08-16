@@ -58,16 +58,12 @@ func (s *Service) FilterInClient(ctx context.Context, clientCode string, filter 
 }
 
 func (s *Service) Me(ctx context.Context, clientCode string) (*model.ClientUser, error) {
-	claims, err := auth.ClientJWTClaims(ctx)
+	identity, err := auth.CurrentClientUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if claims.ClientCode != clientCode {
+	if identity.ClientCode != clientCode {
 		return nil, apperr.Forbidden("client code mismatch")
 	}
-	subject, err := claims.GetSubject()
-	if err != nil {
-		return nil, apperr.Unauthorized("unauthorized")
-	}
-	return s.userRepo.FindByIDInClient(ctx, clientCode, subject)
+	return s.userRepo.FindByIDInClient(ctx, clientCode, identity.UserID)
 }

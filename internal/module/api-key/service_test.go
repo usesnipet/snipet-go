@@ -273,14 +273,14 @@ func TestMeReturnsAuthenticatedAPIKey(t *testing.T) {
 		Return(expected, nil)
 
 	svc := newTestService(repo)
-	ctx := auth.SetPrincipal(context.Background(), auth.NewPrincipal(auth.PrincipalTypeAPIKey, &id, nil))
+	ctx := auth.SetApiKeyIdentity(context.Background(), auth.ApiKeyIdentity{APIKeyID: id})
 
 	result, err := svc.Me(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
 
-func TestMeRejectsMissingPrincipal(t *testing.T) {
+func TestMeRejectsMissingIdentity(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(mocks.NewMockIApiKeyRepository(t))
@@ -289,11 +289,11 @@ func TestMeRejectsMissingPrincipal(t *testing.T) {
 	assertAppError(t, err, http.StatusUnauthorized, "unauthorized")
 }
 
-func TestMeRejectsJWTPrincipal(t *testing.T) {
+func TestMeRejectsClientUserIdentity(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(mocks.NewMockIApiKeyRepository(t))
-	ctx := auth.SetPrincipal(context.Background(), auth.NewPrincipal(auth.PrincipalTypeClientJWT, nil, &auth.BaseClaims{}))
+	ctx := auth.SetClientUserIdentity(context.Background(), auth.ClientUserIdentity{UserID: "u1", ClientCode: "c1"})
 
 	_, err := svc.Me(ctx)
 	assertAppError(t, err, http.StatusUnauthorized, "unauthorized")
@@ -393,62 +393,4 @@ func TestToggleActiveDelegatesToRepository(t *testing.T) {
 
 	err := svc.ToggleActive(context.Background(), id, false)
 	require.NoError(t, err)
-}
-
-func TestInitCreatesRootKeyWhenNoneExist(t *testing.T) {
-	t.Parallel()
-
-	filterCalls := 0
-	createCalls := 0
-	repo := mocks.NewMockIApiKeyRepository(t)
-	repo.EXPECT().
-		Filter(mock.Anything, mock.Anything).
-		Run(func(context.Context, *filter.Options[model.APIKey]) {
-			filterCalls++
-		}).
-		Return(page.NewPaginated([]model.APIKey{}, 0, 0, 0), nil)
-	repo.EXPECT().
-		Create(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, apiKey *model.APIKey) {
-			createCalls++
-			assert.Equal(t, "Root", apiKey.Name)
-			apiKey.ID = uuid.New().String()
-		}).
-		Return(nil)
-
-	svc := newTestService(repo)
-
-	err := svc.Init(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, 1, filterCalls)
-	assert.Equal(t, 1, createCalls)
-}
-
-func TestInitSkipsCreationWhenKeysExist(t *testing.T) {
-	t.Parallel()
-
-	repo := mocks.NewMockIApiKeyRepository(t)
-	repo.EXPECT().
-		Filter(mock.Anything, mock.Anything).
-		Return(page.NewPaginated([]model.APIKey{{Name: "Existing"}}, 1, 0, 1), nil)
-
-	svc := newTestService(repo)
-
-	err := svc.Init(context.Background())
-	require.NoError(t, err)
-}
-
-func TestInitReturnsFilterError(t *testing.T) {
-	t.Parallel()
-
-	expectedErr := errors.New("filter failed")
-	repo := mocks.NewMockIApiKeyRepository(t)
-	repo.EXPECT().
-		Filter(mock.Anything, mock.Anything).
-		Return(nil, expectedErr)
-
-	svc := newTestService(repo)
-
-	err := svc.Init(context.Background())
-	require.ErrorIs(t, err, expectedErr)
 }

@@ -133,17 +133,17 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 }
 
 func (s *Service) Me(ctx context.Context) (*model.User, error) {
-	subject, err := auth.PlatformUserID(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return s.userRepo.FindByID(ctx, subject)
+	return identity.User, nil
 }
 
 func (s *Service) UpdateMyPicture(ctx context.Context, dto UpdateProfilePictureDTO) error {
-	subject, err := auth.PlatformUserID(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return err
 	}
-	return s.userRepo.UpdateByID(ctx, subject, &model.User{Picture: &dto.Picture})
+	return s.userRepo.UpdateByID(ctx, identity.User.ID, &model.User{Picture: &dto.Picture})
 }

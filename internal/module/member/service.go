@@ -51,8 +51,8 @@ func NewService(
 }
 
 // requireMember ensures the caller belongs to the tenant, any role.
-func (s *Service) requireMember(ctx context.Context, tenantID string) (*auth.Identity, error) {
-	identity, err := auth.CurrentIdentity(ctx)
+func (s *Service) requireMember(ctx context.Context, tenantID string) (*auth.UserIdentity, error) {
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +63,8 @@ func (s *Service) requireMember(ctx context.Context, tenantID string) (*auth.Ide
 }
 
 // requireAdmin ensures the caller is an active tenant admin.
-func (s *Service) requireAdmin(ctx context.Context, tenantID string) (*auth.Identity, error) {
-	identity, err := auth.CurrentIdentity(ctx)
+func (s *Service) requireAdmin(ctx context.Context, tenantID string) (*auth.UserIdentity, error) {
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +233,7 @@ func (s *Service) FilterInvitations(ctx context.Context, tenantID string, dto Fi
 // with the role it was issued for. The token must belong to a pending,
 // unexpired invitation addressed to the caller's own email.
 func (s *Service) AcceptInvitation(ctx context.Context, dto AcceptInvitationDTO) (*model.Member, error) {
-	identity, err := auth.CurrentIdentity(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}

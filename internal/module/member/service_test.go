@@ -67,11 +67,11 @@ func newTestService(
 	)
 }
 
-// ctxFor builds a context carrying the auth.Identity that
-// middleware.RequireIdentity would have loaded for user, with the given
-// tenant memberships.
+// ctxFor builds a context carrying the auth.UserIdentity that
+// guard.RequireUser would have loaded for user, with the given tenant
+// memberships.
 func ctxFor(user *model.User, memberships ...*model.Member) context.Context {
-	return auth.SetIdentity(context.Background(), &auth.Identity{User: user, Memberships: memberships})
+	return auth.SetUserIdentity(context.Background(), &auth.UserIdentity{User: user, Memberships: memberships})
 }
 
 func assertAppError(t *testing.T, err error, statusCode int) {

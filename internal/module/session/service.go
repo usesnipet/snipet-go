@@ -44,18 +44,15 @@ func (s *Service) resolveClientID(ctx context.Context, clientCode string) (strin
 }
 
 func (s *Service) ensureSessionUserAccess(ctx context.Context, clientID string, sessionID string) error {
-	if !auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey) && !auth.HasPrincipal(ctx, auth.PrincipalTypeClientJWT) {
-		return apperr.Unauthorized("unauthorized")
-	}
-	if auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey) {
+	if auth.HasApiKey(ctx) {
 		return nil
 	}
 
-	userId, err := auth.ClientUserID(ctx)
+	identity, err := auth.CurrentClientUser(ctx)
 	if err != nil {
 		return err
 	}
-	hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientID, userId, sessionID)
+	hasAccess, err := s.sessionRepo.CheckUserAccess(ctx, clientID, identity.UserID, sessionID)
 	if err != nil {
 		return err
 	}
@@ -70,17 +67,17 @@ func (s *Service) Filter(ctx context.Context, clientCode string, filter *filter.
 	if err != nil {
 		return nil, err
 	}
-	if auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey) {
+	if auth.HasApiKey(ctx) {
 		return s.sessionRepo.FilterInClient(ctx, clientID, filter)
 	}
-	userId, err := auth.ClientUserID(ctx)
+	identity, err := auth.CurrentClientUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return s.sessionRepo.FilterInClientWithUser(
 		ctx,
 		clientID,
-		userId,
+		identity.UserID,
 		filter,
 	)
 }
@@ -114,13 +111,12 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 		ClientID: clientID,
 	}
 
-	if !auth.HasPrincipal(ctx, auth.PrincipalTypeAPIKey) && !auth.HasPrincipal(ctx, auth.PrincipalTypeClientJWT) {
-		return nil, apperr.Unauthorized("unauthorized")
-	}
-	if userId, err := auth.ClientUserID(ctx); err == nil {
+	if identity, err := auth.CurrentClientUser(ctx); err == nil {
 		session.ClientUserToSessions = append(session.ClientUserToSessions, model.ClientUserToSession{
-			ClientUserID: userId,
+			ClientUserID: identity.UserID,
 		})
+	} else if !auth.HasApiKey(ctx) {
+		return nil, apperr.Unauthorized("unauthorized")
 	}
 	if err := s.sessionRepo.Create(ctx, session); err != nil {
 		return nil, err

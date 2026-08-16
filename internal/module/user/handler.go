@@ -9,21 +9,21 @@ import (
 
 // Handler routes tenant-staff user management under /users.
 type Handler struct {
-	service               *Service
-	platformJWTMiddleware api.MiddlewareFunc
+	service        *Service
+	userMiddleware api.MiddlewareFunc
 }
 
-func NewHandler(service *Service, platformJWTMiddleware api.MiddlewareFunc) api.Handler {
+func NewHandler(service *Service, userMiddleware api.MiddlewareFunc) api.Handler {
 	return &Handler{
-		service:               service,
-		platformJWTMiddleware: platformJWTMiddleware,
+		service:        service,
+		userMiddleware: userMiddleware,
 	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/users", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(h.platformJWTMiddleware)
+			r.Use(h.userMiddleware)
 			r.Get("/me", serve(h.me))
 			r.Put("/me/picture", serve(h.updatePicture))
 		})

@@ -18,18 +18,18 @@ import (
 	"github.com/usesnipet/snipet/drivers/tool"
 	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
+	"github.com/usesnipet/snipet/internal/guard"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	"github.com/usesnipet/snipet/internal/infra/database"
 	"github.com/usesnipet/snipet/internal/license"
 	"github.com/usesnipet/snipet/internal/logger"
-	"github.com/usesnipet/snipet/internal/middleware"
 	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	app_module "github.com/usesnipet/snipet/internal/module/app"
-	platformauth "github.com/usesnipet/snipet/internal/module/auth"
+	auth_module "github.com/usesnipet/snipet/internal/module/auth"
 	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/module/clientauth"
-	auth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
+	clientauth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/clientuser"
 	"github.com/usesnipet/snipet/internal/module/email"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
@@ -131,9 +131,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	refreshTokenService := auth.NewTokenService()
 
-	authRegistry := auth_provider.NewRegistry()
+	authRegistry := clientauth_provider.NewRegistry()
 
-	authService := clientauth.NewService(
+	clientauthService := clientauth.NewService(
 		authRegistry,
 		clientRepo,
 		clientUserRepo,
@@ -143,25 +143,24 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		cfg.Auth,
 	)
 
-	platformJWTService := auth.NewJWTService(cfg.Auth, func() *auth.PlatformUserClaims { return &auth.PlatformUserClaims{} })
-	platformProviderRegistry := platformauth.NewProviderRegistry(
-		platformauth.NewGoogleProvider(cfg.Auth),
-		platformauth.NewGithubProvider(cfg.Auth),
+	userJWTService := auth.NewJWTService(cfg.Auth, func() *auth.PlatformUserClaims { return &auth.PlatformUserClaims{} })
+	userProviderRegistry := auth_module.NewProviderRegistry(
+		auth_module.NewGoogleProvider(cfg.Auth),
+		auth_module.NewGithubProvider(cfg.Auth),
 	)
 	emailService := email.NewService(cfg.SMTP, logger)
-	platformAuthService := platformauth.NewService(
+	authService := auth_module.NewService(
 		cfg.Auth,
 		userRepo,
 		accountRepo,
 		tokenRepo,
-		platformJWTService,
+		userJWTService,
 		refreshTokenService,
 		emailService,
-		platformProviderRegistry,
+		userProviderRegistry,
 	)
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
-	apiKeyService.Init(context.Background())
 
 	clientService := client.NewService(clientRepo, agentRepo, logger)
 	if err := clientService.Init(context.Background(), &cfg.App); err != nil {
@@ -211,29 +210,20 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// cache
 	apiKeyCache := cache.NewMemoryCache(1000, 1*time.Hour)
 
-	// middlewares
-	requireAPIKey := middleware.RequireAPIKey(apiKeyService, apiKeyCache)
-	requireClientJWT := middleware.RequireClientJWT(jwtService)
-	requirePlatformJWT := middleware.RequirePlatformJWT(platformJWTService)
-	requireIdentity := middleware.RequireIdentity(userRepo, memberRepo)
-	anyClientAuth := middleware.Or(requireClientJWT, requireAPIKey)
+	// guards
+	requireAPIKey := guard.RequireApiKey(apiKeyService, apiKeyCache)
+	requireClientUser := guard.RequireClientUser(jwtService)
+	requireUser := guard.RequireUser(userJWTService, userRepo, memberRepo)
+	anyClientAuth := guard.Or(requireClientUser, requireAPIKey)
 
 	apiKeyMiddleware := requireAPIKey.Handler()
-	clientJWTMiddleware := requireClientJWT.Handler()
-	platformJWTMiddleware := requirePlatformJWT.Handler()
-	identityMiddleware := requireIdentity.Handler()
+	clientJWTMiddleware := requireClientUser.Handler()
+	userMiddleware := requireUser.Handler()
 	anyClientAuthMiddleware := anyClientAuth.Handler()
 
-	// authenticatedMiddleware requires a valid platform JWT and loads the
-	// caller's profile + tenant memberships (auth.Identity) onto the
-	// context, for modules whose services act on tenant membership.
-	authenticatedMiddleware := func(next http.Handler) http.Handler {
-		return platformJWTMiddleware(identityMiddleware(next))
-	}
-
 	// handlers
-	clientAuthHandler := clientauth.NewHandler(authService)
-	platformAuthHandler := platformauth.NewHandler(platformAuthService, platformJWTMiddleware)
+	clientAuthHandler := clientauth.NewHandler(clientauthService)
+	platformAuthHandler := auth_module.NewHandler(authService, userMiddleware)
 	appHandler := app_module.NewHandler(appService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
 	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
@@ -243,9 +233,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
 	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, clientJWTMiddleware)
-	userHandler := user.NewHandler(userService, authenticatedMiddleware)
-	tenantHandler := tenant.NewHandler(tenantService, authenticatedMiddleware)
-	memberHandler := member.NewHandler(memberService, authenticatedMiddleware)
+	userHandler := user.NewHandler(userService, userMiddleware)
+	tenantHandler := tenant.NewHandler(tenantService, userMiddleware)
+	memberHandler := member.NewHandler(memberService, userMiddleware)
 
 	// register routes
 	api := api.New()

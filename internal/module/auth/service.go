@@ -303,17 +303,12 @@ func (s *Service) Logout(ctx context.Context, dto RefreshDTO) error {
 	return s.tokenRepo.RevokeByID(ctx, token.ID)
 }
 
-// currentUserID resolves the subject of the platform JWT on ctx.
-func (s *Service) currentUserID(ctx context.Context) (string, error) {
-	return auth.PlatformUserID(ctx)
-}
-
 // SetPassword is a "set", not a "change" — no current-password check,
 // regardless of whether PasswordHash was already set. Covers both an
 // OAuth-only user setting their first password and an existing user
 // changing theirs.
 func (s *Service) SetPassword(ctx context.Context, dto SetPasswordDTO) error {
-	userID, err := s.currentUserID(ctx)
+	identity, err := auth.CurrentUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -322,7 +317,7 @@ func (s *Service) SetPassword(ctx context.Context, dto SetPasswordDTO) error {
 	if err != nil {
 		return err
 	}
-	return s.userRepo.UpdateByID(ctx, userID, &model.User{PasswordHash: &passwordHash})
+	return s.userRepo.UpdateByID(ctx, identity.User.ID, &model.User{PasswordHash: &passwordHash})
 }
 
 // ForgotPassword always succeeds regardless of whether the email exists, to

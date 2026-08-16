@@ -12,17 +12,17 @@ import (
 // yet — every route here just requires a valid bearer token, with
 // finer-grained membership/admin checks done in the service.
 type Handler struct {
-	service               *Service
-	platformJWTMiddleware api.MiddlewareFunc
+	service        *Service
+	userMiddleware api.MiddlewareFunc
 }
 
-func NewHandler(service *Service, platformJWTMiddleware api.MiddlewareFunc) api.Handler {
-	return &Handler{service: service, platformJWTMiddleware: platformJWTMiddleware}
+func NewHandler(service *Service, userMiddleware api.MiddlewareFunc) api.Handler {
+	return &Handler{service: service, userMiddleware: userMiddleware}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/tenants", func(r chi.Router) {
-		r.Use(h.platformJWTMiddleware)
+		r.Use(h.userMiddleware)
 
 		r.Get("/me", serve(h.findMine))
 		r.Post("/", serve(h.create))
