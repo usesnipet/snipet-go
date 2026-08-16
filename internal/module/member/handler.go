@@ -9,8 +9,9 @@ import (
 
 // Handler routes member and invitation management under
 // /tenants/{tenant_id}/members, /tenants/{tenant_id}/invitations, and the
-// tenant-less /invitations/accept. Every route here just requires a valid
-// bearer token, with membership/admin checks done in the service.
+// tenant-less /invitations/accept and /invitations/decline. GET
+// /invitations/{token} is public; every other route requires a valid bearer
+// token, with membership/admin checks done in the service.
 type Handler struct {
 	service        *Service
 	userMiddleware api.MiddlewareFunc
@@ -38,9 +39,14 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 
 	r.Route("/invitations", func(r chi.Router) {
-		r.Use(h.userMiddleware)
+		r.Get("/{token}", serve(h.getInvitationByToken))
 
-		r.Post("/accept", serve(h.acceptInvitation))
+		r.Group(func(r chi.Router) {
+			r.Use(h.userMiddleware)
+
+			r.Post("/accept", serve(h.acceptInvitation))
+			r.Post("/decline", serve(h.declineInvitation))
+		})
 	})
 }
 
@@ -116,6 +122,7 @@ func (h *Handler) remove(w http.ResponseWriter, r *http.Request) error {
 // @Produce		json
 // @Security		BearerAuth
 // @Param			tenant_id	path		string	true	"Tenant ID"
+// @Param			status		query		string	false	"Invitation status"	Enums(pending, accepted, declined, expired)
 // @Param			take		query		int		false	"Page size"
 // @Param			skip		query		int		false	"Page offset"
 // @Success		200			{object}	InvitationsPage
@@ -177,6 +184,23 @@ func (h *Handler) cancelInvitation(w http.ResponseWriter, r *http.Request) error
 	return api.WriteNoContent(w)
 }
 
+// @Summary		Get invitation by token
+// @Description	Looks up an invitation and its tenant by token. Public — no authentication required. Lets a user preview an invitation (including whether it's expired, accepted, or declined) before accepting or declining it.
+// @Tags			member
+// @Produce		json
+// @Param			token	path		string	true	"Invitation token"
+// @Success		200		{object}	InvitationInfoResponse
+// @Failure		404		{object}	api.Error
+// @Router			/invitations/{token} [get]
+func (h *Handler) getInvitationByToken(w http.ResponseWriter, r *http.Request) error {
+	token := chi.URLParam(r, "token")
+	data, err := h.service.GetInvitationByToken(r.Context(), token)
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
+}
+
 // @Summary		Accept invitation
 // @Description	Joins the authenticated user to the invitation's tenant. The invitation must be pending, unexpired, and addressed to the caller's own email.
 // @Tags			member
@@ -198,4 +222,25 @@ func (h *Handler) acceptInvitation(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 	return api.WriteJSON(w, http.StatusCreated, data)
+}
+
+// @Summary		Decline invitation
+// @Description	Marks a pending invitation as declined. The token must belong to a pending invitation addressed to the caller's own email.
+// @Tags			member
+// @Accept			json
+// @Security		BearerAuth
+// @Param			body	body	DeclineInvitationDTO	true	"Invitation token"
+// @Success		204
+// @Failure		403		{object}	api.Error
+// @Failure		409		{object}	api.Error
+// @Router			/invitations/decline [post]
+func (h *Handler) declineInvitation(w http.ResponseWriter, r *http.Request) error {
+	var dto DeclineInvitationDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+	if err := h.service.DeclineInvitation(r.Context(), dto); err != nil {
+		return err
+	}
+	return api.WriteNoContent(w)
 }

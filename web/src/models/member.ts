@@ -15,8 +15,8 @@ export const memberSchema = z
     is_active: z.boolean(),
     created_at: z.coerce.date(),
     updated_at: z.coerce.date(),
-    user: userSchema,
-    tenant: tenantSchema,
+    user: userSchema.nullable().optional(),
+    tenant: tenantSchema.nullable().optional(),
   })
   .strict();
 

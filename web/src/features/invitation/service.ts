@@ -2,12 +2,13 @@ import { http } from "@/lib/http";
 import { memberSchema } from "@/models/member";
 
 import {
-  acceptInvitationSchema, createInvitationSchema, invitationSchema,
-  listInvitationSearchParamsSchema, paginatedInvitationSchema
+  acceptInvitationSchema, createInvitationSchema, declineInvitationSchema, invitationInfoSchema,
+  invitationSchema, listInvitationSearchParamsSchema, paginatedInvitationSchema
 } from "./schemas";
 
 import type {
-  AcceptInvitation, CreateInvitation, Invitation, ListInvitationSearchParams, PaginatedInvitation
+  AcceptInvitation, CreateInvitation, DeclineInvitation, Invitation, InvitationInfo,
+  ListInvitationSearchParams, PaginatedInvitation
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions
@@ -15,7 +16,9 @@ import type {
 import type { Member } from "@/models/member";
 
 const invitationsUrl = (tenantId: string) => `/api/tenants/${tenantId}/invitations`;
+const INVITATION_BY_TOKEN_URL = "/api/invitations/{token}";
 const ACCEPT_INVITATION_URL = "/api/invitations/accept";
+const DECLINE_INVITATION_URL = "/api/invitations/decline";
 
 const filter = async (
   tenantId: string,
@@ -59,6 +62,18 @@ const remove = async (
   })
 }
 
+const getByToken = async (
+  token: string,
+  opts: ServiceGetOptions<InvitationInfo> = {},
+): Promise<InvitationInfo> => {
+  return http.get({
+    url: INVITATION_BY_TOKEN_URL,
+    params: { token },
+    schemas: { response: invitationInfoSchema },
+    ...opts,
+  })
+}
+
 const accept = async (
   body: AcceptInvitation,
   opts: ServicePostOptions<AcceptInvitation, Member> = {},
@@ -74,9 +89,25 @@ const accept = async (
   })
 }
 
+const decline = async (
+  body: DeclineInvitation,
+  opts: ServicePostOptions<DeclineInvitation, void> = {},
+): Promise<void> => {
+  return http.post({
+    url: DECLINE_INVITATION_URL,
+    body,
+    schemas: {
+      body: declineInvitationSchema,
+    },
+    ...opts,
+  })
+}
+
 export const invitationService = {
   filter,
   create,
   remove,
+  getByToken,
   accept,
+  decline,
 }

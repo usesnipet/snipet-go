@@ -229,6 +229,25 @@ func (s *Service) FilterInvitations(ctx context.Context, tenantID string, dto Fi
 	)))
 }
 
+// GetInvitationByToken looks up an invitation and its tenant by token. It is
+// public (no membership/admin check) since the token itself is the
+// credential, and is meant to let a user preview an invitation — including
+// whether it's expired or already resolved — before accepting or declining
+// it.
+func (s *Service) GetInvitationByToken(ctx context.Context, token string) (*InvitationInfoResponse, error) {
+	invitation, err := s.invitationRepo.FindByToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	tenant, err := s.tenantRepo.FindByID(ctx, invitation.TenantID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &InvitationInfoResponse{Invite: invitation, Tenant: tenant}, nil
+}
+
 // AcceptInvitation joins the authenticated user to the invitation's tenant
 // with the role it was issued for. The token must belong to a pending,
 // unexpired invitation addressed to the caller's own email.
@@ -274,4 +293,27 @@ func (s *Service) AcceptInvitation(ctx context.Context, dto AcceptInvitationDTO)
 	}
 
 	return created, nil
+}
+
+// DeclineInvitation marks a pending invitation as declined. The token must
+// belong to a pending invitation addressed to the caller's own email.
+func (s *Service) DeclineInvitation(ctx context.Context, dto DeclineInvitationDTO) error {
+	identity, err := auth.CurrentUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	invitation, err := s.invitationRepo.FindByToken(ctx, dto.Token)
+	if err != nil {
+		return err
+	}
+
+	if invitation.Status != model.InvitationStatusPending {
+		return apperr.Conflict("invitation is no longer pending")
+	}
+	if !strings.EqualFold(invitation.Email, identity.User.Email) {
+		return apperr.Forbidden("this invitation was sent to a different email address")
+	}
+
+	return s.invitationRepo.UpdateByID(ctx, invitation.ID, &model.TenantInvitation{Status: model.InvitationStatusDeclined})
 }

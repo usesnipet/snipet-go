@@ -25,6 +25,8 @@ const LLMPage = lazy(() =>
   import("./routes/llms/page").then((m) => ({ default: m.LLMPage })));
 const MembersPage = lazy(() =>
   import("./routes/members/page").then((m) => ({ default: m.MembersPage })));
+const InviteMembersPage = lazy(() =>
+  import("./routes/members/invite/page").then((m) => ({ default: m.InviteMembersPage })));
 
 const ClientAdminLayout = lazy(() =>
   import("./routes/client/(private)/layout").then((m) => ({ default: m.ClientAdminLayout })));
@@ -44,6 +46,8 @@ const AuthRegisterPage = lazy(() =>
 
 const TenantSelectPage = lazy(() =>
   import("./routes/tenant-select/page").then((m) => ({ default: m.TenantSelectPage })));
+const AcceptInvitePage = lazy(() =>
+  import("./routes/invite/page").then((m) => ({ default: m.AcceptInvitePage })));
 
 const toReactRouterPath = (path: RoutePath) => {
   return path.replaceAll(/{([^}]+)}/g, (_, p1) => `:${p1}`);
@@ -61,6 +65,7 @@ export const Router = () => {
           </Route>
           <Route element={<AuthGuard />}>
             <Route path={toReactRouterPath(ROUTES.selectTenant)} element={<TenantSelectPage />} />
+            <Route path={toReactRouterPath(ROUTES.acceptInvite)} element={<AcceptInvitePage />} />
             <Route element={<Layout />}>
               <Route path={toReactRouterPath(ROUTES.tenantHome)} element={<HomePage />} />
               <Route path={toReactRouterPath(ROUTES.clients)} element={<ClientsPage />} />
@@ -69,6 +74,7 @@ export const Router = () => {
               <Route path={toReactRouterPath(ROUTES.knowledgeDetail)} element={<KnowledgeDetailPage />}/>
               <Route path={toReactRouterPath(ROUTES.llms)} element={<LLMPage />} />
               <Route path={toReactRouterPath(ROUTES.members)} element={<MembersPage />} />
+              <Route path={toReactRouterPath(ROUTES.inviteMember)} element={<InviteMembersPage />} />
               <Route path={toReactRouterPath(ROUTES.apiKeys)} element={<ApiKeysPage />} />
             </Route>
             <Route element={<ClientAdminLayout />}>

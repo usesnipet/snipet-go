@@ -6,8 +6,8 @@ import { queryClient } from "@/lib/query-client";
 import { invitationService } from "./service";
 
 import type {
-  AcceptInvitation, CreateInvitation, Invitation, ListInvitationSearchParams,
-  PaginatedInvitation
+  AcceptInvitation, CreateInvitation, DeclineInvitation, Invitation, InvitationInfo,
+  ListInvitationSearchParams, PaginatedInvitation
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions
@@ -80,6 +80,20 @@ export const useRemoveInvitation = (
   })
 }
 
+export const getByTokenInvitationQueryKey = (token: string) =>
+  [BASE_QUERY_KEY, "getByToken", token] as const;
+export const useGetInvitationByToken = (
+  token: string,
+  opts?: ServiceGetOptions<InvitationInfo>,
+): UseQueryResult<InvitationInfo, Error> => {
+  return useQuery({
+    queryKey: getByTokenInvitationQueryKey(token),
+    queryFn: () => invitationService.getByToken(token, opts),
+    enabled: !!token,
+    retry: false,
+  })
+}
+
 export const acceptInvitationQueryKey = () => [BASE_QUERY_KEY, "accept"];
 export const useAcceptInvitation = (
   opts?: ServicePostOptions<AcceptInvitation, Member>,
@@ -98,6 +112,30 @@ export const useAcceptInvitation = (
       toast({
         title: "Failed to accept invitation",
         description: "The invitation has not been accepted successfully",
+        variant: "destructive",
+      });
+    }
+  })
+}
+
+export const declineInvitationQueryKey = () => [BASE_QUERY_KEY, "decline"];
+export const useDeclineInvitation = (
+  opts?: ServicePostOptions<DeclineInvitation, void>,
+): UseMutationResult<void, Error, DeclineInvitation> => {
+  return useMutation({
+    mutationKey: declineInvitationQueryKey(),
+    mutationFn: (data: DeclineInvitation) =>
+      invitationService.decline(data, opts),
+    onSuccess: () => {
+      toast({
+        title: "Invitation declined",
+        description: "You have declined the invitation",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to decline invitation",
+        description: "The invitation has not been declined successfully",
         variant: "destructive",
       });
     }

@@ -8,6 +8,7 @@ export const ROUTES = {
   settings: "/{tenantSlug}/settings",
 
   selectTenant: "/tenant-select",
+  acceptInvite: "/invite",
   tenantHome: "/{tenantSlug}",
   knowledge: "/{tenantSlug}/knowledge",
   knowledgeDetail: "/{tenantSlug}/knowledge/{id}",
