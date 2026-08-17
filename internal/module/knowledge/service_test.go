@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
+	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
@@ -26,6 +27,19 @@ import (
 	knowledgemocks "github.com/usesnipet/snipet/pkg/driver/knowledge/mocks"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
+
+const (
+	tenantID = "11111111-1111-1111-1111-111111111111"
+	userID   = "22222222-2222-2222-2222-222222222222"
+)
+
+func memberCtx() context.Context {
+	user := &model.User{ID: userID, Name: "Regular", Email: "user@example.com"}
+	return auth.SetUserIdentity(context.Background(), &auth.UserIdentity{
+		User:        user,
+		Memberships: []*model.Member{{ID: "m1", UserID: userID, TenantID: tenantID, Role: model.RoleUser, IsActive: true}},
+	})
+}
 
 var testConfigSchema = jsonx.JSONMap{
 	"type": "object",
@@ -126,12 +140,12 @@ func TestFilterDelegatesToRepository(t *testing.T) {
 	expected := page.NewPaginated([]model.Knowledge{{Name: "Knowledge A"}}, 1, 0, 10)
 	repo := mocks.NewMockIKnowledgeRepository(t)
 	repo.EXPECT().
-		Filter(mock.Anything, opts).
+		Filter(mock.Anything, mock.Anything).
 		Return(expected, nil)
 
 	svc := newTestService(t, repo, nil)
 
-	result, err := svc.Filter(context.Background(), opts)
+	result, err := svc.Filter(memberCtx(), tenantID, opts)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -140,7 +154,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	expected := &model.Knowledge{ID: id, Name: "Found"}
+	expected := &model.Knowledge{ID: id, TenantID: tenantID, Name: "Found"}
 	repo := mocks.NewMockIKnowledgeRepository(t)
 	repo.EXPECT().
 		FindByID(mock.Anything, id).
@@ -148,7 +162,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 
 	svc := newTestService(t, repo, nil)
 
-	result, err := svc.FindByID(context.Background(), id)
+	result, err := svc.FindByID(memberCtx(), tenantID, id)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -173,12 +187,12 @@ func TestCreateStoresKnowledgeAndReturnsIt(t *testing.T) {
 	repo.EXPECT().
 		FindByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, id string) (*model.Knowledge, error) {
-			return &model.Knowledge{ID: id}, nil
+			return &model.Knowledge{ID: id, TenantID: tenantID}, nil
 		})
 
 	svc := newTestService(t, repo, map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	result, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
+	result, err := svc.Create(memberCtx(), tenantID, knowledge.CreateKnowledgeDTO{
 		Name:          "Product Docs",
 		Description:   "Internal documentation",
 		Driver:        "pinecone",
@@ -215,7 +229,7 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 
 	svc := newTestService(t, repo, map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	_, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
+	_, err := svc.Create(memberCtx(), tenantID, knowledge.CreateKnowledgeDTO{
 		Name:          "Knowledge",
 		Driver:        "pinecone",
 		Configuration: config,
@@ -236,7 +250,7 @@ func TestCreateReturnsBadRequestWhenConnectionFails(t *testing.T) {
 
 	svc := newTestService(t, repo, map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	_, err := svc.Create(context.Background(), knowledge.CreateKnowledgeDTO{
+	_, err := svc.Create(memberCtx(), tenantID, knowledge.CreateKnowledgeDTO{
 		Name:          "Knowledge",
 		Driver:        "pinecone",
 		Configuration: config,
@@ -258,6 +272,9 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 
 	repo := mocks.NewMockIKnowledgeRepository(t)
 	repo.EXPECT().
+		FindByID(mock.Anything, id).
+		Return(&model.Knowledge{ID: id, TenantID: tenantID}, nil)
+	repo.EXPECT().
 		UpdateByID(mock.Anything, id, mock.Anything).
 		Run(func(_ context.Context, gotID string, updates *model.Knowledge) {
 			assert.Equal(t, id, gotID)
@@ -270,7 +287,7 @@ func TestUpdateDelegatesPartialFieldsToRepository(t *testing.T) {
 
 	svc := newTestService(t, repo, nil)
 
-	err := svc.Update(context.Background(), id, knowledge.UpdateKnowledgeDTO{
+	err := svc.Update(memberCtx(), tenantID, id, knowledge.UpdateKnowledgeDTO{
 		Name:        &newName,
 		Description: &newDescription,
 	})
@@ -285,6 +302,9 @@ func TestUpdateDelegatesDescriptionToRepository(t *testing.T) {
 
 	repo := mocks.NewMockIKnowledgeRepository(t)
 	repo.EXPECT().
+		FindByID(mock.Anything, id).
+		Return(&model.Knowledge{ID: id, TenantID: tenantID}, nil)
+	repo.EXPECT().
 		UpdateByID(mock.Anything, id, mock.Anything).
 		Run(func(_ context.Context, gotID string, updates *model.Knowledge) {
 			assert.Equal(t, id, gotID)
@@ -295,7 +315,7 @@ func TestUpdateDelegatesDescriptionToRepository(t *testing.T) {
 
 	svc := newTestService(t, repo, nil)
 
-	err := svc.Update(context.Background(), id, knowledge.UpdateKnowledgeDTO{
+	err := svc.Update(memberCtx(), tenantID, id, knowledge.UpdateKnowledgeDTO{
 		Description: &newDescription,
 	})
 	require.NoError(t, err)
@@ -307,12 +327,15 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 	id := uuid.New().String()
 	repo := mocks.NewMockIKnowledgeRepository(t)
 	repo.EXPECT().
+		FindByID(mock.Anything, id).
+		Return(&model.Knowledge{ID: id, TenantID: tenantID}, nil)
+	repo.EXPECT().
 		DeleteByID(mock.Anything, id).
 		Return(nil)
 
 	svc := newTestService(t, repo, nil)
 
-	err := svc.DeleteByID(context.Background(), id)
+	err := svc.DeleteByID(memberCtx(), tenantID, id)
 	require.NoError(t, err)
 }
 
@@ -325,7 +348,7 @@ func TestTestConnectionSucceedsWhenDriverValidatesAndConnects(t *testing.T) {
 
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	err := svc.TestConnection(context.Background(), "pinecone", config)
+	err := svc.TestConnection(memberCtx(), tenantID, "pinecone", config)
 	require.NoError(t, err)
 }
 
@@ -334,7 +357,7 @@ func TestTestConnectionReturnsNotFoundForUnknownDriver(t *testing.T) {
 
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), nil)
 
-	err := svc.TestConnection(context.Background(), "unknown", jsonx.JSONMap{"index": "docs"})
+	err := svc.TestConnection(memberCtx(), tenantID, "unknown", jsonx.JSONMap{"index": "docs"})
 	assertAppError(t, err, http.StatusNotFound, driver.ErrDriverNotFound.Error())
 }
 
@@ -344,7 +367,7 @@ func TestTestConnectionReturnsBadRequestWhenConfigurationInvalid(t *testing.T) {
 	source := newMockSource(t, "pinecone", testConfigSchema)
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	err := svc.TestConnection(context.Background(), "pinecone", jsonx.JSONMap{})
+	err := svc.TestConnection(memberCtx(), tenantID, "pinecone", jsonx.JSONMap{})
 	var appErr *apperr.Error
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, http.StatusBadRequest, appErr.StatusCode)
@@ -362,7 +385,7 @@ func TestTestConnectionReturnsDriverConnectionError(t *testing.T) {
 
 	svc := newTestService(t, mocks.NewMockIKnowledgeRepository(t), map[string]kdriver.ISourceDriver{"pinecone": source})
 
-	err := svc.TestConnection(context.Background(), "pinecone", config)
+	err := svc.TestConnection(memberCtx(), tenantID, "pinecone", config)
 	assertAppError(
 		t,
 		err,
@@ -383,7 +406,7 @@ func TestListDriversReturnsSourceDrivers(t *testing.T) {
 		map[string]kdriver.ISourceDriver{"fs": source},
 	)
 
-	result, err := svc.ListDrivers(context.Background())
+	result, err := svc.ListDrivers(memberCtx(), tenantID)
 	require.NoError(t, err)
 	require.Len(t, result.SourceDrivers, 1)
 	assert.Equal(t, "fs", result.SourceDrivers[0].Name)

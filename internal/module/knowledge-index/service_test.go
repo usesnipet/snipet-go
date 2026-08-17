@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
@@ -23,6 +24,19 @@ import (
 	knowledgemocks "github.com/usesnipet/snipet/pkg/driver/knowledge/mocks"
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
+
+const (
+	tenantID = "11111111-1111-1111-1111-111111111111"
+	userID   = "22222222-2222-2222-2222-222222222222"
+)
+
+func memberCtx() context.Context {
+	user := &model.User{ID: userID, Name: "Regular", Email: "user@example.com"}
+	return auth.SetUserIdentity(context.Background(), &auth.UserIdentity{
+		User:        user,
+		Memberships: []*model.Member{{ID: "m1", UserID: userID, TenantID: tenantID, Role: model.RoleUser, IsActive: true}},
+	})
+}
 
 var testIndexConfigSchema = jsonx.JSONMap{
 	"type": "object",
@@ -68,9 +82,24 @@ func newMockIndex(t *testing.T, name string, schema jsonx.JSONMap) *knowledgemoc
 	return indexDriver
 }
 
+// knowledgeRepoFor stubs IKnowledgeRepository.FindByID(knowledgeID) to
+// return a Knowledge belonging to tenantID — the "verify parent belongs to
+// tenant" check every method does before touching the knowledge_id-scoped
+// repo.
+func knowledgeRepoFor(t *testing.T, knowledgeID string) repository.IKnowledgeRepository {
+	t.Helper()
+
+	repo := mocks.NewMockIKnowledgeRepository(t)
+	repo.EXPECT().
+		FindByID(mock.Anything, knowledgeID).
+		Return(&model.Knowledge{ID: knowledgeID, TenantID: tenantID}, nil)
+	return repo
+}
+
 func newTestService(
 	t *testing.T,
 	repo repository.IKnowledgeIndexRepository,
+	knowledgeRepo repository.IKnowledgeRepository,
 	drivers map[string]knowledge.IIndexDriver,
 	opts ...func(*testServiceOptions),
 ) *knowledgeindex.Service {
@@ -100,6 +129,7 @@ func newTestService(
 	)
 	return knowledgeindex.NewService(
 		repo,
+		knowledgeRepo,
 		mocks.NewMockIIndexedKnowledgeItemRepository(t),
 		indexManager,
 		options.pool,
@@ -119,9 +149,9 @@ func TestFilterDelegatesToRepository(t *testing.T) {
 		FilterInKnowledge(mock.Anything, knowledgeID, opts).
 		Return(expected, nil)
 
-	svc := newTestService(t, repo, nil)
+	svc := newTestService(t, repo, knowledgeRepoFor(t, knowledgeID), nil)
 
-	result, err := svc.Filter(context.Background(), knowledgeID, opts)
+	result, err := svc.Filter(memberCtx(), tenantID, knowledgeID, opts)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -131,15 +161,15 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 
 	knowledgeID := uuid.New().String()
 	id := uuid.New().String()
-	expected := &model.KnowledgeIndex{ID: id, Name: "Found"}
+	expected := &model.KnowledgeIndex{ID: id, TenantID: tenantID, Name: "Found"}
 	repo := mocks.NewMockIKnowledgeIndexRepository(t)
 	repo.EXPECT().
 		FindByIDInKnowledge(mock.Anything, knowledgeID, id).
 		Return(expected, nil)
 
-	svc := newTestService(t, repo, nil)
+	svc := newTestService(t, repo, knowledgeRepoFor(t, knowledgeID), nil)
 
-	result, err := svc.FindByID(context.Background(), knowledgeID, id)
+	result, err := svc.FindByID(memberCtx(), tenantID, knowledgeID, id)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -164,9 +194,9 @@ func TestCreateStoresIndexAndReturnsIt(t *testing.T) {
 		}).
 		Return(nil)
 
-	svc := newTestService(t, repo, map[string]knowledge.IIndexDriver{"pinecone": indexDriver})
+	svc := newTestService(t, repo, knowledgeRepoFor(t, knowledgeID), map[string]knowledge.IIndexDriver{"pinecone": indexDriver})
 
-	result, err := svc.Create(context.Background(), knowledgeID, knowledgeindex.CreateKnowledgeIndexDTO{
+	result, err := svc.Create(memberCtx(), tenantID, knowledgeID, knowledgeindex.CreateKnowledgeIndexDTO{
 		Name:          "Docs Index",
 		Driver:        "pinecone",
 		Configuration: config,
@@ -178,6 +208,7 @@ func TestCreateStoresIndexAndReturnsIt(t *testing.T) {
 	assert.Equal(t, "pinecone", result.Driver)
 	assert.Equal(t, config, result.Configuration)
 	assert.Equal(t, knowledgeID, result.KnowledgeID)
+	assert.Equal(t, tenantID, result.TenantID)
 
 	require.NotNil(t, stored)
 	assert.Equal(t, result.Name, stored.Name)
@@ -201,9 +232,9 @@ func TestCreateReturnsRepositoryError(t *testing.T) {
 		CreateInKnowledge(mock.Anything, knowledgeID, mock.Anything).
 		Return(expectedErr)
 
-	svc := newTestService(t, repo, map[string]knowledge.IIndexDriver{"pinecone": indexDriver})
+	svc := newTestService(t, repo, knowledgeRepoFor(t, knowledgeID), map[string]knowledge.IIndexDriver{"pinecone": indexDriver})
 
-	_, err := svc.Create(context.Background(), knowledgeID, knowledgeindex.CreateKnowledgeIndexDTO{
+	_, err := svc.Create(memberCtx(), tenantID, knowledgeID, knowledgeindex.CreateKnowledgeIndexDTO{
 		Name:          "Index",
 		Driver:        "pinecone",
 		Configuration: config,
@@ -223,9 +254,9 @@ func TestUpdateDelegatesNameToRepository(t *testing.T) {
 		UpdateNameInKnowledge(mock.Anything, knowledgeID, id, newName).
 		Return(nil)
 
-	svc := newTestService(t, repo, nil)
+	svc := newTestService(t, repo, knowledgeRepoFor(t, knowledgeID), nil)
 
-	err := svc.Update(context.Background(), knowledgeID, id, knowledgeindex.UpdateKnowledgeIndexDTO{
+	err := svc.Update(memberCtx(), tenantID, knowledgeID, id, knowledgeindex.UpdateKnowledgeIndexDTO{
 		Name: &newName,
 	})
 	require.NoError(t, err)
@@ -241,9 +272,9 @@ func TestDeleteByIDDelegatesToRepository(t *testing.T) {
 		DeleteInKnowledge(mock.Anything, knowledgeID, id).
 		Return(nil)
 
-	svc := newTestService(t, repo, nil)
+	svc := newTestService(t, repo, knowledgeRepoFor(t, knowledgeID), nil)
 
-	err := svc.DeleteByID(context.Background(), knowledgeID, id)
+	err := svc.DeleteByID(memberCtx(), tenantID, knowledgeID, id)
 	require.NoError(t, err)
 }
 
@@ -253,9 +284,9 @@ func TestListDriversReturnsIndexDrivers(t *testing.T) {
 	indexSchema := jsonx.JSONMap{"type": "object", "title": "index"}
 	indexDriver := newMockIndex(t, "rag", indexSchema)
 
-	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), map[string]knowledge.IIndexDriver{"rag": indexDriver})
+	svc := newTestService(t, mocks.NewMockIKnowledgeIndexRepository(t), mocks.NewMockIKnowledgeRepository(t), map[string]knowledge.IIndexDriver{"rag": indexDriver})
 
-	result, err := svc.ListDrivers(context.Background())
+	result, err := svc.ListDrivers(memberCtx(), tenantID)
 	require.NoError(t, err)
 	require.Len(t, result.IndexDrivers, 1)
 	assert.Equal(t, "rag", result.IndexDrivers[0].Name)

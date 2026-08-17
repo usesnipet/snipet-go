@@ -9,18 +9,18 @@ import (
 type MemberRole int
 
 const (
-	RoleUser MemberRole = iota + 1
-	RoleManager
+	RoleGuest MemberRole = iota + 1
+	RoleUser
 	RoleAdmin
 )
 
 var roleNames = map[MemberRole]string{
-	RoleUser:    "user",
-	RoleManager: "manager",
-	RoleAdmin:   "admin",
+	RoleGuest: "guest",
+	RoleUser:  "user",
+	RoleAdmin: "admin",
 }
 var roleValues = map[string]MemberRole{
-	"user": RoleUser, "manager": RoleManager, "admin": RoleAdmin,
+	"guest": RoleGuest, "user": RoleUser, "admin": RoleAdmin,
 }
 
 func (r MemberRole) String() string              { return roleNames[r] }

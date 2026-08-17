@@ -6,6 +6,7 @@ import (
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
+	"github.com/usesnipet/snipet/internal/authz"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
@@ -34,6 +35,10 @@ func NewService(
 	}
 }
 
+// VerifyAPIKey is the auth entrypoint itself — looked up by the key's own
+// key_id before any tenant is known, called by guard.RequireApiKey. Not
+// tenant-scoped; the returned APIKey's TenantID is what the caller uses to
+// populate auth.ApiKeyIdentity.
 func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) (*model.APIKey, error) {
 	keyID := s.generator.GetKeyID(apiKey)
 	paginatedApiKeys, err := s.repository.Filter(
@@ -64,14 +69,35 @@ func (s *Service) VerifyAPIKey(ctx context.Context, apiKey string) (*model.APIKe
 	return key, nil
 }
 
-func (s *Service) Filter(ctx context.Context, opts *filter.Options[model.APIKey]) (*page.Paginated[model.APIKey], error) {
-	return s.repository.Filter(ctx, opts)
+func (s *Service) Filter(ctx context.Context, tenantID string, opts *filter.Options[model.APIKey]) (*page.Paginated[model.APIKey], error) {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return nil, err
+	}
+	return s.repository.Filter(ctx, filter.Merge(opts, filter.New[model.APIKey](filter.WhereEq("tenant_id", tenantID))))
 }
 
-func (s *Service) FindByID(ctx context.Context, id string) (*model.APIKey, error) {
-	return s.repository.FindByID(ctx, id)
+// findInTenant fetches by id then verifies the row belongs to tenantID.
+func (s *Service) findInTenant(ctx context.Context, tenantID, id string) (*model.APIKey, error) {
+	found, err := s.repository.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if found.TenantID != tenantID {
+		return nil, apperr.NotFound("api key not found")
+	}
+	return found, nil
 }
 
+func (s *Service) FindByID(ctx context.Context, tenantID, id string) (*model.APIKey, error) {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return nil, err
+	}
+	return s.findInTenant(ctx, tenantID, id)
+}
+
+// Me returns the API key that authenticated the current request — inherently
+// tenant-agnostic at the call site (there's no tenant_id in the URL on this
+// route), it just reads whichever key's identity guard.RequireApiKey set.
 func (s *Service) Me(ctx context.Context) (*model.APIKey, error) {
 	identity, err := auth.CurrentApiKey(ctx)
 	if err != nil {
@@ -80,7 +106,11 @@ func (s *Service) Me(ctx context.Context) (*model.APIKey, error) {
 	return s.repository.FindByID(ctx, identity.APIKeyID)
 }
 
-func (s *Service) Create(ctx context.Context, dto CreateAPIKeyDTO) (*APIKeyWithSecret, error) {
+func (s *Service) Create(ctx context.Context, tenantID string, dto CreateAPIKeyDTO) (*APIKeyWithSecret, error) {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return nil, err
+	}
+
 	plainKey, keyID, err := s.generator.Generate()
 	if err != nil {
 		return nil, err
@@ -92,6 +122,7 @@ func (s *Service) Create(ctx context.Context, dto CreateAPIKeyDTO) (*APIKeyWithS
 	}
 
 	apiKey := &model.APIKey{
+		TenantID:  tenantID,
 		Name:      dto.Name,
 		KeyID:     keyID,
 		Key:       keyHash,
@@ -108,8 +139,11 @@ func (s *Service) Create(ctx context.Context, dto CreateAPIKeyDTO) (*APIKeyWithS
 	}, nil
 }
 
-func (s *Service) Roll(ctx context.Context, id string) (*APIKeyWithSecret, error) {
-	if _, err := s.repository.FindByID(ctx, id); err != nil {
+func (s *Service) Roll(ctx context.Context, tenantID, id string) (*APIKeyWithSecret, error) {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return nil, err
+	}
+	if _, err := s.findInTenant(ctx, tenantID, id); err != nil {
 		return nil, err
 	}
 
@@ -142,16 +176,25 @@ func (s *Service) Roll(ctx context.Context, id string) (*APIKeyWithSecret, error
 	}, nil
 }
 
-func (s *Service) UpdateExpiration(ctx context.Context, id string, dto UpdateExpirationDTO) error {
-	return s.repository.UpdateExpiration(ctx, id, dto.ExpiresAt)
+func (s *Service) UpdateExpiration(ctx context.Context, tenantID, id string, dto UpdateExpirationDTO) error {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return err
+	}
+	return s.repository.UpdateExpiration(ctx, tenantID, id, dto.ExpiresAt)
 }
 
-func (s *Service) ToggleActive(ctx context.Context, id string, active bool) error {
-	return s.repository.ToggleActive(ctx, id, active)
+func (s *Service) ToggleActive(ctx context.Context, tenantID, id string, active bool) error {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return err
+	}
+	return s.repository.ToggleActive(ctx, tenantID, id, active)
 }
 
-func (s *Service) Delete(ctx context.Context, id string) error {
-	if _, err := s.repository.FindByID(ctx, id); err != nil {
+func (s *Service) Delete(ctx context.Context, tenantID, id string) error {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return err
+	}
+	if _, err := s.findInTenant(ctx, tenantID, id); err != nil {
 		return err
 	}
 	return s.repository.DeleteByID(ctx, id)

@@ -197,7 +197,7 @@ func (s *Service) Create(ctx context.Context, dto CreateTenantDTO) (*model.Tenan
 }
 
 func (s *Service) UpdateByID(ctx context.Context, id string, dto UpdateTenantDTO) error {
-	if _, err := authz.RequireTenantRole(ctx, id, model.RoleManager); err != nil {
+	if _, err := authz.RequireTenantRole(ctx, id, model.RoleAdmin); err != nil {
 		return apperr.Forbidden("not allowed to update this tenant")
 	}
 
