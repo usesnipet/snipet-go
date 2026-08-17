@@ -15,14 +15,19 @@ export const AuthGuard = ({ mode = "private" }: AuthGuardProps) => {
 
   if (isLoading) return null;
 
+  console.log(mode);
+
   if (mode === "public") {
+    console.log("isAuthenticated public", isAuthenticated);
     if (isAuthenticated) return <Navigate to={ROUTES.selectTenant} replace />;
     return <Outlet />
   }
 
   if (!isAuthenticated) {
+    console.log("redirecting to login", isAuthenticated);
     const redirectURL = `${ROUTES.authLogin}?redirect=${pathname}`;
     return <Navigate to={redirectURL} replace />;
   }
+  console.log("redirecting to outlet", isAuthenticated);
   return <Outlet />
 }

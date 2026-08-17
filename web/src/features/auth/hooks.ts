@@ -2,7 +2,8 @@ import { useNavigate } from "@/hooks/use-navigate";
 import { toast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
 import { ROUTES } from "@/routes";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { authService } from "./service";
 import { useAuthStore } from "./store";
@@ -27,7 +28,7 @@ import type {
   ServicePostOptions,
   ServicePutOptions,
 } from "@/lib/services";
-import type { UseMutationResult } from "@tanstack/react-query";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import type { RoutePath } from "@/routes";
 const BASE_QUERY_KEY = "auth";
 
@@ -265,28 +266,42 @@ export const useResetPassword = (
   });
 };
 
-export const activateQueryKey = () => [BASE_QUERY_KEY, "activate"] as const;
+export const activateQueryKey = (token: string) =>
+  [BASE_QUERY_KEY, "activate", token] as const;
 export const useActivate = (
+  token: string,
   opts?: ServicePostOptions<ActivateAccount, void>,
-): UseMutationResult<void, Error, ActivateAccount> => {
-  return useMutation({
-    mutationKey: activateQueryKey(),
-    mutationFn: (data) =>
-      authService.activate(data, opts),
-    onSuccess: () => {
+): UseQueryResult<null, Error> => {
+  const navigate = useNavigate();
+  const query = useQuery({
+    queryKey: activateQueryKey(token),
+    queryFn: async () => {
+      await authService.activate({ token }, opts);
+      return null;
+    },
+    enabled: Boolean(token),
+    retry: false,
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (query.isSuccess) {
       toast({
         title: "Account activated",
         description: "You can now sign in",
       });
-    },
-    onError: () => {
+      navigate(ROUTES.authLogin);
+    }
+    if (query.isError) {
       toast({
         title: "Activation failed",
         description: "Invalid or expired activation token",
         variant: "destructive",
       });
-    },
-  });
+    }
+  }, [query.isSuccess, query.isError, navigate]);
+
+  return query;
 };
 
 export const resendActivationQueryKey = () =>

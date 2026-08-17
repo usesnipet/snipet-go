@@ -113,7 +113,7 @@ func (s *Service) issueActivationToken(ctx context.Context, u *model.User) error
 		return err
 	}
 
-	link := fmt.Sprintf("%s/activate?token=%s", strings.TrimRight(s.config.AppURL, "/"), plainToken)
+	link := fmt.Sprintf("%s/auth/activate?token=%s", strings.TrimRight(s.config.AppURL, "/"), plainToken)
 	return s.emailSvc.SendTemplate(ctx, u.Email, email.TemplateActivateAccount, email.ActivateAccountData{
 		Name: u.Name,
 		Link: link,
