@@ -35,12 +35,10 @@ func NewService(
 	}
 }
 
-func (s *Service) resolveClientID(ctx context.Context, clientCode string) (string, error) {
-	client, err := s.clientService.FindByCode(ctx, clientCode)
-	if err != nil {
-		return "", err
-	}
-	return client.ID, nil
+// resolveClient returns the full Client row (not just its ID) — Create
+// needs client.TenantID to stamp the new Session's denormalized tenant_id.
+func (s *Service) resolveClient(ctx context.Context, clientCode string) (*model.Client, error) {
+	return s.clientService.FindByCode(ctx, clientCode)
 }
 
 func (s *Service) ensureSessionUserAccess(ctx context.Context, clientID string, sessionID string) error {
@@ -63,10 +61,11 @@ func (s *Service) ensureSessionUserAccess(ctx context.Context, clientID string, 
 }
 
 func (s *Service) Filter(ctx context.Context, clientCode string, filter *filter.Options[model.Session]) (*page.Paginated[model.Session], error) {
-	clientID, err := s.resolveClientID(ctx, clientCode)
+	resolvedClient, err := s.resolveClient(ctx, clientCode)
 	if err != nil {
 		return nil, err
 	}
+	clientID := resolvedClient.ID
 	if auth.HasApiKey(ctx) {
 		return s.sessionRepo.FilterInClient(ctx, clientID, filter)
 	}
@@ -88,10 +87,11 @@ func (s *Service) FindByID(
 	id string,
 	opts *filter.Options[model.Session],
 ) (*model.Session, error) {
-	clientID, err := s.resolveClientID(ctx, clientCode)
+	resolvedClient, err := s.resolveClient(ctx, clientCode)
 	if err != nil {
 		return nil, err
 	}
+	clientID := resolvedClient.ID
 	if err := s.ensureSessionUserAccess(ctx, clientID, id); err != nil {
 		return nil, err
 	}
@@ -100,12 +100,14 @@ func (s *Service) FindByID(
 }
 
 func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessionDTO) (*model.Session, error) {
-	clientID, err := s.resolveClientID(ctx, clientCode)
+	resolvedClient, err := s.resolveClient(ctx, clientCode)
 	if err != nil {
 		return nil, err
 	}
+	clientID := resolvedClient.ID
 
 	session := &model.Session{
+		TenantID: resolvedClient.TenantID,
 		AgentID:  dto.AgentID,
 		Metadata: dto.Metadata,
 		ClientID: clientID,
@@ -125,10 +127,11 @@ func (s *Service) Create(ctx context.Context, clientCode string, dto CreateSessi
 }
 
 func (s *Service) DeleteByID(ctx context.Context, clientCode string, id string) error {
-	clientID, err := s.resolveClientID(ctx, clientCode)
+	resolvedClient, err := s.resolveClient(ctx, clientCode)
 	if err != nil {
 		return err
 	}
+	clientID := resolvedClient.ID
 	if err := s.ensureSessionUserAccess(ctx, clientID, id); err != nil {
 		return err
 	}
@@ -137,10 +140,11 @@ func (s *Service) DeleteByID(ctx context.Context, clientCode string, id string) 
 }
 
 func (s *Service) UpdateByID(ctx context.Context, clientCode string, id string, dto UpdateSessionDTO) error {
-	clientID, err := s.resolveClientID(ctx, clientCode)
+	resolvedClient, err := s.resolveClient(ctx, clientCode)
 	if err != nil {
 		return err
 	}
+	clientID := resolvedClient.ID
 	if err := s.ensureSessionUserAccess(ctx, clientID, id); err != nil {
 		return err
 	}
@@ -164,10 +168,11 @@ func (s *Service) FindMessages(
 	sessionID string,
 	filter *filter.Options[model.ExecutionMessage],
 ) (*page.Paginated[model.ExecutionMessage], error) {
-	clientID, err := s.resolveClientID(ctx, clientCode)
+	resolvedClient, err := s.resolveClient(ctx, clientCode)
 	if err != nil {
 		return nil, err
 	}
+	clientID := resolvedClient.ID
 	if err := s.ensureSessionUserAccess(ctx, clientID, sessionID); err != nil {
 		return nil, err
 	}
@@ -185,10 +190,11 @@ func (s *Service) Run(
 	dto RunSessionDTO,
 	subscribers ...execution.Subscriber,
 ) error {
-	clientID, err := s.resolveClientID(ctx, clientCode)
+	resolvedClient, err := s.resolveClient(ctx, clientCode)
 	if err != nil {
 		return err
 	}
+	clientID := resolvedClient.ID
 	if err := s.ensureSessionUserAccess(ctx, clientID, sessionID); err != nil {
 		return err
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/usesnipet/snipet/config"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
+	"github.com/usesnipet/snipet/internal/authz"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
@@ -27,18 +28,21 @@ func NewService(clientRepo repository.IClientRepository, agentRepo repository.IA
 	return &Service{clientRepo: clientRepo, agentRepo: agentRepo, logger: logger}
 }
 
-func (s *Service) Init(ctx context.Context, cfg *config.AppConfig) error {
+// Init runs at boot, before any request/tenant context exists — tenantID is
+// resolved once by tenant.Service.Init and passed in by bootstrap.go, since
+// there's no authenticated caller here to derive it from.
+func (s *Service) Init(ctx context.Context, cfg *config.AppConfig, tenantID string) error {
 	if !cfg.InheritClient {
 		return nil
 	}
 
-	client, err := s.FindByCode(ctx, cfg.InheritClientCode)
+	client, err := s.clientRepo.FindByCode(ctx, cfg.InheritClientCode)
 	var notFoundError *apperr.Error
 	if errors.As(err, &notFoundError) && notFoundError.StatusCode == http.StatusNotFound {
 		s.logger.Infof("creating inherit client: %s with name %s", cfg.InheritClientCode, cfg.InheritClientName)
 		var clientConfig model.ClientConfig
 		clientConfig.Anonymous.Enabled = true
-		_, err = s.CreateWithCode(ctx, CreateClientDTO{
+		_, err = s.createWithCode(ctx, tenantID, CreateClientDTO{
 			Name:   cfg.InheritClientName,
 			Config: clientConfig,
 		}, cfg.InheritClientCode)
@@ -50,19 +54,21 @@ func (s *Service) Init(ctx context.Context, cfg *config.AppConfig) error {
 
 	if client.Name != cfg.InheritClientName {
 		s.logger.Infof("inherit client name update: %s -> %s", client.Name, cfg.InheritClientName)
-		return s.UpdateByCode(
-			ctx,
-			cfg.InheritClientCode,
-			UpdateClientDTO{Name: &cfg.InheritClientName},
-		)
+		return s.clientRepo.UpdateByCode(ctx, cfg.InheritClientCode, &model.Client{Name: cfg.InheritClientName})
 	}
 	return nil
 }
 
-func (s *Service) Filter(ctx context.Context, filter *filter.Options[model.Client]) (*page.Paginated[model.Client], error) {
-	return s.clientRepo.Filter(ctx, filter)
+func (s *Service) Filter(ctx context.Context, tenantID string, opts *filter.Options[model.Client]) (*page.Paginated[model.Client], error) {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return nil, err
+	}
+	return s.clientRepo.Filter(ctx, filter.Merge(opts, filter.New[model.Client](filter.WhereEq("tenant_id", tenantID))))
 }
 
+// FindByCode is the tenant-agnostic lookup used by the public/widget-facing
+// surface (FindPublicByCode, GetAgents) and by Init's bootstrap flow, where
+// there's no tenant-staff caller to scope against.
 func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, error) {
 	paginated, err := s.clientRepo.Filter(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
 	if err != nil {
@@ -72,6 +78,26 @@ func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, e
 		return nil, apperr.NotFound("client not found")
 	}
 	return paginated.First(), nil
+}
+
+// findByCodeInTenant is the admin-path lookup — verifies the client belongs
+// to tenantID (404, not 403, to avoid confirming the code exists elsewhere).
+func (s *Service) findByCodeInTenant(ctx context.Context, tenantID, code string) (*model.Client, error) {
+	found, err := s.clientRepo.FindByCode(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+	if found.TenantID != tenantID {
+		return nil, apperr.NotFound("client not found")
+	}
+	return found, nil
+}
+
+func (s *Service) FindByCodeInTenant(ctx context.Context, tenantID, code string) (*model.Client, error) {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return nil, err
+	}
+	return s.findByCodeInTenant(ctx, tenantID, code)
 }
 
 func (s *Service) FindPublicByCode(ctx context.Context, code string) (*ClientPublicDTO, error) {
@@ -105,15 +131,18 @@ func (s *Service) GenerateCode(ctx context.Context) (string, error) {
 	return s.GenerateCode(ctx)
 }
 
-func (s *Service) Create(ctx context.Context, dto CreateClientDTO) (*model.Client, error) {
+func (s *Service) Create(ctx context.Context, tenantID string, dto CreateClientDTO) (*model.Client, error) {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return nil, err
+	}
 	code, err := s.GenerateCode(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return s.CreateWithCode(ctx, dto, code)
+	return s.createWithCode(ctx, tenantID, dto, code)
 }
 
-func (s *Service) CreateWithCode(ctx context.Context, dto CreateClientDTO, code string) (*model.Client, error) {
+func (s *Service) createWithCode(ctx context.Context, tenantID string, dto CreateClientDTO, code string) (*model.Client, error) {
 	if dto.Config.Webhook.URL != "" {
 		dto.Config.Webhook.Enabled = true
 	}
@@ -122,9 +151,10 @@ func (s *Service) CreateWithCode(ctx context.Context, dto CreateClientDTO, code 
 	}
 
 	client := &model.Client{
-		Code:   code,
-		Name:   dto.Name,
-		Config: dto.Config,
+		TenantID: tenantID,
+		Code:     code,
+		Name:     dto.Name,
+		Config:   dto.Config,
 	}
 	if err := s.clientRepo.Create(ctx, client); err != nil {
 		return nil, err
@@ -132,7 +162,14 @@ func (s *Service) CreateWithCode(ctx context.Context, dto CreateClientDTO, code 
 	return client, nil
 }
 
-func (s *Service) UpdateByCode(ctx context.Context, code string, dto UpdateClientDTO) error {
+func (s *Service) UpdateByCode(ctx context.Context, tenantID, code string, dto UpdateClientDTO) error {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return err
+	}
+	if _, err := s.findByCodeInTenant(ctx, tenantID, code); err != nil {
+		return err
+	}
+
 	updates := &model.Client{}
 	if dto.Name != nil {
 		updates.Name = *dto.Name
@@ -143,14 +180,30 @@ func (s *Service) UpdateByCode(ctx context.Context, code string, dto UpdateClien
 	return s.clientRepo.UpdateByCode(ctx, code, updates)
 }
 
-func (s *Service) DeleteByCode(ctx context.Context, code string) error {
+func (s *Service) DeleteByCode(ctx context.Context, tenantID, code string) error {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return err
+	}
+	if _, err := s.findByCodeInTenant(ctx, tenantID, code); err != nil {
+		return err
+	}
 	return s.clientRepo.DeleteByCode(ctx, code)
 }
 
+// GetAgents is reached via anyAuthMiddleware (API key or client-widget-user
+// JWT), not tenant-staff bearer auth — no tenantID param, per decision 3.
+// Still scopes results to the client's own tenant (fixes a pre-existing bug
+// where this returned every agent in the system regardless of client) —
+// this is not "agents linked to this client" (no such link table exists
+// yet), just the minimum fix to stop leaking other tenants' agents.
 func (s *Service) GetAgents(
 	ctx context.Context,
 	clientCode string,
-	filter *filter.Options[model.Agent],
+	opts *filter.Options[model.Agent],
 ) (*page.Paginated[model.Agent], error) {
-	return s.agentRepo.Filter(ctx, filter)
+	client, err := s.FindByCode(ctx, clientCode)
+	if err != nil {
+		return nil, err
+	}
+	return s.agentRepo.Filter(ctx, filter.Merge(opts, filter.New[model.Agent](filter.WhereEq("tenant_id", client.TenantID))))
 }
