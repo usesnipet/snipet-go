@@ -32,7 +32,13 @@ must not depend on Atlas being available in production.
    writes `<timestamp>_<name>.up.sql` + `.down.sql`.
 3. Review the generated SQL — Atlas is usually right, but a rename Atlas
    sees as "drop + add" (data loss) needs to be corrected by hand into an
-   actual `ALTER ... RENAME`.
+   actual `ALTER ... RENAME`. Atlas is also schema-only, not data-aware: a
+   new `not null` column on a table that already has rows generates a bare
+   `ADD COLUMN ... NOT NULL` with no `DEFAULT` and no backfill — that fails
+   against a populated table. Add the default/backfill by hand (an `UPDATE`
+   between the `ADD COLUMN` and a follow-up `ALTER COLUMN ... SET NOT NULL`,
+   or a `DEFAULT` if one value fits every existing row) whenever the target
+   table isn't empty.
 4. `make db-hash` — updates `migrations/atlas.sum`, the checksum file Atlas
    uses to detect manual edits to already-applied migrations.
 5. Migrations apply automatically the next time the app boots with

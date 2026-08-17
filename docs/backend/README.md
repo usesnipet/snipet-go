@@ -39,8 +39,9 @@ internal/
   model/                       GORM entities
   filter/                       generic Where/Order/Include query-builder
   page/                          Paginated[T] envelope
-  auth/                           JWT + API-key primitives, Principal
-  middleware/                      chi middleware built on auth/
+  auth/                           JWT + API-key primitives, per-mechanism identity types
+  guard/                           chi middleware (Gates) built on auth/
+  authz/                           tenant-membership checks (RequireMember/RequireAdmin) on top of guard/
   runtime/                          the agent execution engine (Engine, Execution, events)
   infra/                             database bootstrap, in-memory cache
   queue/                              in-process background worker pool
@@ -59,7 +60,7 @@ cmd/api/main.go
        → build driver registries + managers (drivers/, internal/runtime/manager)
        → build runtime.Engine (internal/runtime)
        → build services (internal/module/<name>)
-       → build middleware (internal/middleware)
+       → build guards (internal/guard)
        → build handlers, call handler.RegisterRoutes(r, api.Serve)
        → http.ListenAndServe
 ```
@@ -83,7 +84,7 @@ handler parses the request (`api.ParseBody`/`api.ParseQuery`) → calls a
 | [filter-page.md](./filter-page.md) | `internal/filter` + `internal/page` — query building and pagination |
 | [model.md](./model.md) | `internal/model` — GORM entity conventions |
 | [migrations.md](./migrations.md) | `migrations/` — schema change workflow |
-| [auth-middleware.md](./auth-middleware.md) | `internal/auth` + `internal/middleware` — JWT/API-key auth |
+| [auth-middleware.md](./auth-middleware.md) | `internal/auth` + `internal/guard` + `internal/authz` — JWT/API-key auth + tenant-membership checks |
 | [drivers.md](./drivers.md) | `drivers/` + `pkg/driver` + registry/manager — the plugin system |
 | [runtime.md](./runtime.md) | `internal/runtime` — the agent execution engine |
 | [bootstrap.md](./bootstrap.md) | `cmd/api` + `internal/bootstrap` + `config/` — wiring |

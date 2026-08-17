@@ -74,12 +74,16 @@ one function:
    each depending only on repository interfaces, managers, and other
    services it genuinely needs (see [modules.md](./modules.md)). Some call
    an optional `Init(ctx, ...)` afterward for startup-time setup
-   (`apiKeyService.Init`, `clientService.Init`).
-8. **Cache** — `cache.NewMemoryCache(...)` for anything a middleware needs
+   (`userService.Init`, `tenantService.Init`, `clientService.Init`) — order
+   matters here: `tenantService.Init` must run after `userService.Init`
+   (it attaches the bootstrap admin as a `Member`) and before
+   `clientService.Init` (the inherit-client flow needs the bootstrap
+   tenant's ID to stamp onto the created `Client`).
+8. **Cache** — `cache.NewMemoryCache(...)` for anything a guard needs
    (see [infra.md](./infra.md)).
-9. **Middleware** — `RequireAPIKey` / `RequireClientJWT` /
-   `RequirePlatformJWT` (and `Or(...)` compositions), built from the
-   services/cache above; pass `.Handler()` into modules (see
+9. **Guards** — `guard.RequireUser` / `guard.RequireApiKey` /
+   `guard.RequireClientUser` (and `guard.Or(...)` compositions), built from
+   the services/cache above; pass `.Handler()` into modules (see
    [auth-middleware.md](./auth-middleware.md)).
 10. **Handlers** — one `<module>.NewHandler(service, middleware...)` per
     module.

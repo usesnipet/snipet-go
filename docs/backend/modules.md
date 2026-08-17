@@ -80,17 +80,31 @@ real work only where the domain needs it (e.g. `LLM.Create` validates
 `Configuration` against the provider's JSON Schema via `llmManager` before
 persisting, see [drivers.md](./drivers.md)).
 
+For a module scoped under `/tenants/{tenant_id}/...`, every method also
+takes `tenantID string` as its first parameter and starts with an
+`authz.RequireMember`/`RequireAdmin` check (see
+[auth-middleware.md](./auth-middleware.md)):
+
 **The pointer-fields-mean-partial-update pattern**, from `LLM.Update`:
 
 ```go
-updates := &model.LLM{}
-if dto.Name != nil {
-    updates.Name = *dto.Name
+func (s *Service) Update(ctx context.Context, tenantID, id string, dto UpdateLLMDTO) error {
+    if _, err := authz.RequireMember(ctx, tenantID); err != nil {
+        return err
+    }
+    if _, err := s.findInTenant(ctx, tenantID, id); err != nil { // fetch-then-compare, see below
+        return err
+    }
+
+    updates := &model.LLM{}
+    if dto.Name != nil {
+        updates.Name = *dto.Name
+    }
+    if dto.Provider != nil {
+        updates.Provider = *dto.Provider
+    }
+    return s.repo.UpdateByID(ctx, id, updates)
 }
-if dto.Provider != nil {
-    updates.Provider = *dto.Provider
-}
-return s.repo.UpdateByID(ctx, id, updates)
 ```
 
 Only fields the caller actually set get copied onto `updates`; everything
@@ -114,29 +128,39 @@ The only layer that knows about HTTP. Constructs an `api.Handler` (see
 [api.md](./api.md)):
 
 ```go
-func NewHandler(service *Service, apiKeyMiddleware api.MiddlewareFunc) api.Handler {
-    return &Handler{service: service, apiKeyMiddleware: apiKeyMiddleware}
+func NewHandler(service *Service, userMiddleware api.MiddlewareFunc) api.Handler {
+    return &Handler{service: service, userMiddleware: userMiddleware}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-    r.Route("/llm", func(r chi.Router) {
-        r.Group(func(r chi.Router) {
-            r.Use(h.apiKeyMiddleware)
-            r.Get("/", serve(h.filter))
-            r.Post("/", serve(h.create))
-            r.Get("/{id}", serve(h.findByID))
-            r.Put("/{id}", serve(h.update))
-            r.Delete("/{id}", serve(h.deleteByID))
-        })
+    r.Route("/tenants/{tenant_id}/llm", func(r chi.Router) {
+        r.Use(h.userMiddleware)
+        r.Get("/", serve(h.filter))
+        r.Post("/", serve(h.create))
+        r.Get("/{id}", serve(h.findByID))
+        r.Put("/{id}", serve(h.update))
+        r.Delete("/{id}", serve(h.deleteByID))
     })
+}
+
+func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
+    data, err := h.service.Filter(r.Context(), chi.URLParam(r, "tenant_id"), query.ToFilter())
+    ...
 }
 ```
 
 - Route group + `r.Use(...)` is where a module wires its auth requirement
-  (see [auth-middleware.md](./auth-middleware.md)) — a module can mix
-  middlewares per sub-group when some routes need different auth than
-  others (see `client`/`clientuser` handlers using `RequireAPIKey`,
-  `RequireClientJWT`, and `Or(...)` compositions).
+  (see [auth-middleware.md](./auth-middleware.md)). Most modules' admin/CRUD
+  surface lives under `/tenants/{tenant_id}/...`, gated by
+  `guard.RequireUser` — every handler method reads `tenant_id` via
+  `chi.URLParam` and passes it as the first argument into the matching
+  service call, which checks it with `authz.RequireMember`/`RequireAdmin`
+  (see [auth-middleware.md](./auth-middleware.md#internal-authz--tenant-membership-on-top-of-guardrequireuser)).
+  A module can still mix gates across route groups when some routes need
+  different auth than others — `agent`'s CRUD lives under
+  `/tenants/{tenant_id}/agents` (`requireUser`) while `POST /agent/{id}/run`
+  stays on `requireApiKey` at its own unprefixed path; `client`/`session`
+  use `Or(...)` compositions for their client-widget-facing routes.
 - Every handler method has the shape `func(w, r) error` — parse with
   `api.ParseBody`/`api.ParseQuery`, call the service, write with
   `api.WriteJSON`/`api.WriteNoContent`, and just `return err` on failure.
