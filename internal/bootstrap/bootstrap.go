@@ -149,15 +149,19 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		auth_module.NewGithubProvider(cfg.Auth),
 	)
 	emailService := email.NewService(cfg.SMTP, logger)
+	licenseService := license.NewService(cfg.License)
 	authService := auth_module.NewService(
 		cfg.Auth,
 		userRepo,
 		accountRepo,
 		tokenRepo,
+		tenantRepo,
+		memberRepo,
 		userJWTService,
 		refreshTokenService,
 		emailService,
 		userProviderRegistry,
+		licenseService,
 	)
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
@@ -192,9 +196,8 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	clientUserService := clientuser.NewService(clientUserRepo)
 	userService := user.NewService(userRepo, cfg.User)
-	appService := app_module.NewService(&cfg.App)
+	appService := app_module.NewService(&cfg.App, licenseService)
 
-	licenseService := license.NewService(cfg.License)
 	tenantService := tenant.NewService(tenantRepo, memberRepo, userRepo, txManager, cfg.Tenant, licenseService)
 	memberService := member.NewService(cfg.Auth, memberRepo, tenantInvitationRepo, tenantRepo, userRepo, txManager, refreshTokenService, emailService)
 

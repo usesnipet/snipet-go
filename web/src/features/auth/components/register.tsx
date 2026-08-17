@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
 import { Link } from "@/components/ui/link";
+import { useGetSystemInfo } from "@/features/app/hooks";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/routes";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +25,7 @@ export function AuthRegisterForm({
   });
 
   const { mutate, isPending } = useRegister();
+  const { data: systemInfo } = useGetSystemInfo();
   const onSubmit = form.handleSubmit((data) => {
     mutate(data);
   });
@@ -45,8 +47,9 @@ export function AuthRegisterForm({
               </a>
               <h1 className="text-xl font-bold">Create your account</h1>
               <FieldDescription>
-                Register with email and password. You&apos;ll need to activate
-                via email before signing in.
+                {systemInfo?.multi_tenant_enabled
+                  ? "Register with email and password. You'll need to activate via email before signing in."
+                  : "Register with email and password to get started."}
               </FieldDescription>
             </div>
 

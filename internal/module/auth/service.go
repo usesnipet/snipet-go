@@ -13,6 +13,7 @@ import (
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/license"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/module/email"
 	"github.com/usesnipet/snipet/internal/repository"
@@ -23,10 +24,13 @@ type Service struct {
 	userRepo         repository.IUserRepository
 	accountRepo      repository.IAccountRepository
 	tokenRepo        repository.ITokenRepository
+	tenantRepo       repository.ITenantRepository
+	memberRepo       repository.IMemberRepository
 	jwtService       *auth.JWTService[*auth.PlatformUserClaims]
 	tokenGen         *auth.TokenService
 	emailSvc         *email.Service
 	providerRegistry *ProviderRegistry
+	license          *license.Service
 }
 
 func NewService(
@@ -34,26 +38,36 @@ func NewService(
 	userRepo repository.IUserRepository,
 	accountRepo repository.IAccountRepository,
 	tokenRepo repository.ITokenRepository,
+	tenantRepo repository.ITenantRepository,
+	memberRepo repository.IMemberRepository,
 	jwtService *auth.JWTService[*auth.PlatformUserClaims],
 	tokenGen *auth.TokenService,
 	emailSvc *email.Service,
 	providerRegistry *ProviderRegistry,
+	license *license.Service,
 ) *Service {
 	return &Service{
 		config:           config,
 		userRepo:         userRepo,
 		accountRepo:      accountRepo,
 		tokenRepo:        tokenRepo,
+		tenantRepo:       tenantRepo,
+		memberRepo:       memberRepo,
 		jwtService:       jwtService,
 		tokenGen:         tokenGen,
 		emailSvc:         emailSvc,
 		providerRegistry: providerRegistry,
+		license:          license,
 	}
 }
 
-// Register creates an inactive User (email + password) and emails an
-// activate_account token. No access/refresh tokens are issued — login stays
-// blocked until Activate is called.
+// Register creates a User (email + password). Licensed (multi-tenant
+// capable) instances require email activation before login — the account
+// starts with the active_account challenge, and joining/creating a Tenant
+// happens afterward via invitation or Create. Unlicensed (single-tenant)
+// instances have no invitation flow to reach a Tenant through, so
+// registration skips activation entirely and joins the user directly to the
+// one bootstrap Tenant (tenant.Service.Init guarantees it exists).
 func (s *Service) Register(ctx context.Context, dto RegisterDTO) (*RegisterResponse, error) {
 	if _, err := s.userRepo.FindByEmail(ctx, dto.Email); err == nil {
 		return nil, apperr.Conflict("email already in use")
@@ -69,21 +83,51 @@ func (s *Service) Register(ctx context.Context, dto RegisterDTO) (*RegisterRespo
 		return nil, err
 	}
 
+	licensed := s.license.Info().Valid
 	created := &model.User{
 		Name:         dto.Name,
 		Email:        dto.Email,
 		PasswordHash: &passwordHash,
-		Challenges:   []model.Challenge{model.ChallengeActiveAccount},
+		Challenges:   []model.Challenge{},
+	}
+	if licensed {
+		created.Challenges = []model.Challenge{model.ChallengeActiveAccount}
 	}
 	if err := s.userRepo.Create(ctx, created); err != nil {
 		return nil, err
 	}
 
-	if err := s.issueActivationToken(ctx, created); err != nil {
-		return nil, err
+	if licensed {
+		if err := s.issueActivationToken(ctx, created); err != nil {
+			return nil, err
+		}
+		return &RegisterResponse{User: *created}, nil
 	}
 
+	if err := s.joinBootstrapTenant(ctx, created); err != nil {
+		return nil, err
+	}
 	return &RegisterResponse{User: *created}, nil
+}
+
+// joinBootstrapTenant attaches a newly self-registered user, as a regular
+// (non-admin) member, to the single Tenant an unlicensed instance always
+// has.
+func (s *Service) joinBootstrapTenant(ctx context.Context, u *model.User) error {
+	tenants, err := s.tenantRepo.Filter(ctx, filter.New[model.Tenant](filter.Take(1)))
+	if err != nil {
+		return err
+	}
+	if tenants.IsEmpty() {
+		return apperr.InternalServerError("no bootstrap tenant found")
+	}
+
+	return s.memberRepo.Create(ctx, &model.Member{
+		UserID:   u.ID,
+		TenantID: tenants.First().ID,
+		Role:     model.RoleUser,
+		IsActive: true,
+	})
 }
 
 // issueActionToken creates a one-time DB-backed token (activate_account,

@@ -1,3 +1,4 @@
+import { useGetSystemInfo } from "@/features/app/hooks";
 import { useNavigate } from "@/hooks/use-navigate";
 import { toast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
@@ -37,6 +38,7 @@ export const useRegister = (
   opts?: ServicePostOptions<Register, RegisterResponse>,
 ): UseMutationResult<RegisterResponse, Error, Register> => {
   const navigate = useNavigate();
+  const { data: systemInfo } = useGetSystemInfo();
 
   return useMutation({
     mutationKey: registerQueryKey(),
@@ -44,7 +46,9 @@ export const useRegister = (
     onSuccess: () => {
       toast({
         title: "Account created",
-        description: "Check your email to activate your account",
+        description: systemInfo?.multi_tenant_enabled
+          ? "Check your email to activate your account"
+          : "You can now sign in",
       });
       navigate(ROUTES.authLogin);
     },
