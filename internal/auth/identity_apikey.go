@@ -10,6 +10,7 @@ import (
 // guard.RequireApiKey.
 type ApiKeyIdentity struct {
 	APIKeyID string
+	TenantID string
 }
 
 type apiKeyIdentityKeyType struct{}
