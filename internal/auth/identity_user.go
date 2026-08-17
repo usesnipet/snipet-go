@@ -42,9 +42,9 @@ func (i *UserIdentity) IsTenantAdmin(tenantID string) bool {
 	return ok && member.IsActive && member.Role == model.RoleAdmin
 }
 
-func (i *UserIdentity) IsTenantRole(tenantID string, role model.Role) bool {
+func (i *UserIdentity) IsTenantRole(tenantID string, role model.MemberRole) bool {
 	member, ok := i.MembershipOf(tenantID)
-	return ok && member.Role == role
+	return ok && member.IsActive && member.Role.AtLeast(role)
 }
 
 // IsPlatformAdmin reports whether the caller is a platform-wide admin
