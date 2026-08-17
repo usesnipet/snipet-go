@@ -26,6 +26,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Use(h.userMiddleware)
 
 		r.Get("/", serve(h.filter))
+		r.Post("/", serve(h.create))
 		r.Put("/{id}/role", serve(h.updateRole))
 		r.Delete("/{id}", serve(h.remove))
 	})
@@ -72,6 +73,31 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteJSON(w, http.StatusOK, data)
+}
+
+// @Summary		Create member
+// @Description	Directly creates a User (with password) and Member in one step. Only available on unlicensed single-tenant instances (no invitation flow). Caller must be a tenant admin.
+// @Tags			member
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			tenant_id	path		string			true	"Tenant ID"
+// @Param			body		body		CreateMemberDTO	true	"Member data"
+// @Success		201			{object}	MemberResponse
+// @Failure		403			{object}	api.Error
+// @Failure		409			{object}	api.Error
+// @Router			/tenants/{tenant_id}/members [post]
+func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
+	tenantID := chi.URLParam(r, "tenant_id")
+	var dto CreateMemberDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+	data, err := h.service.Create(r.Context(), tenantID, dto)
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusCreated, data)
 }
 
 // @Summary		Update member role

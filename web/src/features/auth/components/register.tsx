@@ -25,10 +25,32 @@ export function AuthRegisterForm({
   });
 
   const { mutate, isPending } = useRegister();
-  const { data: systemInfo } = useGetSystemInfo();
+  const { data: systemInfo, isLoading: isSystemInfoLoading } = useGetSystemInfo();
   const onSubmit = form.handleSubmit((data) => {
     mutate(data);
   });
+
+  if (!isSystemInfoLoading && !systemInfo?.multi_tenant_enabled) {
+    return (
+      <div className={cn("flex flex-col gap-6", className)} {...props}>
+        <FieldGroup>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex size-8 items-center justify-center rounded-md">
+              <GalleryVerticalEnd className="size-6" />
+            </div>
+            <h1 className="text-xl font-bold">Self-registration is disabled</h1>
+            <FieldDescription>
+              This instance doesn&apos;t allow creating accounts directly. Ask a
+              tenant admin to create your account.
+            </FieldDescription>
+          </div>
+          <Button asChild>
+            <Link href={ROUTES.authLogin}>Back to sign in</Link>
+          </Button>
+        </FieldGroup>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -47,9 +69,8 @@ export function AuthRegisterForm({
               </a>
               <h1 className="text-xl font-bold">Create your account</h1>
               <FieldDescription>
-                {systemInfo?.multi_tenant_enabled
-                  ? "Register with email and password. You'll need to activate via email before signing in."
-                  : "Register with email and password to get started."}
+                Register with email and password. You&apos;ll need to activate
+                via email before signing in.
               </FieldDescription>
             </div>
 

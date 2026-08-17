@@ -1,12 +1,13 @@
 import { http } from "@/lib/http";
 
 import {
-  listMemberSearchParamsSchema, paginatedMemberSchema, updateMemberRoleSchema
+  createMemberSchema, listMemberSearchParamsSchema, memberSchema, paginatedMemberSchema,
+  updateMemberRoleSchema
 } from "./schemas";
 
-import type { ListMemberSearchParams, PaginatedMember, UpdateMemberRole } from "./schemas";
+import type { CreateMember, ListMemberSearchParams, Member, PaginatedMember, UpdateMemberRole } from "./schemas";
 import type {
-  ServiceDeleteOptions, ServiceGetOptions, ServicePutOptions
+  ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 
 const membersUrl = (tenantId: string) => `/api/tenants/${tenantId}/members`;
@@ -20,6 +21,22 @@ const filter = async (
     schemas: {
       response: paginatedMemberSchema,
       searchParams: listMemberSearchParamsSchema,
+    },
+    ...opts,
+  })
+}
+
+const create = async (
+  tenantId: string,
+  body: CreateMember,
+  opts: ServicePostOptions<CreateMember, Member> = {},
+): Promise<Member> => {
+  return http.post({
+    url: membersUrl(tenantId),
+    body,
+    schemas: {
+      body: createMemberSchema,
+      response: memberSchema,
     },
     ...opts,
   })
@@ -54,6 +71,7 @@ const remove = async (
 
 export const memberService = {
   filter,
+  create,
   updateRole,
   remove,
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/usesnipet/snipet/config"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
+	"github.com/usesnipet/snipet/internal/license"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/module/email"
@@ -64,6 +65,7 @@ func newTestService(
 		txManager,
 		auth.NewTokenService(),
 		email.NewService(config.SMTPConfig{Enable: false}, logger.NewLogger(logger.LevelError)),
+		license.NewService(config.LicenseConfig{}),
 	)
 }
 

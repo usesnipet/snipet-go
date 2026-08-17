@@ -155,8 +155,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		userRepo,
 		accountRepo,
 		tokenRepo,
-		tenantRepo,
-		memberRepo,
 		userJWTService,
 		refreshTokenService,
 		emailService,
@@ -199,7 +197,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	appService := app_module.NewService(&cfg.App, licenseService)
 
 	tenantService := tenant.NewService(tenantRepo, memberRepo, userRepo, txManager, cfg.Tenant, licenseService)
-	memberService := member.NewService(cfg.Auth, memberRepo, tenantInvitationRepo, tenantRepo, userRepo, txManager, refreshTokenService, emailService)
+	memberService := member.NewService(cfg.Auth, memberRepo, tenantInvitationRepo, tenantRepo, userRepo, txManager, refreshTokenService, emailService, licenseService)
 
 	if err := userService.Init(context.Background()); err != nil {
 		logger.Errorf("failed to init user service: %v", err)

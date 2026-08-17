@@ -1,84 +1,23 @@
+import { SidebarContent } from "@/components/sidebar/content";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { useTheme } from "@/context/theme-provider";
+import { useGetSystemInfo } from "@/features/app/hooks";
 import { TenantCard } from "@/features/tenant/components/tenant-card";
 import { useFindMineTenant } from "@/features/tenant/hooks";
 import { UserCard } from "@/features/user/components/user-card";
 import { useNavigate } from "@/hooks/use-navigate";
 import { ROUTES } from "@/routes";
 import {
-  BookOpen, Bot, Building2Icon, ChevronsUpDownIcon, Cpu, Key, MoonIcon,
-  Settings, Shield, SunIcon, Users
+  BookOpen, Bot, Building2Icon, ChevronsUpDownIcon, Cpu, Key, MoonIcon, Settings, Shield, SunIcon, Users
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
-
-import { SidebarContent } from "@/components/sidebar/content";
-
 import type { NavEntry } from "@/components/sidebar/types";
-
-const navItems: NavEntry[] = [
-  {
-    title: "Home",
-    href: ROUTES.tenantHome,
-    icon: Shield,
-    exact: true,
-  },
-  {
-    title: "Clients",
-    href: ROUTES.clients,
-    icon: Users,
-  },
-  {
-    title: "Agent",
-    href: ROUTES.agent,
-    icon: Bot,
-  },
-  {
-    title: "LLMs",
-    href: ROUTES.llms,
-    icon: Cpu,
-  },
-  {
-    title: "Knowledge",
-    href: ROUTES.knowledge,
-    icon: BookOpen,
-  },
-  {
-    label: "Management",
-    items: [
-      {
-        title: "Members",
-        items: [
-          {
-            title: "Members",
-            href: ROUTES.members,
-            exact: true,
-          },
-          {
-            title: "Invite",
-            href: ROUTES.inviteMember,
-          }
-        ],
-        icon: Users,
-      },
-      {
-        title: "API Keys",
-        href: ROUTES.apiKeys,
-        icon: Key,
-      },
-      {
-        title: "Settings",
-        href: ROUTES.settings,
-        icon: Settings,
-      },
-    ]
-  },
-]
 
 const MAX_VISIBLE_TENANTS = 3;
 
@@ -87,12 +26,83 @@ export function TenantSidebar() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { data } = useFindMineTenant();
+  const { data: systemInfo } = useGetSystemInfo();
+  const multiTenantEnabled = systemInfo?.multi_tenant_enabled ?? false;
+
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
 
   const tenants = data?.data ?? [];
   const currentTenant = tenants.find((tenant) => tenant.slug === tenantSlug) ?? null;
   const visibleTenants = tenants.slice(0, MAX_VISIBLE_TENANTS);
   const hasMoreTenants = tenants.length > MAX_VISIBLE_TENANTS;
+
+  const navItems: NavEntry[] = useMemo(() => [
+    {
+      title: "Home",
+      href: ROUTES.tenantHome,
+      icon: Shield,
+      exact: true,
+    },
+    {
+      title: "Clients",
+      href: ROUTES.clients,
+      icon: Users,
+    },
+    {
+      title: "Agent",
+      href: ROUTES.agent,
+      icon: Bot,
+    },
+    {
+      title: "LLMs",
+      href: ROUTES.llms,
+      icon: Cpu,
+    },
+    {
+      title: "Knowledge",
+      href: ROUTES.knowledge,
+      icon: BookOpen,
+    },
+    {
+      label: "Management",
+      items: [
+        ...(multiTenantEnabled ? [
+          {
+            title: "Members",
+            items: [
+              {
+                title: "Members",
+                href: ROUTES.members,
+                exact: true,
+              },
+              {
+                title: "Invite",
+                href: ROUTES.inviteMember,
+              }
+            ],
+            icon: Users,
+          },
+        ] : [
+          {
+            title: "Members",
+            href: ROUTES.members,
+            exact: true,
+            icon: Users,
+          },
+        ]),
+        {
+          title: "API Keys",
+          href: ROUTES.apiKeys,
+          icon: Key,
+        },
+        {
+          title: "Settings",
+          href: ROUTES.settings,
+          icon: Settings,
+        },
+      ]
+    },
+  ], [multiTenantEnabled])
 
   const goToSelectTenant = () => {
     setOpen(false);

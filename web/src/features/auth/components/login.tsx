@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
 import { Link } from "@/components/ui/link";
+import { useGetSystemInfo } from "@/features/app/hooks";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/routes";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,6 +29,7 @@ export function AuthLoginForm({
   });
 
   const { mutate, isPending } = useLogin(redirect);
+  const { data: systemInfo } = useGetSystemInfo();
   const onSubmit = form.handleSubmit((data) => {
     mutate(data);
   });
@@ -75,11 +77,15 @@ export function AuthLoginForm({
               </Button>
             </Field>
             <FieldDescription className="text-center">
-              Don&apos;t have an account?{" "}
-              <Link href={ROUTES.authRegister} className="underline underline-offset-2">
-                Register
-              </Link>
-              {" · "}
+              {systemInfo?.multi_tenant_enabled && (
+                <>
+                  Don&apos;t have an account?{" "}
+                  <Link href={ROUTES.authRegister} className="underline underline-offset-2">
+                    Register
+                  </Link>
+                  {" · "}
+                </>
+              )}
               <Link
                 href={ROUTES.authForgotPassword}
                 className="underline underline-offset-2"

@@ -5,8 +5,10 @@ import { queryClient } from "@/lib/query-client";
 
 import { memberService } from "./service";
 
-import type { ListMemberSearchParams, PaginatedMember, UpdateMemberRole } from "./schemas";
-import type { ServiceDeleteOptions, ServiceGetOptions, ServicePutOptions } from "@/lib/services";
+import type { CreateMember, ListMemberSearchParams, Member, PaginatedMember, UpdateMemberRole } from "./schemas";
+import type {
+  ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
+} from "@/lib/services";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 
 const BASE_QUERY_KEY = "member";
@@ -21,6 +23,31 @@ export const useFilterMember = (
     queryKey: [...filterMemberQueryKey(tenantId), opts?.searchParams],
     queryFn: () => memberService.filter(tenantId, opts),
     enabled: !!tenantId,
+  })
+}
+
+export const createMemberQueryKey = () => [BASE_QUERY_KEY, "create"];
+export const useCreateMember = (
+  opts?: ServicePostOptions<CreateMember, Member>,
+): UseMutationResult<Member, Error, { tenantId: string; data: CreateMember }> => {
+  return useMutation({
+    mutationKey: createMemberQueryKey(),
+    mutationFn: ({ tenantId, data }) =>
+      memberService.create(tenantId, data, opts),
+    onSuccess: (_data, { tenantId }) => {
+      toast({
+        title: "Member created successfully",
+        description: "The member has been created and can now sign in",
+      });
+      queryClient.invalidateQueries({ queryKey: filterMemberQueryKey(tenantId) });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to create member",
+        description: "The member has not been created successfully",
+        variant: "destructive",
+      });
+    }
   })
 }
 

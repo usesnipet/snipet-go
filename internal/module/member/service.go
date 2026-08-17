@@ -12,6 +12,7 @@ import (
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
+	"github.com/usesnipet/snipet/internal/license"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/module/email"
 	"github.com/usesnipet/snipet/internal/repository"
@@ -26,6 +27,7 @@ type Service struct {
 	txManager      repository.ITxManager
 	tokenGen       *auth.TokenService
 	emailSvc       *email.Service
+	license        *license.Service
 }
 
 func NewService(
@@ -37,6 +39,7 @@ func NewService(
 	txManager repository.ITxManager,
 	tokenGen *auth.TokenService,
 	emailSvc *email.Service,
+	license *license.Service,
 ) *Service {
 	return &Service{
 		config:         config,
@@ -47,6 +50,7 @@ func NewService(
 		txManager:      txManager,
 		tokenGen:       tokenGen,
 		emailSvc:       emailSvc,
+		license:        license,
 	}
 }
 
@@ -132,6 +136,59 @@ func (s *Service) Remove(ctx context.Context, tenantID, memberID string) error {
 	}
 
 	return s.memberRepo.DeleteByID(ctx, memberID)
+}
+
+// Create directly creates a User (with password) and Member row in one
+// step — the single-tenant replacement for self-registration, which
+// auth.Service.Register refuses on unlicensed instances (no email-based
+// invitation flow makes sense with only one tenant to invite into). Only
+// allowed on unlicensed instances; licensed (multi-tenant capable)
+// instances must use Invite instead, keeping email verification as the
+// only way in. Caller must be a tenant admin.
+func (s *Service) Create(ctx context.Context, tenantID string, dto CreateMemberDTO) (*model.Member, error) {
+	if _, err := s.requireAdmin(ctx, tenantID); err != nil {
+		return nil, err
+	}
+	if s.license.Info().Valid {
+		return nil, apperr.Forbidden("direct member creation is only available on unlicensed single-tenant instances; use invitations instead")
+	}
+
+	normalizedEmail := strings.ToLower(strings.TrimSpace(dto.Email))
+	if _, err := s.userRepo.FindByEmail(ctx, normalizedEmail); err == nil {
+		return nil, apperr.Conflict("a user with this email already exists")
+	} else {
+		var appErr *apperr.Error
+		if !errors.As(err, &appErr) || appErr.StatusCode != http.StatusNotFound {
+			return nil, err
+		}
+	}
+
+	passwordHash, err := auth.HashPassword(dto.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &model.User{
+		Name:         dto.Name,
+		Email:        normalizedEmail,
+		PasswordHash: &passwordHash,
+		Challenges:   []model.Challenge{},
+	}
+
+	created := &model.Member{Role: dto.Role, IsActive: true}
+	err = s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		if err := s.userRepo.Create(ctx, user); err != nil {
+			return err
+		}
+		created.UserID = user.ID
+		created.TenantID = tenantID
+		return s.memberRepo.Create(ctx, created)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return created, nil
 }
 
 // Invite creates a pending invitation for an email address and sends the
