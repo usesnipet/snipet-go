@@ -26,6 +26,9 @@ var roleValues = map[string]MemberRole{
 func (r MemberRole) String() string              { return roleNames[r] }
 func (r MemberRole) AtLeast(min MemberRole) bool { return r >= min }
 
+func (r MemberRole) Is(role MemberRole) bool    { return r == role }
+func (r MemberRole) IsNot(role MemberRole) bool { return r != role }
+
 func (r MemberRole) MarshalJSON() ([]byte, error) { return json.Marshal(r.String()) }
 func (r *MemberRole) UnmarshalJSON(b []byte) error {
 	var s string
