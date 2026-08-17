@@ -18,10 +18,12 @@ type ClientConfig struct {
 type Client struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	Code   string       `gorm:"type:varchar(10);not null;unique" json:"code"`
-	Name   string       `gorm:"type:varchar(255);not null" json:"name"`
-	Config ClientConfig `gorm:"type:jsonb;not null;serializer:json" json:"config"`
+	TenantID string       `gorm:"type:uuid;not null;index" json:"tenant_id"`
+	Code     string       `gorm:"type:varchar(10);not null;unique" json:"code"`
+	Name     string       `gorm:"type:varchar(255);not null" json:"name"`
+	Config   ClientConfig `gorm:"type:jsonb;not null;serializer:json" json:"config"`
 
+	Tenant        Tenant               `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Sessions      []Session            `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	ClientToUsers []ClientToClientUser `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }

@@ -19,7 +19,9 @@ type KnowledgeItem struct {
 	LastModified *time.Time               `json:"last_modified,omitempty"`
 
 	KnowledgeID string `gorm:"type:uuid;not null;uniqueIndex:idx_knowledge_items_knowledge_external_id,priority:1" json:"knowledge_id"`
+	TenantID    string `gorm:"type:uuid;not null;index" json:"tenant_id"`
 
+	Tenant    Tenant                 `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	Knowledge Knowledge              `gorm:"foreignKey:KnowledgeID" json:"-"`
 	Indexes   []IndexedKnowledgeItem `gorm:"foreignKey:KnowledgeItemID" json:"-"`
 }

@@ -14,4 +14,9 @@ type Tenant struct {
 
 	Members     []Member           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
 	Invitations []TenantInvitation `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
+	Agents      []Agent            `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
+	APIKeys     []APIKey           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
+	Clients     []Client           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
+	Knowledges  []Knowledge        `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
+	LLMs        []LLM              `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
 }
