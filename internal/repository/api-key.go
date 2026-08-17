@@ -11,17 +11,17 @@ import (
 
 type IApiKeyRepository interface {
 	IRepository[model.APIKey]
-	UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error
-	ToggleActive(ctx context.Context, id string, active bool) error
+	UpdateExpiration(ctx context.Context, tenantID, id string, expiresAt *time.Time) error
+	ToggleActive(ctx context.Context, tenantID, id string, active bool) error
 }
 
 type ApiKeyRepository struct {
 	*Repository[model.APIKey]
 }
 
-func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error {
+func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, tenantID, id string, expiresAt *time.Time) error {
 	affected, err := gorm.G[model.APIKey](r.db(ctx)).
-		Where("id = ?", id).
+		Where("id = ? AND tenant_id = ?", id, tenantID).
 		Update(ctx, "expires_at", expiresAt)
 	if err != nil {
 		return err
@@ -32,12 +32,15 @@ func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, id string, expi
 	return nil
 }
 
-func (r *ApiKeyRepository) ToggleActive(ctx context.Context, id string, active bool) error {
-	_, err := gorm.G[model.APIKey](r.db(ctx)).
-		Where("id = ?", id).
+func (r *ApiKeyRepository) ToggleActive(ctx context.Context, tenantID, id string, active bool) error {
+	affected, err := gorm.G[model.APIKey](r.db(ctx)).
+		Where("id = ? AND tenant_id = ?", id, tenantID).
 		Update(ctx, "active", active)
 	if err != nil {
 		return err
+	}
+	if affected == 0 {
+		return apperr.NotFound("api key not found")
 	}
 	return nil
 }

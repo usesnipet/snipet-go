@@ -293,16 +293,16 @@ func (_c *MockIApiKeyRepository_FindByID_Call) RunAndReturn(run func(ctx context
 }
 
 // ToggleActive provides a mock function for the type MockIApiKeyRepository
-func (_mock *MockIApiKeyRepository) ToggleActive(ctx context.Context, id string, active bool) error {
-	ret := _mock.Called(ctx, id, active)
+func (_mock *MockIApiKeyRepository) ToggleActive(ctx context.Context, tenantID string, id string, active bool) error {
+	ret := _mock.Called(ctx, tenantID, id, active)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ToggleActive")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
-		r0 = returnFunc(ctx, id, active)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, bool) error); ok {
+		r0 = returnFunc(ctx, tenantID, id, active)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -316,13 +316,14 @@ type MockIApiKeyRepository_ToggleActive_Call struct {
 
 // ToggleActive is a helper method to define mock.On call
 //   - ctx context.Context
+//   - tenantID string
 //   - id string
 //   - active bool
-func (_e *MockIApiKeyRepository_Expecter) ToggleActive(ctx any, id any, active any) *MockIApiKeyRepository_ToggleActive_Call {
-	return &MockIApiKeyRepository_ToggleActive_Call{Call: _e.mock.On("ToggleActive", ctx, id, active)}
+func (_e *MockIApiKeyRepository_Expecter) ToggleActive(ctx any, tenantID any, id any, active any) *MockIApiKeyRepository_ToggleActive_Call {
+	return &MockIApiKeyRepository_ToggleActive_Call{Call: _e.mock.On("ToggleActive", ctx, tenantID, id, active)}
 }
 
-func (_c *MockIApiKeyRepository_ToggleActive_Call) Run(run func(ctx context.Context, id string, active bool)) *MockIApiKeyRepository_ToggleActive_Call {
+func (_c *MockIApiKeyRepository_ToggleActive_Call) Run(run func(ctx context.Context, tenantID string, id string, active bool)) *MockIApiKeyRepository_ToggleActive_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -332,14 +333,19 @@ func (_c *MockIApiKeyRepository_ToggleActive_Call) Run(run func(ctx context.Cont
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 bool
+		var arg2 string
 		if args[2] != nil {
-			arg2 = args[2].(bool)
+			arg2 = args[2].(string)
+		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -350,7 +356,7 @@ func (_c *MockIApiKeyRepository_ToggleActive_Call) Return(err error) *MockIApiKe
 	return _c
 }
 
-func (_c *MockIApiKeyRepository_ToggleActive_Call) RunAndReturn(run func(ctx context.Context, id string, active bool) error) *MockIApiKeyRepository_ToggleActive_Call {
+func (_c *MockIApiKeyRepository_ToggleActive_Call) RunAndReturn(run func(ctx context.Context, tenantID string, id string, active bool) error) *MockIApiKeyRepository_ToggleActive_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -419,16 +425,16 @@ func (_c *MockIApiKeyRepository_UpdateByID_Call) RunAndReturn(run func(ctx conte
 }
 
 // UpdateExpiration provides a mock function for the type MockIApiKeyRepository
-func (_mock *MockIApiKeyRepository) UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error {
-	ret := _mock.Called(ctx, id, expiresAt)
+func (_mock *MockIApiKeyRepository) UpdateExpiration(ctx context.Context, tenantID string, id string, expiresAt *time.Time) error {
+	ret := _mock.Called(ctx, tenantID, id, expiresAt)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateExpiration")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *time.Time) error); ok {
-		r0 = returnFunc(ctx, id, expiresAt)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *time.Time) error); ok {
+		r0 = returnFunc(ctx, tenantID, id, expiresAt)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -442,13 +448,14 @@ type MockIApiKeyRepository_UpdateExpiration_Call struct {
 
 // UpdateExpiration is a helper method to define mock.On call
 //   - ctx context.Context
+//   - tenantID string
 //   - id string
 //   - expiresAt *time.Time
-func (_e *MockIApiKeyRepository_Expecter) UpdateExpiration(ctx any, id any, expiresAt any) *MockIApiKeyRepository_UpdateExpiration_Call {
-	return &MockIApiKeyRepository_UpdateExpiration_Call{Call: _e.mock.On("UpdateExpiration", ctx, id, expiresAt)}
+func (_e *MockIApiKeyRepository_Expecter) UpdateExpiration(ctx any, tenantID any, id any, expiresAt any) *MockIApiKeyRepository_UpdateExpiration_Call {
+	return &MockIApiKeyRepository_UpdateExpiration_Call{Call: _e.mock.On("UpdateExpiration", ctx, tenantID, id, expiresAt)}
 }
 
-func (_c *MockIApiKeyRepository_UpdateExpiration_Call) Run(run func(ctx context.Context, id string, expiresAt *time.Time)) *MockIApiKeyRepository_UpdateExpiration_Call {
+func (_c *MockIApiKeyRepository_UpdateExpiration_Call) Run(run func(ctx context.Context, tenantID string, id string, expiresAt *time.Time)) *MockIApiKeyRepository_UpdateExpiration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -458,14 +465,19 @@ func (_c *MockIApiKeyRepository_UpdateExpiration_Call) Run(run func(ctx context.
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *time.Time
+		var arg2 string
 		if args[2] != nil {
-			arg2 = args[2].(*time.Time)
+			arg2 = args[2].(string)
+		}
+		var arg3 *time.Time
+		if args[3] != nil {
+			arg3 = args[3].(*time.Time)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -476,7 +488,7 @@ func (_c *MockIApiKeyRepository_UpdateExpiration_Call) Return(err error) *MockIA
 	return _c
 }
 
-func (_c *MockIApiKeyRepository_UpdateExpiration_Call) RunAndReturn(run func(ctx context.Context, id string, expiresAt *time.Time) error) *MockIApiKeyRepository_UpdateExpiration_Call {
+func (_c *MockIApiKeyRepository_UpdateExpiration_Call) RunAndReturn(run func(ctx context.Context, tenantID string, id string, expiresAt *time.Time) error) *MockIApiKeyRepository_UpdateExpiration_Call {
 	_c.Call.Return(run)
 	return _c
 }
