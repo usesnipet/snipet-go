@@ -11,6 +11,7 @@ import (
 	"github.com/usesnipet/snipet/config"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
+	"github.com/usesnipet/snipet/internal/authz"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/license"
 	"github.com/usesnipet/snipet/internal/model"
@@ -54,33 +55,9 @@ func NewService(
 	}
 }
 
-// requireMember ensures the caller belongs to the tenant, any role.
-func (s *Service) requireMember(ctx context.Context, tenantID string) (*auth.UserIdentity, error) {
-	identity, err := auth.CurrentUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !identity.IsMemberOf(tenantID) {
-		return nil, apperr.Forbidden("not a member of this tenant")
-	}
-	return identity, nil
-}
-
-// requireAdmin ensures the caller is an active tenant admin.
-func (s *Service) requireAdmin(ctx context.Context, tenantID string) (*auth.UserIdentity, error) {
-	identity, err := auth.CurrentUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !identity.IsTenantAdmin(tenantID) {
-		return nil, apperr.Forbidden("not allowed to manage members of this tenant")
-	}
-	return identity, nil
-}
-
 // Filter lists a tenant's members. Caller must be a member (any role).
 func (s *Service) Filter(ctx context.Context, tenantID string, dto FindMembersFilterDTO) (*MembersPage, error) {
-	if _, err := s.requireMember(ctx, tenantID); err != nil {
+	if _, err := authz.RequireMember(ctx, tenantID); err != nil {
 		return nil, err
 	}
 
@@ -97,7 +74,7 @@ func (s *Service) Filter(ctx context.Context, tenantID string, dto FindMembersFi
 // UpdateRole changes a member's role. Caller must be a tenant admin and
 // cannot change their own role.
 func (s *Service) UpdateRole(ctx context.Context, tenantID, memberID string, dto UpdateMemberRoleDTO) error {
-	identity, err := s.requireAdmin(ctx, tenantID)
+	identity, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin)
 	if err != nil {
 		return err
 	}
@@ -119,7 +96,7 @@ func (s *Service) UpdateRole(ctx context.Context, tenantID, memberID string, dto
 // Remove deletes a member from the tenant. Caller must be a tenant admin and
 // cannot remove themselves.
 func (s *Service) Remove(ctx context.Context, tenantID, memberID string) error {
-	identity, err := s.requireAdmin(ctx, tenantID)
+	identity, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin)
 	if err != nil {
 		return err
 	}
@@ -146,7 +123,7 @@ func (s *Service) Remove(ctx context.Context, tenantID, memberID string) error {
 // instances must use Invite instead, keeping email verification as the
 // only way in. Caller must be a tenant admin.
 func (s *Service) Create(ctx context.Context, tenantID string, dto CreateMemberDTO) (*model.Member, error) {
-	if _, err := s.requireAdmin(ctx, tenantID); err != nil {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
 		return nil, err
 	}
 	if s.license.Info().Valid {
@@ -194,7 +171,7 @@ func (s *Service) Create(ctx context.Context, tenantID string, dto CreateMemberD
 // Invite creates a pending invitation for an email address and sends the
 // invitation email. Caller must be a tenant admin.
 func (s *Service) Invite(ctx context.Context, tenantID string, dto InviteMemberDTO) (*model.TenantInvitation, error) {
-	identity, err := s.requireAdmin(ctx, tenantID)
+	identity, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +236,7 @@ func (s *Service) Invite(ctx context.Context, tenantID string, dto InviteMemberD
 // CancelInvitation deletes a pending invitation. Caller must be a tenant
 // admin.
 func (s *Service) CancelInvitation(ctx context.Context, tenantID, invitationID string) error {
-	if _, err := s.requireAdmin(ctx, tenantID); err != nil {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
 		return err
 	}
 
@@ -277,7 +254,7 @@ func (s *Service) CancelInvitation(ctx context.Context, tenantID, invitationID s
 // FilterInvitations lists a tenant's invitations. Caller must be a tenant
 // admin.
 func (s *Service) FilterInvitations(ctx context.Context, tenantID string, dto FindInvitationsFilterDTO) (*InvitationsPage, error) {
-	if _, err := s.requireAdmin(ctx, tenantID); err != nil {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
 		return nil, err
 	}
 
