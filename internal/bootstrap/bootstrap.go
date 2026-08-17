@@ -165,10 +165,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 
 	clientService := client.NewService(clientRepo, agentRepo, logger)
-	if err := clientService.Init(context.Background(), &cfg.App); err != nil {
-		logger.Errorf("failed to init client service: %v", err)
-		return err
-	}
 
 	agentService := agent.NewService(agentRepo, llmRepo, txManager, engine, executionRepo, messageRepo, logger)
 	llmService := llmmodule.NewService(llmRepo, llmManager)
@@ -183,6 +179,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	)
 	knowledgeIndexService := knowledgeindex.NewService(
 		knowledgeIndexRepo,
+		knowledgeRepo,
 		indexedKnowledgeItemRepo,
 		indexManager,
 		syncPool,
@@ -203,8 +200,13 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		logger.Errorf("failed to init user service: %v", err)
 		return err
 	}
-	if err := tenantService.Init(context.Background(), cfg.User.AdminEmail); err != nil {
+	bootstrapTenant, err := tenantService.Init(context.Background(), cfg.User.AdminEmail)
+	if err != nil {
 		logger.Errorf("failed to init tenant service: %v", err)
+		return err
+	}
+	if err := clientService.Init(context.Background(), &cfg.App, bootstrapTenant.ID); err != nil {
+		logger.Errorf("failed to init client service: %v", err)
 		return err
 	}
 
@@ -226,13 +228,13 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	clientAuthHandler := clientauth.NewHandler(clientauthService)
 	platformAuthHandler := auth_module.NewHandler(authService, userMiddleware)
 	appHandler := app_module.NewHandler(appService)
-	apiKeyHandler := apikey.NewHandler(apiKeyService, apiKeyMiddleware)
-	agentHandler := agent.NewHandler(agentService, apiKeyMiddleware)
-	llmHandler := llmmodule.NewHandler(llmService, apiKeyMiddleware)
-	clientHandler := client.NewHandler(clientService, apiKeyMiddleware, anyClientAuthMiddleware)
+	apiKeyHandler := apikey.NewHandler(apiKeyService, userMiddleware, apiKeyMiddleware)
+	agentHandler := agent.NewHandler(agentService, userMiddleware, apiKeyMiddleware)
+	llmHandler := llmmodule.NewHandler(llmService, userMiddleware)
+	clientHandler := client.NewHandler(clientService, userMiddleware, anyClientAuthMiddleware)
 	sessionHandler := session.NewHandler(sessionService, anyClientAuthMiddleware)
-	knowledgeHandler := knowledge.NewHandler(knowledgeService, apiKeyMiddleware)
-	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, apiKeyMiddleware)
+	knowledgeHandler := knowledge.NewHandler(knowledgeService, userMiddleware)
+	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, userMiddleware)
 	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, clientJWTMiddleware)
 	userHandler := user.NewHandler(userService, userMiddleware)
 	tenantHandler := tenant.NewHandler(tenantService, userMiddleware)
