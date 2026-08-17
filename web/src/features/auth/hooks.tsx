@@ -1,5 +1,7 @@
+import { ToastAction } from "@/components/ui/toast";
 import { useNavigate } from "@/hooks/use-navigate";
 import { toast } from "@/hooks/use-toast";
+import { ApiError } from "@/lib/http";
 import { logger } from "@/lib/logger";
 import { ROUTES } from "@/routes";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -66,6 +68,7 @@ export const useLogin = (
 ): UseMutationResult<AuthenticateResponse, Error, Login> => {
   const navigate = useNavigate();
   const setTokens = useAuthStore((state) => state.setTokens);
+  const { mutate: resendActivation } = useResendActivation();
 
   return useMutation({
     mutationKey: loginQueryKey(),
@@ -78,11 +81,29 @@ export const useLogin = (
       });
       navigate(redirect ?? ROUTES.tenantHome);
     },
-    onError: (e) => {
+    onError: (e, variables) => {
       logger.error("Failed to login", { error: e });
+
+      if (ApiError.is(e) && e.statusCode === 403) {
+        toast({
+          title: "Account not activated",
+          description: "Check your email to activate your account.",
+          variant: "destructive",
+          action: (
+            <ToastAction
+              altText="Resend activation email"
+              onClick={() => resendActivation({ email: variables.email })}
+            >
+              Resend email
+            </ToastAction>
+          ),
+        });
+        return;
+      }
+
       toast({
         title: "Failed to sign in",
-        description: "Invalid credentials or account not activated",
+        description: "Invalid credentials",
         variant: "destructive",
       });
     },

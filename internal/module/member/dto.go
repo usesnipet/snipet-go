@@ -44,11 +44,10 @@ type InviteMemberDTO struct {
 // see member.Service.Create — since there's no email-based invitation flow
 // to reach a Tenant through without one.
 type CreateMemberDTO struct {
-	Name            string     `json:"name" validate:"required,max=255"`
-	Email           string     `json:"email" validate:"required,email,max=255"`
-	Password        string     `json:"password" validate:"required,min=8"`
-	ConfirmPassword string     `json:"confirm_password" validate:"required,eqfield=Password"`
-	Role            model.Role `json:"role" validate:"required,oneof=admin user"`
+	Name     string     `json:"name" validate:"required,max=255"`
+	Email    string     `json:"email" validate:"required,email,max=255"`
+	Password string     `json:"password" validate:"required,min=8"`
+	Role     model.Role `json:"role" validate:"required,oneof=admin user"`
 }
 
 // invitationStatusExpired is a filter-only pseudo-status: invitations that

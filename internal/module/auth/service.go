@@ -134,7 +134,9 @@ func (s *Service) issueActivationToken(ctx context.Context, u *model.User) error
 // Login rejects with a generic "invalid credentials" error for unknown
 // emails and OAuth-only accounts (PasswordHash == nil), without leaking
 // which. Only once the password itself checks out is the more specific
-// "account not activated" error safe to return.
+// "account not activated" error safe to return. Does not resend the
+// activation email — the client prompts the user to trigger that
+// explicitly via ResendActivation.
 func (s *Service) Login(ctx context.Context, dto LoginDTO) (*AuthenticateResponse, error) {
 	invalidCredentials := apperr.Unauthorized("invalid credentials")
 
@@ -147,13 +149,6 @@ func (s *Service) Login(ctx context.Context, dto LoginDTO) (*AuthenticateRespons
 	}
 
 	if slices.Contains(found.Challenges, model.ChallengeActiveAccount) {
-		if tokens, err := s.tokenRepo.FindByUserIDAndType(ctx, found.ID, model.TokenTypeActivateAccount); err == nil {
-			if len(tokens) == 0 || tokens[0].RevokedAt != nil || tokens[0].ExpiresAt.Before(time.Now()) {
-				if err := s.issueActivationToken(ctx, found); err != nil {
-					return nil, err
-				}
-			}
-		}
 		return nil, apperr.Forbidden("account not activated")
 	}
 
