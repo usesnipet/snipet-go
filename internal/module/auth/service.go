@@ -421,7 +421,11 @@ func (s *Service) Activate(ctx context.Context, dto ActivateAccountDTO) error {
 // ResendActivation revokes any prior un-consumed activate_account token for
 // the user before issuing a new one, so valid tokens don't stack. Silently
 // no-ops for an unknown email, same enumeration-safety rationale as
-// ForgotPassword.
+// ForgotPassword — and silently no-ops (skips sending) if the last
+// activation email for this user went out within ResendActivationCooldown,
+// so repeated requests can't spam the mailbox. Same enumeration-safety
+// reasoning applies here too: an error would let a caller distinguish
+// "already sent recently" from "unknown email" by timing two calls.
 func (s *Service) ResendActivation(ctx context.Context, dto ResendActivationDTO) error {
 	found, err := s.userRepo.FindByEmail(ctx, dto.Email)
 	if err != nil {
@@ -439,6 +443,17 @@ func (s *Service) ResendActivation(ctx context.Context, dto ResendActivationDTO)
 	if err != nil {
 		return err
 	}
+
+	var lastSentAt time.Time
+	for _, t := range pending.Data {
+		if t.CreatedAt.After(lastSentAt) {
+			lastSentAt = t.CreatedAt
+		}
+	}
+	if !lastSentAt.IsZero() && time.Since(lastSentAt) < s.config.ResendActivationCooldown {
+		return nil
+	}
+
 	for _, t := range pending.Data {
 		if t.RevokedAt == nil {
 			if err := s.tokenRepo.RevokeByID(ctx, t.ID); err != nil {
