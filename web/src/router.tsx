@@ -43,6 +43,8 @@ const AuthLoginPage = lazy(() =>
   import("./routes/auth/login/page").then((m) => ({ default: m.AuthLoginPage })));
 const AuthRegisterPage = lazy(() =>
   import("./routes/auth/register/page").then((m) => ({ default: m.AuthRegisterPage })));
+const AuthActivatePage = lazy(() =>
+  import("./routes/auth/activate/page").then((m) => ({ default: m.AuthActivatePage })));
 
 const TenantSelectPage = lazy(() =>
   import("./routes/tenant-select/page").then((m) => ({ default: m.TenantSelectPage })));
@@ -62,6 +64,7 @@ export const Router = () => {
           <Route element={<AuthGuard mode="public" />}>
             <Route path={toReactRouterPath(ROUTES.authLogin)} element={<AuthLoginPage />} />
             <Route path={toReactRouterPath(ROUTES.authRegister)} element={<AuthRegisterPage />} />
+            <Route path={toReactRouterPath(ROUTES.authActivate)} element={<AuthActivatePage />} />
           </Route>
           <Route element={<AuthGuard />}>
             <Route path={toReactRouterPath(ROUTES.selectTenant)} element={<TenantSelectPage />} />

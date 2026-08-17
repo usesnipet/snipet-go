@@ -14,6 +14,7 @@ type ITokenRepository interface {
 	IRepository[model.Token]
 	FindByHashAndType(ctx context.Context, hash string, tokenType model.TokenType) (*model.Token, error)
 	RevokeByID(ctx context.Context, id string) error
+	FindByUserIDAndType(ctx context.Context, userID string, tokenType model.TokenType) ([]model.Token, error)
 }
 
 type TokenRepository struct {
@@ -52,4 +53,18 @@ func (r *TokenRepository) RevokeByID(ctx context.Context, id string) error {
 		return apperr.NotFound("token not found")
 	}
 	return nil
+}
+
+func (r *TokenRepository) FindByUserIDAndType(ctx context.Context, userID string, tokenType model.TokenType) ([]model.Token, error) {
+	paginated, err := r.Filter(ctx, filter.New[model.Token](
+		filter.WhereEq("user_id", userID),
+		filter.WhereEq("type", tokenType),
+	))
+	if err != nil {
+		return nil, err
+	}
+	if paginated.IsEmpty() {
+		return nil, apperr.NotFound("token not found")
+	}
+	return paginated.Data, nil
 }

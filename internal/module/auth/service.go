@@ -136,6 +136,13 @@ func (s *Service) Login(ctx context.Context, dto LoginDTO) (*AuthenticateRespons
 	}
 
 	if slices.Contains(found.Challenges, model.ChallengeActiveAccount) {
+		if tokens, err := s.tokenRepo.FindByUserIDAndType(ctx, found.ID, model.TokenTypeActivateAccount); err == nil {
+			if len(tokens) == 0 || tokens[0].RevokedAt != nil || tokens[0].ExpiresAt.Before(time.Now()) {
+				if err := s.issueActivationToken(ctx, found); err != nil {
+					return nil, err
+				}
+			}
+		}
 		return nil, apperr.Forbidden("account not activated")
 	}
 

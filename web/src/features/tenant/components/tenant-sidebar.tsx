@@ -57,6 +57,7 @@ const navItems: NavEntry[] = [
           {
             title: "Members",
             href: ROUTES.members,
+            exact: true,
           },
           {
             title: "Invite",
