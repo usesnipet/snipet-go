@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/usesnipet/snipet/config"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/filter"
@@ -37,42 +36,6 @@ func assertAppError(t *testing.T, err error, statusCode int) {
 	var appErr *apperr.Error
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, statusCode, appErr.StatusCode)
-}
-
-func TestInitCreatesInheritClientUnderBootstrapTenant(t *testing.T) {
-	t.Parallel()
-
-	cfg := &config.AppConfig{InheritClient: true, InheritClientName: "Snipet", InheritClientCode: "default"}
-
-	clientRepo := mocks.NewMockIClientRepository(t)
-	clientRepo.EXPECT().
-		FindByCode(mock.Anything, "default").
-		Return(nil, apperr.NotFound("client not found"))
-	var stored *model.Client
-	clientRepo.EXPECT().
-		Create(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, c *model.Client) { stored = c }).
-		Return(nil)
-
-	svc := client.NewService(clientRepo, mocks.NewMockIAgentRepository(t), logger.NewLogger(logger.LevelError))
-
-	err := svc.Init(context.Background(), cfg, tenantID)
-	require.NoError(t, err)
-
-	require.NotNil(t, stored)
-	assert.Equal(t, tenantID, stored.TenantID)
-	assert.Equal(t, "default", stored.Code)
-	assert.Equal(t, "Snipet", stored.Name)
-}
-
-func TestInitNoopsWhenInheritClientDisabled(t *testing.T) {
-	t.Parallel()
-
-	cfg := &config.AppConfig{InheritClient: false}
-	svc := client.NewService(mocks.NewMockIClientRepository(t), mocks.NewMockIAgentRepository(t), logger.NewLogger(logger.LevelError))
-
-	err := svc.Init(context.Background(), cfg, tenantID)
-	require.NoError(t, err)
 }
 
 func TestFindByCodeInTenantRejectsCrossTenant(t *testing.T) {

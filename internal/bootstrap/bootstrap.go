@@ -200,13 +200,9 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		logger.Errorf("failed to init user service: %v", err)
 		return err
 	}
-	bootstrapTenant, err := tenantService.Init(context.Background(), cfg.User.AdminEmail)
+	_, err = tenantService.Init(context.Background(), cfg.User.AdminEmail)
 	if err != nil {
 		logger.Errorf("failed to init tenant service: %v", err)
-		return err
-	}
-	if err := clientService.Init(context.Background(), &cfg.App, bootstrapTenant.ID); err != nil {
-		logger.Errorf("failed to init client service: %v", err)
 		return err
 	}
 
