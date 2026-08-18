@@ -4,12 +4,31 @@ import { AnimatedOutlet } from "@/components/animated-outlet";
 import { Loading } from "@/components/ui/loading";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TenantSidebar } from "@/features/tenant/components/tenant-sidebar";
-import { useCurrentTenant } from "@/features/tenant/hooks";
+import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
+import { useEffect } from "react";
+import { useParams } from "react-router";
 
 export function Layout() {
-  const { isLoading: isLoadingTenant } = useCurrentTenant();
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
+  if (!tenantSlug) {
+    throw new Error("Tenant slug is required");
+  }
 
-  if (isLoadingTenant) {
+  const { data, isError, isLoading } = useFindBySlugTenant(tenantSlug);
+  const setTenant = useTenantStore((state) => state.setTenant);
+  const clearTenant = useTenantStore((state) => state.clearTenant);
+
+  useEffect(() => {
+    if (data) setTenant(data);
+  }, [data, setTenant]);
+
+  useEffect(() => {
+    if (isError) clearTenant();
+  }, [isError, clearTenant]);
+
+
+  if (isLoading) {
     return (
       <div className="flex h-dvh items-center justify-center">
         <Loading />
