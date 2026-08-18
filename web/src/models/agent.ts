@@ -14,6 +14,7 @@ export type AgentToLLM = z.infer<typeof agentToLLMSchema>;
 export const agentSchema = z
   .object({
     id: z.uuid(),
+    tenant_id: z.uuid(),
     name: z.string().min(1).max(255),
     description: z.string().max(1000),
     instructions: z.string().max(1000),

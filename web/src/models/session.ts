@@ -11,6 +11,7 @@ export type SessionMetadata = z.infer<typeof sessionMetadataSchema>;
 export const sessionSchema = z
   .object({
     id: z.uuid(),
+    tenant_id: z.uuid(),
     client_id: z.uuid(),
     agent_id: z.uuid(),
     metadata: sessionMetadataSchema,
@@ -50,6 +51,7 @@ export type Message = z.infer<typeof messageSchema>;
 
 export const executionMessageSchema = messageSchema
   .extend({
+    tenant_id: z.uuid(),
     execution_id: z.uuid(),
   })
   .strict();

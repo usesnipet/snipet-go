@@ -35,6 +35,7 @@ export type ClientConfig = z.infer<typeof clientConfigSchema>;
 export const clientSchema = z
   .object({
     id: z.string(),
+    tenant_id: z.string(),
     code: z.string(),
     name: z.string().min(1).max(255),
     config: clientConfigSchema,

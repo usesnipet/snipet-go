@@ -11,6 +11,7 @@ const optionalDateSchema = z
 export const apiKeySchema = z
   .object({
     id: z.string(),
+    tenant_id: z.string(),
     name: z.string().min(1).max(255),
     key_id: z.string(),
     active: z.boolean(),

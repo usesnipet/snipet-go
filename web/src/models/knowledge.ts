@@ -6,6 +6,7 @@ export type SyncStatus = z.infer<typeof syncStatusSchema>;
 export const knowledgeSchema = z
   .object({
     id: z.uuid(),
+    tenant_id: z.uuid(),
     name: z.string().min(1).max(255),
     description: z.string(),
     driver: z.string().min(1).max(100),
@@ -32,6 +33,7 @@ export type KnowledgeItemKind = z.infer<typeof knowledgeItemKindSchema>;
 export const knowledgeItemSchema = z
   .object({
     id: z.uuid(),
+    tenant_id: z.uuid(),
     external_id: z.string(),
     name: z.string(),
     hash: z.string(),
@@ -54,6 +56,7 @@ export type KnowledgeItem = z.infer<typeof knowledgeItemSchema>;
 export const knowledgeIndexSchema = z
   .object({
     id: z.uuid(),
+    tenant_id: z.uuid(),
     name: z.string().min(1).max(255),
     driver: z.string().min(1).max(100),
     configuration: z.record(z.string(), z.unknown()),
