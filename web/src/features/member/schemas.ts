@@ -1,10 +1,9 @@
-import { z } from "zod";
-
 import { memberSchema, roleSchema } from "@/models/member";
 import { paginatedSchema } from "@/schemas/paginated";
+import { z } from "zod";
 
 export { memberSchema, roleSchema } from "@/models/member";
-export type { Member, Role } from "@/models/member";
+export type { Member, MemberRole as Role } from "@/models/member";
 
 export const paginatedMemberSchema = paginatedSchema(memberSchema);
 export type PaginatedMember = z.infer<typeof paginatedMemberSchema>;

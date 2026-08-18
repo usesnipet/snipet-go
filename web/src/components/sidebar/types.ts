@@ -5,6 +5,8 @@ export type NavSubItem = {
   href: string
   /** When true, only exact pathname matches (avoids /llm matching /llm/playground). */
   exact?: boolean
+  visible?: boolean | (() => boolean)
+  disabled?: boolean | (() => boolean)
 }
 
 export type NavItem = {
@@ -12,12 +14,16 @@ export type NavItem = {
   href: string
   icon: LucideIcon
   exact?: boolean
+  visible?: boolean | (() => boolean)
+  disabled?: boolean | (() => boolean)
 }
 
 export type NavItemWithChildren = {
   title: string
   icon: LucideIcon
   items: NavSubItem[]
+  visible?: boolean | (() => boolean)
+  disabled?: boolean | (() => boolean)
 }
 
 export type NavLeafEntry = NavItem | NavItemWithChildren

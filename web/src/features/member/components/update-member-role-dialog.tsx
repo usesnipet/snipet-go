@@ -1,6 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-
 import { FormSelect } from "@/components/form/select";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +6,8 @@ import {
 import { FieldGroup } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
 import { useUpdateRoleMember } from "../hooks";
 import { updateMemberRoleSchema } from "../schemas";
@@ -45,7 +44,7 @@ export function UpdateMemberRoleDialog({ tenantId, member, close }: UpdateMember
         <DialogTitle>Update member role</DialogTitle>
         <DialogDescription>
           Change the role of{" "}
-          <span className="font-medium text-foreground">{member.user.name}</span>{" "}
+          <span className="font-medium text-foreground">{member.user?.name}</span>{" "}
           within this tenant.
         </DialogDescription>
       </DialogHeader>

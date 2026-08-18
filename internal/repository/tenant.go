@@ -35,9 +35,10 @@ func (r *TenantRepository) FilterByUserIDWithMember(
 
 	tenants := make([]model.Tenant, 0, len(user.Members))
 	for _, member := range user.Members {
-		tenant := member.Tenant
+		tenant := *member.Tenant
+		member.Tenant = nil
 		tenant.Members = append(tenant.Members, member)
-		tenants = append(tenants, *tenant)
+		tenants = append(tenants, tenant)
 	}
 	return page.NewPaginated(tenants, int64(len(tenants)), 0, int64(len(tenants))), nil
 }

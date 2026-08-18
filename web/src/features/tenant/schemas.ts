@@ -1,4 +1,4 @@
-import { tenantSchema } from "@/models/tenant";
+import { tenantBaseSchema, tenantSchema } from "@/models/tenant";
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
@@ -8,7 +8,7 @@ export type { Tenant } from "@/models/tenant";
 export const paginatedTenantSchema = paginatedSchema(tenantSchema);
 export type PaginatedTenant = z.infer<typeof paginatedTenantSchema>;
 
-export const createTenantSchema = tenantSchema.pick({
+export const createTenantSchema = tenantBaseSchema.pick({
   name: true,
   slug: true,
 }).extend({
@@ -17,7 +17,7 @@ export const createTenantSchema = tenantSchema.pick({
 
 export type CreateTenant = z.infer<typeof createTenantSchema>;
 
-export const updateTenantSchema = tenantSchema.pick({
+export const updateTenantSchema = tenantBaseSchema.pick({
   name: true,
   slug: true,
   icon: true,

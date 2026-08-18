@@ -7,6 +7,7 @@ import {
   SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem
 } from "@/components/ui/sidebar";
 import { applyPathParams } from "@/lib/http";
+import { resolve } from "@/lib/resolve";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useLocation, useParams } from "react-router";
@@ -14,7 +15,6 @@ import { useLocation, useParams } from "react-router";
 import { isNavActive, isNavGroup, isNavGroupActive, isNavItemWithChildren } from "./utils";
 
 import type { NavEntry, NavLeafEntry } from "./types";
-
 type Props = {
   navItems: NavEntry[]
 }
@@ -25,15 +25,22 @@ type NavSection = {
 }
 
 function NavMenuItems({ items, pathname }: { items: NavLeafEntry[]; pathname: string }) {
+  const toBoolean = (v?: boolean | (() => boolean), defaultValue = true) => {
+    const value = resolve(v);
+    return value === undefined ? defaultValue : value;
+  }
+
   return (
     <SidebarMenu>
       {items.map((item) =>
         isNavItemWithChildren(item) ? (
+          toBoolean(item.visible) &&
           <Collapsible
             key={item.title}
             asChild
             defaultOpen={isNavGroupActive(pathname, item.items)}
             className="group/collapsible"
+            disabled={toBoolean(item.disabled)}
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
@@ -49,10 +56,11 @@ function NavMenuItems({ items, pathname }: { items: NavLeafEntry[]; pathname: st
               <CollapsibleContent>
                 <SidebarMenuSub>
                   {item.items.map((subItem) => (
+                    toBoolean(subItem.visible) &&
                     <SidebarMenuSubItem key={subItem.href}>
                       <SidebarMenuSubButton
                         asChild
-                        isActive={isNavActive(pathname, subItem.href, subItem.exact)}
+                        isActive={isNavActive(pathname, subItem.href, subItem.exact) && toBoolean(subItem.visible)}
                       >
                         <Link href={subItem.href}>
                           <span>{subItem.title}</span>
@@ -65,10 +73,11 @@ function NavMenuItems({ items, pathname }: { items: NavLeafEntry[]; pathname: st
             </SidebarMenuItem>
           </Collapsible>
         ) : (
+          toBoolean(item.visible) &&
           <SidebarMenuItem key={item.href}>
             <SidebarMenuButton
               asChild
-              isActive={isNavActive(pathname, item.href, item.exact)}
+              isActive={isNavActive(pathname, item.href, item.exact) && toBoolean(item.visible)}
               tooltip={item.title}
             >
               <Link href={item.href}>

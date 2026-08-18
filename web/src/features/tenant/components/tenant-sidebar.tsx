@@ -15,7 +15,8 @@ import {
   BookOpen, Bot, Building2Icon, ChevronsUpDownIcon, Cpu, Key, MoonIcon, Settings, Shield, SunIcon, Users
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useParams } from "react-router";
+
+import { useTenantStore } from "../store";
 
 import type { NavEntry } from "@/components/sidebar/types";
 
@@ -29,12 +30,11 @@ export function TenantSidebar() {
   const { data: systemInfo } = useGetSystemInfo();
   const multiTenantEnabled = systemInfo?.multi_tenant_enabled ?? false;
 
-  const { tenantSlug } = useParams<{ tenantSlug: string }>();
-
   const tenants = data?.data ?? [];
-  const currentTenant = tenants.find((tenant) => tenant.slug === tenantSlug) ?? null;
+  const currentTenant = useTenantStore(s => s.tenant);
   const visibleTenants = tenants.slice(0, MAX_VISIBLE_TENANTS);
   const hasMoreTenants = tenants.length > MAX_VISIBLE_TENANTS;
+
 
   const navItems: NavEntry[] = useMemo(() => [
     {

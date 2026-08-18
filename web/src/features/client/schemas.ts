@@ -1,4 +1,4 @@
-import { clientSchema } from "@/models/client";
+import { clientBaseSchema, clientSchema } from "@/models/client";
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
@@ -8,14 +8,14 @@ export type { Client, ClientConfig } from "@/models/client";
 export const paginatedClientSchema = paginatedSchema(clientSchema);
 export type PaginatedClient = z.infer<typeof paginatedClientSchema>;
 
-export const createClientSchema = clientSchema.pick({
+export const createClientSchema = clientBaseSchema.pick({
   name: true,
   config: true,
 }).strict();
 
 export type CreateClient = z.infer<typeof createClientSchema>;
 
-export const updateClientSchema = clientSchema.pick({
+export const updateClientSchema = clientBaseSchema.pick({
   name: true,
   config: true,
 }).partial().strict();

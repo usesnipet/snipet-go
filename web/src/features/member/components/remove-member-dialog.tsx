@@ -28,7 +28,7 @@ export function RemoveMemberDialog({ tenantId, member, close }: RemoveMemberDial
         <DialogTitle>Remove member?</DialogTitle>
         <DialogDescription>
           This will remove{" "}
-          <span className="font-medium text-foreground">{member.user.name}</span>{" "}
+          <span className="font-medium text-foreground">{member.user?.name}</span>{" "}
           from this tenant. They will lose access immediately. This action cannot be undone.
         </DialogDescription>
       </DialogHeader>
