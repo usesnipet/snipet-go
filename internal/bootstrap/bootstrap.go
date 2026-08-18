@@ -193,7 +193,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	userService := user.NewService(userRepo, cfg.User)
 	appService := app_module.NewService(&cfg.App, licenseService)
 
-	tenantService := tenant.NewService(tenantRepo, memberRepo, userRepo, txManager, cfg.Tenant, licenseService)
+	tenantService := tenant.NewService(tenantRepo, memberRepo, userRepo, txManager, cfg.Tenant, licenseService, logger)
 	memberService := member.NewService(cfg.Auth, memberRepo, tenantInvitationRepo, tenantRepo, userRepo, txManager, refreshTokenService, emailService, licenseService)
 
 	if err := userService.Init(context.Background()); err != nil {

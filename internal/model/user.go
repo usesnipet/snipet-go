@@ -24,5 +24,5 @@ type User struct {
 
 	Accounts []Account `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
 	Tokens   []Token   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
-	Members  []Member  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
+	Members  []Member  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"members"`
 }

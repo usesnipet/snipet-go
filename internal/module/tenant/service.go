@@ -11,6 +11,7 @@ import (
 	"github.com/usesnipet/snipet/internal/authz"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/license"
+	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/repository"
 )
@@ -22,6 +23,7 @@ type Service struct {
 	txManager  repository.ITxManager
 	config     config.TenantConfig
 	license    *license.Service
+	logger     *logger.Logger
 }
 
 func NewService(
@@ -31,6 +33,7 @@ func NewService(
 	txManager repository.ITxManager,
 	config config.TenantConfig,
 	license *license.Service,
+	logger *logger.Logger,
 ) *Service {
 	return &Service{
 		tenantRepo: tenantRepo,
@@ -39,6 +42,7 @@ func NewService(
 		txManager:  txManager,
 		config:     config,
 		license:    license,
+		logger:     logger,
 	}
 }
 
@@ -132,19 +136,25 @@ func (s *Service) FindMine(ctx context.Context) (*TenantsPage, error) {
 	if err != nil {
 		return nil, err
 	}
+	return s.tenantRepo.FilterByUserIDWithMember(ctx, identity.User.ID)
 
-	tenantIDs := make([]any, 0, len(identity.Memberships))
-	for _, m := range identity.Memberships {
-		tenantIDs = append(tenantIDs, m.TenantID)
-	}
-	if len(tenantIDs) == 0 {
-		return &TenantsPage{Data: []model.Tenant{}}, nil
-	}
+	// tenantIDs := make([]any, 0, len(identity.Memberships))
+	// for _, m := range identity.Memberships {
+	// 	tenantIDs = append(tenantIDs, m.TenantID)
+	// }
+	// if len(tenantIDs) == 0 {
+	// 	return &TenantsPage{Data: []model.Tenant{}}, nil
+	// }
 
-	return s.tenantRepo.Filter(ctx, filter.New[model.Tenant](
-		filter.WhereIn("id", tenantIDs...),
-		filter.Take(len(tenantIDs)),
-	))
+	// page, err := s.tenantRepo.Filter(ctx, filter.New[model.Tenant](
+	// 	filter.WhereIn("id", tenantIDs...),
+	// 	filter.Take(len(tenantIDs)),
+	// 	filter.Include("Members"),
+	// ))
+	// if err != nil {
+	// 	s.logger.Error(err)
+	// }
+	// return page, err
 }
 
 // Create is gated by the license: unlicensed (or expired/invalid) instances
