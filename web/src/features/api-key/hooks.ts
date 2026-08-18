@@ -15,30 +15,32 @@ import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 
 const BASE_QUERY_KEY = "api-key";
 
-export const listApiKeyQueryKey = () => [BASE_QUERY_KEY] as const;
+export const listApiKeyQueryKey = (tenantId: string) => [BASE_QUERY_KEY, "list", tenantId] as const;
 export const useListApiKey = (
+  tenantId: string,
   opts?: ServiceGetOptions<PaginatedApiKey, ListApiKeySearchParams>
 ): UseQueryResult<PaginatedApiKey, Error> => {
   return useQuery({
-    queryKey: [...listApiKeyQueryKey(), opts?.searchParams],
-    queryFn: () => apiKeyService.list(opts),
+    queryKey: [...listApiKeyQueryKey(tenantId), opts?.searchParams],
+    queryFn: () => apiKeyService.list(tenantId, opts),
+    enabled: !!tenantId,
   })
 }
 
 export const createApiKeyQueryKey = () => [BASE_QUERY_KEY, "create"];
 export const useCreateApiKey = (
   opts?: ServicePostOptions<CreateApiKey, ApiKeyWithSecret>
-): UseMutationResult<ApiKeyWithSecret, Error, CreateApiKey> => {
+): UseMutationResult<ApiKeyWithSecret, Error, { tenantId: string; data: CreateApiKey }> => {
   return useMutation({
     mutationKey: createApiKeyQueryKey(),
-    mutationFn: (data: CreateApiKey) =>
-      apiKeyService.create(data, opts),
-    onSuccess: () => {
+    mutationFn: ({ tenantId, data }: { tenantId: string; data: CreateApiKey }) =>
+      apiKeyService.create(tenantId, data, opts),
+    onSuccess: (_data, { tenantId }) => {
       toast({
         title: "API Key created successfully",
         description: "The API key has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listApiKeyQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listApiKeyQueryKey(tenantId) });
     },
     onError: () => {
       toast({
@@ -61,34 +63,37 @@ export const useMeApiKey = (
   })
 }
 
-export const findByIdApiKeyQueryKey = (id: string) => [BASE_QUERY_KEY, "findById", id];
+export const findByIdApiKeyQueryKey = (tenantId: string, id: string) =>
+  [BASE_QUERY_KEY, "findById", tenantId, id];
 export const useFindByIdApiKey = (
+  tenantId: string,
   id: string,
   opts?: ServiceGetOptions<ApiKey>
 ): UseQueryResult<ApiKey, Error> => {
   return useQuery({
-    queryKey: findByIdApiKeyQueryKey(id),
+    queryKey: findByIdApiKeyQueryKey(tenantId, id),
     queryFn: (): Promise<ApiKey> =>
-      apiKeyService.findById(id, opts),
+      apiKeyService.findById(tenantId, id, opts),
+    enabled: !!tenantId && !!id,
   })
 }
 
 export const rollApiKeyQueryKey = () => [BASE_QUERY_KEY, "roll"];
 export const useRollApiKey = (
   opts?: ServicePostOptions<undefined, ApiKeyWithSecret>
-): UseMutationResult<ApiKeyWithSecret, Error, string> => {
+): UseMutationResult<ApiKeyWithSecret, Error, { tenantId: string; id: string }> => {
   return useMutation({
     mutationKey: rollApiKeyQueryKey(),
-    mutationFn: (id: string) =>
-      apiKeyService.roll(id, opts),
-    onSuccess: (_data, id) => {
+    mutationFn: ({ tenantId, id }: { tenantId: string; id: string }) =>
+      apiKeyService.roll(tenantId, id, opts),
+    onSuccess: (_data, { tenantId, id }) => {
       toast({
         title: "API Key rolled successfully",
         description: "The API key has been rolled successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listApiKeyQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listApiKeyQueryKey(tenantId) });
       queryClient.invalidateQueries({ queryKey: meApiKeyQueryKey() });
-      queryClient.invalidateQueries({ queryKey: findByIdApiKeyQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: findByIdApiKeyQueryKey(tenantId, id) });
     },
     onError: () => {
       toast({
@@ -103,19 +108,19 @@ export const useRollApiKey = (
 export const updateExpirationApiKeyQueryKey = () => [BASE_QUERY_KEY, "updateExpiration"];
 export const useUpdateExpirationApiKey = (
   opts?: ServicePutOptions<UpdateApiKeyExpiration, void>
-): UseMutationResult<void, Error, { id: string; data: UpdateApiKeyExpiration }> => {
+): UseMutationResult<void, Error, { tenantId: string; id: string; data: UpdateApiKeyExpiration }> => {
   return useMutation({
     mutationKey: updateExpirationApiKeyQueryKey(),
-    mutationFn: ({ id, data }: { id: string; data: UpdateApiKeyExpiration }) =>
-      apiKeyService.updateExpiration(id, data, opts),
-    onSuccess: (_data, { id }) => {
+    mutationFn: ({ tenantId, id, data }: { tenantId: string; id: string; data: UpdateApiKeyExpiration }) =>
+      apiKeyService.updateExpiration(tenantId, id, data, opts),
+    onSuccess: (_data, { tenantId, id }) => {
       toast({
         title: "API Key expiration updated successfully",
         description: "The API key expiration has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listApiKeyQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listApiKeyQueryKey(tenantId) });
       queryClient.invalidateQueries({ queryKey: meApiKeyQueryKey() });
-      queryClient.invalidateQueries({ queryKey: findByIdApiKeyQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: findByIdApiKeyQueryKey(tenantId, id) });
     },
     onError: () => {
       toast({
@@ -130,19 +135,19 @@ export const useUpdateExpirationApiKey = (
 export const deleteApiKeyQueryKey = () => [BASE_QUERY_KEY, "delete"];
 export const useDeleteApiKey = (
   opts?: ServiceDeleteOptions<void>
-): UseMutationResult<void, Error, string> => {
+): UseMutationResult<void, Error, { tenantId: string; id: string }> => {
   return useMutation({
     mutationKey: deleteApiKeyQueryKey(),
-    mutationFn: (id: string) =>
-      apiKeyService.delete(id, opts),
-    onSuccess: (_data, id) => {
+    mutationFn: ({ tenantId, id }: { tenantId: string; id: string }) =>
+      apiKeyService.delete(tenantId, id, opts),
+    onSuccess: (_data, { tenantId, id }) => {
       toast({
         title: "API Key deleted successfully",
         description: "The API key has been deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listApiKeyQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listApiKeyQueryKey(tenantId) });
       queryClient.invalidateQueries({ queryKey: meApiKeyQueryKey() });
-      queryClient.invalidateQueries({ queryKey: findByIdApiKeyQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: findByIdApiKeyQueryKey(tenantId, id) });
     },
     onError: () => {
       toast({

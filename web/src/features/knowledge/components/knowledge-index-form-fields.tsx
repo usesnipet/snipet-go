@@ -1,11 +1,15 @@
 import { DriverSelect } from "@/components/form/driver-select";
 import { FormInput } from "@/components/form/input";
 import { FieldGroup } from "@/components/ui/field";
+import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useParams } from "react-router";
 
 import { useListKnowledgeIndexDrivers } from "../hooks";
 
 export function KnowledgeIndexFormFields() {
-  const { data: drivers } = useListKnowledgeIndexDrivers();
+  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
+  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const { data: drivers } = useListKnowledgeIndexDrivers(tenant?.id ?? "");
 
   return (
     <FieldGroup>

@@ -13,11 +13,16 @@ import type {
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
-const CLIENTS_URL = "/api/clients";
 
-const list = async (opts?: ServiceGetOptions<PaginatedClient>): Promise<PaginatedClient> => {
+const CLIENTS_PUBLIC_URL = "/api/clients";
+const clientsUrl = (tenantId: string) => `/api/tenants/${tenantId}/clients`;
+
+const list = async (
+  tenantId: string,
+  opts?: ServiceGetOptions<PaginatedClient>,
+): Promise<PaginatedClient> => {
   return http.get({
-    url: CLIENTS_URL,
+    url: clientsUrl(tenantId),
     schemas: {
       response: paginatedClientSchema,
     },
@@ -26,7 +31,7 @@ const list = async (opts?: ServiceGetOptions<PaginatedClient>): Promise<Paginate
 }
 const listAgents = async (code: string, opts?: ServiceGetOptions<PaginatedAgent>): Promise<PaginatedAgent> => {
   return http.get({
-    url: `${CLIENTS_URL}/{code}/agents`,
+    url: `${CLIENTS_PUBLIC_URL}/{code}/agents`,
     params: { code },
     schemas: {
       response: paginatedAgentSchema,
@@ -36,11 +41,12 @@ const listAgents = async (code: string, opts?: ServiceGetOptions<PaginatedAgent>
 }
 
 const create = async (
+  tenantId: string,
   body: CreateClient,
   opts?: ServicePostOptions<CreateClient, Client>,
 ): Promise<Client> => {
   return http.post({
-    url: CLIENTS_URL,
+    url: clientsUrl(tenantId),
     body,
     schemas: {
       body: createClientSchema,
@@ -50,9 +56,13 @@ const create = async (
   })
 }
 
-const findByCode = async (code: string, opts?: ServiceGetOptions<Client>): Promise<Client> => {
+const findByCode = async (
+  tenantId: string,
+  code: string,
+  opts?: ServiceGetOptions<Client>,
+): Promise<Client> => {
   return http.get({
-    url: `${CLIENTS_URL}/{code}`,
+    url: `${clientsUrl(tenantId)}/{code}`,
     params: { code },
     schemas: { response: clientSchema },
     ...opts,
@@ -64,7 +74,7 @@ const findPublicByCode = async (
   opts?: ServiceGetOptions<ClientPublic>,
 ): Promise<ClientPublic> => {
   return http.get({
-    url: `${CLIENTS_URL}/{code}/public`,
+    url: `${CLIENTS_PUBLIC_URL}/{code}/public`,
     params: { code },
     schemas: { response: clientPublicSchema },
     ...opts,
@@ -72,12 +82,13 @@ const findPublicByCode = async (
 }
 
 const update = async (
+  tenantId: string,
   code: string,
   body: UpdateClient,
   opts: ServicePutOptions<UpdateClient, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${CLIENTS_URL}/{code}`,
+    url: `${clientsUrl(tenantId)}/{code}`,
     params: { code },
     body,
     schemas: {
@@ -87,9 +98,13 @@ const update = async (
   })
 }
 
-const remove = async (code: string, opts: ServiceDeleteOptions<void>): Promise<void> => {
+const remove = async (
+  tenantId: string,
+  code: string,
+  opts: ServiceDeleteOptions<void>,
+): Promise<void> => {
   return http.delete({
-    url: `${CLIENTS_URL}/{code}`,
+    url: `${clientsUrl(tenantId)}/{code}`,
     params: { code },
     ...opts,
   })

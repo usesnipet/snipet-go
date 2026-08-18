@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useFindBySlugTenant } from "@/features/tenant/hooks";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
 import { ROUTES } from "@/routes";
@@ -18,6 +19,7 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
+import { useParams } from "react-router";
 
 import { useSyncKnowledge } from "../hooks";
 
@@ -28,6 +30,9 @@ import { UpdateKnowledgeDialog } from "./update-knowledge-dialog";
 import type { Knowledge } from "../schemas";
 
 export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
+  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
+  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenantId = tenant?.id ?? "";
   const { openDialog } = useDialog();
   const navigate = useNavigate();
   const { mutate: sync, isPending: isSyncing } = useSyncKnowledge();
@@ -38,14 +43,14 @@ export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
   const openEdit = () => {
     openDialog({
       component: UpdateKnowledgeDialog,
-      props: { knowledge },
+      props: { tenantId, knowledge },
     });
   };
 
   const openDelete = () => {
     openDialog({
       component: DeleteKnowledgeDialog,
-      props: { knowledge },
+      props: { tenantId, knowledge },
     });
   };
 
@@ -79,14 +84,14 @@ export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
           <DropdownMenuContent align="end" onClick={(event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation()}>
             <DropdownMenuItem
               disabled={isSyncBusy || isSyncing}
-              onClick={() => sync({ id: knowledge.id })}
+              onClick={() => sync({ tenantId, id: knowledge.id })}
             >
               <RefreshCw />
               Sync
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={isSyncBusy || isSyncing}
-              onClick={() => sync({ id: knowledge.id, force: true })}
+              onClick={() => sync({ tenantId, id: knowledge.id, force: true })}
             >
               <RotateCcw />
               Full resync

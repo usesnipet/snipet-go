@@ -21,6 +21,7 @@ import type { CreateLlm, Llm } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type CreateLlmDialogProps = DialogInstanceProps<{
+  tenantId: string;
   onCreated?: (llm: Llm) => void;
 }>;
 
@@ -30,7 +31,7 @@ const defaultValues: CreateLlm = {
   configuration: {},
 };
 
-export function CreateLlmDialog({ onCreated, close }: CreateLlmDialogProps) {
+export function CreateLlmDialog({ tenantId, onCreated, close }: CreateLlmDialogProps) {
   const form = useForm<CreateLlm>({
     resolver: zodResolver(createLlmSchema),
     defaultValues,
@@ -39,7 +40,7 @@ export function CreateLlmDialog({ onCreated, close }: CreateLlmDialogProps) {
   const { mutateAsync, isPending } = useCreateLlm();
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await mutateAsync(values);
+    const result = await mutateAsync({ tenantId, data: values });
     form.reset();
     onCreated?.(result);
     close();

@@ -17,10 +17,11 @@ import type { Client, CreateClient } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type CreateClientDialogProps = DialogInstanceProps<{
+  tenantId: string
   onCreated?: (client: Client) => void
 }>;
 
-export function CreateClientDialog({ onCreated, close }: CreateClientDialogProps) {
+export function CreateClientDialog({ tenantId, onCreated, close }: CreateClientDialogProps) {
   const form = useForm<CreateClient>({
     resolver: zodResolver(createClientSchema),
     defaultValues: {
@@ -45,7 +46,7 @@ export function CreateClientDialog({ onCreated, close }: CreateClientDialogProps
   const { mutateAsync, isPending } = useCreateClient();
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await mutateAsync(values);
+    const result = await mutateAsync({ tenantId, data: values });
     form.reset();
     onCreated?.(result);
     close();

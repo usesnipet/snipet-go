@@ -10,14 +10,15 @@ import type { Client } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type DeleteClientDialogProps = DialogInstanceProps<{
+  tenantId: string
   client: Client
 }>;
 
-export function DeleteClientDialog({ client, close }: DeleteClientDialogProps) {
+export function DeleteClientDialog({ tenantId, client, close }: DeleteClientDialogProps) {
   const { mutateAsync, isPending } = useDeleteClient();
 
   const handleConfirm = async () => {
-    await mutateAsync(client.code);
+    await mutateAsync({ tenantId, code: client.code });
     close();
   };
 

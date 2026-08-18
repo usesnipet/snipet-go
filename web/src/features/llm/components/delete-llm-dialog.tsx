@@ -15,14 +15,15 @@ import type { Llm } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type DeleteLlmDialogProps = DialogInstanceProps<{
+  tenantId: string;
   llm: Llm;
 }>;
 
-export function DeleteLlmDialog({ llm, close }: DeleteLlmDialogProps) {
+export function DeleteLlmDialog({ tenantId, llm, close }: DeleteLlmDialogProps) {
   const { mutateAsync, isPending } = useDeleteLlm();
 
   const handleConfirm = async () => {
-    await mutateAsync(llm.id);
+    await mutateAsync({ tenantId, id: llm.id });
     close();
   };
 

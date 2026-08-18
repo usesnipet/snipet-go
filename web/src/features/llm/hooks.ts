@@ -17,30 +17,32 @@ import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 
 const BASE_QUERY_KEY = "llm";
 
-export const listLlmQueryKey = () => [BASE_QUERY_KEY] as const;
+export const listLlmQueryKey = (tenantId: string) => [BASE_QUERY_KEY, "list", tenantId] as const;
 export const useListLlm = (
+  tenantId: string,
   opts?: ServiceGetOptions<PaginatedLlm, ListLlmSearchParams>,
 ): UseQueryResult<PaginatedLlm, Error> => {
   return useQuery({
-    queryKey: [...listLlmQueryKey(), opts?.searchParams],
-    queryFn: () => llmService.list(opts),
+    queryKey: [...listLlmQueryKey(tenantId), opts?.searchParams],
+    queryFn: () => llmService.list(tenantId, opts),
+    enabled: !!tenantId,
   });
 };
 
 export const createLlmQueryKey = () => [BASE_QUERY_KEY, "create"] as const;
 export const useCreateLlm = (
   opts?: ServicePostOptions<CreateLlm, Llm>,
-): UseMutationResult<Llm, Error, CreateLlm> => {
+): UseMutationResult<Llm, Error, { tenantId: string; data: CreateLlm }> => {
   return useMutation({
     mutationKey: createLlmQueryKey(),
-    mutationFn: (data: CreateLlm) =>
-      llmService.create(data, opts),
-    onSuccess: () => {
+    mutationFn: ({ tenantId, data }: { tenantId: string; data: CreateLlm }) =>
+      llmService.create(tenantId, data, opts),
+    onSuccess: (_data, { tenantId }) => {
       toast({
         title: "LLM created successfully",
         description: "The LLM has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listLlmQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listLlmQueryKey(tenantId) });
     },
     onError: () => {
       toast({
@@ -55,17 +57,17 @@ export const useCreateLlm = (
 export const updateLlmQueryKey = () => [BASE_QUERY_KEY, "update"] as const;
 export const useUpdateLlm = (
   opts?: ServicePutOptions<UpdateLlm, void>,
-): UseMutationResult<void, Error, { id: string; data: UpdateLlm }> => {
+): UseMutationResult<void, Error, { tenantId: string; id: string; data: UpdateLlm }> => {
   return useMutation({
     mutationKey: updateLlmQueryKey(),
-    mutationFn: ({ id, data }: { id: string; data: UpdateLlm }) =>
-      llmService.update(id, data, opts),
-    onSuccess: () => {
+    mutationFn: ({ tenantId, id, data }: { tenantId: string; id: string; data: UpdateLlm }) =>
+      llmService.update(tenantId, id, data, opts),
+    onSuccess: (_data, { tenantId }) => {
       toast({
         title: "LLM updated successfully",
         description: "The LLM has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listLlmQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listLlmQueryKey(tenantId) });
     },
     onError: () => {
       toast({
@@ -80,17 +82,17 @@ export const useUpdateLlm = (
 export const deleteLlmQueryKey = () => [BASE_QUERY_KEY, "delete"] as const;
 export const useDeleteLlm = (
   opts?: ServiceDeleteOptions<void>,
-): UseMutationResult<void, Error, string> => {
+): UseMutationResult<void, Error, { tenantId: string; id: string }> => {
   return useMutation({
     mutationKey: deleteLlmQueryKey(),
-    mutationFn: (id: string) =>
-      llmService.delete(id, opts),
-    onSuccess: () => {
+    mutationFn: ({ tenantId, id }: { tenantId: string; id: string }) =>
+      llmService.delete(tenantId, id, opts),
+    onSuccess: (_data, { tenantId }) => {
       toast({
         title: "LLM deleted successfully",
         description: "The LLM has been deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listLlmQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listLlmQueryKey(tenantId) });
     },
     onError: () => {
       toast({
@@ -102,12 +104,15 @@ export const useDeleteLlm = (
   });
 };
 
-export const listLlmDriversQueryKey = () => [BASE_QUERY_KEY, "drivers"] as const;
+export const listLlmDriversQueryKey = (tenantId: string) =>
+  [BASE_QUERY_KEY, "drivers", tenantId] as const;
 export const useListLlmDrivers = (
+  tenantId: string,
   opts?: ServiceGetOptions<ListDrivers>,
 ): UseQueryResult<ListDrivers, Error> => {
   return useQuery({
-    queryKey: listLlmDriversQueryKey(),
-    queryFn: () => llmService.listDrivers(opts),
+    queryKey: listLlmDriversQueryKey(tenantId),
+    queryFn: () => llmService.listDrivers(tenantId, opts),
+    enabled: !!tenantId,
   });
 };

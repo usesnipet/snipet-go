@@ -1,8 +1,8 @@
 import { http } from "@/lib/http";
 
 import {
-  apiKeySchema, apiKeyWithSecretSchema, createApiKeySchema, listApiKeySearchParamsSchema,
-  paginatedApiKeySchema, updateApiKeyExpirationSchema
+  apiKeySchema, apiKeyWithSecretSchema, createApiKeySchema,
+  listApiKeySearchParamsSchema, paginatedApiKeySchema, updateApiKeyExpirationSchema
 } from "./schemas";
 
 import type {
@@ -13,13 +13,15 @@ import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 
-const API_KEYS_URL = "/api/api-key";
+const apiKeysUrl = (tenantId: string) => `/api/tenants/${tenantId}/api-keys`;
+const API_KEY_ME_URL = "/api/api-key/me";
 
 const list = async (
+  tenantId: string,
   opts: ServiceGetOptions<PaginatedApiKey, ListApiKeySearchParams> = {},
 ): Promise<PaginatedApiKey> => {
   return http.get({
-    url: API_KEYS_URL,
+    url: apiKeysUrl(tenantId),
     schemas: {
       response: paginatedApiKeySchema,
       searchParams: listApiKeySearchParamsSchema,
@@ -29,11 +31,12 @@ const list = async (
 }
 
 const create = async (
+  tenantId: string,
   body: CreateApiKey,
   opts: ServicePostOptions<CreateApiKey, ApiKeyWithSecret> = {},
 ): Promise<ApiKeyWithSecret> => {
   return http.post({
-    url: API_KEYS_URL,
+    url: apiKeysUrl(tenantId),
     body,
     schemas: {
       body: createApiKeySchema,
@@ -44,12 +47,13 @@ const create = async (
 }
 
 const updateExpiration = async (
+  tenantId: string,
   id: string,
   body: UpdateApiKeyExpiration,
   opts: ServicePutOptions<UpdateApiKeyExpiration, void> = {},
 ): Promise<void> => {
   return http.put({
-    url: `${API_KEYS_URL}/{id}/expiration`,
+    url: `${apiKeysUrl(tenantId)}/{id}/expiration`,
     params: { id },
     body,
     schemas: {
@@ -61,15 +65,19 @@ const updateExpiration = async (
 
 const me = async (opts: ServiceGetOptions<ApiKey> = {}): Promise<ApiKey> => {
   return http.get({
-    url: `${API_KEYS_URL}/me`,
+    url: API_KEY_ME_URL,
     schemas: { response: apiKeySchema },
     ...opts,
   })
 }
 
-const findById = async (id: string, opts: ServiceGetOptions<ApiKey> = {}): Promise<ApiKey> => {
+const findById = async (
+  tenantId: string,
+  id: string,
+  opts: ServiceGetOptions<ApiKey> = {},
+): Promise<ApiKey> => {
   return http.get({
-    url: `${API_KEYS_URL}/{id}`,
+    url: `${apiKeysUrl(tenantId)}/{id}`,
     params: { id },
     schemas: { response: apiKeySchema },
     ...opts,
@@ -77,11 +85,12 @@ const findById = async (id: string, opts: ServiceGetOptions<ApiKey> = {}): Promi
 }
 
 const roll = async (
+  tenantId: string,
   id: string,
   opts: ServicePostOptions<undefined, ApiKeyWithSecret> = {},
 ): Promise<ApiKeyWithSecret> => {
   return http.post({
-    url: `${API_KEYS_URL}/{id}/roll`,
+    url: `${apiKeysUrl(tenantId)}/{id}/roll`,
     params: { id },
     schemas: {
       response: apiKeyWithSecretSchema,
@@ -90,9 +99,13 @@ const roll = async (
   })
 }
 
-const remove = async (id: string, opts: ServiceDeleteOptions<void> = {}): Promise<void> => {
+const remove = async (
+  tenantId: string,
+  id: string,
+  opts: ServiceDeleteOptions<void> = {},
+): Promise<void> => {
   return http.delete({
-    url: `${API_KEYS_URL}/{id}`,
+    url: `${apiKeysUrl(tenantId)}/{id}`,
     params: { id },
     ...opts,
   })

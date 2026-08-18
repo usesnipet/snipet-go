@@ -10,14 +10,15 @@ import type { ApiKey } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type DeleteApiKeyDialogProps = DialogInstanceProps<{
+  tenantId: string
   apiKey: ApiKey
 }>;
 
-export function DeleteApiKeyDialog({ apiKey, close }: DeleteApiKeyDialogProps) {
+export function DeleteApiKeyDialog({ tenantId, apiKey, close }: DeleteApiKeyDialogProps) {
   const { mutateAsync, isPending } = useDeleteApiKey();
 
   const handleConfirm = async () => {
-    await mutateAsync(apiKey.id);
+    await mutateAsync({ tenantId, id: apiKey.id });
     close();
   };
 

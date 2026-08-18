@@ -21,6 +21,7 @@ import type { CreateKnowledge, CreateKnowledgeResponse } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type CreateKnowledgeDialogProps = DialogInstanceProps<{
+  tenantId: string;
   onCreated?: (result: CreateKnowledgeResponse) => void;
 }>;
 
@@ -31,7 +32,7 @@ const defaultValues: CreateKnowledge = {
   configuration: {},
 };
 
-export function CreateKnowledgeDialog({ onCreated, close }: CreateKnowledgeDialogProps) {
+export function CreateKnowledgeDialog({ tenantId, onCreated, close }: CreateKnowledgeDialogProps) {
   const form = useForm<CreateKnowledge>({
     resolver: zodResolver(createKnowledgeSchema),
     defaultValues,
@@ -40,7 +41,7 @@ export function CreateKnowledgeDialog({ onCreated, close }: CreateKnowledgeDialo
   const { mutateAsync, isPending } = useCreateKnowledge();
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await mutateAsync(values);
+    const result = await mutateAsync({ tenantId, data: values });
     form.reset();
     onCreated?.(result);
     close();

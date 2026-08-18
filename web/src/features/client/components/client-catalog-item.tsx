@@ -1,10 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useFindBySlugTenant } from "@/features/tenant/hooks";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
 import { ROUTES } from "@/routes";
 import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { useParams } from "react-router";
 
 import { ClientCode } from "./client-code";
 import { DeleteClientDialog } from "./delete-client-dialog";
@@ -40,20 +42,24 @@ function AuthBadges({ client }: { client: Client }) {
 }
 
 export function ClientCatalogItem({ client }: { client: Client }) {
+  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
+  const { data: tenant } = useFindBySlugTenant(tenantSlug);
   const { openDialog } = useDialog();
   const navigate = useNavigate();
 
   const openEdit = (client: Client) => {
+    if (!tenant) return;
     openDialog({
       component: UpdateClientDialog,
-      props: { client },
+      props: { tenantId: tenant.id, client },
     });
   };
 
   const openDelete = (client: Client) => {
+    if (!tenant) return;
     openDialog({
       component: DeleteClientDialog,
-      props: { client },
+      props: { tenantId: tenant.id, client },
     });
   };
 

@@ -17,6 +17,7 @@ import type { CreateAgent, Agent } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type CreateAgentDialogProps = DialogInstanceProps<{
+  tenantId: string
   onCreated?: (agent: Agent) => void
 }>;
 
@@ -27,7 +28,7 @@ const defaultValues: CreateAgent = {
   llm_ids: [],
 };
 
-export function CreateAgentDialog({ onCreated, close }: CreateAgentDialogProps) {
+export function CreateAgentDialog({ tenantId, onCreated, close }: CreateAgentDialogProps) {
   const form = useForm<CreateAgent>({
     resolver: zodResolver(createAgentSchema),
     defaultValues,
@@ -36,7 +37,7 @@ export function CreateAgentDialog({ onCreated, close }: CreateAgentDialogProps) 
   const { mutateAsync, isPending } = useCreateAgent();
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await mutateAsync(values);
+    const result = await mutateAsync({ tenantId, data: values });
     form.reset();
     onCreated?.(result);
     close();

@@ -6,16 +6,19 @@ import { KnowledgeDetails } from "@/features/knowledge/components/knowledge-deta
 import { KnowledgeItemsTable } from "@/features/knowledge/components/knowledge-items-table";
 import { UpdateKnowledgeDialog } from "@/features/knowledge/components/update-knowledge-dialog";
 import { useKnowledge, useSyncKnowledge } from "@/features/knowledge/hooks";
+import { useFindBySlugTenant } from "@/features/tenant/hooks";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
 import { ArrowLeftIcon, PencilIcon, RefreshCw, RotateCcw } from "lucide-react";
 import { useParams } from "react-router";
 
 export function KnowledgeDetailPage() {
-  const { id = "" } = useParams<{ id: string }>();
+  const { id = "", tenantSlug = "" } = useParams<{ id: string; tenantSlug: string }>();
+  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenantId = tenant?.id ?? "";
   const { openDialog } = useDialog();
   const navigate = useNavigate();
-  const { data: knowledge, isLoading, error } = useKnowledge(id);
+  const { data: knowledge, isLoading, error } = useKnowledge(tenantId, id);
   const { mutate: sync, isPending: isSyncing } = useSyncKnowledge();
 
   // useEffect(() => {
@@ -39,7 +42,7 @@ export function KnowledgeDetailPage() {
   const openEdit = () => {
     openDialog({
       component: UpdateKnowledgeDialog,
-      props: { knowledge },
+      props: { tenantId, knowledge },
     });
   };
 
@@ -60,7 +63,7 @@ export function KnowledgeDetailPage() {
             variant="outline"
             size="sm"
             disabled={isSyncBusy || isSyncing}
-            onClick={() => sync({ id: knowledge.id })}
+            onClick={() => sync({ tenantId, id: knowledge.id })}
           >
             <RefreshCw />
             Sync
@@ -69,7 +72,7 @@ export function KnowledgeDetailPage() {
             variant="outline"
             size="sm"
             disabled={isSyncBusy || isSyncing}
-            onClick={() => sync({ id: knowledge.id, force: true })}
+            onClick={() => sync({ tenantId, id: knowledge.id, force: true })}
           >
             <RotateCcw />
             Full resync
@@ -82,7 +85,7 @@ export function KnowledgeDetailPage() {
       </PageActions>
 
       <div className="grid min-h-0 grid-cols-1 gap-4 md:grid-cols-[1fr_3fr]">
-        <KnowledgeDetails knowledge={knowledge} />
+        <KnowledgeDetails tenantId={tenantId} knowledge={knowledge} />
         <KnowledgeItemsTable />
       </div>
     </Page>

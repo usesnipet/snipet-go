@@ -37,13 +37,14 @@ import type {
 } from "@/lib/services";
 import type { DriverInfo } from "@/schemas/driver";
 
-const KNOWLEDGE_URL = "/api/knowledge";
+const knowledgeUrl = (tenantId: string) => `/api/tenants/${tenantId}/knowledge`;
 
 const list = async (
+  tenantId: string,
   opts?: ServiceGetOptions<PaginatedKnowledge>,
 ): Promise<PaginatedKnowledge> => {
   return http.get({
-    url: KNOWLEDGE_URL,
+    url: knowledgeUrl(tenantId),
     schemas: {
       response: paginatedKnowledgeSchema,
     },
@@ -52,11 +53,12 @@ const list = async (
 };
 
 const findByID = async (
+  tenantId: string,
   id: string,
   opts?: ServiceGetOptions<Knowledge>,
 ): Promise<Knowledge> => {
   return http.get({
-    url: `${KNOWLEDGE_URL}/{id}`,
+    url: `${knowledgeUrl(tenantId)}/{id}`,
     params: { id },
     schemas: {
       response: knowledgeSchema,
@@ -66,11 +68,12 @@ const findByID = async (
 };
 
 const listItems = async (
+  tenantId: string,
   id: string,
   opts?: ServiceGetOptions<PaginatedKnowledgeItem>,
 ): Promise<PaginatedKnowledgeItem> => {
   return http.get({
-    url: `${KNOWLEDGE_URL}/{id}/items`,
+    url: `${knowledgeUrl(tenantId)}/{id}/items`,
     params: { id },
     schemas: {
       response: paginatedKnowledgeItemSchema,
@@ -80,11 +83,12 @@ const listItems = async (
 };
 
 const create = async (
+  tenantId: string,
   body: CreateKnowledge,
   opts?: ServicePostOptions<CreateKnowledge, CreateKnowledgeResponse>,
 ): Promise<CreateKnowledgeResponse> => {
   return http.post({
-    url: KNOWLEDGE_URL,
+    url: knowledgeUrl(tenantId),
     body,
     schemas: {
       body: createKnowledgeSchema,
@@ -95,12 +99,13 @@ const create = async (
 };
 
 const update = async (
+  tenantId: string,
   id: string,
   body: UpdateKnowledge,
   opts?: ServicePutOptions<UpdateKnowledge, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${KNOWLEDGE_URL}/{id}`,
+    url: `${knowledgeUrl(tenantId)}/{id}`,
     params: { id },
     body,
     schemas: {
@@ -111,10 +116,11 @@ const update = async (
 };
 
 const listDrivers = async (
+  tenantId: string,
   opts?: ServiceGetOptions<ListKnowledgeDrivers>,
 ): Promise<DriverInfo[]> => {
   const response = await http.get({
-    url: `${KNOWLEDGE_URL}/drivers`,
+    url: `${knowledgeUrl(tenantId)}/drivers`,
     schemas: { response: listKnowledgeDriversSchema },
     ...opts,
   });
@@ -122,21 +128,26 @@ const listDrivers = async (
 };
 
 const sync = async (
+  tenantId: string,
   id: string,
   force = false,
   opts?: ServicePostOptions<undefined, void>,
 ): Promise<void> => {
   return http.post({
-    url: `${KNOWLEDGE_URL}/{id}/sync`,
+    url: `${knowledgeUrl(tenantId)}/{id}/sync`,
     params: { id },
     searchParams: { force },
     ...opts,
   });
 };
 
-const remove = async (id: string, opts?: ServiceDeleteOptions<void>): Promise<void> => {
+const remove = async (
+  tenantId: string,
+  id: string,
+  opts?: ServiceDeleteOptions<void>,
+): Promise<void> => {
   return http.delete({
-    url: `${KNOWLEDGE_URL}/{id}`,
+    url: `${knowledgeUrl(tenantId)}/{id}`,
     params: { id },
     ...opts,
   });
@@ -153,13 +164,16 @@ export const knowledgeService = {
   delete: remove,
 };
 
+const knowledgeIndexUrl = (tenantId: string, knowledgeId: string) =>
+  `/api/tenants/${tenantId}/knowledge/${knowledgeId}/index`;
+
 const listIndexes = async (
+  tenantId: string,
   knowledgeID: string,
   opts?: ServiceGetOptions<PaginatedKnowledgeIndex>,
 ): Promise<PaginatedKnowledgeIndex> => {
   return http.get({
-    url: `${KNOWLEDGE_URL}/{knowledge_id}/index`,
-    params: { knowledge_id: knowledgeID },
+    url: knowledgeIndexUrl(tenantId, knowledgeID),
     schemas: {
       response: paginatedKnowledgeIndexSchema,
     },
@@ -168,13 +182,14 @@ const listIndexes = async (
 };
 
 const findIndexByID = async (
+  tenantId: string,
   knowledgeID: string,
   id: string,
   opts?: ServiceGetOptions<KnowledgeIndex>,
 ): Promise<KnowledgeIndex> => {
   return http.get({
-    url: `${KNOWLEDGE_URL}/{knowledge_id}/index/{id}`,
-    params: { knowledge_id: knowledgeID, id },
+    url: `${knowledgeIndexUrl(tenantId, knowledgeID)}/{id}`,
+    params: { id },
     schemas: {
       response: knowledgeIndexSchema,
     },
@@ -183,13 +198,13 @@ const findIndexByID = async (
 };
 
 const createIndex = async (
+  tenantId: string,
   knowledgeID: string,
   body: CreateKnowledgeIndex,
   opts?: ServicePostOptions<CreateKnowledgeIndex, KnowledgeIndex>,
 ): Promise<KnowledgeIndex> => {
   return http.post({
-    url: `${KNOWLEDGE_URL}/{knowledge_id}/index`,
-    params: { knowledge_id: knowledgeID },
+    url: knowledgeIndexUrl(tenantId, knowledgeID),
     body,
     schemas: {
       body: createKnowledgeIndexSchema,
@@ -200,14 +215,15 @@ const createIndex = async (
 };
 
 const updateIndex = async (
+  tenantId: string,
   knowledgeID: string,
   id: string,
   body: UpdateKnowledgeIndex,
   opts?: ServicePutOptions<UpdateKnowledgeIndex, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${KNOWLEDGE_URL}/{knowledge_id}/index/{id}`,
-    params: { knowledge_id: knowledgeID, id },
+    url: `${knowledgeIndexUrl(tenantId, knowledgeID)}/{id}`,
+    params: { id },
     body,
     schemas: {
       body: updateKnowledgeIndexSchema,
@@ -217,22 +233,24 @@ const updateIndex = async (
 };
 
 const deleteIndex = async (
+  tenantId: string,
   knowledgeID: string,
   id: string,
   opts?: ServiceDeleteOptions<void>,
 ): Promise<void> => {
   return http.delete({
-    url: `${KNOWLEDGE_URL}/{knowledge_id}/index/{id}`,
-    params: { knowledge_id: knowledgeID, id },
+    url: `${knowledgeIndexUrl(tenantId, knowledgeID)}/{id}`,
+    params: { id },
     ...opts,
   });
 };
 
 const listIndexDrivers = async (
+  tenantId: string,
   opts?: ServiceGetOptions<ListKnowledgeIndexDrivers>,
 ): Promise<DriverInfo[]> => {
   const response = await http.get({
-    url: `${KNOWLEDGE_URL}/index/drivers`,
+    url: `${knowledgeUrl(tenantId)}/index/drivers`,
     schemas: { response: listKnowledgeIndexDriversSchema },
     ...opts,
   });

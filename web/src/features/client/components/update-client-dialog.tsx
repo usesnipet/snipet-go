@@ -16,10 +16,11 @@ import type { Client, UpdateClient } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type UpdateClientDialogProps = DialogInstanceProps<{
+  tenantId: string
   client: Client
 }>;
 
-export function UpdateClientDialog({ client, close }: UpdateClientDialogProps) {
+export function UpdateClientDialog({ tenantId, client, close }: UpdateClientDialogProps) {
   const form = useForm<UpdateClient>({
     resolver: zodResolver(updateClientSchema),
     defaultValues: {
@@ -44,7 +45,7 @@ export function UpdateClientDialog({ client, close }: UpdateClientDialogProps) {
   const { mutateAsync, isPending } = useUpdateClient();
 
   const onSubmit = form.handleSubmit(async (values) => {
-    await mutateAsync({ code: client.code, data: values });
+    await mutateAsync({ tenantId, code: client.code, data: values });
     close();
   });
 

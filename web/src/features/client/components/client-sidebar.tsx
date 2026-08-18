@@ -7,7 +7,7 @@ import { ROUTES } from "@/routes";
 import { Boxes, Home, Settings, Users } from "lucide-react";
 import { useParams } from "react-router";
 
-import { useFindByCodeClient } from "../hooks";
+import { useFindPublicByCodeClient } from "../hooks";
 
 import { ClientCode } from "./client-code";
 
@@ -38,7 +38,7 @@ const navItems: NavEntry[] = [
 
 export function ClientSidebar() {
   const { clientCode = "" } = useParams<{ clientCode: string }>();
-  const { data: client, isLoading } = useFindByCodeClient(clientCode);
+  const { data: client, isLoading } = useFindPublicByCodeClient(clientCode);
 
   return (
     <Sidebar>

@@ -19,13 +19,14 @@ import type {
   ServicePutOptions,
 } from "@/lib/services";
 
-const LLM_URL = "/api/llm";
+const llmUrl = (tenantId: string) => `/api/tenants/${tenantId}/llm`;
 
 const list = async (
+  tenantId: string,
   opts?: ServiceGetOptions<PaginatedLlm, ListLlmSearchParams>,
 ): Promise<PaginatedLlm> => {
   return http.get({
-    url: LLM_URL,
+    url: llmUrl(tenantId),
     schemas: {
       response: paginatedLlmSchema,
       searchParams: listLlmSearchParamsSchema,
@@ -35,11 +36,12 @@ const list = async (
 };
 
 const create = async (
+  tenantId: string,
   body: CreateLlm,
   opts?: ServicePostOptions<CreateLlm, Llm>,
 ): Promise<Llm> => {
   return http.post({
-    url: LLM_URL,
+    url: llmUrl(tenantId),
     body,
     schemas: {
       body: createLlmSchema,
@@ -50,12 +52,13 @@ const create = async (
 };
 
 const update = async (
+  tenantId: string,
   id: string,
   body: UpdateLlm,
   opts?: ServicePutOptions<UpdateLlm, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${LLM_URL}/{id}`,
+    url: `${llmUrl(tenantId)}/{id}`,
     params: { id },
     body,
     schemas: {
@@ -65,17 +68,24 @@ const update = async (
   });
 };
 
-const remove = async (id: string, opts?: ServiceDeleteOptions<void>): Promise<void> => {
+const remove = async (
+  tenantId: string,
+  id: string,
+  opts?: ServiceDeleteOptions<void>,
+): Promise<void> => {
   return http.delete({
-    url: `${LLM_URL}/{id}`,
+    url: `${llmUrl(tenantId)}/{id}`,
     params: { id },
     ...opts,
   });
 };
 
-const listDrivers = async (opts?: ServiceGetOptions<ListDrivers>): Promise<ListDrivers> => {
+const listDrivers = async (
+  tenantId: string,
+  opts?: ServiceGetOptions<ListDrivers>,
+): Promise<ListDrivers> => {
   return http.get({
-    url: `${LLM_URL}/drivers`,
+    url: `${llmUrl(tenantId)}/drivers`,
     schemas: { response: listDriversSchema },
     ...opts,
   });

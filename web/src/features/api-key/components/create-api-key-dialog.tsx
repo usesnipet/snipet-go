@@ -24,10 +24,11 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 type CreateApiKeyDialogProps = DialogInstanceProps<{
+  tenantId: string
   onCreated: (apiKey: ApiKeyWithSecret) => void
 }>;
 
-export function CreateApiKeyDialog({ onCreated, close }: CreateApiKeyDialogProps) {
+export function CreateApiKeyDialog({ tenantId, onCreated, close }: CreateApiKeyDialogProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: "", expires_at: "" },
@@ -39,8 +40,11 @@ export function CreateApiKeyDialog({ onCreated, close }: CreateApiKeyDialogProps
     const expiresAt = resolveDurationExpiresAt(values.expires_at);
 
     const result = await mutateAsync({
-      name: values.name,
-      expires_at: expiresAt ? new Date(expiresAt) : undefined,
+      tenantId,
+      data: {
+        name: values.name,
+        expires_at: expiresAt ? new Date(expiresAt) : undefined,
+      },
     });
     form.reset();
     onCreated(result);

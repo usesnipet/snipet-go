@@ -22,10 +22,11 @@ import type { Knowledge, UpdateKnowledge } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type UpdateKnowledgeDialogProps = DialogInstanceProps<{
+  tenantId: string;
   knowledge: Knowledge;
 }>;
 
-export function UpdateKnowledgeDialog({ knowledge, close }: UpdateKnowledgeDialogProps) {
+export function UpdateKnowledgeDialog({ tenantId, knowledge, close }: UpdateKnowledgeDialogProps) {
   const form = useForm<UpdateKnowledge>({
     resolver: zodResolver(updateKnowledgeSchema),
     defaultValues: {
@@ -37,7 +38,7 @@ export function UpdateKnowledgeDialog({ knowledge, close }: UpdateKnowledgeDialo
   const { mutateAsync, isPending } = useUpdateKnowledge();
 
   const onSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync({ id: knowledge.id, data });
+    await mutateAsync({ tenantId, id: knowledge.id, data });
     close();
   });
 

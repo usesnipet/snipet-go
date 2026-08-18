@@ -10,15 +10,16 @@ import type { ApiKey, ApiKeyWithSecret } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type RollApiKeyDialogProps = DialogInstanceProps<{
+  tenantId: string
   apiKey: ApiKey
   onRolled: (apiKey: ApiKeyWithSecret) => void
 }>;
 
-export function RollApiKeyDialog({ apiKey, onRolled, close }: RollApiKeyDialogProps) {
+export function RollApiKeyDialog({ tenantId, apiKey, onRolled, close }: RollApiKeyDialogProps) {
   const { mutateAsync, isPending } = useRollApiKey();
 
   const handleConfirm = async () => {
-    const result = await mutateAsync(apiKey.id);
+    const result = await mutateAsync({ tenantId, id: apiKey.id });
     close();
     onRolled(result);
   };

@@ -9,7 +9,13 @@ import { SyncStatusBadge } from "./sync-status-badge";
 
 import type { Knowledge } from "../schemas";
 
-export function KnowledgeDetails({ knowledge }: { knowledge: Knowledge }) {
+export function KnowledgeDetails({
+  tenantId,
+  knowledge,
+}: {
+  tenantId: string;
+  knowledge: Knowledge;
+}) {
   return (
     <ScrollArea className="h-full">
       <div className="flex flex-col gap-4 pr-3">
@@ -54,7 +60,7 @@ export function KnowledgeDetails({ knowledge }: { knowledge: Knowledge }) {
 
         <JsonViewer title={`Configuration (${knowledge.driver})`} value={knowledge.configuration} />
 
-        <KnowledgeIndexesSection knowledgeID={knowledge.id} />
+        <KnowledgeIndexesSection tenantId={tenantId} knowledgeID={knowledge.id} />
       </div>
     </ScrollArea>
   );

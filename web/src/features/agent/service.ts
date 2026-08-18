@@ -9,11 +9,14 @@ import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 
-const AGENT_URL = "/api/agent";
+const agentUrl = (tenantId: string) => `/api/tenants/${tenantId}/agents`;
 
-const list = async (opts?: ServiceGetOptions<PaginatedAgent>): Promise<PaginatedAgent> => {
+const list = async (
+  tenantId: string,
+  opts?: ServiceGetOptions<PaginatedAgent>,
+): Promise<PaginatedAgent> => {
   return http.get({
-    url: AGENT_URL,
+    url: agentUrl(tenantId),
     schemas: {
       response: paginatedAgentSchema,
     },
@@ -21,9 +24,13 @@ const list = async (opts?: ServiceGetOptions<PaginatedAgent>): Promise<Paginated
   });
 };
 
-const findById = async (id: string, opts?: ServiceGetOptions<Agent>): Promise<Agent> => {
+const findById = async (
+  tenantId: string,
+  id: string,
+  opts?: ServiceGetOptions<Agent>,
+): Promise<Agent> => {
   return http.get({
-    url: `${AGENT_URL}/{id}`,
+    url: `${agentUrl(tenantId)}/{id}`,
     params: { id },
     schemas: { response: agentSchema },
     ...opts,
@@ -31,11 +38,12 @@ const findById = async (id: string, opts?: ServiceGetOptions<Agent>): Promise<Ag
 };
 
 const create = async (
+  tenantId: string,
   body: CreateAgent,
   opts?: ServicePostOptions<CreateAgent, Agent>,
 ): Promise<Agent> => {
   return http.post({
-    url: AGENT_URL,
+    url: agentUrl(tenantId),
     body,
     schemas: {
       body: createAgentSchema,
@@ -46,12 +54,13 @@ const create = async (
 };
 
 const update = async (
+  tenantId: string,
   id: string,
   body: UpdateAgent,
   opts?: ServicePutOptions<UpdateAgent, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${AGENT_URL}/{id}`,
+    url: `${agentUrl(tenantId)}/{id}`,
     params: { id },
     body,
     schemas: {
@@ -61,9 +70,13 @@ const update = async (
   });
 };
 
-const remove = async (id: string, opts?: ServiceDeleteOptions<void>): Promise<void> => {
+const remove = async (
+  tenantId: string,
+  id: string,
+  opts?: ServiceDeleteOptions<void>,
+): Promise<void> => {
   return http.delete({
-    url: `${AGENT_URL}/{id}`,
+    url: `${agentUrl(tenantId)}/{id}`,
     params: { id },
     ...opts,
   });

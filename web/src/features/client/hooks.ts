@@ -15,13 +15,15 @@ import type { PaginatedAgent } from "../agent/schemas";
 
 const BASE_QUERY_KEY = "client";
 
-export const listClientQueryKey = () => [BASE_QUERY_KEY] as const;
+export const listClientQueryKey = (tenantId: string) => [BASE_QUERY_KEY, "list", tenantId] as const;
 export const useListClient = (
+  tenantId: string,
   opts?: ServiceGetOptions<PaginatedClient>
 ): UseQueryResult<PaginatedClient, Error> => {
   return useQuery({
-    queryKey: listClientQueryKey(),
-    queryFn: () => clientService.list(opts),
+    queryKey: listClientQueryKey(tenantId),
+    queryFn: () => clientService.list(tenantId, opts),
+    enabled: !!tenantId,
   })
 }
 
@@ -37,15 +39,18 @@ export const useListClientAgents = (
   })
 }
 
-export const findByCodeClientQueryKey = (code: string) => [BASE_QUERY_KEY, "findByCode", code];
+export const findByCodeClientQueryKey = (tenantId: string, code: string) =>
+  [BASE_QUERY_KEY, "findByCode", tenantId, code];
 export const useFindByCodeClient = (
+  tenantId: string,
   code: string,
   opts?: ServiceGetOptions<Client>
 ): UseQueryResult<Client, Error> => {
   return useQuery({
-    queryKey: findByCodeClientQueryKey(code),
+    queryKey: findByCodeClientQueryKey(tenantId, code),
     queryFn: (): Promise<Client> =>
-      clientService.findByCode(code, opts),
+      clientService.findByCode(tenantId, code, opts),
+    enabled: !!tenantId && !!code,
   })
 }
 
@@ -59,23 +64,24 @@ export const useFindPublicByCodeClient = (
     queryKey: findPublicByCodeClientQueryKey(code),
     queryFn: (): Promise<ClientPublic> =>
       clientService.findPublicByCode(code, opts),
+    enabled: !!code,
   })
 }
 
 export const createClientQueryKey = () => [BASE_QUERY_KEY, "create"];
 export const useCreateClient = (
   opts?: ServicePostOptions<CreateClient, Client>
-): UseMutationResult<Client, Error, CreateClient> => {
+): UseMutationResult<Client, Error, { tenantId: string; data: CreateClient }> => {
   return useMutation({
     mutationKey: createClientQueryKey(),
-    mutationFn: (data: CreateClient) =>
-      clientService.create(data, opts),
-    onSuccess: () => {
+    mutationFn: ({ tenantId, data }: { tenantId: string; data: CreateClient }) =>
+      clientService.create(tenantId, data, opts),
+    onSuccess: (_data, { tenantId }) => {
       toast({
         title: "Client created successfully",
         description: "The client has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listClientQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listClientQueryKey(tenantId) });
     },
     onError: () => {
       toast({
@@ -90,18 +96,18 @@ export const useCreateClient = (
 export const updateClientQueryKey = () => [BASE_QUERY_KEY, "update"];
 export const useUpdateClient = (
   opts: ServicePutOptions<UpdateClient, void> = {}
-): UseMutationResult<void, Error, { code: string; data: UpdateClient }> => {
+): UseMutationResult<void, Error, { tenantId: string; code: string; data: UpdateClient }> => {
   return useMutation({
     mutationKey: updateClientQueryKey(),
-    mutationFn: ({ code, data }: { code: string; data: UpdateClient }) =>
-      clientService.update(code, data, opts),
-    onSuccess: (_data, { code }) => {
+    mutationFn: ({ tenantId, code, data }: { tenantId: string; code: string; data: UpdateClient }) =>
+      clientService.update(tenantId, code, data, opts),
+    onSuccess: (_data, { tenantId, code }) => {
       toast({
         title: "Client updated successfully",
         description: "The client has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listClientQueryKey() });
-      queryClient.invalidateQueries({ queryKey: findByCodeClientQueryKey(code) });
+      queryClient.invalidateQueries({ queryKey: listClientQueryKey(tenantId) });
+      queryClient.invalidateQueries({ queryKey: findByCodeClientQueryKey(tenantId, code) });
     },
     onError: () => {
       toast({
@@ -116,18 +122,18 @@ export const useUpdateClient = (
 export const deleteClientQueryKey = () => [BASE_QUERY_KEY, "delete"];
 export const useDeleteClient = (
   opts: ServiceDeleteOptions<void> = {}
-): UseMutationResult<void, Error, string> => {
+): UseMutationResult<void, Error, { tenantId: string; code: string }> => {
   return useMutation({
     mutationKey: deleteClientQueryKey(),
-    mutationFn: (code: string) =>
-      clientService.delete(code, opts),
-    onSuccess: (_data, code) => {
+    mutationFn: ({ tenantId, code }: { tenantId: string; code: string }) =>
+      clientService.delete(tenantId, code, opts),
+    onSuccess: (_data, { tenantId, code }) => {
       toast({
         title: "Client deleted successfully",
         description: "The client has been deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listClientQueryKey() });
-      queryClient.invalidateQueries({ queryKey: findByCodeClientQueryKey(code) });
+      queryClient.invalidateQueries({ queryKey: listClientQueryKey(tenantId) });
+      queryClient.invalidateQueries({ queryKey: findByCodeClientQueryKey(tenantId, code) });
     },
     onError: () => {
       toast({

@@ -16,6 +16,7 @@ import type { DialogInstanceProps } from "@/lib/dialog";
 import type { Agent, UpdateAgent } from "../schemas";
 
 type UpdateAgentDialogProps = DialogInstanceProps<{
+  tenantId: string
   agent: Agent
 }>;
 
@@ -25,7 +26,7 @@ function llmIdsFromAgent(agent: Agent): string[] {
     .map((rel) => rel.llm_id);
 }
 
-export function UpdateAgentDialog({ agent, close }: UpdateAgentDialogProps) {
+export function UpdateAgentDialog({ tenantId, agent, close }: UpdateAgentDialogProps) {
   const form = useForm<UpdateAgent>({
     resolver: zodResolver(updateAgentSchema),
     defaultValues: {
@@ -39,7 +40,7 @@ export function UpdateAgentDialog({ agent, close }: UpdateAgentDialogProps) {
   const { mutateAsync, isPending } = useUpdateAgent();
 
   const onSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync({ id: agent.id, data });
+    await mutateAsync({ tenantId, id: agent.id, data });
     close();
   });
 

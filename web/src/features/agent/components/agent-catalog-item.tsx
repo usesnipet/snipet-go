@@ -1,8 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useFindBySlugTenant } from "@/features/tenant/hooks";
 import { useDialog } from "@/lib/dialog";
 import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { useParams } from "react-router";
 
 import { DeleteAgentDialog } from "./delete-agent-dialog";
 import { UpdateAgentDialog } from "./update-agent-dialog";
@@ -10,19 +12,23 @@ import { UpdateAgentDialog } from "./update-agent-dialog";
 import type { Agent } from "../schemas";
 
 export function AgentCatalogItem({ agent }: { agent: Agent }) {
+  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
+  const { data: tenant } = useFindBySlugTenant(tenantSlug);
   const { openDialog } = useDialog();
 
   const openEdit = () => {
+    if (!tenant) return;
     openDialog({
       component: UpdateAgentDialog,
-      props: { agent },
+      props: { tenantId: tenant.id, agent },
     });
   };
 
   const openDelete = () => {
+    if (!tenant) return;
     openDialog({
       component: DeleteAgentDialog,
-      props: { agent },
+      props: { tenantId: tenant.id, agent },
     });
   };
 

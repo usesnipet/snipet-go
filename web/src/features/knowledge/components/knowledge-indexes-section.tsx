@@ -19,15 +19,21 @@ import { UpdateKnowledgeIndexDialog } from "./update-knowledge-index-dialog";
 
 import type { KnowledgeIndex } from "../schemas";
 
-export function KnowledgeIndexesSection({ knowledgeID }: { knowledgeID: string }) {
+export function KnowledgeIndexesSection({
+  tenantId,
+  knowledgeID,
+}: {
+  tenantId: string;
+  knowledgeID: string;
+}) {
   const { openDialog } = useDialog();
-  const { data, isLoading } = useListKnowledgeIndexes(knowledgeID);
+  const { data, isLoading } = useListKnowledgeIndexes(tenantId, knowledgeID);
   const indexes = data?.data ?? [];
 
   const openCreate = () => {
     openDialog({
       component: CreateKnowledgeIndexDialog,
-      props: { knowledgeID },
+      props: { tenantId, knowledgeID },
     });
   };
 
@@ -54,7 +60,12 @@ export function KnowledgeIndexesSection({ knowledgeID }: { knowledgeID: string }
         ) : (
           <ul className="flex flex-col gap-2">
             {indexes.map((index) => (
-              <KnowledgeIndexRow key={index.id} knowledgeID={knowledgeID} index={index} />
+              <KnowledgeIndexRow
+                key={index.id}
+                tenantId={tenantId}
+                knowledgeID={knowledgeID}
+                index={index}
+              />
             ))}
           </ul>
         )}
@@ -64,9 +75,11 @@ export function KnowledgeIndexesSection({ knowledgeID }: { knowledgeID: string }
 }
 
 function KnowledgeIndexRow({
+  tenantId,
   knowledgeID,
   index,
 }: {
+  tenantId: string;
   knowledgeID: string;
   index: KnowledgeIndex;
 }) {
@@ -75,14 +88,14 @@ function KnowledgeIndexRow({
   const openEdit = () => {
     openDialog({
       component: UpdateKnowledgeIndexDialog,
-      props: { knowledgeID, index },
+      props: { tenantId, knowledgeID, index },
     });
   };
 
   const openDelete = () => {
     openDialog({
       component: DeleteKnowledgeIndexDialog,
-      props: { knowledgeID, index },
+      props: { tenantId, knowledgeID, index },
     });
   };
 

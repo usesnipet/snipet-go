@@ -1,12 +1,16 @@
 import { CatalogList } from "@/components/catalog";
 import { Loading } from "@/components/ui/loading";
+import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useParams } from "react-router";
 
 import { useListClient } from "../hooks";
 
 import { ClientCatalogItem } from "./client-catalog-item";
 
 export function ClientList() {
-  const { data, isLoading } = useListClient();
+  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
+  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const { data, isLoading } = useListClient(tenant?.id ?? "");
 
   if (isLoading) {
     return (

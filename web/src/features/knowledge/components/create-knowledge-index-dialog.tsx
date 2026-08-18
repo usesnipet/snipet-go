@@ -21,6 +21,7 @@ import type { CreateKnowledgeIndex, KnowledgeIndex } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type CreateKnowledgeIndexDialogProps = DialogInstanceProps<{
+  tenantId: string;
   knowledgeID: string;
   onCreated?: (result: KnowledgeIndex) => void;
 }>;
@@ -32,6 +33,7 @@ const defaultValues: CreateKnowledgeIndex = {
 };
 
 export function CreateKnowledgeIndexDialog({
+  tenantId,
   knowledgeID,
   onCreated,
   close,
@@ -44,7 +46,7 @@ export function CreateKnowledgeIndexDialog({
   const { mutateAsync, isPending } = useCreateKnowledgeIndex();
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await mutateAsync({ knowledgeID, data: values });
+    const result = await mutateAsync({ tenantId, knowledgeID, data: values });
     form.reset();
     onCreated?.(result);
     close();
