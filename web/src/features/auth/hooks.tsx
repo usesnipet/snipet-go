@@ -3,9 +3,12 @@ import { useNavigate } from "@/hooks/use-navigate";
 import { toast } from "@/hooks/use-toast";
 import { ApiError } from "@/lib/http";
 import { logger } from "@/lib/logger";
+import { queryClient } from "@/lib/query-client";
 import { ROUTES } from "@/routes";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+
+import { meUserQueryKey } from "../user/hooks";
 
 import { authService } from "./service";
 import { useAuthStore } from "./store";
@@ -73,13 +76,14 @@ export const useLogin = (
   return useMutation({
     mutationKey: loginQueryKey(),
     mutationFn: (data) => authService.login(data, opts),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setTokens(data);
       toast({
         title: "Signed in successfully",
         description: "You have been authenticated successfully",
       });
-      navigate(redirect ?? ROUTES.tenantHome);
+      await queryClient.invalidateQueries({ queryKey: meUserQueryKey() });
+      await navigate(redirect ?? ROUTES.tenantHome, { replace: true });
     },
     onError: (e, variables) => {
       logger.error("Failed to login", { error: e });
