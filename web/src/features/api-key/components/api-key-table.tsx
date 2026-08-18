@@ -5,10 +5,9 @@ import { DateFormat } from "@/components/ui/date";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog";
 import { CalendarClock, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
-import { useParams } from "react-router";
 
 import { useListApiKey } from "../hooks";
 
@@ -20,15 +19,14 @@ import { UpdateApiKeyExpirationDialog } from "./update-api-key-expiration-dialog
 import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { ApiKey, ApiKeyWithSecret } from "../schemas";
 
+
 function useApiKeyTableQuery(pagination: DataTablePagination) {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   return useListApiKey(tenant?.id ?? "", { searchParams: pagination })
 }
 
 export function ApiKeyTable() {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const showSecret = (apiKey: ApiKeyWithSecret) => {

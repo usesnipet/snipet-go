@@ -2,14 +2,12 @@ import { Page, PageActions } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { CreateLlmDialog } from "@/features/llm/components/create-llm-dialog";
 import { LlmTable } from "@/features/llm/components/llm-table";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog/use-dialog";
 import { Plus } from "lucide-react";
-import { useParams } from "react-router";
 
 export function LLMPage() {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const openCreate = () => {

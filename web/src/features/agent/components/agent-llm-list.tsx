@@ -3,16 +3,14 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Link } from "@/components/ui/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useListLlm } from "@/features/llm/hooks";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { applyPathParams } from "@/lib/http";
 import { ROUTES } from "@/routes";
 import { ArrowDownIcon, ArrowUpIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { useParams } from "react-router";
 
 import type { Llm } from "@/features/llm/schemas";
-
 type AgentLlmListProps = {
   name?: string
   label?: string
@@ -32,13 +30,12 @@ export function AgentLlmList({
   label = "LLMs",
 }: AgentLlmListProps) {
   const form = useFormContext();
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { data, isLoading } = useListLlm(tenant?.id ?? "");
   const llms = data?.data ?? [];
   const llmById = new Map(llms.map((llm) => [llm.id, llm]));
   const [selectKey, setSelectKey] = useState(0);
-  const llmsHref = applyPathParams(ROUTES.llms, { tenantSlug });
+  const llmsHref = applyPathParams(ROUTES.llms, { tenantSlug: tenant?.slug ?? "" });
 
   return (
     <FormField

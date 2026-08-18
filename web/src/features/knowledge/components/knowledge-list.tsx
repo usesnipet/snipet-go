@@ -1,15 +1,13 @@
 import { CatalogList } from "@/components/catalog";
 import { Loading } from "@/components/ui/loading";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
-import { useParams } from "react-router";
+import { useTenantStore } from "@/features/tenant/store";
 
 import { useListKnowledge } from "../hooks";
 
 import { KnowledgeCatalogItem } from "./knowledge-catalog-item";
 
 export function KnowledgeList() {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { data, isLoading } = useListKnowledge(tenant?.id ?? "");
 
   if (isLoading) {

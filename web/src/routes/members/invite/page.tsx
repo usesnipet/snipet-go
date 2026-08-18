@@ -1,20 +1,16 @@
-import { UserPlus } from "lucide-react";
-import { useState } from "react";
-import { useParams } from "react-router";
-
 import { Page, PageActions } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InvitationTable } from "@/features/invitation/components/invitation-table";
 import { InviteMemberDialog } from "@/features/invitation/components/invite-member-dialog";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog";
+import { UserPlus } from "lucide-react";
+import { useState } from "react";
 
 import type { InvitationStatusFilter } from "@/features/invitation/schemas";
-
 export function InviteMembersPage() {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
   const [status, setStatus] = useState<InvitationStatusFilter>("pending");
 

@@ -1,6 +1,3 @@
-import { MoreHorizontal, XCircle } from "lucide-react";
-import { useParams } from "react-router";
-
 import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,8 +5,9 @@ import { DateFormat } from "@/components/ui/date";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog";
+import { MoreHorizontal, XCircle } from "lucide-react";
 
 import { useFilterInvitation } from "../hooks";
 
@@ -17,7 +15,6 @@ import { CancelInvitationDialog } from "./cancel-invitation-dialog";
 
 import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { Invitation, InvitationStatusFilter } from "../schemas";
-
 const statusVariant: Record<InvitationStatusFilter, "default" | "secondary" | "destructive"> = {
   pending: "secondary",
   accepted: "default",
@@ -44,8 +41,7 @@ type InvitationTableProps = {
 }
 
 export function InvitationTable({ status }: InvitationTableProps) {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const useInvitationTableQuery = (pagination: DataTablePagination) =>

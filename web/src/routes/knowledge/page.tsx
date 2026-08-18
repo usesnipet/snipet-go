@@ -2,14 +2,12 @@ import { Page, PageActions } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { CreateKnowledgeDialog } from "@/features/knowledge/components/create-knowledge-dialog";
 import { KnowledgeList } from "@/features/knowledge/components/knowledge-list";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog/use-dialog";
 import { Plus } from "lucide-react";
-import { useParams } from "react-router";
 
 export function KnowledgePage() {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const openCreate = () => {

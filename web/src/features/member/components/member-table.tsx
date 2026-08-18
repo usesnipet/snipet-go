@@ -1,6 +1,3 @@
-import { MoreHorizontal, Shield, UserIcon, UserMinus } from "lucide-react";
-import { useParams } from "react-router";
-
 import { DataTable } from "@/components/data-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,8 +6,9 @@ import { DateFormat } from "@/components/ui/date";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog";
+import { MoreHorizontal, Shield, UserIcon, UserMinus } from "lucide-react";
 
 import { useFilterMember } from "../hooks";
 
@@ -19,16 +17,13 @@ import { UpdateMemberRoleDialog } from "./update-member-role-dialog";
 
 import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { Member } from "../schemas";
-
 function useMemberTableQuery(pagination: DataTablePagination) {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   return useFilterMember(tenant?.id ?? "", { searchParams: pagination });
 }
 
 export function MemberTable() {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const openUpdateRole = (member: Member) => {
@@ -54,14 +49,14 @@ export function MemberTable() {
       cell: (row) => (
         <div className="flex items-center gap-3">
           <Avatar size="sm">
-            {row.user.picture && <AvatarImage src={row.user.picture} alt={row.user.name} />}
+            {row.user?.picture && <AvatarImage src={row.user.picture} alt={row.user.name} />}
             <AvatarFallback>
               <UserIcon className="size-4" />
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-0.5">
-            <span className="font-medium">{row.user.name}</span>
-            <span className="text-xs text-muted-foreground">{row.user.email}</span>
+            <span className="font-medium">{row.user?.name}</span>
+            <span className="text-xs text-muted-foreground">{row.user?.email}</span>
           </div>
         </div>
       ),

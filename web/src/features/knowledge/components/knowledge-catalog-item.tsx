@@ -1,25 +1,13 @@
 import { CatalogCard } from "@/components/catalog";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
 import { ROUTES } from "@/routes";
-import {
-  BookOpenIcon,
-  MoreHorizontal,
-  PencilIcon,
-  RefreshCw,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
-import { useParams } from "react-router";
+import { BookOpenIcon, MoreHorizontal, PencilIcon, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 
 import { useSyncKnowledge } from "../hooks";
 
@@ -29,9 +17,9 @@ import { UpdateKnowledgeDialog } from "./update-knowledge-dialog";
 
 import type { Knowledge } from "../schemas";
 
+
 export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const tenantId = tenant?.id ?? "";
   const { openDialog } = useDialog();
   const navigate = useNavigate();

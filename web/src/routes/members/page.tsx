@@ -1,25 +1,23 @@
-import { UserPlus } from "lucide-react";
-import { useParams } from "react-router";
-
 import { Page, PageActions } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { useGetSystemInfo } from "@/features/app/hooks";
 import { CreateMemberDialog } from "@/features/member/components/create-member-dialog";
 import { MemberTable } from "@/features/member/components/member-table";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
+import { useTenantStore } from "@/features/tenant/store";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
 import { ROUTES } from "@/routes";
+import { UserPlus } from "lucide-react";
 
 export function MembersPage() {
   const navigate = useNavigate();
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { data: systemInfo } = useGetSystemInfo();
   const { openDialog } = useDialog();
 
   const goToInvite = () => {
-    navigate(ROUTES.inviteMember, { params: { tenantSlug } });
+    if (!tenant) return;
+    navigate(ROUTES.inviteMember, { params: { tenantSlug: tenant.slug } });
   };
 
   const openCreate = () => {

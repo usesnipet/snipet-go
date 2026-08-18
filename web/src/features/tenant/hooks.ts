@@ -1,15 +1,17 @@
 import { toast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/query-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useParams } from "react-router";
 
 import { tenantService } from "./service";
+import { useTenantStore } from "./store";
 
 import type { CreateTenant, PaginatedTenant, Tenant, UpdateTenant } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
-
 const BASE_QUERY_KEY = "tenant";
 
 export const findMineTenantQueryKey = () => [BASE_QUERY_KEY, "findMine"] as const;
@@ -145,3 +147,24 @@ export const useLeaveTenant = (
     },
   });
 };
+
+export const useCurrentTenant = (): UseQueryResult<Tenant, Error> => {
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
+  if (!tenantSlug) {
+    throw new Error("Tenant slug is required");
+  }
+
+  const query = useFindBySlugTenant(tenantSlug);
+  const setTenant = useTenantStore((state) => state.setTenant);
+  const clearTenant = useTenantStore((state) => state.clearTenant);
+
+  useEffect(() => {
+    if (query.data) setTenant(query.data);
+  }, [query.data, setTenant]);
+
+  useEffect(() => {
+    if (query.isError) clearTenant();
+  }, [query.isError, clearTenant]);
+
+  return query;
+}

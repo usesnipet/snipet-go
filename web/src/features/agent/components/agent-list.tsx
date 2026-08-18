@@ -1,15 +1,13 @@
 import { CatalogList } from "@/components/catalog";
 import { Loading } from "@/components/ui/loading";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
-import { useParams } from "react-router";
+import { useTenantStore } from "@/features/tenant/store";
 
 import { useListAgent } from "../hooks";
 
 import { AgentCatalogItem } from "./agent-catalog-item";
 
 export function AgentList() {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { data, isLoading } = useListAgent(tenant?.id ?? "");
 
   if (isLoading) {

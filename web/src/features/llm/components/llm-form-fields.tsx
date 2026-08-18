@@ -1,14 +1,12 @@
 import { DriverSelect } from "@/components/form/driver-select";
 import { FormInput } from "@/components/form/input";
 import { FieldGroup } from "@/components/ui/field";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
-import { useParams } from "react-router";
+import { useTenantStore } from "@/features/tenant/store";
 
 import { useListLlmDrivers } from "../hooks";
 
 export function LlmFormFields() {
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
+  const tenant = useTenantStore((state) => state.tenant);
   const { data: drivers } = useListLlmDrivers(tenant?.id ?? "");
 
   return (

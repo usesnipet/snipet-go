@@ -55,6 +55,8 @@ const toReactRouterPath = (path: RoutePath) => {
   return path.replaceAll(/{([^}]+)}/g, (_, p1) => `:${p1}`);
 }
 
+console.log(toReactRouterPath(ROUTES.knowledge));
+
 export const Router = () => {
   return (
     <BrowserRouter>
