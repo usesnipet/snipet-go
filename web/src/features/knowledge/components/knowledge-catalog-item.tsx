@@ -6,6 +6,7 @@ import {
 import { useTenantStore } from "@/features/tenant/store";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
+import { logger } from "@/lib/logger";
 import { ROUTES } from "@/routes";
 import { BookOpenIcon, MoreHorizontal, PencilIcon, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 
@@ -16,8 +17,6 @@ import { SyncStatusBadge } from "./sync-status-badge";
 import { UpdateKnowledgeDialog } from "./update-knowledge-dialog";
 
 import type { Knowledge } from "../schemas";
-
-
 export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
   const tenant = useTenantStore((state) => state.tenant);
   const tenantId = tenant?.id ?? "";
@@ -43,7 +42,11 @@ export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
   };
 
   const goToDetail = () => {
-    navigate(ROUTES.knowledgeDetail, { params: { id: knowledge.id } });
+    if (!tenant) {
+      logger.error("Tenant not found");
+      return;
+    }
+    navigate(ROUTES.knowledgeDetail, { params: { tenantSlug: tenant.slug, id: knowledge.id } });
   };
 
   return (
