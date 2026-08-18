@@ -1,8 +1,8 @@
-import { roleSchema } from "@/models/member";
+import { memberRoleSchema } from "@/models/member-role";
 import { tenantSchema } from "@/models/tenant";
 import { z } from "zod";
 
-import type { MemberRole } from "@/models/member";
+import type { MemberRole } from "@/models/member-role";
 import type { Tenant } from "@/models/tenant";
 
 export const invitationStatusSchema = z.enum(["pending", "accepted", "declined"]);
@@ -26,7 +26,7 @@ export const invitationBaseSchema = z
     id: z.uuid(),
     tenant_id: z.uuid(),
     email: z.email().max(255),
-    role: roleSchema,
+    role: memberRoleSchema,
     status: invitationStatusSchema,
     expires_at: z.coerce.date(),
     created_at: z.coerce.date(),

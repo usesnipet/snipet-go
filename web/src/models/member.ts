@@ -4,9 +4,7 @@ import { z } from "zod";
 
 import type { Tenant } from "@/models/tenant";
 import type { User } from "@/models/user";
-
-export const roleSchema = z.enum(["admin", "user"]);
-export type MemberRole = z.infer<typeof roleSchema>;
+import { memberRoleSchema, type MemberRole } from "./member-role";
 
 export interface Member {
   id: string;
@@ -26,7 +24,7 @@ export const memberBaseSchema = z
     id: z.uuid(),
     user_id: z.uuid(),
     tenant_id: z.uuid(),
-    role: roleSchema,
+    role: memberRoleSchema,
     is_active: z.boolean(),
     created_at: z.coerce.date(),
     updated_at: z.coerce.date(),
