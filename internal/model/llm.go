@@ -10,7 +10,7 @@ type LLM struct {
 	Provider      string        `gorm:"type:varchar(255);not null" json:"provider"`
 	Configuration jsonx.JSONMap `gorm:"type:jsonb;not null" json:"configuration"`
 
-	Tenant Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Tenant *Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
 }
 
 func (LLM) TableName() string {

@@ -20,10 +20,10 @@ type Execution struct {
 	CreatedAt    time.Time        `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt    time.Time        `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 
-	Tenant   Tenant             `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Session  *Session           `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Agent    *Agent             `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Messages []ExecutionMessage `gorm:"foreignKey:ExecutionID;constraint:OnDelete:CASCADE" json:"-"`
+	Tenant   *Tenant            `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
+	Session  *Session           `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"session"`
+	Agent    *Agent             `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"agent"`
+	Messages []ExecutionMessage `gorm:"foreignKey:ExecutionID;constraint:OnDelete:CASCADE" json:"messages"`
 }
 
 func (e *Execution) ToRuntimeExecution(options ...execution.ExecutionOption) (*execution.Execution, error) {

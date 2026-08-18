@@ -14,9 +14,9 @@ type Agent struct {
 	Description  string `gorm:"type:text;not null" json:"description"`
 	Instructions string `gorm:"type:text;not null" json:"instructions"`
 
-	Tenant           Tenant             `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Tenant           *Tenant            `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
 	AgentToLLMs      []AgentToLLM       `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"llms"`
-	AgentToKnowledge []AgentToKnowledge `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	AgentToKnowledge []AgentToKnowledge `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"knowledge"`
 }
 
 func (a Agent) ToRuntimeAgent() *execution.Agent {

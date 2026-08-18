@@ -27,7 +27,7 @@ type Knowledge struct {
 	SyncStatus    SyncStatus    `gorm:"type:varchar(20);default:null" json:"sync_status"`
 	SyncError     *string       `gorm:"type:text;default:null" json:"sync_error"`
 
-	Tenant  Tenant           `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Items   []KnowledgeItem  `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"-"`
-	Indexes []KnowledgeIndex `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"-"`
+	Tenant  *Tenant          `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
+	Items   []KnowledgeItem  `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"items"`
+	Indexes []KnowledgeIndex `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"indexes"`
 }

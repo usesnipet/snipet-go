@@ -12,11 +12,11 @@ type Tenant struct {
 	CreatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 
-	Members     []Member           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
-	Invitations []TenantInvitation `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
-	Agents      []Agent            `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
-	APIKeys     []APIKey           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
-	Clients     []Client           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
-	Knowledges  []Knowledge        `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
-	LLMs        []LLM              `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"-"`
+	Members     []Member           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"members"`
+	Invitations []TenantInvitation `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"invitations"`
+	Agents      []Agent            `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"agents"`
+	APIKeys     []APIKey           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"api_keys"`
+	Clients     []Client           `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"clients"`
+	Knowledges  []Knowledge        `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"knowledges"`
+	LLMs        []LLM              `gorm:"foreignKey:TenantID;constraint:OnDelete:CASCADE" json:"llms"`
 }

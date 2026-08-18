@@ -10,9 +10,9 @@ type Session struct {
 	AgentID  string        `gorm:"type:uuid;not null;index" json:"agent_id"`
 	Metadata jsonx.JSONMap `gorm:"type:jsonb;not null;serializer:json" json:"metadata"`
 
-	Tenant               Tenant                `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Client               Client                `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientUserToSessions []ClientUserToSession `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Executions           []Execution           `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Agent                *Agent                `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"agent,omitempty"`
+	Tenant               *Tenant               `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
+	Client               *Client               `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"client"`
+	ClientUserToSessions []ClientUserToSession `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"client_user_to_sessions"`
+	Executions           []Execution           `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"executions"`
+	Agent                *Agent                `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"agent"`
 }

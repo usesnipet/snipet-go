@@ -12,7 +12,7 @@ type KnowledgeIndex struct {
 
 	KnowledgeID string `gorm:"type:uuid;not null;index" json:"knowledge_id"`
 
-	Tenant    Tenant                 `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Knowledge Knowledge              `gorm:"foreignKey:KnowledgeID" json:"-"`
-	Items     []IndexedKnowledgeItem `gorm:"foreignKey:IndexID" json:"-"`
+	Tenant    *Tenant                `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
+	Knowledge *Knowledge             `gorm:"foreignKey:KnowledgeID;references:ID;constraint:OnDelete:CASCADE" json:"knowledge"`
+	Items     []IndexedKnowledgeItem `gorm:"foreignKey:IndexID;constraint:OnDelete:CASCADE" json:"items"`
 }

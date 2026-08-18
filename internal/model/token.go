@@ -26,5 +26,5 @@ type Token struct {
 
 	CreatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 
-	User User `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	User *User `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"user"`
 }

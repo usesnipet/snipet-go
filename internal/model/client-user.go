@@ -10,8 +10,8 @@ type ClientUser struct {
 	Email    *string       `gorm:"type:text" json:"email"`
 	Metadata jsonx.JSONMap `gorm:"type:jsonb;not null" json:"metadata"`
 
-	ClientUserToSessions []ClientUserToSession `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientToClientUsers  []ClientToClientUser  `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ClientUserToSessions []ClientUserToSession `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"client_user_to_sessions"`
+	ClientToClientUsers  []ClientToClientUser  `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"client_to_client_users"`
 }
 
 type ClientToClientUser struct {
@@ -19,14 +19,14 @@ type ClientToClientUser struct {
 	ClientUserID string  `gorm:"primaryKey" json:"client_user_id"`
 	ExternalID   *string `gorm:"type:varchar(255);index" json:"external_id"`
 
-	Client     Client     `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	ClientUser ClientUser `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Client     *Client     `gorm:"foreignKey:ClientID;references:ID;constraint:OnDelete:CASCADE" json:"client"`
+	ClientUser *ClientUser `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"client_user"`
 }
 
 type ClientUserToSession struct {
 	ClientUserID string `gorm:"primaryKey" json:"user_id"`
 	SessionID    string `gorm:"primaryKey" json:"session_id"`
 
-	ClientUser ClientUser `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-	Session    Session    `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	ClientUser *ClientUser `gorm:"foreignKey:ClientUserID;references:ID;constraint:OnDelete:CASCADE" json:"client_user"`
+	Session    *Session    `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"session"`
 }

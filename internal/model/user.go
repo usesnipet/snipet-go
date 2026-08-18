@@ -22,7 +22,7 @@ type User struct {
 	CreatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 
-	Accounts []Account `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
-	Tokens   []Token   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
+	Accounts []Account `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"accounts"`
+	Tokens   []Token   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"tokens"`
 	Members  []Member  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"members"`
 }

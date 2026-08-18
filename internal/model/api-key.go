@@ -17,5 +17,5 @@ type APIKey struct {
 	CreatedAt time.Time  `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt time.Time  `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 
-	Tenant Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
+	Tenant *Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
 }
