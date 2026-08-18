@@ -1,6 +1,31 @@
 import { z } from "zod";
 
-export const tenantSchema = z
+import { agentSchema, type Agent } from "@/models/agent";
+import { apiKeySchema, type ApiKey } from "@/models/api-key";
+import { clientSchema, type Client } from "@/models/client";
+import { invitationSchema, type Invitation } from "@/models/invitation";
+import { knowledgeSchema, type Knowledge } from "@/models/knowledge";
+import { llmSchema, type Llm } from "@/models/llm";
+import { memberSchema, type Member } from "@/models/member";
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  created_at: Date;
+  updated_at: Date;
+  members: Member[] | null;
+  invitations: Invitation[] | null;
+  agents: Agent[] | null;
+  api_keys: ApiKey[] | null;
+  clients: Client[] | null;
+  knowledges: Knowledge[] | null;
+  llms: Llm[] | null;
+}
+
+/** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
+export const tenantBaseSchema = z
   .object({
     id: z.string(),
     name: z.string().min(1).max(255),
@@ -11,4 +36,16 @@ export const tenantSchema = z
   })
   .strict();
 
-export type Tenant = z.infer<typeof tenantSchema>;
+export const tenantSchema: z.ZodType<Tenant> = z.lazy(() =>
+  tenantBaseSchema
+    .extend({
+      members: z.array(memberSchema).nullable(),
+      invitations: z.array(invitationSchema).nullable(),
+      agents: z.array(agentSchema).nullable(),
+      api_keys: z.array(apiKeySchema).nullable(),
+      clients: z.array(clientSchema).nullable(),
+      knowledges: z.array(knowledgeSchema).nullable(),
+      llms: z.array(llmSchema).nullable(),
+    })
+    .strict(),
+);

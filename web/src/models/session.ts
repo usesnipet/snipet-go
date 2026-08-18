@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { agentSchema } from "@/models/agent";
+import { agentSchema, type Agent } from "@/models/agent";
+import { clientSchema, type Client } from "@/models/client";
+import { clientUserToSessionSchema, type ClientUserToSession } from "@/models/client-user";
+import { executionSchema, type Execution } from "@/models/execution";
+import { tenantSchema, type Tenant } from "@/models/tenant";
 
 export const sessionMetadataSchema = z
   .object({ name: z.string().optional() })
@@ -8,18 +12,35 @@ export const sessionMetadataSchema = z
 
 export type SessionMetadata = z.infer<typeof sessionMetadataSchema>;
 
-export const sessionSchema = z
-  .object({
-    id: z.uuid(),
-    tenant_id: z.uuid(),
-    client_id: z.uuid(),
-    agent_id: z.uuid(),
-    metadata: sessionMetadataSchema,
-    agent: agentSchema.optional(),
-  })
-  .strict();
+export interface Session {
+  id: string;
+  tenant_id: string;
+  client_id: string;
+  agent_id: string;
+  metadata: SessionMetadata;
+  tenant?: Tenant | null;
+  client?: Client | null;
+  agent?: Agent | null;
+  client_user_to_sessions: ClientUserToSession[] | null;
+  executions: Execution[] | null;
+}
 
-export type Session = z.infer<typeof sessionSchema>;
+export const sessionSchema: z.ZodType<Session> = z.lazy(() =>
+  z
+    .object({
+      id: z.uuid(),
+      tenant_id: z.uuid(),
+      client_id: z.uuid(),
+      agent_id: z.uuid(),
+      metadata: sessionMetadataSchema,
+      tenant: tenantSchema.nullable().optional(),
+      client: clientSchema.nullable().optional(),
+      agent: agentSchema.nullable().optional(),
+      client_user_to_sessions: z.array(clientUserToSessionSchema).nullable(),
+      executions: z.array(executionSchema).nullable(),
+    })
+    .strict(),
+);
 
 export const messageRoleSchema = z.enum(["system", "user", "assistant", "tool"]);
 export type MessageRole = z.infer<typeof messageRoleSchema>;
@@ -49,11 +70,20 @@ export const messageSchema = z
 
 export type Message = z.infer<typeof messageSchema>;
 
-export const executionMessageSchema = messageSchema
-  .extend({
-    tenant_id: z.uuid(),
-    execution_id: z.uuid(),
-  })
-  .strict();
+export interface ExecutionMessage extends Message {
+  tenant_id: string;
+  execution_id: string;
+  tenant?: Tenant | null;
+  execution?: Execution | null;
+}
 
-export type ExecutionMessage = z.infer<typeof executionMessageSchema>;
+export const executionMessageSchema: z.ZodType<ExecutionMessage> = z.lazy(() =>
+  messageSchema
+    .extend({
+      tenant_id: z.uuid(),
+      execution_id: z.uuid(),
+      tenant: tenantSchema.nullable().optional(),
+      execution: executionSchema.nullable().optional(),
+    })
+    .strict(),
+);

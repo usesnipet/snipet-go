@@ -1,23 +1,37 @@
-import { z } from "zod";
-
 import { tenantSchema } from "@/models/tenant";
 import { userSchema } from "@/models/user";
+import { z } from "zod";
+
+import type { Tenant } from "@/models/tenant";
+import type { User } from "@/models/user";
 
 export const roleSchema = z.enum(["admin", "user"]);
-export type Role = z.infer<typeof roleSchema>;
+export type MemberRole = z.infer<typeof roleSchema>;
 
-export const memberSchema = z
-  .object({
-    id: z.uuid(),
-    user_id: z.uuid(),
-    tenant_id: z.uuid(),
-    role: roleSchema,
-    is_active: z.boolean(),
-    created_at: z.coerce.date(),
-    updated_at: z.coerce.date(),
-    user: userSchema.nullable().optional(),
-    tenant: tenantSchema.nullable().optional(),
-  })
-  .strict();
+export interface Member {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  role: MemberRole;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+  user?: User | null;
+  tenant?: Tenant | null;
+}
 
-export type Member = z.infer<typeof memberSchema>;
+export const memberSchema: z.ZodType<Member> = z.lazy(() =>
+  z
+    .object({
+      id: z.uuid(),
+      user_id: z.uuid(),
+      tenant_id: z.uuid(),
+      role: roleSchema,
+      is_active: z.boolean(),
+      created_at: z.coerce.date(),
+      updated_at: z.coerce.date(),
+      user: userSchema.nullable(),
+      tenant: tenantSchema.nullable(),
+    })
+    .strict(),
+);
