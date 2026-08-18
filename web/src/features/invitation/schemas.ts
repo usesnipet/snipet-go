@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-import { invitationSchema, invitationStatusSchema } from "@/models/invitation";
-import { roleSchema } from "@/models/member";
+import { invitationBaseSchema, invitationSchema, invitationStatusSchema } from "@/models/invitation";
 import { tenantSchema } from "@/models/tenant";
 import { paginatedSchema } from "@/schemas/paginated";
 
@@ -31,12 +30,10 @@ export const listInvitationSearchParamsSchema = z
 
 export type ListInvitationSearchParams = z.infer<typeof listInvitationSearchParamsSchema>;
 
-export const createInvitationSchema = z
-  .object({
-    email: z.email().max(255),
-    role: roleSchema,
-  })
-  .strict();
+export const createInvitationSchema = invitationBaseSchema.pick({
+  email: true,
+  role: true,
+}).strict();
 
 export type CreateInvitation = z.infer<typeof createInvitationSchema>;
 

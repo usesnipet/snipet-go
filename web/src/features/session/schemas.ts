@@ -1,7 +1,7 @@
 import {
   executionMessageSchema,
   messageSchema,
-  sessionMetadataSchema,
+  sessionBaseSchema,
   sessionSchema,
 } from "@/models/session";
 import { paginatedSchema } from "@/schemas/paginated";
@@ -27,21 +27,17 @@ export type {
 export const paginatedSessionSchema = paginatedSchema(sessionSchema);
 export type PaginatedSession = z.infer<typeof paginatedSessionSchema>;
 
-export const createSessionSchema = z
-  .object({
-    agent_id: z.uuid(),
-    metadata: sessionMetadataSchema.optional(),
-  })
-  .strict();
+export const createSessionSchema = sessionBaseSchema.pick({
+  agent_id: true,
+  metadata: true,
+}).partial({ metadata: true }).strict();
 
 export type CreateSession = z.infer<typeof createSessionSchema>;
 
-export const updateSessionSchema = z
-  .object({
-    agent_id: z.uuid().optional(),
-    metadata: sessionMetadataSchema.optional(),
-  })
-  .strict();
+export const updateSessionSchema = sessionBaseSchema.pick({
+  agent_id: true,
+  metadata: true,
+}).partial().strict();
 
 export type UpdateSession = z.infer<typeof updateSessionSchema>;
 

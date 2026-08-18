@@ -11,14 +11,20 @@ export interface Llm {
   tenant?: Tenant | null;
 }
 
+/** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
+export const llmBaseSchema = z
+  .object({
+    id: z.uuid(),
+    tenant_id: z.uuid(),
+    name: z.string().min(1).max(255),
+    provider: z.string().min(1).max(255),
+    configuration: z.record(z.string(), z.unknown()),
+  })
+  .strict();
+
 export const llmSchema: z.ZodType<Llm> = z.lazy(() =>
-  z
-    .object({
-      id: z.uuid(),
-      tenant_id: z.uuid(),
-      name: z.string().min(1).max(255),
-      provider: z.string().min(1).max(255),
-      configuration: z.record(z.string(), z.unknown()),
+  llmBaseSchema
+    .extend({
       tenant: tenantSchema.nullable().optional(),
     })
     .strict(),

@@ -1,4 +1,6 @@
 import {
+  knowledgeBaseSchema,
+  knowledgeIndexBaseSchema,
   knowledgeIndexSchema,
   knowledgeItemSchema,
   knowledgeSchema,
@@ -28,23 +30,19 @@ export type PaginatedKnowledge = z.infer<typeof paginatedKnowledgeSchema>;
 export const paginatedKnowledgeItemSchema = paginatedSchema(knowledgeItemSchema);
 export type PaginatedKnowledgeItem = z.infer<typeof paginatedKnowledgeItemSchema>;
 
-export const createKnowledgeSchema = z
-  .object({
-    name: z.string().min(1).max(255),
-    description: z.string(),
-    driver: z.string().min(1).max(255),
-    configuration: z.record(z.string(), z.unknown()),
-  })
-  .strict();
+export const createKnowledgeSchema = knowledgeBaseSchema.pick({
+  name: true,
+  description: true,
+  driver: true,
+  configuration: true,
+}).strict();
 
 export type CreateKnowledge = z.infer<typeof createKnowledgeSchema>;
 
-export const updateKnowledgeSchema = z
-  .object({
-    name: z.string().min(1).max(255),
-    description: z.string(),
-  })
-  .strict();
+export const updateKnowledgeSchema = knowledgeBaseSchema.pick({
+  name: true,
+  description: true,
+}).strict();
 
 export type UpdateKnowledge = z.infer<typeof updateKnowledgeSchema>;
 
@@ -67,21 +65,17 @@ export type ListKnowledgeDrivers = z.infer<typeof listKnowledgeDriversSchema>;
 export const paginatedKnowledgeIndexSchema = paginatedSchema(knowledgeIndexSchema);
 export type PaginatedKnowledgeIndex = z.infer<typeof paginatedKnowledgeIndexSchema>;
 
-export const createKnowledgeIndexSchema = z
-  .object({
-    name: z.string().min(1).max(255),
-    driver: z.string().min(1).max(100),
-    configuration: z.record(z.string(), z.unknown()),
-  })
-  .strict();
+export const createKnowledgeIndexSchema = knowledgeIndexBaseSchema.pick({
+  name: true,
+  driver: true,
+  configuration: true,
+}).strict();
 
 export type CreateKnowledgeIndex = z.infer<typeof createKnowledgeIndexSchema>;
 
-export const updateKnowledgeIndexSchema = z
-  .object({
-    name: z.string().min(1).max(255),
-  })
-  .strict();
+export const updateKnowledgeIndexSchema = knowledgeIndexBaseSchema.pick({
+  name: true,
+}).strict();
 
 export type UpdateKnowledgeIndex = z.infer<typeof updateKnowledgeIndexSchema>;
 

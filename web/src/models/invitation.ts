@@ -20,17 +20,23 @@ export interface Invitation {
   tenant?: Tenant | null;
 }
 
+/** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
+export const invitationBaseSchema = z
+  .object({
+    id: z.uuid(),
+    tenant_id: z.uuid(),
+    email: z.email().max(255),
+    role: roleSchema,
+    status: invitationStatusSchema,
+    expires_at: z.coerce.date(),
+    created_at: z.coerce.date(),
+    updated_at: z.coerce.date(),
+  })
+  .strict();
+
 export const invitationSchema: z.ZodType<Invitation> = z.lazy(() =>
-  z
-    .object({
-      id: z.uuid(),
-      tenant_id: z.uuid(),
-      email: z.email(),
-      role: roleSchema,
-      status: invitationStatusSchema,
-      expires_at: z.coerce.date(),
-      created_at: z.coerce.date(),
-      updated_at: z.coerce.date(),
+  invitationBaseSchema
+    .extend({
       tenant: tenantSchema.nullable().optional(),
     })
     .strict(),

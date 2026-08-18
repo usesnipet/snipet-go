@@ -1,4 +1,4 @@
-import { llmSchema } from "@/models/llm";
+import { llmBaseSchema, llmSchema } from "@/models/llm";
 import { driverInfoSchema } from "@/schemas/driver";
 import { paginatedSchema, paginationParamsSchema } from "@/schemas/paginated";
 import { z } from "zod";
@@ -12,13 +12,11 @@ export type PaginatedLlm = z.infer<typeof paginatedLlmSchema>;
 export const listLlmSearchParamsSchema = paginationParamsSchema;
 export type ListLlmSearchParams = z.infer<typeof listLlmSearchParamsSchema>;
 
-export const createLlmSchema = z
-  .object({
-    name: z.string().min(1).max(255),
-    provider: z.string().min(1).max(255),
-    configuration: z.record(z.string(), z.unknown()),
-  })
-  .strict();
+export const createLlmSchema = llmBaseSchema.pick({
+  name: true,
+  provider: true,
+  configuration: true,
+}).strict();
 
 export type CreateLlm = z.infer<typeof createLlmSchema>;
 

@@ -25,14 +25,20 @@ export interface Session {
   executions: Execution[] | null;
 }
 
+/** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
+export const sessionBaseSchema = z
+  .object({
+    id: z.uuid(),
+    tenant_id: z.uuid(),
+    client_id: z.uuid(),
+    agent_id: z.uuid(),
+    metadata: sessionMetadataSchema,
+  })
+  .strict();
+
 export const sessionSchema: z.ZodType<Session> = z.lazy(() =>
-  z
-    .object({
-      id: z.uuid(),
-      tenant_id: z.uuid(),
-      client_id: z.uuid(),
-      agent_id: z.uuid(),
-      metadata: sessionMetadataSchema,
+  sessionBaseSchema
+    .extend({
       tenant: tenantSchema.nullable().optional(),
       client: clientSchema.nullable().optional(),
       agent: agentSchema.nullable().optional(),

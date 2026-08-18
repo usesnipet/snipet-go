@@ -21,18 +21,24 @@ export interface Knowledge {
   indexes: KnowledgeIndex[] | null;
 }
 
+/** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
+export const knowledgeBaseSchema = z
+  .object({
+    id: z.uuid(),
+    tenant_id: z.uuid(),
+    name: z.string().min(1).max(255),
+    description: z.string(),
+    driver: z.string().min(1).max(100),
+    configuration: z.record(z.string(), z.unknown()),
+    last_synced_at: z.coerce.date().nullable(),
+    sync_status: syncStatusSchema.nullable(),
+    sync_error: z.string().nullable(),
+  })
+  .strict();
+
 export const knowledgeSchema: z.ZodType<Knowledge> = z.lazy(() =>
-  z
-    .object({
-      id: z.uuid(),
-      tenant_id: z.uuid(),
-      name: z.string().min(1).max(255),
-      description: z.string(),
-      driver: z.string().min(1).max(100),
-      configuration: z.record(z.string(), z.unknown()),
-      last_synced_at: z.coerce.date().nullable(),
-      sync_status: syncStatusSchema.nullable(),
-      sync_error: z.string().nullable(),
+  knowledgeBaseSchema
+    .extend({
       tenant: tenantSchema.nullable().optional(),
       items: z.array(knowledgeItemSchema).nullable(),
       indexes: z.array(knowledgeIndexSchema).nullable(),
@@ -105,15 +111,21 @@ export interface KnowledgeIndex {
   items: IndexedKnowledgeItem[] | null;
 }
 
+/** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
+export const knowledgeIndexBaseSchema = z
+  .object({
+    id: z.uuid(),
+    tenant_id: z.uuid(),
+    name: z.string().min(1).max(255),
+    driver: z.string().min(1).max(100),
+    configuration: z.record(z.string(), z.unknown()),
+    knowledge_id: z.uuid(),
+  })
+  .strict();
+
 export const knowledgeIndexSchema: z.ZodType<KnowledgeIndex> = z.lazy(() =>
-  z
-    .object({
-      id: z.uuid(),
-      tenant_id: z.uuid(),
-      name: z.string().min(1).max(255),
-      driver: z.string().min(1).max(100),
-      configuration: z.record(z.string(), z.unknown()),
-      knowledge_id: z.uuid(),
+  knowledgeIndexBaseSchema
+    .extend({
       tenant: tenantSchema.nullable().optional(),
       knowledge: knowledgeSchema.nullable().optional(),
       items: z.array(indexedKnowledgeItemSchema).nullable(),

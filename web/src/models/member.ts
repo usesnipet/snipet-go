@@ -20,16 +20,22 @@ export interface Member {
   tenant?: Tenant | null;
 }
 
+/** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
+export const memberBaseSchema = z
+  .object({
+    id: z.uuid(),
+    user_id: z.uuid(),
+    tenant_id: z.uuid(),
+    role: roleSchema,
+    is_active: z.boolean(),
+    created_at: z.coerce.date(),
+    updated_at: z.coerce.date(),
+  })
+  .strict();
+
 export const memberSchema: z.ZodType<Member> = z.lazy(() =>
-  z
-    .object({
-      id: z.uuid(),
-      user_id: z.uuid(),
-      tenant_id: z.uuid(),
-      role: roleSchema,
-      is_active: z.boolean(),
-      created_at: z.coerce.date(),
-      updated_at: z.coerce.date(),
+  memberBaseSchema
+    .extend({
       user: userSchema.nullable(),
       tenant: tenantSchema.nullable(),
     })
