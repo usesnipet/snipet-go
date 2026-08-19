@@ -62,8 +62,8 @@ func (r *SessionRepository) CheckUserAccess(
 	sessionID string,
 ) (bool, error) {
 	var total int64
-	err := r.db(ctx).Table("user_to_sessions").
-		Joins("LEFT JOIN sessions s ON s.id = user_to_sessions.session_id").
+	err := r.db(ctx).Table("client_user_to_sessions").
+		Joins("LEFT JOIN sessions s ON s.id = client_user_to_sessions.session_id").
 		Where("s.client_id = ?", clientId).
 		Where("user_id = ? AND session_id = ?", userID, sessionID).
 		Count(&total).Error
@@ -95,7 +95,7 @@ func (r *SessionRepository) FilterInClientWithUser(
 
 	var total int64
 	err := r.db(ctx).Table("sessions").
-		Joins("LEFT JOIN user_to_sessions uts ON uts.session_id = sessions.id").
+		Joins("LEFT JOIN client_user_to_sessions uts ON uts.session_id = sessions.id").
 		Where("client_id = ?", clientID).
 		Where("uts.user_id = ?", userID).
 		Count(&total).Error
@@ -107,7 +107,7 @@ func (r *SessionRepository) FilterInClientWithUser(
 		return nil, err
 	}
 	var data []model.Session
-	err = chain.Joins("LEFT JOIN user_to_sessions uts ON uts.session_id = sessions.id").
+	err = chain.Joins("LEFT JOIN client_user_to_sessions uts ON uts.session_id = sessions.id").
 		Where("client_id = ?", clientID).
 		Where("uts.user_id = ?", userID).Find(&data).Error
 	if err != nil {
