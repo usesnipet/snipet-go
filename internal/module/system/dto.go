@@ -1,12 +1,6 @@
-package app
+package system
 
-type AppConfigDTO struct {
-	InheritClient     bool   `json:"inherit_client"`
-	InheritClientCode string `json:"inherit_client_code"`
-	InheritClientName string `json:"inherit_client_name"`
-}
-
-type SystemInfoDTO struct {
+type InfoDTO struct {
 	Version string `json:"version"`
 	// MultiTenantEnabled mirrors license.Info().Valid — lets the frontend
 	// pick single- vs multi-tenant onboarding/registration copy. The actual

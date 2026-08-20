@@ -70,14 +70,14 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	apiKeyRepo := repository.NewApiKeyRepository(db)
 	agentRepo := repository.NewAgentRepository(db)
 	llmRepo := repository.NewLLMRepository(db)
-	clientRepo := repository.NewClientRepository(db)
-	sessionRepo := repository.NewSessionRepository(db, clientRepo)
+	appRepo := repository.NewAppRepository(db)
+	sessionRepo := repository.NewSessionRepository(db, appRepo)
 	knowledgeRepo := repository.NewKnowledgeRepository(db)
 	knowledgeIndexRepo := repository.NewKnowledgeIndexRepository(db)
 	knowledgeItemRepo := repository.NewKnowledgeItemRepository(db)
 	indexedKnowledgeItemRepo := repository.NewIndexedKnowledgeItemRepository(db)
-	clientUserRepo := repository.NewClientUserRepository(db, clientRepo)
-	refreshTokenRepo := repository.NewClientUserRefreshTokenRepository(db)
+	appUserRepo := repository.NewAppUserRepository(db, appRepo)
+	refreshTokenRepo := repository.NewAppUserRefreshTokenRepository(db)
 	executionRepo := repository.NewExecutionRepository(db)
 	messageRepo := repository.NewExecutionMessageRepository(db)
 	userRepo := repository.NewUserRepository(db)
@@ -135,8 +135,8 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	clientauthService := clientauth.NewService(
 		authRegistry,
-		clientRepo,
-		clientUserRepo,
+		appRepo,
+		appUserRepo,
 		refreshTokenRepo,
 		jwtService,
 		refreshTokenService,
@@ -164,7 +164,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 
-	clientService := client.NewService(clientRepo, agentRepo, logger)
+	clientService := client.NewService(appRepo, agentRepo, logger)
 
 	agentService := agent.NewService(agentRepo, llmRepo, txManager, engine, executionRepo, messageRepo, logger)
 	llmService := llmmodule.NewService(llmRepo, llmManager)
@@ -189,7 +189,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	sessionService := session.NewService(sessionRepo, messageRepo, clientService, agentService)
 
-	clientUserService := clientuser.NewService(clientUserRepo)
+	clientUserService := clientuser.NewService(appUserRepo)
 	userService := user.NewService(userRepo, cfg.User)
 	appService := app_module.NewService(&cfg.App, licenseService)
 

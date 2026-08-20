@@ -14,6 +14,7 @@ type App struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
 	TenantID     string    `gorm:"type:uuid;not null;index" json:"tenant_id"`
+	Code         string    `gorm:"type:varchar(10);not null;unique" json:"code"`
 	Name         string    `gorm:"type:varchar(255);not null" json:"name"`
 	Description  string    `gorm:"type:text;not null" json:"description"`
 	Status       AppStatus `gorm:"type:varchar(255);not null" json:"status"`
