@@ -44,7 +44,7 @@ func TestFindByCodeInTenantRejectsCrossTenant(t *testing.T) {
 	clientRepo := mocks.NewMockIClientRepository(t)
 	clientRepo.EXPECT().
 		FindByCode(mock.Anything, "acme").
-		Return(&model.Client{Code: "acme", TenantID: "other-tenant"}, nil)
+		Return(&model.App{Code: "acme", TenantID: "other-tenant"}, nil)
 
 	svc := client.NewService(clientRepo, mocks.NewMockIAgentRepository(t), logger.NewLogger(logger.LevelError))
 
@@ -58,7 +58,7 @@ func TestGetAgentsScopesToClientTenant(t *testing.T) {
 	clientRepo := mocks.NewMockIClientRepository(t)
 	clientRepo.EXPECT().
 		Filter(mock.Anything, mock.Anything).
-		Return(page.NewPaginated([]model.Client{{Code: "acme", TenantID: tenantID}}, 1, 0, 1), nil)
+		Return(page.NewPaginated([]model.App{{Code: "acme", TenantID: tenantID}}, 1, 0, 1), nil)
 
 	expected := page.NewPaginated([]model.Agent{{Name: "Agent A", TenantID: tenantID}}, 1, 0, 10)
 	agentRepo := mocks.NewMockIAgentRepository(t)

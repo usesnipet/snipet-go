@@ -37,7 +37,7 @@ func NewService(
 
 // resolveClient returns the full Client row (not just its ID) — Create
 // needs client.TenantID to stamp the new Session's denormalized tenant_id.
-func (s *Service) resolveClient(ctx context.Context, clientCode string) (*model.Client, error) {
+func (s *Service) resolveClient(ctx context.Context, clientCode string) (*model.App, error) {
 	return s.clientService.FindByCode(ctx, clientCode)
 }
 

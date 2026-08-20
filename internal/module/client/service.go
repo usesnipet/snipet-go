@@ -27,18 +27,18 @@ func NewService(clientRepo repository.IClientRepository, agentRepo repository.IA
 	return &Service{clientRepo: clientRepo, agentRepo: agentRepo, logger: logger}
 }
 
-func (s *Service) Filter(ctx context.Context, tenantID string, opts *filter.Options[model.Client]) (*page.Paginated[model.Client], error) {
+func (s *Service) Filter(ctx context.Context, tenantID string, opts *filter.Options[model.App]) (*page.Paginated[model.App], error) {
 	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
 		return nil, err
 	}
-	return s.clientRepo.Filter(ctx, filter.Merge(opts, filter.New[model.Client](filter.WhereEq("tenant_id", tenantID))))
+	return s.clientRepo.Filter(ctx, filter.Merge(opts, filter.New[model.App](filter.WhereEq("tenant_id", tenantID))))
 }
 
 // FindByCode is the tenant-agnostic lookup used by the public/widget-facing
 // surface (FindPublicByCode, GetAgents) and by Init's bootstrap flow, where
 // there's no tenant-staff caller to scope against.
-func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, error) {
-	paginated, err := s.clientRepo.Filter(ctx, filter.New[model.Client](filter.WhereEq("code", code)))
+func (s *Service) FindByCode(ctx context.Context, code string) (*model.App, error) {
+	paginated, err := s.clientRepo.Filter(ctx, filter.New[model.App](filter.WhereEq("code", code)))
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (s *Service) FindByCode(ctx context.Context, code string) (*model.Client, e
 
 // findByCodeInTenant is the admin-path lookup — verifies the client belongs
 // to tenantID (404, not 403, to avoid confirming the code exists elsewhere).
-func (s *Service) findByCodeInTenant(ctx context.Context, tenantID, code string) (*model.Client, error) {
+func (s *Service) findByCodeInTenant(ctx context.Context, tenantID, code string) (*model.App, error) {
 	found, err := s.clientRepo.FindByCode(ctx, code)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (s *Service) findByCodeInTenant(ctx context.Context, tenantID, code string)
 	return found, nil
 }
 
-func (s *Service) FindByCodeInTenant(ctx context.Context, tenantID, code string) (*model.Client, error) {
+func (s *Service) FindByCodeInTenant(ctx context.Context, tenantID, code string) (*model.App, error) {
 	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (s *Service) GenerateCode(ctx context.Context) (string, error) {
 	return s.GenerateCode(ctx)
 }
 
-func (s *Service) Create(ctx context.Context, tenantID string, dto CreateClientDTO) (*model.Client, error) {
+func (s *Service) Create(ctx context.Context, tenantID string, dto CreateClientDTO) (*model.App, error) {
 	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (s *Service) Create(ctx context.Context, tenantID string, dto CreateClientD
 	return s.createWithCode(ctx, tenantID, dto, code)
 }
 
-func (s *Service) createWithCode(ctx context.Context, tenantID string, dto CreateClientDTO, code string) (*model.Client, error) {
+func (s *Service) createWithCode(ctx context.Context, tenantID string, dto CreateClientDTO, code string) (*model.App, error) {
 	if dto.Config.Webhook.URL != "" {
 		dto.Config.Webhook.Enabled = true
 	}
@@ -118,7 +118,7 @@ func (s *Service) createWithCode(ctx context.Context, tenantID string, dto Creat
 		dto.Config.OIDC.Enabled = true
 	}
 
-	client := &model.Client{
+	client := &model.App{
 		TenantID: tenantID,
 		Code:     code,
 		Name:     dto.Name,
@@ -138,7 +138,7 @@ func (s *Service) UpdateByCode(ctx context.Context, tenantID, code string, dto U
 		return err
 	}
 
-	updates := &model.Client{}
+	updates := &model.App{}
 	if dto.Name != nil {
 		updates.Name = *dto.Name
 	}

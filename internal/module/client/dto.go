@@ -9,9 +9,9 @@ import (
 // ClientResponse, ClientsPage and ClientAgentsPage exist so swagger annotations
 // in this package can reference them without importing internal/model or
 // internal/page directly.
-type ClientResponse = model.Client
+type ClientResponse = model.App
 
-type ClientsPage = page.Paginated[model.Client]
+type ClientsPage = page.Paginated[model.App]
 
 type ClientAgentsPage = page.Paginated[model.Agent]
 
@@ -30,8 +30,8 @@ type FindClientsFilterDTO struct {
 	Skip *int `form:"skip" validate:"omitempty,min=0"`
 }
 
-func (dto *FindClientsFilterDTO) ToFilter() *filter.Options[model.Client] {
-	return filter.New[model.Client](
+func (dto *FindClientsFilterDTO) ToFilter() *filter.Options[model.App] {
+	return filter.New[model.App](
 		filter.PtrTake(dto.Take),
 		filter.PtrSkip(dto.Skip),
 	)

@@ -79,7 +79,7 @@ func expectClientByCode(t *testing.T, clientRepo *mocks.MockIClientRepository, c
 	t.Helper()
 	clientRepo.EXPECT().
 		Filter(mock.Anything, mock.Anything).
-		Return(page.NewPaginated([]model.Client{{ID: clientID, Code: code}}, 1, 0, 10), nil)
+		Return(page.NewPaginated([]model.App{{ID: clientID, Code: code}}, 1, 0, 10), nil)
 }
 
 func TestFindMessagesReturnsExecutionMessages(t *testing.T) {

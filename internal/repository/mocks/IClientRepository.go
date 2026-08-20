@@ -42,7 +42,7 @@ func (_m *MockIClientRepository) EXPECT() *MockIClientRepository_Expecter {
 }
 
 // Create provides a mock function for the type MockIClientRepository
-func (_mock *MockIClientRepository) Create(ctx context.Context, model1 *model.Client) error {
+func (_mock *MockIClientRepository) Create(ctx context.Context, model1 *model.App) error {
 	ret := _mock.Called(ctx, model1)
 
 	if len(ret) == 0 {
@@ -50,7 +50,7 @@ func (_mock *MockIClientRepository) Create(ctx context.Context, model1 *model.Cl
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.Client) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.App) error); ok {
 		r0 = returnFunc(ctx, model1)
 	} else {
 		r0 = ret.Error(0)
@@ -70,15 +70,15 @@ func (_e *MockIClientRepository_Expecter) Create(ctx any, model1 any) *MockIClie
 	return &MockIClientRepository_Create_Call{Call: _e.mock.On("Create", ctx, model1)}
 }
 
-func (_c *MockIClientRepository_Create_Call) Run(run func(ctx context.Context, model1 *model.Client)) *MockIClientRepository_Create_Call {
+func (_c *MockIClientRepository_Create_Call) Run(run func(ctx context.Context, model1 *model.App)) *MockIClientRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *model.Client
+		var arg1 *model.App
 		if args[1] != nil {
-			arg1 = args[1].(*model.Client)
+			arg1 = args[1].(*model.App)
 		}
 		run(
 			arg0,
@@ -93,7 +93,7 @@ func (_c *MockIClientRepository_Create_Call) Return(err error) *MockIClientRepos
 	return _c
 }
 
-func (_c *MockIClientRepository_Create_Call) RunAndReturn(run func(ctx context.Context, model1 *model.Client) error) *MockIClientRepository_Create_Call {
+func (_c *MockIClientRepository_Create_Call) RunAndReturn(run func(ctx context.Context, model1 *model.App) error) *MockIClientRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -213,26 +213,26 @@ func (_c *MockIClientRepository_DeleteByID_Call) RunAndReturn(run func(ctx conte
 }
 
 // Filter provides a mock function for the type MockIClientRepository
-func (_mock *MockIClientRepository) Filter(ctx context.Context, filter1 *filter.Options[model.Client]) (*page.Paginated[model.Client], error) {
+func (_mock *MockIClientRepository) Filter(ctx context.Context, filter1 *filter.Options[model.App]) (*page.Paginated[model.App], error) {
 	ret := _mock.Called(ctx, filter1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Filter")
 	}
 
-	var r0 *page.Paginated[model.Client]
+	var r0 *page.Paginated[model.App]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.Client]) (*page.Paginated[model.Client], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.App]) (*page.Paginated[model.App], error)); ok {
 		return returnFunc(ctx, filter1)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.Client]) *page.Paginated[model.Client]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *filter.Options[model.App]) *page.Paginated[model.App]); ok {
 		r0 = returnFunc(ctx, filter1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*page.Paginated[model.Client])
+			r0 = ret.Get(0).(*page.Paginated[model.App])
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *filter.Options[model.Client]) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *filter.Options[model.App]) error); ok {
 		r1 = returnFunc(ctx, filter1)
 	} else {
 		r1 = ret.Error(1)
@@ -247,20 +247,20 @@ type MockIClientRepository_Filter_Call struct {
 
 // Filter is a helper method to define mock.On call
 //   - ctx context.Context
-//   - filter1 *filter.Options[model.Client]
+//   - filter1 *filter.Options[model.App]
 func (_e *MockIClientRepository_Expecter) Filter(ctx any, filter1 any) *MockIClientRepository_Filter_Call {
 	return &MockIClientRepository_Filter_Call{Call: _e.mock.On("Filter", ctx, filter1)}
 }
 
-func (_c *MockIClientRepository_Filter_Call) Run(run func(ctx context.Context, filter1 *filter.Options[model.Client])) *MockIClientRepository_Filter_Call {
+func (_c *MockIClientRepository_Filter_Call) Run(run func(ctx context.Context, filter1 *filter.Options[model.App])) *MockIClientRepository_Filter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *filter.Options[model.Client]
+		var arg1 *filter.Options[model.App]
 		if args[1] != nil {
-			arg1 = args[1].(*filter.Options[model.Client])
+			arg1 = args[1].(*filter.Options[model.App])
 		}
 		run(
 			arg0,
@@ -270,34 +270,34 @@ func (_c *MockIClientRepository_Filter_Call) Run(run func(ctx context.Context, f
 	return _c
 }
 
-func (_c *MockIClientRepository_Filter_Call) Return(paginated *page.Paginated[model.Client], err error) *MockIClientRepository_Filter_Call {
+func (_c *MockIClientRepository_Filter_Call) Return(paginated *page.Paginated[model.App], err error) *MockIClientRepository_Filter_Call {
 	_c.Call.Return(paginated, err)
 	return _c
 }
 
-func (_c *MockIClientRepository_Filter_Call) RunAndReturn(run func(ctx context.Context, filter1 *filter.Options[model.Client]) (*page.Paginated[model.Client], error)) *MockIClientRepository_Filter_Call {
+func (_c *MockIClientRepository_Filter_Call) RunAndReturn(run func(ctx context.Context, filter1 *filter.Options[model.App]) (*page.Paginated[model.App], error)) *MockIClientRepository_Filter_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FindByCode provides a mock function for the type MockIClientRepository
-func (_mock *MockIClientRepository) FindByCode(ctx context.Context, code string) (*model.Client, error) {
+func (_mock *MockIClientRepository) FindByCode(ctx context.Context, code string) (*model.App, error) {
 	ret := _mock.Called(ctx, code)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindByCode")
 	}
 
-	var r0 *model.Client
+	var r0 *model.App
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.Client, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.App, error)); ok {
 		return returnFunc(ctx, code)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.Client); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.App); ok {
 		r0 = returnFunc(ctx, code)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Client)
+			r0 = ret.Get(0).(*model.App)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -338,34 +338,34 @@ func (_c *MockIClientRepository_FindByCode_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockIClientRepository_FindByCode_Call) Return(client *model.Client, err error) *MockIClientRepository_FindByCode_Call {
+func (_c *MockIClientRepository_FindByCode_Call) Return(client *model.App, err error) *MockIClientRepository_FindByCode_Call {
 	_c.Call.Return(client, err)
 	return _c
 }
 
-func (_c *MockIClientRepository_FindByCode_Call) RunAndReturn(run func(ctx context.Context, code string) (*model.Client, error)) *MockIClientRepository_FindByCode_Call {
+func (_c *MockIClientRepository_FindByCode_Call) RunAndReturn(run func(ctx context.Context, code string) (*model.App, error)) *MockIClientRepository_FindByCode_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FindByID provides a mock function for the type MockIClientRepository
-func (_mock *MockIClientRepository) FindByID(ctx context.Context, id string) (*model.Client, error) {
+func (_mock *MockIClientRepository) FindByID(ctx context.Context, id string) (*model.App, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindByID")
 	}
 
-	var r0 *model.Client
+	var r0 *model.App
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.Client, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.App, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.Client); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.App); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Client)
+			r0 = ret.Get(0).(*model.App)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -406,18 +406,18 @@ func (_c *MockIClientRepository_FindByID_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockIClientRepository_FindByID_Call) Return(client *model.Client, err error) *MockIClientRepository_FindByID_Call {
+func (_c *MockIClientRepository_FindByID_Call) Return(client *model.App, err error) *MockIClientRepository_FindByID_Call {
 	_c.Call.Return(client, err)
 	return _c
 }
 
-func (_c *MockIClientRepository_FindByID_Call) RunAndReturn(run func(ctx context.Context, id string) (*model.Client, error)) *MockIClientRepository_FindByID_Call {
+func (_c *MockIClientRepository_FindByID_Call) RunAndReturn(run func(ctx context.Context, id string) (*model.App, error)) *MockIClientRepository_FindByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateByCode provides a mock function for the type MockIClientRepository
-func (_mock *MockIClientRepository) UpdateByCode(ctx context.Context, code string, updates *model.Client) error {
+func (_mock *MockIClientRepository) UpdateByCode(ctx context.Context, code string, updates *model.App) error {
 	ret := _mock.Called(ctx, code, updates)
 
 	if len(ret) == 0 {
@@ -425,7 +425,7 @@ func (_mock *MockIClientRepository) UpdateByCode(ctx context.Context, code strin
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.Client) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.App) error); ok {
 		r0 = returnFunc(ctx, code, updates)
 	} else {
 		r0 = ret.Error(0)
@@ -446,7 +446,7 @@ func (_e *MockIClientRepository_Expecter) UpdateByCode(ctx any, code any, update
 	return &MockIClientRepository_UpdateByCode_Call{Call: _e.mock.On("UpdateByCode", ctx, code, updates)}
 }
 
-func (_c *MockIClientRepository_UpdateByCode_Call) Run(run func(ctx context.Context, code string, updates *model.Client)) *MockIClientRepository_UpdateByCode_Call {
+func (_c *MockIClientRepository_UpdateByCode_Call) Run(run func(ctx context.Context, code string, updates *model.App)) *MockIClientRepository_UpdateByCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -456,9 +456,9 @@ func (_c *MockIClientRepository_UpdateByCode_Call) Run(run func(ctx context.Cont
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *model.Client
+		var arg2 *model.App
 		if args[2] != nil {
-			arg2 = args[2].(*model.Client)
+			arg2 = args[2].(*model.App)
 		}
 		run(
 			arg0,
@@ -474,13 +474,13 @@ func (_c *MockIClientRepository_UpdateByCode_Call) Return(err error) *MockIClien
 	return _c
 }
 
-func (_c *MockIClientRepository_UpdateByCode_Call) RunAndReturn(run func(ctx context.Context, code string, updates *model.Client) error) *MockIClientRepository_UpdateByCode_Call {
+func (_c *MockIClientRepository_UpdateByCode_Call) RunAndReturn(run func(ctx context.Context, code string, updates *model.App) error) *MockIClientRepository_UpdateByCode_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateByID provides a mock function for the type MockIClientRepository
-func (_mock *MockIClientRepository) UpdateByID(ctx context.Context, id string, model1 *model.Client) error {
+func (_mock *MockIClientRepository) UpdateByID(ctx context.Context, id string, model1 *model.App) error {
 	ret := _mock.Called(ctx, id, model1)
 
 	if len(ret) == 0 {
@@ -488,7 +488,7 @@ func (_mock *MockIClientRepository) UpdateByID(ctx context.Context, id string, m
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.Client) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *model.App) error); ok {
 		r0 = returnFunc(ctx, id, model1)
 	} else {
 		r0 = ret.Error(0)
@@ -509,7 +509,7 @@ func (_e *MockIClientRepository_Expecter) UpdateByID(ctx any, id any, model1 any
 	return &MockIClientRepository_UpdateByID_Call{Call: _e.mock.On("UpdateByID", ctx, id, model1)}
 }
 
-func (_c *MockIClientRepository_UpdateByID_Call) Run(run func(ctx context.Context, id string, model1 *model.Client)) *MockIClientRepository_UpdateByID_Call {
+func (_c *MockIClientRepository_UpdateByID_Call) Run(run func(ctx context.Context, id string, model1 *model.App)) *MockIClientRepository_UpdateByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -519,9 +519,9 @@ func (_c *MockIClientRepository_UpdateByID_Call) Run(run func(ctx context.Contex
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *model.Client
+		var arg2 *model.App
 		if args[2] != nil {
-			arg2 = args[2].(*model.Client)
+			arg2 = args[2].(*model.App)
 		}
 		run(
 			arg0,
@@ -537,7 +537,7 @@ func (_c *MockIClientRepository_UpdateByID_Call) Return(err error) *MockIClientR
 	return _c
 }
 
-func (_c *MockIClientRepository_UpdateByID_Call) RunAndReturn(run func(ctx context.Context, id string, model1 *model.Client) error) *MockIClientRepository_UpdateByID_Call {
+func (_c *MockIClientRepository_UpdateByID_Call) RunAndReturn(run func(ctx context.Context, id string, model1 *model.App) error) *MockIClientRepository_UpdateByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
