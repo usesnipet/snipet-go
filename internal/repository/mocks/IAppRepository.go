@@ -416,6 +416,69 @@ func (_c *MockIAppRepository_FindByID_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
+// UpdateAuthConfigByCode provides a mock function for the type MockIAppRepository
+func (_mock *MockIAppRepository) UpdateAuthConfigByCode(ctx context.Context, code string, authConfig model.AppAuthConfig) error {
+	ret := _mock.Called(ctx, code, authConfig)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateAuthConfigByCode")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, model.AppAuthConfig) error); ok {
+		r0 = returnFunc(ctx, code, authConfig)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIAppRepository_UpdateAuthConfigByCode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAuthConfigByCode'
+type MockIAppRepository_UpdateAuthConfigByCode_Call struct {
+	*mock.Call
+}
+
+// UpdateAuthConfigByCode is a helper method to define mock.On call
+//   - ctx context.Context
+//   - code string
+//   - authConfig model.AppAuthConfig
+func (_e *MockIAppRepository_Expecter) UpdateAuthConfigByCode(ctx any, code any, authConfig any) *MockIAppRepository_UpdateAuthConfigByCode_Call {
+	return &MockIAppRepository_UpdateAuthConfigByCode_Call{Call: _e.mock.On("UpdateAuthConfigByCode", ctx, code, authConfig)}
+}
+
+func (_c *MockIAppRepository_UpdateAuthConfigByCode_Call) Run(run func(ctx context.Context, code string, authConfig model.AppAuthConfig)) *MockIAppRepository_UpdateAuthConfigByCode_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 model.AppAuthConfig
+		if args[2] != nil {
+			arg2 = args[2].(model.AppAuthConfig)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIAppRepository_UpdateAuthConfigByCode_Call) Return(err error) *MockIAppRepository_UpdateAuthConfigByCode_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIAppRepository_UpdateAuthConfigByCode_Call) RunAndReturn(run func(ctx context.Context, code string, authConfig model.AppAuthConfig) error) *MockIAppRepository_UpdateAuthConfigByCode_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateByCode provides a mock function for the type MockIAppRepository
 func (_mock *MockIAppRepository) UpdateByCode(ctx context.Context, code string, updates *model.App) error {
 	ret := _mock.Called(ctx, code, updates)

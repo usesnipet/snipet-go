@@ -22,6 +22,14 @@ type UpdateAppDTO struct {
 	Description *string `json:"description" validate:"omitempty,max=1000"`
 }
 
+type UpdateAppAuthConfigDTO struct {
+	model.AppAuthConfig
+}
+
+func (dto *UpdateAppAuthConfigDTO) ToModel() model.AppAuthConfig {
+	return dto.AppAuthConfig
+}
+
 type AppWithSecret struct {
 	*model.App
 	Key string `json:"key"`

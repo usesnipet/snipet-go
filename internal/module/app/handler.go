@@ -33,6 +33,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 		r.Post("/", serve(h.create))
 		r.Get("/{code}", serve(h.findByCode))
 		r.Put("/{code}", serve(h.update))
+		r.Put("/{code}/auth-config", serve(h.updateAuthConfig))
 		r.Post("/{code}/roll", serve(h.roll))
 		r.Put("/{code}/active", serve(h.toggleActive))
 		r.Put("/{code}/disabled", serve(h.toggleDisabled))
@@ -127,6 +128,29 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	err := h.service.UpdateByCode(r.Context(), h.tenantID(r), chi.URLParam(r, "code"), dto)
+	if err != nil {
+		return err
+	}
+	return api.WriteNoContent(w)
+}
+
+// @Summary		Update app auth config
+// @Description	Replaces how the app federates its end-users' identity (OIDC/webhook). Caller must be a tenant admin.
+// @Tags			app
+// @Accept			json
+// @Security		BearerAuth
+// @Param			tenant_id	path	string					true	"Tenant ID"
+// @Param			code		path	string					true	"App code"
+// @Param			body		body	UpdateAppAuthConfigDTO	true	"Auth config data"
+// @Success		204
+// @Failure		400	{object}	api.Error
+// @Router			/tenants/{tenant_id}/apps/{code}/auth-config [put]
+func (h *Handler) updateAuthConfig(w http.ResponseWriter, r *http.Request) error {
+	var dto UpdateAppAuthConfigDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+	err := h.service.UpdateAuthConfig(r.Context(), h.tenantID(r), chi.URLParam(r, "code"), dto)
 	if err != nil {
 		return err
 	}

@@ -35,11 +35,11 @@ func (p *OIDCProvider) Name() ProviderName {
 
 func (p *OIDCProvider) Validate(
 	ctx context.Context,
-	clientCode string,
-	clientConfig *model.ClientConfig,
+	appCode string,
+	authConfig *model.AppAuthConfig,
 ) error {
-	if !clientConfig.OIDC.Enabled {
-		return apperr.BadRequest("client oidc is not enabled")
+	if !authConfig.OIDC.Enabled {
+		return apperr.BadRequest("app oidc is not enabled")
 	}
 
 	return nil
@@ -47,8 +47,8 @@ func (p *OIDCProvider) Validate(
 
 func (p *OIDCProvider) Authenticate(
 	ctx context.Context,
-	clientCode string,
-	clientConfig *model.ClientConfig,
+	appCode string,
+	authConfig *model.AppAuthConfig,
 	req *http.Request,
 ) (*Identity, error) {
 
@@ -74,8 +74,8 @@ func (p *OIDCProvider) Authenticate(
 	}
 
 	issuer := unverified.Issuer
-	if clientConfig.OIDC.Issuer != "" {
-		issuer = clientConfig.OIDC.Issuer
+	if authConfig.OIDC.Issuer != "" {
+		issuer = authConfig.OIDC.Issuer
 	}
 
 	if issuer == "" {
@@ -89,8 +89,8 @@ func (p *OIDCProvider) Authenticate(
 
 	config := &oidc.Config{}
 
-	if clientConfig.OIDC.Audience != "" {
-		config.ClientID = clientConfig.OIDC.Audience
+	if authConfig.OIDC.Audience != "" {
+		config.ClientID = authConfig.OIDC.Audience
 	} else {
 		config.SkipClientIDCheck = true
 	}

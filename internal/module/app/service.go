@@ -169,6 +169,16 @@ func (s *Service) UpdateByCode(ctx context.Context, tenantID, code string, dto U
 	return s.appRepo.UpdateByCode(ctx, code, updates)
 }
 
+func (s *Service) UpdateAuthConfig(ctx context.Context, tenantID, code string, dto UpdateAppAuthConfigDTO) error {
+	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
+		return err
+	}
+	if _, err := s.findByCodeInTenant(ctx, tenantID, code); err != nil {
+		return err
+	}
+	return s.appRepo.UpdateAuthConfigByCode(ctx, code, dto.ToModel())
+}
+
 // ToggleActive flips an app between active and deactivated. A deactivated
 // app fails key verification (see VerifyKey) so it can no longer ping in or
 // authenticate.

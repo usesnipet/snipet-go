@@ -14,6 +14,7 @@ type IAppRepository interface {
 
 	FindByCode(ctx context.Context, code string) (*model.App, error)
 	UpdateByCode(ctx context.Context, code string, updates *model.App) error
+	UpdateAuthConfigByCode(ctx context.Context, code string, authConfig model.AppAuthConfig) error
 	DeleteByCode(ctx context.Context, code string) error
 }
 
@@ -40,6 +41,24 @@ func (r *AppRepository) FindByCode(ctx context.Context, code string) (*model.App
 
 func (r *AppRepository) UpdateByCode(ctx context.Context, code string, updates *model.App) error {
 	affected, err := gorm.G[model.App](r.db(ctx)).Where("code = ?", code).Updates(ctx, *updates)
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return apperr.NotFound("entity not found")
+	}
+	return nil
+}
+
+// UpdateAuthConfigByCode replaces the whole auth_config column, forcing it
+// into the SQL update via Select — a plain struct Updates would silently
+// skip a fully-zeroed AppAuthConfig (e.g. disabling every provider) since
+// gorm.Updates omits zero-value fields.
+func (r *AppRepository) UpdateAuthConfigByCode(ctx context.Context, code string, authConfig model.AppAuthConfig) error {
+	affected, err := gorm.G[model.App](r.db(ctx)).
+		Where("code = ?", code).
+		Select("auth_config").
+		Updates(ctx, model.App{AuthConfig: authConfig})
 	if err != nil {
 		return err
 	}

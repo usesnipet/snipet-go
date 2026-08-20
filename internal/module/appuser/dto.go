@@ -14,6 +14,11 @@ type AppUserResponse = model.AppUser
 
 type AppUsersPage = page.Paginated[model.AppUser]
 
+type CreateAnonymousAppUserDTO struct {
+	Name     *string       `json:"name" validate:"omitempty,max=255"`
+	Metadata jsonx.JSONMap `json:"metadata" validate:"omitempty"`
+}
+
 type CreateAppUserDTO struct {
 	ExternalID string        `json:"external_id" validate:"required,max=255"`
 	Name       string        `json:"name" validate:"omitempty,max=255"`

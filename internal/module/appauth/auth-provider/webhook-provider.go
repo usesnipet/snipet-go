@@ -43,27 +43,27 @@ func (p *WebhookProvider) Name() ProviderName {
 
 func (p *WebhookProvider) Validate(
 	ctx context.Context,
-	clientCode string,
-	clientConfig *model.ClientConfig,
+	appCode string,
+	authConfig *model.AppAuthConfig,
 ) error {
-	if clientConfig.Webhook.URL == "" {
-		return apperr.BadRequest("client webhook url not configured")
+	if authConfig.Webhook.URL == "" {
+		return apperr.BadRequest("app webhook url not configured")
 	}
-	if !clientConfig.Webhook.Enabled {
-		return apperr.BadRequest("client webhook is not enabled")
+	if !authConfig.Webhook.Enabled {
+		return apperr.BadRequest("app webhook is not enabled")
 	}
 	return nil
 }
 
 func (p *WebhookProvider) Authenticate(
 	ctx context.Context,
-	clientCode string,
-	clientConfig *model.ClientConfig,
+	appCode string,
+	authConfig *model.AppAuthConfig,
 	req *http.Request,
 ) (*Identity, error) {
-	webhookURL, err := url.Parse(clientConfig.Webhook.URL)
+	webhookURL, err := url.Parse(authConfig.Webhook.URL)
 	if err != nil {
-		return nil, apperr.BadRequest("invalid client webhook url")
+		return nil, apperr.BadRequest("invalid app webhook url")
 	}
 
 	query := webhookURL.Query()
@@ -92,28 +92,28 @@ func (p *WebhookProvider) Authenticate(
 
 	resp, err := p.client.Do(webhookReq)
 	if err != nil {
-		return nil, apperr.NetworkError("failed to call client webhook")
+		return nil, apperr.NetworkError("failed to call app webhook")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return nil, apperr.Unauthorized("client webhook rejected authentication")
+		return nil, apperr.Unauthorized("app webhook rejected authentication")
 	}
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, apperr.NetworkError("client webhook returned an error")
+		return nil, apperr.NetworkError("app webhook returned an error")
 	}
 	if resp.Header.Get("Content-Type") != "application/json" {
-		return nil, apperr.BadRequest("client webhook response is not a JSON")
+		return nil, apperr.BadRequest("app webhook response is not a JSON")
 	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return nil, apperr.NetworkError("failed to read client webhook response")
+		return nil, apperr.NetworkError("failed to read app webhook response")
 	}
 
 	var identity Identity
 	if err := json.Unmarshal(body, &identity); err != nil {
-		return nil, apperr.BadRequest("invalid client webhook response")
+		return nil, apperr.BadRequest("invalid app webhook response")
 	}
 	return &identity, nil
 }

@@ -31,24 +31,24 @@ func (r *Registry) get(ctx context.Context, providerName ProviderName) (IProvide
 func (r *Registry) Authenticate(
 	ctx context.Context,
 	providerName ProviderName,
-	clientCode string,
-	clientConfig *model.ClientConfig,
+	appCode string,
+	authConfig *model.AppAuthConfig,
 	req *http.Request,
 ) (*Identity, error) {
 	provider, err := r.get(ctx, providerName)
 	if err != nil {
 		return nil, err
 	}
-	if err := provider.Validate(ctx, clientCode, clientConfig); err != nil {
+	if err := provider.Validate(ctx, appCode, authConfig); err != nil {
 		return nil, err
 	}
-	identity, err := provider.Authenticate(ctx, clientCode, clientConfig, req)
+	identity, err := provider.Authenticate(ctx, appCode, authConfig, req)
 	if err != nil {
 		return nil, err
 	}
 
 	if identity.ExternalID == "" {
-		return nil, apperr.BadRequest("client authentication response missing external id")
+		return nil, apperr.BadRequest("app authentication response missing external id")
 	}
 
 	identity.Provider = providerName

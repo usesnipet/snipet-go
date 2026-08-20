@@ -308,7 +308,7 @@ func TestMeRejectsAppUserIdentity(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(mocks.NewMockIApiKeyRepository(t))
-	ctx := auth.SetAppUserIdentity(context.Background(), auth.AppUserIdentity{UserID: "u1", ClientCode: "c1"})
+	ctx := auth.SetAppUserIdentity(context.Background(), auth.AppUserIdentity{UserID: "u1", AppCode: "c1"})
 
 	_, err := svc.Me(ctx)
 	assertAppError(t, err, http.StatusUnauthorized, "unauthorized")

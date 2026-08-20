@@ -21,13 +21,13 @@ type IProvider interface {
 	Name() ProviderName
 	Validate(
 		ctx context.Context,
-		clientCode string,
-		clientConfig *model.ClientConfig,
+		appCode string,
+		authConfig *model.AppAuthConfig,
 	) error
 	Authenticate(
 		ctx context.Context,
-		clientCode string,
-		clientConfig *model.ClientConfig,
+		appCode string,
+		authConfig *model.AppAuthConfig,
 		req *http.Request,
 	) (*Identity, error)
 }

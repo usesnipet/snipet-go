@@ -26,10 +26,10 @@ import (
 	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
 	appmodule "github.com/usesnipet/snipet/internal/module/app"
-	auth_module "github.com/usesnipet/snipet/internal/module/auth"
+	"github.com/usesnipet/snipet/internal/module/appauth"
+	appauth_provider "github.com/usesnipet/snipet/internal/module/appauth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/appuser"
-	"github.com/usesnipet/snipet/internal/module/clientauth"
-	clientauth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
+	auth_module "github.com/usesnipet/snipet/internal/module/auth"
 	"github.com/usesnipet/snipet/internal/module/email"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
@@ -131,9 +131,11 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	refreshTokenService := auth.NewTokenService()
 
-	authRegistry := clientauth_provider.NewRegistry()
+	authRegistry := appauth_provider.NewRegistry()
+	authRegistry.RegisterProvider(appauth_provider.NewOIDCProvider())
+	authRegistry.RegisterProvider(appauth_provider.NewWebhookProvider())
 
-	clientauthService := clientauth.NewService(
+	appauthService := appauth.NewService(
 		authRegistry,
 		appRepo,
 		appUserRepo,
@@ -224,7 +226,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	appAuthMiddleware := appAuth.Handler()
 
 	// handlers
-	clientAuthHandler := clientauth.NewHandler(clientauthService)
+	appAuthHandler := appauth.NewHandler(appauthService)
 	platformAuthHandler := auth_module.NewHandler(authService, userMiddleware)
 	systemHandler := systemmodule.NewHandler(systemService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, userMiddleware, apiKeyMiddleware)
@@ -243,7 +245,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	api := api.New()
 	api.Router.Handle("/*", web.Handler())
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
-		clientAuthHandler.RegisterRoutes(r, api.Serve)
+		appAuthHandler.RegisterRoutes(r, api.Serve)
 		platformAuthHandler.RegisterRoutes(r, api.Serve)
 		systemHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
