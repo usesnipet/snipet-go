@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
 import { Link } from "@/components/ui/link";
-import { useGetSystemInfo } from "@/features/app/hooks";
+import { useGetSystemInfo } from "@/features/system/hooks";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/routes";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -1,13 +1,11 @@
-import { useGetSystemInfo } from "@/features/app/hooks";
+import { useGetSystemInfo } from "@/features/system/hooks";
 
 import { Loading } from "./ui/loading";
 
 export const Version = () => {
   const { data, error, isLoading } = useGetSystemInfo()
 
-  if (error) {
-    return <span className="text-destructive text-sm">Error</span>
-  }
+  if (error) return <span className="text-destructive text-sm">Error</span>
 
   return (
     <div className="flex items-center gap-2">

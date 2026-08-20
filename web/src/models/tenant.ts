@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { agentSchema, type Agent } from "@/models/agent";
 import { apiKeySchema, type ApiKey } from "@/models/api-key";
-import { clientSchema, type Client } from "@/models/client";
+import { appSchema, type App } from "@/models/app";
 import { invitationSchema, type Invitation } from "@/models/invitation";
 import { knowledgeSchema, type Knowledge } from "@/models/knowledge";
 import { llmSchema, type Llm } from "@/models/llm";
@@ -19,7 +19,7 @@ export interface Tenant {
   invitations: Invitation[] | null;
   agents: Agent[] | null;
   api_keys: ApiKey[] | null;
-  clients: Client[] | null;
+  clients: App[] | null;
   knowledges: Knowledge[] | null;
   llms: Llm[] | null;
 }
@@ -43,7 +43,7 @@ export const tenantSchema: z.ZodType<Tenant> = z.lazy(() =>
       invitations: z.array(invitationSchema).nullable(),
       agents: z.array(agentSchema).nullable(),
       api_keys: z.array(apiKeySchema).nullable(),
-      clients: z.array(clientSchema).nullable(),
+      clients: z.array(appSchema).nullable(),
       knowledges: z.array(knowledgeSchema).nullable(),
       llms: z.array(llmSchema).nullable(),
     })

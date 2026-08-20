@@ -5,14 +5,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { useTheme } from "@/context/theme-provider";
-import { useGetSystemInfo } from "@/features/app/hooks";
+import { useGetSystemInfo } from "@/features/system/hooks";
 import { TenantCard } from "@/features/tenant/components/tenant-card";
 import { useFindMineTenant } from "@/features/tenant/hooks";
 import { UserCard } from "@/features/user/components/user-card";
 import { useNavigate } from "@/hooks/use-navigate";
 import { ROUTES } from "@/routes";
 import {
-  BookOpen, Bot, Building2Icon, ChevronsUpDownIcon, Cpu, Key, MoonIcon, Settings, Shield, SunIcon, Users
+  Blocks, BookOpen, Bot, Building2Icon, ChevronsUpDownIcon, Cpu, Key, MoonIcon, Settings, Shield, SunIcon,
+  Users
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -35,7 +36,6 @@ export function TenantSidebar() {
   const visibleTenants = tenants.slice(0, MAX_VISIBLE_TENANTS);
   const hasMoreTenants = tenants.length > MAX_VISIBLE_TENANTS;
 
-
   const navItems: NavEntry[] = useMemo(() => [
     {
       title: "Home",
@@ -44,9 +44,9 @@ export function TenantSidebar() {
       exact: true,
     },
     {
-      title: "Clients",
-      href: ROUTES.clients,
-      icon: Users,
+      title: "Apps",
+      href: ROUTES.apps,
+      icon: Blocks,
     },
     {
       title: "Agent",

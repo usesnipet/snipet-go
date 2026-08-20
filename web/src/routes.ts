@@ -14,7 +14,7 @@ export const ROUTES = {
   knowledgeDetail: "/{tenantSlug}/knowledge/{id}",
   agent: "/{tenantSlug}/agent",
   llms: "/{tenantSlug}/llms",
-  clients: "/{tenantSlug}/clients",
+  apps: "/{tenantSlug}/apps",
 
   // auth routes
   authLogin: "/auth/login",
@@ -24,11 +24,11 @@ export const ROUTES = {
   authActivate: "/auth/activate",
   authResendActivation: "/auth/resend-activation",
 
-  // client routes
-  client: "/client/{clientCode}",
-  clientUsers: "/client/{clientCode}/users",
-  clientSessions: "/client/{clientCode}/sessions",
-  clientSettings: "/client/{clientCode}/settings",
+  // app routes
+  app: "/apps/{appCode}",
+  appUsers: "/apps/{appCode}/users",
+  appSessions: "/apps/{appCode}/sessions",
+  appSettings: "/apps/{appCode}/settings",
 } as const;
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];

@@ -15,47 +15,47 @@ import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 
 const BASE_QUERY_KEY = "session";
 
-export const listSessionQueryKey = (clientCode: string) =>
-  [BASE_QUERY_KEY, clientCode] as const;
+export const listSessionQueryKey = (appCode: string) =>
+  [BASE_QUERY_KEY, appCode] as const;
 export const useListSession = (
-  clientCode: string,
+  appCode: string,
   opts: Partial<ServiceGetOptions<PaginatedSession, ListSessionSearchParams>> = {},
 ): UseQueryResult<PaginatedSession, Error> => {
   return useQuery({
-    queryKey: [...listSessionQueryKey(clientCode), opts?.searchParams],
+    queryKey: [...listSessionQueryKey(appCode), opts?.searchParams],
     queryFn: () =>
-      sessionService.list(clientCode, opts),
-    enabled: !!clientCode,
+      sessionService.list(appCode, opts),
+    enabled: !!appCode,
   })
 }
 
-export const findByIdSessionQueryKey = (clientCode: string, id: string) =>
-  [BASE_QUERY_KEY, clientCode, "findById", id] as const;
+export const findByIdSessionQueryKey = (appCode: string, id: string) =>
+  [BASE_QUERY_KEY, appCode, "findById", id] as const;
 export const useFindByIdSession = (
-  clientCode: string,
+  appCode: string,
   id: string,
   opts: Partial<ServiceGetOptions<Session, FindSessionSearchParams>> = {},
 ): UseQueryResult<Session, Error> => {
   return useQuery({
-    queryKey: [...findByIdSessionQueryKey(clientCode, id), opts?.searchParams],
+    queryKey: [...findByIdSessionQueryKey(appCode, id), opts?.searchParams],
     queryFn: (): Promise<Session> =>
-      sessionService.findById(clientCode, id, opts),
-    enabled: !!clientCode && !!id,
+      sessionService.findById(appCode, id, opts),
+    enabled: !!appCode && !!id,
   })
 }
 
-export const findMessagesSessionQueryKey = (clientCode: string, id: string) =>
-  [BASE_QUERY_KEY, clientCode, "messages", id] as const;
+export const findMessagesSessionQueryKey = (appCode: string, id: string) =>
+  [BASE_QUERY_KEY, appCode, "messages", id] as const;
 export const useFindMessagesSession = (
-  clientCode: string,
+  appCode: string,
   id: string,
   opts: ServiceGetOptions<PaginatedExecutionMessage, ListMessagesSearchParams> = {},
 ): UseQueryResult<PaginatedExecutionMessage, Error> => {
   return useQuery({
-    queryKey: [...findMessagesSessionQueryKey(clientCode, id), opts?.searchParams],
+    queryKey: [...findMessagesSessionQueryKey(appCode, id), opts?.searchParams],
     queryFn: (): Promise<PaginatedExecutionMessage> =>
-      sessionService.findMessages(clientCode, id, opts),
-    enabled: !!clientCode && !!id,
+      sessionService.findMessages(appCode, id, opts),
+    enabled: !!appCode && !!id,
   })
 }
 
@@ -65,18 +65,18 @@ export const useCreateSession = (
 ): UseMutationResult<
   Session,
   Error,
-  { clientCode: string; data: CreateSession }
+  { appCode: string; data: CreateSession }
 > => {
   return useMutation({
     mutationKey: createSessionQueryKey(),
-    mutationFn: ({ clientCode, data }) =>
-      sessionService.create(clientCode, data, opts),
-    onSuccess: (_data, { clientCode }) => {
+    mutationFn: ({ appCode, data }) =>
+      sessionService.create(appCode, data, opts),
+    onSuccess: (_data, { appCode }) => {
       toast({
         title: "Session created successfully",
         description: "The session has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listSessionQueryKey(clientCode) });
+      queryClient.invalidateQueries({ queryKey: listSessionQueryKey(appCode) });
     },
     onError: () => {
       toast({
@@ -94,19 +94,19 @@ export const useUpdateSession = (
 ): UseMutationResult<
   void,
   Error,
-  { clientCode: string; id: string; data: UpdateSession }
+  { appCode: string; id: string; data: UpdateSession }
 > => {
   return useMutation({
     mutationKey: updateSessionQueryKey(),
-    mutationFn: ({ clientCode, id, data }) =>
-      sessionService.update(clientCode, id, data, opts),
-    onSuccess: (_data, { clientCode, id }) => {
+    mutationFn: ({ appCode, id, data }) =>
+      sessionService.update(appCode, id, data, opts),
+    onSuccess: (_data, { appCode, id }) => {
       toast({
         title: "Session updated successfully",
         description: "The session has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listSessionQueryKey(clientCode) });
-      queryClient.invalidateQueries({ queryKey: findByIdSessionQueryKey(clientCode, id) });
+      queryClient.invalidateQueries({ queryKey: listSessionQueryKey(appCode) });
+      queryClient.invalidateQueries({ queryKey: findByIdSessionQueryKey(appCode, id) });
     },
     onError: () => {
       toast({
@@ -121,22 +121,22 @@ export const useUpdateSession = (
 export const deleteSessionQueryKey = () => [BASE_QUERY_KEY, "delete"] as const;
 export const useDeleteSession = (
   opts: ServiceDeleteOptions<void> = {},
-): UseMutationResult<void, Error, { clientCode: string; id: string }> => {
+): UseMutationResult<void, Error, { appCode: string; id: string }> => {
   return useMutation({
     mutationKey: deleteSessionQueryKey(),
-    mutationFn: ({ clientCode, id }) =>
-      sessionService.delete(clientCode, id, opts),
-    onSuccess: (_data, { clientCode, id }) => {
+    mutationFn: ({ appCode, id }) =>
+      sessionService.delete(appCode, id, opts),
+    onSuccess: (_data, { appCode, id }) => {
       toast({
         title: "Session deleted successfully",
         description: "The session has been deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listSessionQueryKey(clientCode) });
+      queryClient.invalidateQueries({ queryKey: listSessionQueryKey(appCode) });
       queryClient.invalidateQueries({
-        queryKey: findByIdSessionQueryKey(clientCode, id),
+        queryKey: findByIdSessionQueryKey(appCode, id),
       });
       queryClient.invalidateQueries({
-        queryKey: findMessagesSessionQueryKey(clientCode, id),
+        queryKey: findMessagesSessionQueryKey(appCode, id),
       });
     },
     onError: () => {

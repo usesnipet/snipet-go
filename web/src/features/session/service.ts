@@ -15,15 +15,15 @@ import type {
 } from "@/lib/services";
 import type { SseEventHandler } from "@/lib/http";
 
-const sessionUrl = (clientCode: string) => `/api/client/${clientCode}/session`;
+const sessionUrl = (appCode: string) => `/api/apps/${appCode}/session`;
 
 const list = async (
-  clientCode: string,
+  appCode: string,
   opts: ServiceGetOptions<PaginatedSession, ListSessionSearchParams>,
 ): Promise<PaginatedSession> => {
   const { searchParams, ...rest } = opts;
   return http.get({
-    url: sessionUrl(clientCode),
+    url: sessionUrl(appCode),
     searchParams,
     schemas: {
       response: paginatedSessionSchema,
@@ -34,12 +34,12 @@ const list = async (
 }
 
 const create = async (
-  clientCode: string,
+  appCode: string,
   body: CreateSession,
   opts: ServicePostOptions<CreateSession, Session>,
 ): Promise<Session> => {
   return http.post({
-    url: sessionUrl(clientCode),
+    url: sessionUrl(appCode),
     body,
     schemas: {
       body: createSessionSchema,
@@ -50,13 +50,13 @@ const create = async (
 }
 
 const findById = async (
-  clientCode: string,
+  appCode: string,
   id: string,
   opts: ServiceGetOptions<Session, FindSessionSearchParams>,
 ): Promise<Session> => {
   const { searchParams, ...rest } = opts;
   return http.get({
-    url: `${sessionUrl(clientCode)}/{id}`,
+    url: `${sessionUrl(appCode)}/{id}`,
     params: { id },
     searchParams,
     schemas: {
@@ -68,13 +68,13 @@ const findById = async (
 }
 
 const update = async (
-  clientCode: string,
+  appCode: string,
   id: string,
   body: UpdateSession,
   opts: ServicePutOptions<UpdateSession, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${sessionUrl(clientCode)}/{id}`,
+    url: `${sessionUrl(appCode)}/{id}`,
     params: { id },
     body,
     schemas: {
@@ -85,25 +85,25 @@ const update = async (
 }
 
 const remove = async (
-  clientCode: string,
+  appCode: string,
   id: string,
   opts: ServiceDeleteOptions<void>,
 ): Promise<void> => {
   return http.delete({
-    url: `${sessionUrl(clientCode)}/{id}`,
+    url: `${sessionUrl(appCode)}/{id}`,
     params: { id },
     ...opts,
   })
 }
 
 const findMessages = async (
-  clientCode: string,
+  appCode: string,
   id: string,
   opts: ServiceGetOptions<PaginatedExecutionMessage, ListMessagesSearchParams>,
 ): Promise<PaginatedExecutionMessage> => {
   const { searchParams, ...rest } = opts;
   return http.get({
-    url: `${sessionUrl(clientCode)}/{id}/messages`,
+    url: `${sessionUrl(appCode)}/{id}/messages`,
     params: { id },
     searchParams,
     schemas: {
@@ -120,14 +120,14 @@ export type RunSessionOptions = {
 };
 
 const run = async (
-  clientCode: string,
+  appCode: string,
   id: string,
   body: RunSession,
   opts: RunSessionOptions,
 ): Promise<void> => {
   const { onEvent, signal } = opts;
   return httpSse({
-    url: `${sessionUrl(clientCode)}/{id}/run`,
+    url: `${sessionUrl(appCode)}/{id}/run`,
     params: { id },
     method: "POST",
     body,

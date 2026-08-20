@@ -15,8 +15,8 @@ const AgentsPage = lazy(() =>
   import("./routes/agents/page").then((m) => ({ default: m.AgentsPage })));
 const ApiKeysPage = lazy(() =>
   import("./routes/api-keys/page").then((m) => ({ default: m.ApiKeysPage })));
-const ClientsPage = lazy(() =>
-  import("./routes/clients/page").then((m) => ({ default: m.ClientsPage })));
+const AppsPage = lazy(() =>
+  import("./routes/apps/page").then((m) => ({ default: m.AppsPage })));
 const KnowledgePage = lazy(() =>
   import("./routes/knowledge/page").then((m) => ({ default: m.KnowledgePage })));
 const KnowledgeDetailPage = lazy(() =>
@@ -28,16 +28,16 @@ const MembersPage = lazy(() =>
 const InviteMembersPage = lazy(() =>
   import("./routes/members/invite/page").then((m) => ({ default: m.InviteMembersPage })));
 
-const ClientAdminLayout = lazy(() =>
-  import("./routes/client/(private)/layout").then((m) => ({ default: m.ClientAdminLayout })));
-const ClientPage = lazy(() =>
-  import("./routes/client/(private)/page").then((m) => ({ default: m.ClientPage })));
-const ClientSessionsPage = lazy(() =>
-  import("./routes/client/(private)/sessions/page").then((m) => ({ default: m.ClientSessionsPage })));
-const ClientSettingsPage = lazy(() =>
-  import("./routes/client/(private)/settings/page").then((m) => ({ default: m.ClientSettingsPage })));
-const ClientUsersPage = lazy(() =>
-  import("./routes/client/(private)/users/page").then((m) => ({ default: m.ClientUsersPage })));
+const AppAdminLayout = lazy(() =>
+  import("./routes/app/(private)/layout").then((m) => ({ default: m.AppAdminLayout })));
+const AppPage = lazy(() =>
+  import("./routes/app/(private)/page").then((m) => ({ default: m.AppPage })));
+const AppSessionsPage = lazy(() =>
+  import("./routes/app/(private)/sessions/page").then((m) => ({ default: m.AppSessionsPage })));
+const AppSettingsPage = lazy(() =>
+  import("./routes/app/(private)/settings/page").then((m) => ({ default: m.AppSettingsPage })));
+const AppUsersPage = lazy(() =>
+  import("./routes/app/(private)/users/page").then((m) => ({ default: m.AppUsersPage })));
 
 const AuthLoginPage = lazy(() =>
   import("./routes/auth/login/page").then((m) => ({ default: m.AuthLoginPage })));
@@ -73,7 +73,7 @@ export const Router = () => {
             <Route path={toReactRouterPath(ROUTES.acceptInvite)} element={<AcceptInvitePage />} />
             <Route element={<Layout />}>
               <Route path={toReactRouterPath(ROUTES.tenantHome)} element={<HomePage />} />
-              <Route path={toReactRouterPath(ROUTES.clients)} element={<ClientsPage />} />
+              <Route path={toReactRouterPath(ROUTES.apps)} element={<AppsPage />} />
               <Route path={toReactRouterPath(ROUTES.agent)} element={<AgentsPage />} />
               <Route path={toReactRouterPath(ROUTES.knowledge)} element={<KnowledgePage />} />
               <Route path={toReactRouterPath(ROUTES.knowledgeDetail)} element={<KnowledgeDetailPage />}/>
@@ -82,11 +82,11 @@ export const Router = () => {
               <Route path={toReactRouterPath(ROUTES.inviteMember)} element={<InviteMembersPage />} />
               <Route path={toReactRouterPath(ROUTES.apiKeys)} element={<ApiKeysPage />} />
             </Route>
-            <Route element={<ClientAdminLayout />}>
-              <Route path={toReactRouterPath(ROUTES.client)} element={<ClientPage />} />
-              <Route path={toReactRouterPath(ROUTES.clientUsers)} element={<ClientUsersPage />} />
-              <Route path={toReactRouterPath(ROUTES.clientSessions)} element={<ClientSessionsPage />} />
-              <Route path={toReactRouterPath(ROUTES.clientSettings)} element={<ClientSettingsPage />} />
+            <Route element={<AppAdminLayout />}>
+              <Route path={toReactRouterPath(ROUTES.app)} element={<AppPage />} />
+              <Route path={toReactRouterPath(ROUTES.appUsers)} element={<AppUsersPage />} />
+              <Route path={toReactRouterPath(ROUTES.appSessions)} element={<AppSessionsPage />} />
+              <Route path={toReactRouterPath(ROUTES.appSettings)} element={<AppSettingsPage />} />
             </Route>
           </Route>
         </Routes>

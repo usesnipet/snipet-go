@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { agentSchema, type Agent } from "@/models/agent";
-import { clientSchema, type Client } from "@/models/client";
-import { clientUserToSessionSchema, type ClientUserToSession } from "@/models/client-user";
+import { appSchema, type App } from "@/models/app";
+import { appUserToSessionSchema, type AppUserToSession } from "@/models/app-user";
 import { executionSchema, type Execution } from "@/models/execution";
 import { tenantSchema, type Tenant } from "@/models/tenant";
 
@@ -15,13 +15,13 @@ export type SessionMetadata = z.infer<typeof sessionMetadataSchema>;
 export interface Session {
   id: string;
   tenant_id: string;
-  client_id: string;
+  app_id: string;
   agent_id: string;
   metadata: SessionMetadata;
   tenant?: Tenant | null;
-  client?: Client | null;
+  app?: App | null;
   agent?: Agent | null;
-  client_user_to_sessions: ClientUserToSession[] | null;
+  app_user_to_sessions: AppUserToSession[] | null;
   executions: Execution[] | null;
 }
 
@@ -30,7 +30,7 @@ export const sessionBaseSchema = z
   .object({
     id: z.uuid(),
     tenant_id: z.uuid(),
-    client_id: z.uuid(),
+    app_id: z.uuid(),
     agent_id: z.uuid(),
     metadata: sessionMetadataSchema,
   })
@@ -40,9 +40,9 @@ export const sessionSchema: z.ZodType<Session> = z.lazy(() =>
   sessionBaseSchema
     .extend({
       tenant: tenantSchema.nullable().optional(),
-      client: clientSchema.nullable().optional(),
+      app: appSchema.nullable().optional(),
       agent: agentSchema.nullable().optional(),
-      client_user_to_sessions: z.array(clientUserToSessionSchema).nullable(),
+      app_user_to_sessions: z.array(appUserToSessionSchema).nullable(),
       executions: z.array(executionSchema).nullable(),
     })
     .strict(),

@@ -1,6 +1,6 @@
 import { Page, PageActions } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { useGetSystemInfo } from "@/features/app/hooks";
+import { useGetSystemInfo } from "@/features/system/hooks";
 import { CreateMemberDialog } from "@/features/member/components/create-member-dialog";
 import { MemberTable } from "@/features/member/components/member-table";
 import { useTenantStore } from "@/features/tenant/store";
