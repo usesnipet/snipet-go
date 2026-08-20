@@ -13,6 +13,13 @@ type AppKeyIdentity struct {
 	Code  string
 }
 
+func (i AppKeyIdentity) Is(codeOrId string) error {
+	if codeOrId == i.AppID || codeOrId == i.Code {
+		return nil
+	}
+	return apperr.Forbidden("this app key does not have access to this app")
+}
+
 type appKeyIdentityKeyType struct{}
 
 var appKeyIdentityKey = appKeyIdentityKeyType{}

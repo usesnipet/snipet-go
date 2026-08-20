@@ -13,6 +13,13 @@ type AppUserIdentity struct {
 	AppCode string
 }
 
+func (i AppUserIdentity) CanAccessApp(appCode string) error {
+	if i.AppCode == appCode {
+		return nil
+	}
+	return apperr.Forbidden("app code mismatch")
+}
+
 type appUserIdentityKeyType struct{}
 
 var appUserIdentityKey = appUserIdentityKeyType{}
