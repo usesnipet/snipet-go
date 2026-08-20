@@ -25,9 +25,8 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
-	app_module "github.com/usesnipet/snipet/internal/module/app"
+	appmodule "github.com/usesnipet/snipet/internal/module/app"
 	auth_module "github.com/usesnipet/snipet/internal/module/auth"
-	"github.com/usesnipet/snipet/internal/module/client"
 	"github.com/usesnipet/snipet/internal/module/clientauth"
 	clientauth_provider "github.com/usesnipet/snipet/internal/module/clientauth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/clientuser"
@@ -37,6 +36,7 @@ import (
 	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
 	"github.com/usesnipet/snipet/internal/module/member"
 	"github.com/usesnipet/snipet/internal/module/session"
+	systemmodule "github.com/usesnipet/snipet/internal/module/system"
 	"github.com/usesnipet/snipet/internal/module/tenant"
 	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/queue"
@@ -164,7 +164,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 
-	clientService := client.NewService(appRepo, agentRepo, logger)
+	appService := appmodule.NewService(appRepo, apiKeyGenerator, apiKeyHasher, logger)
 
 	agentService := agent.NewService(agentRepo, llmRepo, txManager, engine, executionRepo, messageRepo, logger)
 	llmService := llmmodule.NewService(llmRepo, llmManager)
@@ -187,11 +187,11 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		txManager,
 	)
 
-	sessionService := session.NewService(sessionRepo, messageRepo, clientService, agentService)
+	sessionService := session.NewService(sessionRepo, messageRepo, appService, agentService)
 
 	clientUserService := clientuser.NewService(appUserRepo)
 	userService := user.NewService(userRepo, cfg.User)
-	appService := app_module.NewService(&cfg.App, licenseService)
+	systemService := systemmodule.NewService(licenseService)
 
 	tenantService := tenant.NewService(tenantRepo, memberRepo, userRepo, txManager, cfg.Tenant, licenseService, logger)
 	memberService := member.NewService(cfg.Auth, memberRepo, tenantInvitationRepo, tenantRepo, userRepo, txManager, refreshTokenService, emailService, licenseService)
@@ -208,14 +208,17 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	// cache
 	apiKeyCache := cache.NewMemoryCache(1000, 1*time.Hour)
+	appKeyCache := cache.NewMemoryCache(1000, 1*time.Hour)
 
 	// guards
 	requireAPIKey := guard.RequireApiKey(apiKeyService, apiKeyCache)
+	requireAppKey := guard.RequireAppKey(appService, appKeyCache)
 	requireClientUser := guard.RequireClientUser(jwtService)
 	requireUser := guard.RequireUser(userJWTService, userRepo, memberRepo)
 	anyClientAuth := guard.Or(requireClientUser, requireAPIKey)
 
 	apiKeyMiddleware := requireAPIKey.Handler()
+	appKeyMiddleware := requireAppKey.Handler()
 	clientJWTMiddleware := requireClientUser.Handler()
 	userMiddleware := requireUser.Handler()
 	anyClientAuthMiddleware := anyClientAuth.Handler()
@@ -223,11 +226,11 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// handlers
 	clientAuthHandler := clientauth.NewHandler(clientauthService)
 	platformAuthHandler := auth_module.NewHandler(authService, userMiddleware)
-	appHandler := app_module.NewHandler(appService)
+	systemHandler := systemmodule.NewHandler(systemService)
 	apiKeyHandler := apikey.NewHandler(apiKeyService, userMiddleware, apiKeyMiddleware)
 	agentHandler := agent.NewHandler(agentService, userMiddleware, apiKeyMiddleware)
 	llmHandler := llmmodule.NewHandler(llmService, userMiddleware)
-	clientHandler := client.NewHandler(clientService, userMiddleware, anyClientAuthMiddleware)
+	appHandler := appmodule.NewHandler(appService, userMiddleware, appKeyMiddleware)
 	sessionHandler := session.NewHandler(sessionService, anyClientAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, userMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, userMiddleware)
@@ -242,11 +245,11 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
 		clientAuthHandler.RegisterRoutes(r, api.Serve)
 		platformAuthHandler.RegisterRoutes(r, api.Serve)
-		appHandler.RegisterRoutes(r, api.Serve)
+		systemHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
 		agentHandler.RegisterRoutes(r, api.Serve)
 		llmHandler.RegisterRoutes(r, api.Serve)
-		clientHandler.RegisterRoutes(r, api.Serve)
+		appHandler.RegisterRoutes(r, api.Serve)
 		sessionHandler.RegisterRoutes(r, api.Serve)
 		knowledgeHandler.RegisterRoutes(r, api.Serve)
 		knowledgeIndexHandler.RegisterRoutes(r, api.Serve)
