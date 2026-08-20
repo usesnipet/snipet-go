@@ -189,7 +189,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	sessionService := session.NewService(sessionRepo, messageRepo, appService, agentService)
 
-	appUserService := appuser.NewService(appUserRepo)
+	appUserService := appuser.NewService(appUserRepo, appRepo)
 	userService := user.NewService(userRepo, cfg.User)
 	systemService := systemmodule.NewService(licenseService)
 
@@ -234,7 +234,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sessionHandler := session.NewHandler(sessionService, appAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, userMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, userMiddleware)
-	appUserHandler := appuser.NewHandler(appUserService, appKeyMiddleware, appAuthMiddleware, appJWTMiddleware)
+	appUserHandler := appuser.NewHandler(appUserService, appKeyMiddleware, appJWTMiddleware)
 	userHandler := user.NewHandler(userService, userMiddleware)
 	tenantHandler := tenant.NewHandler(tenantService, userMiddleware)
 	memberHandler := member.NewHandler(memberService, userMiddleware)

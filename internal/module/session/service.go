@@ -48,9 +48,8 @@ func (s *Service) resolveApp(ctx context.Context, appCode string) (*model.App, e
 		if err != nil {
 			return nil, err
 		}
-
-		if appIdentity.AppID != app.ID {
-			return nil, apperr.Forbidden("this app key does not have access to this app")
+		if err := appIdentity.Is(app.ID); err != nil {
+			return nil, err
 		}
 		return app, nil
 	}
@@ -59,8 +58,8 @@ func (s *Service) resolveApp(ctx context.Context, appCode string) (*model.App, e
 		if err != nil {
 			return nil, err
 		}
-		if userIdentity.AppCode != app.Code {
-			return nil, apperr.Forbidden("you do not have access to this app")
+		if err := userIdentity.CanAccessApp(app.Code); err != nil {
+			return nil, err
 		}
 		return app, nil
 	}
@@ -73,10 +72,7 @@ func (s *Service) ensureSessionAccess(ctx context.Context, appID string, session
 		if err != nil {
 			return err
 		}
-		if appIdentity.AppID != appID {
-			return apperr.Forbidden("app does not have access to this session")
-		}
-		return nil
+		return appIdentity.Is(appID)
 	}
 
 	userIdentity, err := auth.CurrentAppUser(ctx)
