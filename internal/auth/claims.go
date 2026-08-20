@@ -1,11 +1,11 @@
 package auth
 
-// ClientUserClaims are JWT claims issued for a client-widget end-user
-// (model.ClientUser) authenticating into a Client.
-type ClientUserClaims struct {
+// AppUserClaims are JWT claims issued for a app end-user
+// (model.AppUser) authenticating into a App.
+type AppUserClaims struct {
 	BaseClaims
 
-	ClientCode string `json:"client_code"`
+	AppCode string `json:"app_code"`
 }
 
 // PlatformUserClaims are JWT claims issued for a tenant-staff user.

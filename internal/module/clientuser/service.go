@@ -58,7 +58,7 @@ func (s *Service) FilterInClient(ctx context.Context, clientCode string, filter 
 }
 
 func (s *Service) Me(ctx context.Context, clientCode string) (*model.ClientUser, error) {
-	identity, err := auth.CurrentClientUser(ctx)
+	identity, err := auth.CurrentAppUser(ctx)
 	if err != nil {
 		return nil, err
 	}

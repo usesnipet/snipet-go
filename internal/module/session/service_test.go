@@ -15,7 +15,7 @@ import (
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
 	"github.com/usesnipet/snipet/internal/module/agent"
-	"github.com/usesnipet/snipet/internal/module/client"
+	appmodule "github.com/usesnipet/snipet/internal/module/app"
 	session "github.com/usesnipet/snipet/internal/module/session"
 	"github.com/usesnipet/snipet/internal/page"
 	"github.com/usesnipet/snipet/internal/repository/mocks"
@@ -50,64 +50,61 @@ func (it *fakeStreamIterator) Event() llm.StreamEvent { return it.events[it.idx-
 func (it *fakeStreamIterator) Err() error             { return nil }
 func (it *fakeStreamIterator) Close() error           { return nil }
 
-func apiKeyContext() context.Context {
-	return auth.SetApiKeyIdentity(context.Background(), auth.ApiKeyIdentity{APIKeyID: "api-key-id"})
+func appKeyContext(appID string) context.Context {
+	return auth.SetAppKeyIdentity(context.Background(), auth.AppKeyIdentity{AppID: appID})
 }
 
-func jwtContext(userID string) context.Context {
-	return auth.SetClientUserIdentity(context.Background(), auth.ClientUserIdentity{UserID: userID})
+func jwtContext(userID, appCode string) context.Context {
+	return auth.SetAppUserIdentity(context.Background(), auth.AppUserIdentity{UserID: userID, AppCode: appCode})
 }
 
 func newSessionService(
 	t *testing.T,
 	sessionRepo *mocks.MockISessionRepository,
 	messageRepo *mocks.MockIExecutionMessageRepository,
-	clientRepo *mocks.MockIClientRepository,
-	agentRepo *mocks.MockIAgentRepository,
+	appRepo *mocks.MockIAppRepository,
 	agentSvc *agent.Service,
 ) *session.Service {
 	t.Helper()
 	return session.NewService(
 		sessionRepo,
 		messageRepo,
-		client.NewService(clientRepo, agentRepo, logger.NewLogger(logger.LevelError)),
+		appmodule.NewService(appRepo, auth.NewAPIKeyGenerator(), auth.NewKeyHasher(), logger.NewLogger(logger.LevelError)),
 		agentSvc,
 	)
 }
 
-func expectClientByCode(t *testing.T, clientRepo *mocks.MockIClientRepository, code, clientID string) {
+func expectAppByCode(t *testing.T, appRepo *mocks.MockIAppRepository, code, appID string) {
 	t.Helper()
-	clientRepo.EXPECT().
-		Filter(mock.Anything, mock.Anything).
-		Return(page.NewPaginated([]model.App{{ID: clientID, Code: code}}, 1, 0, 10), nil)
+	appRepo.EXPECT().
+		FindByCode(mock.Anything, code).
+		Return(&model.App{ID: appID, Code: code}, nil)
 }
 
 func TestFindMessagesReturnsExecutionMessages(t *testing.T) {
 	t.Parallel()
 
-	clientCode := "abc"
-	clientID := uuid.New().String()
+	appCode := "abc"
+	appID := uuid.New().String()
 	sessionID := uuid.New().String()
 	expected := page.NewPaginated([]model.ExecutionMessage{{Message: msg.NewMessage(msg.RoleUser, "hi")}}, 1, 0, 10)
 
-	clientRepo := mocks.NewMockIClientRepository(t)
-	expectClientByCode(t, clientRepo, clientCode, clientID)
+	appRepo := mocks.NewMockIAppRepository(t)
+	expectAppByCode(t, appRepo, appCode, appID)
 
 	sessionRepo := mocks.NewMockISessionRepository(t)
 	sessionRepo.EXPECT().
-		FindByIDInClient(mock.Anything, clientID, sessionID, mock.Anything).
-		Return(&model.Session{ID: sessionID, ClientID: clientID}, nil)
+		FindByIDInApp(mock.Anything, appID, sessionID, mock.Anything).
+		Return(&model.Session{ID: sessionID, AppID: appID}, nil)
 
 	messageRepo := mocks.NewMockIExecutionMessageRepository(t)
 	messageRepo.EXPECT().
 		FilterInSession(mock.Anything, sessionID, mock.Anything).
 		Return(expected, nil)
 
-	agentRepo := mocks.NewMockIAgentRepository(t)
+	svc := newSessionService(t, sessionRepo, messageRepo, appRepo, nil)
 
-	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, agentRepo, nil)
-
-	result, err := svc.FindMessages(apiKeyContext(), clientCode, sessionID, filter.Default[model.ExecutionMessage]())
+	result, err := svc.FindMessages(appKeyContext(appID), appCode, sessionID, filter.Default[model.ExecutionMessage]())
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -115,25 +112,24 @@ func TestFindMessagesReturnsExecutionMessages(t *testing.T) {
 func TestFindMessagesForbiddenWithoutAccess(t *testing.T) {
 	t.Parallel()
 
-	clientCode := "abc"
-	clientID := uuid.New().String()
+	appCode := "abc"
+	appID := uuid.New().String()
 	sessionID := uuid.New().String()
 	userID := uuid.New().String()
 
-	clientRepo := mocks.NewMockIClientRepository(t)
-	expectClientByCode(t, clientRepo, clientCode, clientID)
+	appRepo := mocks.NewMockIAppRepository(t)
+	expectAppByCode(t, appRepo, appCode, appID)
 
 	sessionRepo := mocks.NewMockISessionRepository(t)
 	sessionRepo.EXPECT().
-		CheckUserAccess(mock.Anything, clientID, userID, sessionID).
+		CheckUserAccess(mock.Anything, appID, userID, sessionID).
 		Return(false, nil)
 
 	messageRepo := mocks.NewMockIExecutionMessageRepository(t)
-	agentRepo := mocks.NewMockIAgentRepository(t)
 
-	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, agentRepo, nil)
+	svc := newSessionService(t, sessionRepo, messageRepo, appRepo, nil)
 
-	_, err := svc.FindMessages(jwtContext(userID), clientCode, sessionID, filter.Default[model.ExecutionMessage]())
+	_, err := svc.FindMessages(jwtContext(userID, appCode), appCode, sessionID, filter.Default[model.ExecutionMessage]())
 	var appErr *apperr.Error
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, http.StatusForbidden, appErr.StatusCode)
@@ -142,20 +138,20 @@ func TestFindMessagesForbiddenWithoutAccess(t *testing.T) {
 func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 	t.Parallel()
 
-	clientCode := "abc"
-	clientID := uuid.New().String()
+	appCode := "abc"
+	appID := uuid.New().String()
 	sessionID := uuid.New().String()
 	agentID := uuid.New().String()
 
 	var created *model.Execution
 
-	clientRepo := mocks.NewMockIClientRepository(t)
-	expectClientByCode(t, clientRepo, clientCode, clientID)
+	appRepo := mocks.NewMockIAppRepository(t)
+	expectAppByCode(t, appRepo, appCode, appID)
 
 	sessionRepo := mocks.NewMockISessionRepository(t)
 	sessionRepo.EXPECT().
-		FindByIDInClient(mock.Anything, clientID, sessionID, mock.Anything).
-		Return(&model.Session{ID: sessionID, ClientID: clientID, AgentID: agentID}, nil)
+		FindByIDInApp(mock.Anything, appID, sessionID, mock.Anything).
+		Return(&model.Session{ID: sessionID, AppID: appID, AgentID: agentID}, nil)
 
 	agentRepo := mocks.NewMockIAgentRepository(t)
 	llmID := uuid.New().String()
@@ -189,8 +185,8 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 
 	messageRepo := mocks.NewMockIExecutionMessageRepository(t)
 	messageRepo.EXPECT().
-		ListBySessionID(mock.Anything, sessionID).
-		Return(nil, nil)
+		FilterInSession(mock.Anything, sessionID, mock.Anything).
+		Return(page.NewPaginated([]model.ExecutionMessage{}, 0, 0, 20), nil)
 	messageRepo.EXPECT().
 		CreateInExecution(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
@@ -203,6 +199,9 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		ConfigurationSchema: jsonx.JSONMap{"type": "object"},
 	})
 	primary.EXPECT().Validate().Return(nil)
+	primary.EXPECT().
+		Model(mock.Anything, mock.Anything).
+		Return(llm.NewModel("primary", "primary", []llm.ModelCapabilities{llm.ModelCapabilitiesToolCall}), nil)
 	primary.EXPECT().
 		Stream(mock.Anything, mock.Anything, mock.Anything).
 		Return(streamOf(llm.TextDeltaEvent{Text: "ok"}), nil)
@@ -223,9 +222,9 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		logger.NewLogger(logger.LevelError),
 	)
 
-	svc := newSessionService(t, sessionRepo, messageRepo, clientRepo, agentRepo, agentSvc)
+	svc := newSessionService(t, sessionRepo, messageRepo, appRepo, agentSvc)
 
-	err := svc.Run(apiKeyContext(), clientCode, sessionID, session.RunSessionDTO{Message: "hi"})
+	err := svc.Run(appKeyContext(appID), appCode, sessionID, session.RunSessionDTO{Message: "hi"})
 	require.NoError(t, err)
 
 	require.NotNil(t, created)
@@ -234,25 +233,23 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 	assert.Equal(t, agentID, created.AgentID)
 }
 
-func TestDeleteByIDResolvesClientCode(t *testing.T) {
+func TestDeleteByIDResolvesAppCode(t *testing.T) {
 	t.Parallel()
 
-	clientCode := "abc"
-	clientID := uuid.New().String()
+	appCode := "abc"
+	appID := uuid.New().String()
 	sessionID := uuid.New().String()
 
-	clientRepo := mocks.NewMockIClientRepository(t)
-	expectClientByCode(t, clientRepo, clientCode, clientID)
+	appRepo := mocks.NewMockIAppRepository(t)
+	expectAppByCode(t, appRepo, appCode, appID)
 
 	sessionRepo := mocks.NewMockISessionRepository(t)
 	sessionRepo.EXPECT().
-		DeleteInClient(mock.Anything, clientID, sessionID).
+		DeleteInApp(mock.Anything, appID, sessionID).
 		Return(nil)
 
-	agentRepo := mocks.NewMockIAgentRepository(t)
+	svc := newSessionService(t, sessionRepo, mocks.NewMockIExecutionMessageRepository(t), appRepo, nil)
 
-	svc := newSessionService(t, sessionRepo, mocks.NewMockIExecutionMessageRepository(t), clientRepo, agentRepo, nil)
-
-	err := svc.DeleteByID(apiKeyContext(), clientCode, sessionID)
+	err := svc.DeleteByID(appKeyContext(appID), appCode, sessionID)
 	require.NoError(t, err)
 }

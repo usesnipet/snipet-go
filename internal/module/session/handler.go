@@ -18,7 +18,7 @@ func NewHandler(service *Service, anyAuthMiddleware api.MiddlewareFunc) api.Hand
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/client/{client_code}/session", func(r chi.Router) {
+	r.Route("/apps/{code}/session", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.anyAuthMiddleware)
 			r.Get("/", serve(h.filter))
@@ -32,8 +32,8 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 }
 
-func (h *Handler) clientCode(r *http.Request) string {
-	return chi.URLParam(r, "client_code")
+func (h *Handler) appCode(r *http.Request) string {
+	return chi.URLParam(r, "code")
 }
 
 func (h *Handler) sessionID(r *http.Request) string {
@@ -47,12 +47,12 @@ func (h *Handler) sessionID(r *http.Request) string {
 // @Produce		text/event-stream
 // @Security		BearerAuth
 // @Security		ApiKeyAuth
-// @Param			client_code	path	string			true	"Client code"
-// @Param			id			path	string			true	"Session ID"
-// @Param			body		body	RunSessionDTO	true	"Run input"
+// @Param			code	path	string			true	"App code"
+// @Param			id		path	string			true	"Session ID"
+// @Param			body	body	RunSessionDTO	true	"Run input"
 // @Success		200 {object}  any
 // @Failure		400	{object}	api.Error
-// @Router			/client/{client_code}/session/{id}/run [post]
+// @Router			/apps/{code}/session/{id}/run [post]
 func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 	var dto RunSessionDTO
 	if err := api.ParseBody(r, &dto); err != nil {
@@ -61,7 +61,7 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 
 	sse := subscriber.NewSSE(w)
 
-	err := h.service.Run(r.Context(), h.clientCode(r), h.sessionID(r), dto, sse)
+	err := h.service.Run(r.Context(), h.appCode(r), h.sessionID(r), dto, sse)
 	if err != nil {
 		return sse.HandleError(err)
 	}
@@ -74,20 +74,20 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request) error {
 // @Produce		json
 // @Security		BearerAuth
 // @Security		ApiKeyAuth
-// @Param			client_code	path		string	true	"Client code"
-// @Param			id			path		string	true	"Session ID"
-// @Param			sort		query		string	false	"Order by timestamp"	Enums(asc, desc)
-// @Param			take		query		int		false	"Page size"
-// @Param			skip		query		int		false	"Page offset"
-// @Success		200			{object}	SessionMessagesPage
-// @Failure		400			{object}	api.Error
-// @Router			/client/{client_code}/session/{id}/messages [get]
+// @Param			code	path		string	true	"App code"
+// @Param			id		path		string	true	"Session ID"
+// @Param			sort	query		string	false	"Order by timestamp"	Enums(asc, desc)
+// @Param			take	query		int		false	"Page size"
+// @Param			skip	query		int		false	"Page offset"
+// @Success		200		{object}	SessionMessagesPage
+// @Failure		400		{object}	api.Error
+// @Router			/apps/{code}/session/{id}/messages [get]
 func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
 	var query MessagesFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}
-	data, err := h.service.FindMessages(r.Context(), h.clientCode(r), h.sessionID(r), query.ToFilter())
+	data, err := h.service.FindMessages(r.Context(), h.appCode(r), h.sessionID(r), query.ToFilter())
 	if err != nil {
 		return err
 	}
@@ -95,24 +95,24 @@ func (h *Handler) findMessages(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		List sessions
-// @Description	Lists sessions of a client, with optional pagination and includes.
+// @Description	Lists sessions of an app, with optional pagination and includes.
 // @Tags			session
 // @Produce		json
 // @Security		BearerAuth
 // @Security		ApiKeyAuth
-// @Param			client_code	path		string		true	"Client code"
-// @Param			take		query		int			false	"Page size"
-// @Param			skip		query		int			false	"Page offset"
-// @Param			include		query		[]string	false	"Related resources to include"	Enums(agent)
-// @Success		200			{object}	SessionsPage
-// @Failure		400			{object}	api.Error
-// @Router			/client/{client_code}/session [get]
+// @Param			code	path		string		true	"App code"
+// @Param			take	query		int			false	"Page size"
+// @Param			skip	query		int			false	"Page offset"
+// @Param			include	query		[]string	false	"Related resources to include"	Enums(agent)
+// @Success		200		{object}	SessionsPage
+// @Failure		400		{object}	api.Error
+// @Router			/apps/{code}/session [get]
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 	var query SessionsFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}
-	data, err := h.service.Filter(r.Context(), h.clientCode(r), query.ToFilter())
+	data, err := h.service.Filter(r.Context(), h.appCode(r), query.ToFilter())
 	if err != nil {
 		return err
 	}
@@ -125,18 +125,18 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 // @Produce		json
 // @Security		BearerAuth
 // @Security		ApiKeyAuth
-// @Param			client_code	path		string		true	"Client code"
-// @Param			id			path		string		true	"Session ID"
-// @Param			include		query		[]string	false	"Related resources to include"	Enums(agent)
-// @Success		200			{object}	SessionResponse
-// @Failure		404			{object}	api.Error
-// @Router			/client/{client_code}/session/{id} [get]
+// @Param			code	path		string		true	"App code"
+// @Param			id		path		string		true	"Session ID"
+// @Param			include	query		[]string	false	"Related resources to include"	Enums(agent)
+// @Success		200		{object}	SessionResponse
+// @Failure		404		{object}	api.Error
+// @Router			/apps/{code}/session/{id} [get]
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 	var query SessionIncludeDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}
-	data, err := h.service.FindByID(r.Context(), h.clientCode(r), h.sessionID(r), query.ToFilter())
+	data, err := h.service.FindByID(r.Context(), h.appCode(r), h.sessionID(r), query.ToFilter())
 	if err != nil {
 		return err
 	}
@@ -144,23 +144,23 @@ func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Create session
-// @Description	Creates a new session for a client.
+// @Description	Creates a new session for an app.
 // @Tags			session
 // @Accept			json
 // @Produce		json
 // @Security		BearerAuth
 // @Security		ApiKeyAuth
-// @Param			client_code	path		string				true	"Client code"
-// @Param			body		body		CreateSessionDTO	true	"Session data"
-// @Success		201			{object}	SessionResponse
-// @Failure		400			{object}	api.Error
-// @Router			/client/{client_code}/session [post]
+// @Param			code	path		string				true	"App code"
+// @Param			body	body		CreateSessionDTO	true	"Session data"
+// @Success		201		{object}	SessionResponse
+// @Failure		400		{object}	api.Error
+// @Router			/apps/{code}/session [post]
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	var dto CreateSessionDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	data, err := h.service.Create(r.Context(), h.clientCode(r), dto)
+	data, err := h.service.Create(r.Context(), h.appCode(r), dto)
 	if err != nil {
 		return err
 	}
@@ -173,18 +173,18 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 // @Accept			json
 // @Security		BearerAuth
 // @Security		ApiKeyAuth
-// @Param			client_code	path	string				true	"Client code"
-// @Param			id			path	string				true	"Session ID"
-// @Param			body		body	UpdateSessionDTO	true	"Session data"
+// @Param			code	path	string				true	"App code"
+// @Param			id		path	string				true	"Session ID"
+// @Param			body	body	UpdateSessionDTO	true	"Session data"
 // @Success		204
 // @Failure		400	{object}	api.Error
-// @Router			/client/{client_code}/session/{id} [put]
+// @Router			/apps/{code}/session/{id} [put]
 func (h *Handler) updateByID(w http.ResponseWriter, r *http.Request) error {
 	var dto UpdateSessionDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	if err := h.service.UpdateByID(r.Context(), h.clientCode(r), h.sessionID(r), dto); err != nil {
+	if err := h.service.UpdateByID(r.Context(), h.appCode(r), h.sessionID(r), dto); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
@@ -195,13 +195,13 @@ func (h *Handler) updateByID(w http.ResponseWriter, r *http.Request) error {
 // @Tags			session
 // @Security		BearerAuth
 // @Security		ApiKeyAuth
-// @Param			client_code	path	string	true	"Client code"
-// @Param			id			path	string	true	"Session ID"
+// @Param			code	path	string	true	"App code"
+// @Param			id		path	string	true	"Session ID"
 // @Success		204
 // @Failure		404	{object}	api.Error
-// @Router			/client/{client_code}/session/{id} [delete]
+// @Router			/apps/{code}/session/{id} [delete]
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
-	if err := h.service.DeleteByID(r.Context(), h.clientCode(r), h.sessionID(r)); err != nil {
+	if err := h.service.DeleteByID(r.Context(), h.appCode(r), h.sessionID(r)); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)

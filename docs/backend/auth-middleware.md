@@ -22,7 +22,7 @@ exclusive on a given request's context.
 |---|---|---|---|
 | Platform-staff JWT | `Authorization: Bearer` | `auth.UserIdentity` (`User`, `Memberships []*model.Member`) | `guard.RequireUser` |
 | API key | `X-API-Key` | `auth.ApiKeyIdentity` (`APIKeyID`, `TenantID`) | `guard.RequireApiKey` |
-| Client-widget JWT | `Authorization: Bearer` | `auth.ClientUserIdentity` (`UserID`, `ClientCode`) | `guard.RequireClientUser` |
+| Client-widget JWT | `Authorization: Bearer` | `auth.AppUserIdentity` (`UserID`, `ClientCode`) | `guard.RequireClientUser` |
 
 ```go
 type UserIdentity struct {
@@ -35,7 +35,7 @@ type ApiKeyIdentity struct {
     TenantID string
 }
 
-type ClientUserIdentity struct {
+type AppUserIdentity struct {
     UserID     string
     ClientCode string
 }
@@ -46,7 +46,7 @@ type ClientUserIdentity struct {
 ```go
 identity, err := auth.CurrentUser(ctx)       // *auth.UserIdentity
 identity, err := auth.CurrentApiKey(ctx)     // auth.ApiKeyIdentity
-identity, err := auth.CurrentClientUser(ctx) // auth.ClientUserIdentity
+identity, err := auth.CurrentAppUser(ctx) // auth.AppUserIdentity
 
 auth.HasApiKey(ctx) // bool, no error — useful in code paths reachable by
                      // more than one mechanism (see session.Service.Run)

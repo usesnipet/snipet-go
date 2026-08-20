@@ -127,7 +127,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// services
 	apiKeyGenerator := auth.NewAPIKeyGenerator()
 	apiKeyHasher := auth.NewKeyHasher()
-	jwtService := auth.NewJWTService(cfg.Auth, func() *auth.ClientUserClaims { return &auth.ClientUserClaims{} })
+	appUserJWTService := auth.NewJWTService(cfg.Auth, func() *auth.AppUserClaims { return &auth.AppUserClaims{} })
 
 	refreshTokenService := auth.NewTokenService()
 
@@ -138,12 +138,12 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		appRepo,
 		appUserRepo,
 		refreshTokenRepo,
-		jwtService,
+		appUserJWTService,
 		refreshTokenService,
 		cfg.Auth,
 	)
 
-	userJWTService := auth.NewJWTService(cfg.Auth, func() *auth.PlatformUserClaims { return &auth.PlatformUserClaims{} })
+	platformUserJWTService := auth.NewJWTService(cfg.Auth, func() *auth.PlatformUserClaims { return &auth.PlatformUserClaims{} })
 	userProviderRegistry := auth_module.NewProviderRegistry(
 		auth_module.NewGoogleProvider(cfg.Auth),
 		auth_module.NewGithubProvider(cfg.Auth),
@@ -155,7 +155,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		userRepo,
 		accountRepo,
 		tokenRepo,
-		userJWTService,
+		platformUserJWTService,
 		refreshTokenService,
 		emailService,
 		userProviderRegistry,
@@ -213,15 +213,17 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	// guards
 	requireAPIKey := guard.RequireApiKey(apiKeyService, apiKeyCache)
 	requireAppKey := guard.RequireAppKey(appService, appKeyCache)
-	requireClientUser := guard.RequireClientUser(jwtService)
-	requireUser := guard.RequireUser(userJWTService, userRepo, memberRepo)
-	anyClientAuth := guard.Or(requireClientUser, requireAPIKey)
+	requireAppUser := guard.RequireAppUser(appUserJWTService)
+	requireUser := guard.RequireUser(platformUserJWTService, userRepo, memberRepo)
+	anyClientAuth := guard.Or(requireAppUser, requireAPIKey)
+	sessionAuth := guard.Or(requireAppUser, requireAppKey)
 
 	apiKeyMiddleware := requireAPIKey.Handler()
 	appKeyMiddleware := requireAppKey.Handler()
-	clientJWTMiddleware := requireClientUser.Handler()
+	appJWTMiddleware := requireAppUser.Handler()
 	userMiddleware := requireUser.Handler()
 	anyClientAuthMiddleware := anyClientAuth.Handler()
+	sessionAuthMiddleware := sessionAuth.Handler()
 
 	// handlers
 	clientAuthHandler := clientauth.NewHandler(clientauthService)
@@ -231,10 +233,10 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	agentHandler := agent.NewHandler(agentService, userMiddleware, apiKeyMiddleware)
 	llmHandler := llmmodule.NewHandler(llmService, userMiddleware)
 	appHandler := appmodule.NewHandler(appService, userMiddleware, appKeyMiddleware)
-	sessionHandler := session.NewHandler(sessionService, anyClientAuthMiddleware)
+	sessionHandler := session.NewHandler(sessionService, sessionAuthMiddleware)
 	knowledgeHandler := knowledge.NewHandler(knowledgeService, userMiddleware)
 	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, userMiddleware)
-	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, clientJWTMiddleware)
+	clientUserHandler := clientuser.NewHandler(clientUserService, apiKeyMiddleware, anyClientAuthMiddleware, appJWTMiddleware)
 	userHandler := user.NewHandler(userService, userMiddleware)
 	tenantHandler := tenant.NewHandler(tenantService, userMiddleware)
 	memberHandler := member.NewHandler(memberService, userMiddleware)

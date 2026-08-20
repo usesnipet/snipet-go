@@ -304,11 +304,11 @@ func TestMeRejectsMissingIdentity(t *testing.T) {
 	assertAppError(t, err, http.StatusUnauthorized, "unauthorized")
 }
 
-func TestMeRejectsClientUserIdentity(t *testing.T) {
+func TestMeRejectsAppUserIdentity(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(mocks.NewMockIApiKeyRepository(t))
-	ctx := auth.SetClientUserIdentity(context.Background(), auth.ClientUserIdentity{UserID: "u1", ClientCode: "c1"})
+	ctx := auth.SetAppUserIdentity(context.Background(), auth.AppUserIdentity{UserID: "u1", ClientCode: "c1"})
 
 	_, err := svc.Me(ctx)
 	assertAppError(t, err, http.StatusUnauthorized, "unauthorized")

@@ -20,14 +20,14 @@ func testAuthConfig() config.AuthConfig {
 	}
 }
 
-func newTestJWTService(cfg config.AuthConfig) *auth.JWTService[*auth.ClientUserClaims] {
-	return auth.NewJWTService(cfg, func() *auth.ClientUserClaims { return &auth.ClientUserClaims{} })
+func newTestJWTService(cfg config.AuthConfig) *auth.JWTService[*auth.AppUserClaims] {
+	return auth.NewJWTService(cfg, func() *auth.AppUserClaims { return &auth.AppUserClaims{} })
 }
 
-func testClaims(cfg config.AuthConfig, clientCode, subject string) *auth.ClientUserClaims {
-	return &auth.ClientUserClaims{
+func testClaims(cfg config.AuthConfig, appCode, subject string) *auth.AppUserClaims {
+	return &auth.AppUserClaims{
 		BaseClaims: auth.NewBaseClaims(cfg, subject),
-		ClientCode: clientCode,
+		AppCode:    appCode,
 	}
 }
 
@@ -56,7 +56,7 @@ func TestGenerateTokenEmbedsExpectedClaims(t *testing.T) {
 	claims, err := service.VerifyToken(token)
 	require.NoError(t, err)
 
-	assert.Equal(t, "client-abc", claims.ClientCode)
+	assert.Equal(t, "client-abc", claims.AppCode)
 	assert.Equal(t, subject, claims.Subject)
 	assert.Equal(t, cfg.JWTIssuer, claims.Issuer)
 	assert.Equal(t, cfg.JWTAudience, claims.Audience[0])
@@ -77,7 +77,7 @@ func TestVerifyTokenAcceptsValidToken(t *testing.T) {
 	claims, err := service.VerifyToken(token)
 	require.NoError(t, err)
 
-	assert.Equal(t, input.ClientCode, claims.ClientCode)
+	assert.Equal(t, input.AppCode, claims.AppCode)
 	assert.Equal(t, input.Subject, claims.Subject)
 	assert.Equal(t, input.Issuer, claims.Issuer)
 }
@@ -93,7 +93,7 @@ func TestVerifyTokenAcceptsTokenWithoutBearerPrefix(t *testing.T) {
 	claims, err := service.VerifyToken(strings.TrimPrefix(token, "Bearer "))
 	require.NoError(t, err)
 
-	assert.Equal(t, "client-abc", claims.ClientCode)
+	assert.Equal(t, "client-abc", claims.AppCode)
 }
 
 func TestVerifyTokenRejectsInvalidToken(t *testing.T) {
@@ -103,7 +103,7 @@ func TestVerifyTokenRejectsInvalidToken(t *testing.T) {
 
 	claims, err := service.VerifyToken("Bearer not.a.valid.token")
 	require.Error(t, err)
-	assert.Empty(t, claims.ClientCode)
+	assert.Empty(t, claims.AppCode)
 }
 
 func TestVerifyTokenRejectsWrongSecret(t *testing.T) {
@@ -120,7 +120,7 @@ func TestVerifyTokenRejectsWrongSecret(t *testing.T) {
 
 	claims, err := verifier.VerifyToken(token)
 	require.Error(t, err)
-	assert.Empty(t, claims.ClientCode)
+	assert.Empty(t, claims.AppCode)
 }
 
 func TestVerifyTokenRejectsExpiredToken(t *testing.T) {
@@ -135,5 +135,5 @@ func TestVerifyTokenRejectsExpiredToken(t *testing.T) {
 
 	claims, err := service.VerifyToken(token)
 	require.Error(t, err)
-	assert.Empty(t, claims.ClientCode)
+	assert.Empty(t, claims.AppCode)
 }

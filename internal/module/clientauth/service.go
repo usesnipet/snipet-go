@@ -23,7 +23,7 @@ type Service struct {
 	clientRepo                 repository.IClientRepository
 	userRepo                   repository.IClientUserRepository
 	clientUserRefreshTokenRepo repository.IClientUserRefreshTokenRepository
-	jwtService                 *auth.JWTService[*auth.ClientUserClaims]
+	jwtService                 *auth.JWTService[*auth.AppUserClaims]
 	tokenService               *auth.TokenService
 	authConfig                 config.AuthConfig
 }
@@ -33,7 +33,7 @@ func NewService(
 	clientRepo repository.IClientRepository,
 	userRepo repository.IClientUserRepository,
 	clientUserRefreshTokenRepo repository.IClientUserRefreshTokenRepository,
-	jwtService *auth.JWTService[*auth.ClientUserClaims],
+	jwtService *auth.JWTService[*auth.AppUserClaims],
 	refreshTokenService *auth.TokenService,
 	authConfig config.AuthConfig,
 ) *Service {
@@ -49,7 +49,7 @@ func NewService(
 }
 
 func (s *Service) issueTokens(ctx context.Context, clientCode string, user *model.ClientUser, metadata jsonx.JSONMap) (*AuthenticateResponse, error) {
-	claims := &auth.ClientUserClaims{
+	claims := &auth.AppUserClaims{
 		BaseClaims: auth.NewBaseClaims(s.authConfig, user.ID),
 		ClientCode: clientCode,
 	}

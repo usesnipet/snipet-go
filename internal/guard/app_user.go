@@ -8,9 +8,9 @@ import (
 	"github.com/usesnipet/snipet/internal/auth"
 )
 
-// RequireClientUser requires a valid client-widget end-user JWT
-// (Authorization: Bearer) and sets an auth.ClientUserIdentity.
-func RequireClientUser(jwtService *auth.JWTService[*auth.ClientUserClaims]) Gate {
+// RequireAppUser requires a valid app end-user JWT
+// (Authorization: Bearer) and sets an auth.AppUserIdentity.
+func RequireAppUser(jwtService *auth.JWTService[*auth.AppUserClaims]) Gate {
 	return func(r *http.Request) (context.Context, error) {
 		claims, err := verifyBearerJWT(r, jwtService)
 		if err != nil {
@@ -21,7 +21,7 @@ func RequireClientUser(jwtService *auth.JWTService[*auth.ClientUserClaims]) Gate
 			return nil, apperr.Unauthorized("unauthorized")
 		}
 
-		identity := auth.ClientUserIdentity{UserID: userID, ClientCode: claims.ClientCode}
-		return auth.SetClientUserIdentity(r.Context(), identity), nil
+		identity := auth.AppUserIdentity{UserID: userID, AppCode: claims.AppCode}
+		return auth.SetAppUserIdentity(r.Context(), identity), nil
 	}
 }

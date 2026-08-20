@@ -1,5 +1,5 @@
 // Package guard authenticates requests and stashes the resulting identity
-// (see internal/auth's UserIdentity, ApiKeyIdentity, ClientUserIdentity) on
+// (see internal/auth's UserIdentity, ApiKeyIdentity, AppUserIdentity) on
 // the request context. Each Require* constructor below is one auth scheme;
 // wire the one an endpoint needs via .Handler(), or accept several with Or.
 package guard
@@ -16,7 +16,7 @@ import (
 
 // Gate is a single authentication attempt against a request. On success it
 // returns a context carrying whatever identity it authenticated (via
-// auth.SetUserIdentity / SetApiKeyIdentity / SetClientUserIdentity). On
+// auth.SetUserIdentity / SetApiKeyIdentity / SetAppUserIdentity). On
 // failure it returns auth.ErrNotApplicable when its credential was simply
 // absent from the request — so Or can fall through to the next gate — or
 // any other error when the credential was present but invalid.
@@ -39,7 +39,7 @@ func (g Gate) Handler() api.MiddlewareFunc {
 
 // Or tries each gate in order and keeps the context from the first that
 // succeeds — every successful gate sets its own identity, so which one fired
-// is recoverable downstream (auth.CurrentApiKey / CurrentClientUser / ...).
+// is recoverable downstream (auth.CurrentApiKey / CurrentAppUser / ...).
 // Gates reporting auth.ErrNotApplicable (credential absent) are skipped; a
 // gate whose credential is present but invalid fails the whole chain
 // immediately. At least one gate must succeed.
