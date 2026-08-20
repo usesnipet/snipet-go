@@ -39,10 +39,10 @@ export function UpdateAppDialog({ tenantId, app, close }: UpdateAppDialogProps) 
   const { mutateAsync: updateAuthConfig, isPending: isUpdatingAuthConfig } = useUpdateAppAuthConfig();
   const isPending = isUpdatingApp || isUpdatingAuthConfig;
 
-  const onSubmit = form.handleSubmit(async ({ auth_config, ...data }) => {
+  const onSubmit = form.handleSubmit(async ({ auth_config: app_config, ...data }) => {
     await Promise.all([
       updateApp({ tenantId, code: app.code, data }),
-      updateAuthConfig({ tenantId, code: app.code, data: { auth_config } }),
+      updateAuthConfig({ tenantId, code: app.code, data: { auth_config: app_config } }),
     ]);
     close();
   });

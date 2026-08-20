@@ -23,11 +23,11 @@ type UpdateAppDTO struct {
 }
 
 type UpdateAppAuthConfigDTO struct {
-	model.AppAuthConfig
+	AuthConfig model.AppAuthConfig `json:"auth_config"`
 }
 
 func (dto *UpdateAppAuthConfigDTO) ToModel() model.AppAuthConfig {
-	return dto.AppAuthConfig
+	return dto.AuthConfig
 }
 
 type AppWithSecret struct {

@@ -46,7 +46,9 @@ export function AppCatalogItem({ app }: { app: App }) {
   const { openDialog } = useDialog();
   const navigate = useNavigate();
 
-  const openEdit = (app: App) => {
+  const openEdit = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
     if (!tenant) return;
     openDialog({
       component: UpdateAppDialog,
@@ -54,7 +56,9 @@ export function AppCatalogItem({ app }: { app: App }) {
     });
   };
 
-  const openDelete = (app: App) => {
+  const openDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
     if (!tenant) return;
     openDialog({
       component: DeleteAppDialog,
@@ -67,7 +71,7 @@ export function AppCatalogItem({ app }: { app: App }) {
   }
 
   return (
-    <Card className="flex h-full flex-col cursor-pointer" onClick={() => goToAppPage()}>
+    <Card className="flex h-full flex-col cursor-pointer" onClick={goToAppPage}>
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-3">
         <BotIcon className="size-8 text-muted-foreground border border-border rounded-full p-1.5" />
         <div className="flex min-w-0 flex-1 items-center justify-between space-y-1">
@@ -80,7 +84,7 @@ export function AppCatalogItem({ app }: { app: App }) {
               variant="ghost"
               size="icon"
               aria-label="Edit app"
-              onClick={() => openEdit(app)}
+              onClick={openEdit}
             >
               <PencilIcon className="size-4" />
             </Button>
@@ -88,7 +92,7 @@ export function AppCatalogItem({ app }: { app: App }) {
               variant="ghost"
               size="icon"
               aria-label="Delete app"
-              onClick={() => openDelete(app)}
+              onClick={openDelete}
             >
               <TrashIcon className="size-4" />
             </Button>

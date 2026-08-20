@@ -1,4 +1,4 @@
-import { appBaseSchema, appSchema } from "@/models/app";
+import { appAuthConfigSchema, appBaseSchema, appSchema } from "@/models/app";
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
@@ -25,8 +25,8 @@ export const updateAppSchema = appBaseSchema.pick({
 
 export type UpdateApp = z.infer<typeof updateAppSchema>;
 
-export const updateAppAuthConfigSchema = appBaseSchema.pick({
-  auth_config: true,
+export const updateAppAuthConfigSchema = z.object({
+  auth_config: appAuthConfigSchema,
 }).strict();
 
 export type UpdateAppAuthConfig = z.infer<typeof updateAppAuthConfigSchema>;
