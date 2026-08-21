@@ -118,6 +118,60 @@ export const useUpdateAppAuthConfig = (
   })
 }
 
+export const rollAppQueryKey = () => [BASE_QUERY_KEY, "roll"];
+export const useRollApp = (
+  opts?: ServicePostOptions<undefined, AppWithSecret>
+): UseMutationResult<AppWithSecret, Error, { tenantId: string; code: string }> => {
+  return useMutation({
+    mutationKey: rollAppQueryKey(),
+    mutationFn: ({ tenantId, code }: { tenantId: string; code: string }) =>
+      appService.roll(tenantId, code, opts),
+    onSuccess: (_data, { tenantId, code }) => {
+      toast({
+        title: "App key rolled successfully",
+        description: "The app key has been rolled successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: listAppQueryKey(tenantId) });
+      queryClient.invalidateQueries({ queryKey: findByCodeAppQueryKey(tenantId, code) });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to roll app key",
+        description: "The app key has not been rolled successfully",
+        variant: "destructive",
+      });
+    }
+  })
+}
+
+export const setActiveAppQueryKey = () => [BASE_QUERY_KEY, "set-active"];
+export const useSetActiveApp = (
+  opts: ServicePutOptions<void, void> = {}
+): UseMutationResult<void, Error, { tenantId: string; code: string; active: boolean }> => {
+  return useMutation({
+    mutationKey: setActiveAppQueryKey(),
+    mutationFn: ({ tenantId, code, active }: { tenantId: string; code: string; active: boolean }) =>
+      appService.setActive(tenantId, code, active, opts),
+    onSuccess: (_data, { tenantId, code, active }) => {
+      toast({
+        title: active ? "App activated" : "App deactivated",
+        description: active
+          ? "The app has been activated successfully"
+          : "The app has been deactivated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: listAppQueryKey(tenantId) });
+      queryClient.invalidateQueries({ queryKey: findByCodeAppQueryKey(tenantId, code) });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to update app status",
+        description: "The app status has not been updated successfully",
+        variant: "destructive",
+      });
+    }
+  })
+}
+
 export const deleteAppQueryKey = () => [BASE_QUERY_KEY, "delete"];
 export const useDeleteApp = (
   opts: ServiceDeleteOptions<void> = {}

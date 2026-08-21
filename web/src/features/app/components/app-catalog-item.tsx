@@ -1,54 +1,59 @@
+import { SecretKeyDialog } from "@/components/secret-key-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { DateFormat } from "@/components/ui/date";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { useTenantStore } from "@/features/tenant/store";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
 import { ROUTES } from "@/routes";
-import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
+import {
+  BotIcon, MoreHorizontal, PencilIcon, PowerIcon, PowerOffIcon, RefreshCwIcon, TrashIcon
+} from "lucide-react";
+
+import { useSetActiveApp } from "../hooks";
 
 import { AppCode } from "./app-code";
 import { DeleteAppDialog } from "./delete-app-dialog";
+import { RollAppDialog } from "./roll-app-dialog";
 import { UpdateAppDialog } from "./update-app-dialog";
 
-import type { App } from "../schemas";
-
-
-function AuthBadges({ app }: { app: App }) {
-  const methods: string[] = [];
-  if (app.auth_config.oidc.enabled) methods.push("OIDC");
-  if (app.auth_config.webhook.enabled) methods.push("Webhook");
-
-  if (methods.length === 0) {
-    return (
-      <Badge variant="outline" className="shrink-0 font-normal text-muted-foreground">
-        No auth
-      </Badge>
-    );
-  }
-
-  return (
-    <>
-      <Badge key={methods[0]} variant="outline" className="shrink-0 font-normal">
-        {methods[0]}
-      </Badge>
-      {methods.length > 1 && (
-        <Badge variant="outline" className="shrink-0 font-normal">
-          +{methods.length - 1}
-        </Badge>
-      )}
-    </>
-  );
-}
+import type { App, AppWithSecret } from "../schemas";
 
 export function AppCatalogItem({ app }: { app: App }) {
   const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
   const navigate = useNavigate();
+  const { mutate: setActive } = useSetActiveApp();
 
-  const openEdit = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    event.preventDefault();
+  const showSecret = (app: AppWithSecret) => {
+    openDialog({
+      component: SecretKeyDialog,
+      props: {
+        secret: app.key,
+        title: "App key rolled",
+        description: "Copy this key now. You will not be able to see it again.",
+      },
+    });
+  };
+
+  const openRoll = () => {
+    if (!tenant) return;
+    openDialog({
+      component: RollAppDialog,
+      props: { tenantId: tenant.id, app, onRolled: (rolled) => showSecret(rolled) },
+    });
+  };
+
+  const toggleActive = () => {
+    if (!tenant) return;
+    setActive({ tenantId: tenant.id, code: app.code, active: app.status !== "active" });
+  };
+
+  const openEdit = () => {
     if (!tenant) return;
     openDialog({
       component: UpdateAppDialog,
@@ -56,9 +61,7 @@ export function AppCatalogItem({ app }: { app: App }) {
     });
   };
 
-  const openDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    event.preventDefault();
+  const openDelete = () => {
     if (!tenant) return;
     openDialog({
       component: DeleteAppDialog,
@@ -70,6 +73,8 @@ export function AppCatalogItem({ app }: { app: App }) {
     navigate(ROUTES.app, { params: { appCode: app.code } });
   }
 
+  const isActive = app.status === "active";
+
   return (
     <Card className="flex h-full flex-col cursor-pointer" onClick={goToAppPage}>
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-3">
@@ -77,30 +82,55 @@ export function AppCatalogItem({ app }: { app: App }) {
         <div className="flex min-w-0 flex-1 items-center justify-between space-y-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h2 className="truncate text-base font-semibold leading-tight">{app.name}</h2>
-            <AuthBadges app={app} />
+            <Badge variant={app.status === "active" ? "default" : "secondary"}>
+              {app.status}
+            </Badge>
           </div>
-          <div>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Edit app"
-              onClick={openEdit}
-            >
-              <PencilIcon className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Delete app"
-              onClick={openDelete}
-            >
-              <TrashIcon className="size-4" />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Open menu"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+              <DropdownMenuItem onClick={openRoll}>
+                <RefreshCwIcon />
+                Roll key
+              </DropdownMenuItem>
+              {
+                app.status !== "pending" && (
+                  <DropdownMenuItem onClick={toggleActive}>
+                    {isActive ? <PowerOffIcon /> : <PowerIcon />}
+                    {isActive ? "Deactivate" : "Activate"}
+                  </DropdownMenuItem>
+                )
+              }
+              <DropdownMenuItem onClick={openEdit}>
+                <PencilIcon />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={openDelete}
+              >
+                <TrashIcon />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3 pt-0">
         <AppCode code={app.code} />
+        <p className="mt-auto text-xs text-muted-foreground">
+          Last verified: <DateFormat date={app.last_verified_at} emptyValue="Never" />
+        </p>
       </CardContent>
     </Card>
   )

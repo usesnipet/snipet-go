@@ -186,8 +186,12 @@ func (s *Service) ToggleActive(ctx context.Context, tenantID, code string, activ
 	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
 		return err
 	}
-	if _, err := s.findByCodeInTenant(ctx, tenantID, code); err != nil {
+	app, err := s.findByCodeInTenant(ctx, tenantID, code)
+	if err != nil {
 		return err
+	}
+	if app.Status == model.AppStatusPending && active {
+		return apperr.BadRequest("cannot activate a pending app")
 	}
 	status := model.AppStatusActive
 	if !active {

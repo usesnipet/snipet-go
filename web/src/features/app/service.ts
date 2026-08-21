@@ -90,6 +90,34 @@ const updateAuthConfig = async (
   })
 }
 
+const roll = async (
+  tenantId: string,
+  code: string,
+  opts?: ServicePostOptions<undefined, AppWithSecret>,
+): Promise<AppWithSecret> => {
+  return http.post({
+    url: `${appsUrl(tenantId)}/{code}/roll`,
+    params: { code },
+    schemas: {
+      response: appWithSecretSchema,
+    },
+    ...opts,
+  })
+}
+
+const setActive = async (
+  tenantId: string,
+  code: string,
+  active: boolean,
+  opts: ServicePutOptions<void, void> = {},
+): Promise<void> => {
+  return http.put({
+    url: `${appsUrl(tenantId)}/{code}/${active ? "active" : "disabled"}`,
+    params: { code },
+    ...opts,
+  })
+}
+
 const remove = async (
   tenantId: string,
   code: string,
@@ -108,5 +136,7 @@ export const appService = {
   findByCode,
   update,
   updateAuthConfig,
+  roll,
+  setActive,
   delete: remove,
 }

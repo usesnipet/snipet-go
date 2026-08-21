@@ -1,6 +1,6 @@
 import { Page, PageActions } from "@/components/page";
+import { SecretKeyDialog } from "@/components/secret-key-dialog";
 import { Button } from "@/components/ui/button";
-import { ApiKeySecretDialog } from "@/features/api-key/components/api-key-secret-dialog";
 import { ApiKeyTable } from "@/features/api-key/components/api-key-table";
 import { CreateApiKeyDialog } from "@/features/api-key/components/create-api-key-dialog";
 import { useTenantStore } from "@/features/tenant/store";
@@ -14,7 +14,7 @@ export function ApiKeysPage() {
 
   const showSecret = (apiKey: ApiKeyWithSecret) => {
     openDialog({
-      component: ApiKeySecretDialog,
+      component: SecretKeyDialog,
       props: {
         secret: apiKey.key,
         title: "API Key created",

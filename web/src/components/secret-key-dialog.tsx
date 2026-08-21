@@ -9,18 +9,18 @@ import { useState } from "react";
 
 import type { DialogInstanceProps } from "@/lib/dialog";
 
-type ApiKeySecretDialogProps = DialogInstanceProps<{
+type SecretKeyDialogProps = DialogInstanceProps<{
   secret: string
   title?: string
   description?: string
 }>;
 
-export function ApiKeySecretDialog({
+export function SecretKeyDialog({
   secret,
-  title = "API Key created",
+  title = "Secret key created",
   description = "Copy this key now. You will not be able to see it again.",
   close,
-}: ApiKeySecretDialogProps) {
+}: SecretKeyDialogProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {

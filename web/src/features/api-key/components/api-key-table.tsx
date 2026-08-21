@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table";
+import { SecretKeyDialog } from "@/components/secret-key-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DateFormat } from "@/components/ui/date";
@@ -11,7 +12,6 @@ import { CalendarClock, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 
 import { useListApiKey } from "../hooks";
 
-import { ApiKeySecretDialog } from "./api-key-secret-dialog";
 import { DeleteApiKeyDialog } from "./delete-api-key-dialog";
 import { RollApiKeyDialog } from "./roll-api-key-dialog";
 import { UpdateApiKeyExpirationDialog } from "./update-api-key-expiration-dialog";
@@ -31,7 +31,7 @@ export function ApiKeyTable() {
 
   const showSecret = (apiKey: ApiKeyWithSecret) => {
     openDialog({
-      component: ApiKeySecretDialog,
+      component: SecretKeyDialog,
       props: {
         secret: apiKey.key,
         title: "API Key rolled",
