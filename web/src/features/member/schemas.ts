@@ -1,10 +1,10 @@
-import { memberBaseSchema, memberSchema, roleSchema } from "@/models/member";
+import { memberBaseSchema, memberSchema } from "@/models/member";
+import { memberRoleSchema } from "@/models/member-role";
 import { userBaseSchema } from "@/models/user";
 import { paginatedSchema } from "@/schemas/paginated";
 import { z } from "zod";
 
-export { memberSchema, roleSchema } from "@/models/member";
-export type { Member, MemberRole as Role } from "@/models/member";
+export type { MemberRole } from "@/models/member-role";
 
 export const paginatedMemberSchema = paginatedSchema(memberSchema);
 export type PaginatedMember = z.infer<typeof paginatedMemberSchema>;
@@ -33,7 +33,7 @@ export const createMemberSchema = userBaseSchema.pick({
 }).extend({
   password: z.string().min(8),
   confirm_password: z.string().min(8),
-  role: roleSchema,
+  role: memberRoleSchema,
 }).strict()
   .refine((data) => data.password === data.confirm_password, {
     message: "Passwords do not match",

@@ -6,8 +6,8 @@ import { Spinner } from "@/components/ui/spinner";
 
 import { useRemoveMember } from "../hooks";
 
-import type { Member } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
+import type { Member } from "@/models/member";
 
 type RemoveMemberDialogProps = DialogInstanceProps<{
   tenantId: string

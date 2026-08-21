@@ -1,14 +1,15 @@
 import { http } from "@/lib/http";
 
 import {
-  createMemberSchema, listMemberSearchParamsSchema, memberSchema, paginatedMemberSchema,
+  createMemberSchema, listMemberSearchParamsSchema, paginatedMemberSchema,
   updateMemberRoleSchema
 } from "./schemas";
 
-import type { CreateMember, ListMemberSearchParams, Member, PaginatedMember, UpdateMemberRole } from "./schemas";
+import type { CreateMember, ListMemberSearchParams, PaginatedMember, UpdateMemberRole } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
+import { memberSchema, type Member } from "@/models/member";
 
 const membersUrl = (tenantId: string) => `/api/tenants/${tenantId}/members`;
 

@@ -12,8 +12,9 @@ import { useForm } from "react-hook-form";
 import { useUpdateRoleMember } from "../hooks";
 import { updateMemberRoleSchema } from "../schemas";
 
-import type { Member, UpdateMemberRole } from "../schemas";
+import type { UpdateMemberRole } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
+import type { Member } from "@/models/member";
 
 const roleOptions = [
   { label: "Admin", value: "admin" },

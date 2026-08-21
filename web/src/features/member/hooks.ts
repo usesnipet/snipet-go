@@ -5,11 +5,12 @@ import { queryClient } from "@/lib/query-client";
 
 import { memberService } from "./service";
 
-import type { CreateMember, ListMemberSearchParams, Member, PaginatedMember, UpdateMemberRole } from "./schemas";
+import type { CreateMember, ListMemberSearchParams, PaginatedMember, UpdateMemberRole } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import type { Member } from "@/models/member";
 
 const BASE_QUERY_KEY = "member";
 

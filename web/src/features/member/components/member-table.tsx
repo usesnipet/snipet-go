@@ -16,7 +16,7 @@ import { RemoveMemberDialog } from "./remove-member-dialog";
 import { UpdateMemberRoleDialog } from "./update-member-role-dialog";
 
 import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
-import type { Member } from "../schemas";
+import type { Member } from "@/models/member";
 function useMemberTableQuery(pagination: DataTablePagination) {
   const tenant = useTenantStore((state) => state.tenant);
   return useFilterMember(tenant?.id ?? "", { searchParams: pagination });
