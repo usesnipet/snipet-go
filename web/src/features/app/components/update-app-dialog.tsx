@@ -31,6 +31,7 @@ export function UpdateAppDialog({ tenantId, app, close }: UpdateAppDialogProps) 
     defaultValues: {
       name: app.name,
       description: app.description,
+      public: app.public,
       auth_config: app.auth_config,
     },
   });

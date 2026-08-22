@@ -20,8 +20,8 @@ func NewHandler(service *Service) api.Handler {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/apps/{code}", func(r chi.Router) {
-		r.Post("/authenticate/{provider_name}", serve(h.authenticate))
+	r.Route("/apps/{code}/auth", func(r chi.Router) {
+		r.Post("/{provider_name}", serve(h.authenticate))
 		r.Post("/refresh", serve(h.refresh))
 	})
 }

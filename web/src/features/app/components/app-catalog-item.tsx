@@ -103,7 +103,7 @@ export function AppCatalogItem({ app }: { app: App }) {
                 Roll key
               </DropdownMenuItem>
               {
-                app.status !== "pending" && (
+                (app.status !== "pending" || app.public) && (
                   <DropdownMenuItem onClick={toggleActive}>
                     {isActive ? <PowerOffIcon /> : <PowerIcon />}
                     {isActive ? "Deactivate" : "Activate"}

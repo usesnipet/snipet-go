@@ -27,6 +27,7 @@ export function CreateAppDialog({ tenantId, onCreated, close }: CreateAppDialogP
     defaultValues: {
       name: "",
       description: "",
+      public: false,
     },
   });
 

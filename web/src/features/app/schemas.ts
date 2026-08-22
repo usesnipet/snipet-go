@@ -14,6 +14,7 @@ export type AppWithSecret = z.infer<typeof appWithSecretSchema>;
 export const createAppSchema = appBaseSchema.pick({
   name: true,
   description: true,
+  public: true,
 }).strict();
 
 export type CreateApp = z.infer<typeof createAppSchema>;
@@ -21,6 +22,7 @@ export type CreateApp = z.infer<typeof createAppSchema>;
 export const updateAppSchema = appBaseSchema.pick({
   name: true,
   description: true,
+  public: true,
 }).partial().strict();
 
 export type UpdateApp = z.infer<typeof updateAppSchema>;

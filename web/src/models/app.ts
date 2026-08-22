@@ -41,6 +41,7 @@ export interface App {
   name: string;
   description: string;
   status: AppStatus;
+  public: boolean;
   last_verified_at: Date | null;
   key_id: string;
   auth_config: AppAuthConfig;
@@ -58,6 +59,7 @@ export const appBaseSchema = z
     name: z.string().min(1).max(255),
     description: z.string().max(1000),
     status: appStatusSchema,
+    public: z.boolean(),
     last_verified_at: z.coerce.date().nullable(),
     key_id: z.string(),
     auth_config: appAuthConfigSchema,
