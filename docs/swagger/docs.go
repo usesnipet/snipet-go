@@ -4932,6 +4932,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "maxLength": 255
+                },
+                "public": {
+                    "type": "boolean"
                 }
             }
         },
@@ -6552,6 +6555,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "maxLength": 255
+                },
+                "public": {
+                    "type": "boolean"
                 }
             }
         },

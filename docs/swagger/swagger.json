@@ -4925,6 +4925,9 @@
                 "name": {
                     "type": "string",
                     "maxLength": 255
+                },
+                "public": {
+                    "type": "boolean"
                 }
             }
         },
@@ -6545,6 +6548,9 @@
                 "name": {
                     "type": "string",
                     "maxLength": 255
+                },
+                "public": {
+                    "type": "boolean"
                 }
             }
         },

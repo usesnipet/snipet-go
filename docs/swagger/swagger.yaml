@@ -469,6 +469,8 @@ definitions:
       name:
         maxLength: 255
         type: string
+      public:
+        type: boolean
     required:
     - name
     type: object
@@ -1575,6 +1577,8 @@ definitions:
       name:
         maxLength: 255
         type: string
+      public:
+        type: boolean
     type: object
   UpdateExpirationDTO:
     properties:

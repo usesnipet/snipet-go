@@ -15,6 +15,7 @@ type IAppRepository interface {
 	FindByCode(ctx context.Context, code string) (*model.App, error)
 	UpdateByCode(ctx context.Context, code string, updates *model.App) error
 	UpdateAuthConfigByCode(ctx context.Context, code string, authConfig model.AppAuthConfig) error
+	UpdatePublicByCode(ctx context.Context, code string, public bool) error
 	DeleteByCode(ctx context.Context, code string) error
 }
 
@@ -59,6 +60,23 @@ func (r *AppRepository) UpdateAuthConfigByCode(ctx context.Context, code string,
 		Where("code = ?", code).
 		Select("auth_config").
 		Updates(ctx, model.App{AuthConfig: authConfig})
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return apperr.NotFound("entity not found")
+	}
+	return nil
+}
+
+// UpdatePublicByCode sets the public column explicitly, the same way
+// UpdateAuthConfigByCode does — a plain struct Updates would silently skip
+// Public when set to false, since gorm.Updates omits zero-value fields.
+func (r *AppRepository) UpdatePublicByCode(ctx context.Context, code string, public bool) error {
+	affected, err := gorm.G[model.App](r.db(ctx)).
+		Where("code = ?", code).
+		Select("public").
+		Updates(ctx, model.App{Public: public})
 	if err != nil {
 		return err
 	}

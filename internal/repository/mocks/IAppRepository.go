@@ -604,3 +604,66 @@ func (_c *MockIAppRepository_UpdateByID_Call) RunAndReturn(run func(ctx context.
 	_c.Call.Return(run)
 	return _c
 }
+
+// UpdatePublicByCode provides a mock function for the type MockIAppRepository
+func (_mock *MockIAppRepository) UpdatePublicByCode(ctx context.Context, code string, public bool) error {
+	ret := _mock.Called(ctx, code, public)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdatePublicByCode")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
+		r0 = returnFunc(ctx, code, public)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIAppRepository_UpdatePublicByCode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePublicByCode'
+type MockIAppRepository_UpdatePublicByCode_Call struct {
+	*mock.Call
+}
+
+// UpdatePublicByCode is a helper method to define mock.On call
+//   - ctx context.Context
+//   - code string
+//   - public bool
+func (_e *MockIAppRepository_Expecter) UpdatePublicByCode(ctx any, code any, public any) *MockIAppRepository_UpdatePublicByCode_Call {
+	return &MockIAppRepository_UpdatePublicByCode_Call{Call: _e.mock.On("UpdatePublicByCode", ctx, code, public)}
+}
+
+func (_c *MockIAppRepository_UpdatePublicByCode_Call) Run(run func(ctx context.Context, code string, public bool)) *MockIAppRepository_UpdatePublicByCode_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 bool
+		if args[2] != nil {
+			arg2 = args[2].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIAppRepository_UpdatePublicByCode_Call) Return(err error) *MockIAppRepository_UpdatePublicByCode_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIAppRepository_UpdatePublicByCode_Call) RunAndReturn(run func(ctx context.Context, code string, public bool) error) *MockIAppRepository_UpdatePublicByCode_Call {
+	_c.Call.Return(run)
+	return _c
+}

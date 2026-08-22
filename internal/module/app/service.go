@@ -126,6 +126,7 @@ func (s *Service) Create(ctx context.Context, tenantID string, dto CreateAppDTO)
 		Name:        dto.Name,
 		Description: dto.Description,
 		Status:      model.AppStatusPending,
+		Public:      dto.Public,
 		KeyID:       keyID,
 		KeyHash:     keyHash,
 	}
@@ -181,7 +182,14 @@ func (s *Service) UpdateByCode(ctx context.Context, tenantID, code string, dto U
 	if dto.Description != nil {
 		updates.Description = *dto.Description
 	}
-	return s.appRepo.UpdateByCode(ctx, code, updates)
+	if err := s.appRepo.UpdateByCode(ctx, code, updates); err != nil {
+		return err
+	}
+
+	if dto.Public != nil {
+		return s.appRepo.UpdatePublicByCode(ctx, code, *dto.Public)
+	}
+	return nil
 }
 
 func (s *Service) UpdateAuthConfig(ctx context.Context, tenantID, code string, dto UpdateAppAuthConfigDTO) error {
@@ -205,7 +213,7 @@ func (s *Service) ToggleActive(ctx context.Context, tenantID, code string, activ
 	if err != nil {
 		return err
 	}
-	if app.Status == model.AppStatusPending && active {
+	if app.Status == model.AppStatusPending && active && !app.Public {
 		return apperr.BadRequest("cannot activate a pending app")
 	}
 	status := model.AppStatusActive

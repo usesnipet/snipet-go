@@ -15,11 +15,13 @@ type AppsPage = page.Paginated[model.App]
 type CreateAppDTO struct {
 	Name        string `json:"name" validate:"required,max=255"`
 	Description string `json:"description" validate:"max=1000"`
+	Public      bool   `json:"public"`
 }
 
 type UpdateAppDTO struct {
 	Name        *string `json:"name" validate:"omitempty,max=255"`
 	Description *string `json:"description" validate:"omitempty,max=1000"`
+	Public      *bool   `json:"public"`
 }
 
 type UpdateAppAuthConfigDTO struct {
