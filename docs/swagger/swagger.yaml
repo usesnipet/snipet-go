@@ -14,6 +14,10 @@ definitions:
         type: string
       name:
         type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
       updated_at:
         type: string
     type: object
@@ -30,6 +34,10 @@ definitions:
       key_id:
         type: string
       name:
+        type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
         type: string
       updated_at:
         type: string
@@ -50,6 +58,10 @@ definitions:
         type: string
       name:
         type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
       updated_at:
         type: string
     type: object
@@ -66,6 +78,30 @@ definitions:
       total:
         type: integer
     type: object
+  AcceptInvitationDTO:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  Account:
+    properties:
+      created_at:
+        type: string
+      external_id:
+        type: string
+      id:
+        type: string
+      provider:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/User'
+      user_id:
+        type: string
+    type: object
   ActivateAccountDTO:
     properties:
       token:
@@ -81,11 +117,19 @@ definitions:
         type: string
       instructions:
         type: string
+      knowledge:
+        items:
+          $ref: '#/definitions/AgentToKnowledge'
+        type: array
       llms:
         items:
           $ref: '#/definitions/AgentToLLM'
         type: array
       name:
+        type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
         type: string
     type: object
   AgentResponse:
@@ -96,11 +140,28 @@ definitions:
         type: string
       instructions:
         type: string
+      knowledge:
+        items:
+          $ref: '#/definitions/AgentToKnowledge'
+        type: array
       llms:
         items:
           $ref: '#/definitions/AgentToLLM'
         type: array
       name:
+        type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
+    type: object
+  AgentToKnowledge:
+    properties:
+      active:
+        type: boolean
+      agent_id:
+        type: string
+      knowledge_id:
         type: string
     type: object
   AgentToLLM:
@@ -125,26 +186,227 @@ definitions:
       total:
         type: integer
     type: object
-  AppConfigDTO:
+  App:
     properties:
-      inherit_client:
-        type: boolean
-      inherit_client_code:
+      app_to_users:
+        items:
+          $ref: '#/definitions/AppToAppUser'
+        type: array
+      auth_config:
+        $ref: '#/definitions/AppAuthConfig'
+      code:
         type: string
-      inherit_client_name:
+      description:
+        type: string
+      id:
+        type: string
+      key_id:
+        type: string
+      last_verified_at:
+        type: string
+      name:
+        type: string
+      public:
+        type: boolean
+      sessions:
+        items:
+          $ref: '#/definitions/Session'
+        type: array
+      status:
+        $ref: '#/definitions/AppStatus'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
         type: string
     type: object
-  AuthenticateAnonymousDTO:
+  AppAuthConfig:
     properties:
+      oidc:
+        properties:
+          audience:
+            type: string
+          enabled:
+            type: boolean
+          issuer:
+            type: string
+        type: object
+      webhook:
+        properties:
+          enabled:
+            type: boolean
+          url:
+            type: string
+        type: object
+    type: object
+  AppResponse:
+    properties:
+      app_to_users:
+        items:
+          $ref: '#/definitions/AppToAppUser'
+        type: array
+      auth_config:
+        $ref: '#/definitions/AppAuthConfig'
+      code:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      key_id:
+        type: string
+      last_verified_at:
+        type: string
+      name:
+        type: string
+      public:
+        type: boolean
+      sessions:
+        items:
+          $ref: '#/definitions/Session'
+        type: array
+      status:
+        $ref: '#/definitions/AppStatus'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
+    type: object
+  AppStatus:
+    enum:
+    - pending
+    - active
+    - deactivated
+    type: string
+    x-enum-varnames:
+    - AppStatusPending
+    - AppStatusActive
+    - AppStatusDeactivated
+  AppToAppUser:
+    properties:
+      app:
+        $ref: '#/definitions/App'
+      app_id:
+        type: string
+      app_user:
+        $ref: '#/definitions/AppUser'
+      app_user_id:
+        type: string
+      external_id:
+        type: string
+    type: object
+  AppUser:
+    properties:
+      app_to_App_users:
+        items:
+          $ref: '#/definitions/AppToAppUser'
+        type: array
+      app_user_to_sessions:
+        items:
+          $ref: '#/definitions/AppUserToSession'
+        type: array
       email:
+        type: string
+      id:
         type: string
       metadata:
         $ref: '#/definitions/JSONMap'
       name:
-        maxLength: 255
         type: string
       picture:
         type: string
+    type: object
+  AppUserResponse:
+    properties:
+      app_to_App_users:
+        items:
+          $ref: '#/definitions/AppToAppUser'
+        type: array
+      app_user_to_sessions:
+        items:
+          $ref: '#/definitions/AppUserToSession'
+        type: array
+      email:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      name:
+        type: string
+      picture:
+        type: string
+    type: object
+  AppUserToSession:
+    properties:
+      app_user:
+        $ref: '#/definitions/AppUser'
+      session:
+        $ref: '#/definitions/Session'
+      session_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  AppUsersPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/AppUser'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  AppWithSecret:
+    properties:
+      app_to_users:
+        items:
+          $ref: '#/definitions/AppToAppUser'
+        type: array
+      auth_config:
+        $ref: '#/definitions/AppAuthConfig'
+      code:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      key:
+        type: string
+      key_id:
+        type: string
+      last_verified_at:
+        type: string
+      name:
+        type: string
+      public:
+        type: boolean
+      sessions:
+        items:
+          $ref: '#/definitions/Session'
+        type: array
+      status:
+        $ref: '#/definitions/AppStatus'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
+    type: object
+  AppsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/App'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
     type: object
   AuthenticateResponse:
     properties:
@@ -168,134 +430,6 @@ definitions:
         type: string
       tool:
         type: string
-    type: object
-  Challenge:
-    enum:
-    - active_account
-    - change_password
-    type: string
-    x-enum-varnames:
-    - ChallengeActiveAccount
-    - ChallengeChangePassword
-  Client:
-    properties:
-      code:
-        type: string
-      config:
-        $ref: '#/definitions/ClientConfig'
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  ClientAgentsPage:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/Agent'
-        type: array
-      skip:
-        type: integer
-      take:
-        type: integer
-      total:
-        type: integer
-    type: object
-  ClientConfig:
-    properties:
-      anonymous:
-        properties:
-          enabled:
-            type: boolean
-        type: object
-      oidc:
-        properties:
-          audience:
-            type: string
-          enabled:
-            type: boolean
-          issuer:
-            type: string
-        type: object
-      webhook:
-        properties:
-          enabled:
-            type: boolean
-          url:
-            type: string
-        type: object
-    type: object
-  ClientPublicDTO:
-    properties:
-      allow_anonymous:
-        type: boolean
-      code:
-        type: string
-      name:
-        type: string
-    type: object
-  ClientResponse:
-    properties:
-      code:
-        type: string
-      config:
-        $ref: '#/definitions/ClientConfig'
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  ClientUser:
-    properties:
-      email:
-        type: string
-      id:
-        type: string
-      metadata:
-        $ref: '#/definitions/JSONMap'
-      name:
-        type: string
-      picture:
-        type: string
-    type: object
-  ClientUserResponse:
-    properties:
-      email:
-        type: string
-      id:
-        type: string
-      metadata:
-        $ref: '#/definitions/JSONMap'
-      name:
-        type: string
-      picture:
-        type: string
-    type: object
-  ClientUsersPage:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/ClientUser'
-        type: array
-      skip:
-        type: integer
-      take:
-        type: integer
-      total:
-        type: integer
-    type: object
-  ClientsPage:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/Client'
-        type: array
-      skip:
-        type: integer
-      take:
-        type: integer
-      total:
-        type: integer
     type: object
   CreateAPIKeyDTO:
     properties:
@@ -327,15 +461,18 @@ definitions:
     - llm_ids
     - name
     type: object
-  CreateAnonymousClientUserDTO:
+  CreateAppDTO:
     properties:
-      metadata:
-        $ref: '#/definitions/JSONMap'
+      description:
+        maxLength: 1000
+        type: string
       name:
         maxLength: 255
         type: string
+    required:
+    - name
     type: object
-  CreateAuthenticatedClientUserDTO:
+  CreateAppUserDTO:
     properties:
       email:
         type: string
@@ -352,17 +489,6 @@ definitions:
     required:
     - email
     - external_id
-    type: object
-  CreateClientDTO:
-    properties:
-      config:
-        $ref: '#/definitions/ClientConfig'
-      name:
-        maxLength: 255
-        type: string
-    required:
-    - config
-    - name
     type: object
   CreateKnowledgeDTO:
     properties:
@@ -416,6 +542,25 @@ definitions:
     - name
     - provider
     type: object
+  CreateMemberDTO:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      password:
+        minLength: 8
+        type: string
+      role:
+        $ref: '#/definitions/MemberRole'
+    required:
+    - email
+    - name
+    - password
+    - role
+    type: object
   CreateSessionDTO:
     properties:
       agent_id:
@@ -424,6 +569,28 @@ definitions:
         $ref: '#/definitions/JSONMap'
     required:
     - agent_id
+    type: object
+  CreateTenantDTO:
+    properties:
+      icon:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      slug:
+        maxLength: 255
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  DeclineInvitationDTO:
+    properties:
+      token:
+        type: string
+    required:
+    - token
     type: object
   DriverInfo:
     properties:
@@ -463,10 +630,45 @@ definitions:
       statusCode:
         type: integer
     type: object
+  Execution:
+    properties:
+      agent:
+        $ref: '#/definitions/Agent'
+      agent_id:
+        type: string
+      created_at:
+        type: string
+      error_message:
+        type: string
+      id:
+        type: string
+      messages:
+        items:
+          $ref: '#/definitions/ExecutionMessage'
+        type: array
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      session:
+        $ref: '#/definitions/Session'
+      session_id:
+        type: string
+      status:
+        $ref: '#/definitions/Status'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
+      turns:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   ExecutionMessage:
     properties:
       content:
         type: string
+      execution:
+        $ref: '#/definitions/Execution'
       execution_id:
         type: string
       final:
@@ -477,6 +679,10 @@ definitions:
         $ref: '#/definitions/Role'
       sequence:
         type: integer
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
       timestamp:
         type: string
       tool_call_id:
@@ -517,10 +723,14 @@ definitions:
         type: string
       id:
         type: string
+      index:
+        $ref: '#/definitions/KnowledgeIndex'
       index_id:
         type: string
       indexed_at:
         type: string
+      knowledge_item:
+        $ref: '#/definitions/KnowledgeItem'
       knowledge_item_id:
         type: string
       last_error:
@@ -531,6 +741,10 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/IndexStatus'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
     type: object
   IndexedKnowledgeItemsPage:
     properties:
@@ -566,6 +780,79 @@ definitions:
     - key
     - name
     type: object
+  InfoDTO:
+    properties:
+      multi_tenant_enabled:
+        description: |-
+          MultiTenantEnabled mirrors license.Info().Valid — lets the frontend
+          pick single- vs multi-tenant onboarding/registration copy. The actual
+          gate stays server-side (auth.Register, tenant.Create).
+        type: boolean
+      version:
+        type: string
+    type: object
+  InvitationInfoResponse:
+    properties:
+      invite:
+        $ref: '#/definitions/TenantInvitation'
+      tenant:
+        $ref: '#/definitions/Tenant'
+    type: object
+  InvitationResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      role:
+        $ref: '#/definitions/MemberRole'
+      status:
+        $ref: '#/definitions/InvitationStatus'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  InvitationStatus:
+    enum:
+    - pending
+    - accepted
+    - declined
+    type: string
+    x-enum-varnames:
+    - InvitationStatusPending
+    - InvitationStatusAccepted
+    - InvitationStatusDeclined
+  InvitationsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/TenantInvitation'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  InviteMemberDTO:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      role:
+        $ref: '#/definitions/MemberRole'
+    required:
+    - email
+    - role
+    type: object
   JSONMap:
     additionalProperties: {}
     type: object
@@ -579,6 +866,14 @@ definitions:
         type: string
       id:
         type: string
+      indexes:
+        items:
+          $ref: '#/definitions/KnowledgeIndex'
+        type: array
+      items:
+        items:
+          $ref: '#/definitions/KnowledgeItem'
+        type: array
       last_synced_at:
         type: string
       name:
@@ -587,6 +882,10 @@ definitions:
         type: string
       sync_status:
         $ref: '#/definitions/SyncStatus'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
     type: object
   KnowledgeIndex:
     properties:
@@ -596,9 +895,19 @@ definitions:
         type: string
       id:
         type: string
+      items:
+        items:
+          $ref: '#/definitions/IndexedKnowledgeItem'
+        type: array
+      knowledge:
+        $ref: '#/definitions/Knowledge'
       knowledge_id:
         type: string
       name:
+        type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
         type: string
     type: object
   KnowledgeIndexResponse:
@@ -609,9 +918,19 @@ definitions:
         type: string
       id:
         type: string
+      items:
+        items:
+          $ref: '#/definitions/IndexedKnowledgeItem'
+        type: array
+      knowledge:
+        $ref: '#/definitions/Knowledge'
       knowledge_id:
         type: string
       name:
+        type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
         type: string
     type: object
   KnowledgeIndexesPage:
@@ -637,8 +956,14 @@ definitions:
         type: string
       id:
         type: string
+      indexes:
+        items:
+          $ref: '#/definitions/IndexedKnowledgeItem'
+        type: array
       kind:
         $ref: '#/definitions/SourceItemKind'
+      knowledge:
+        $ref: '#/definitions/Knowledge'
       knowledge_id:
         type: string
       last_modified:
@@ -646,6 +971,10 @@ definitions:
       metadata:
         $ref: '#/definitions/JSONMap'
       name:
+        type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
         type: string
     type: object
   KnowledgeItemsPage:
@@ -671,6 +1000,14 @@ definitions:
         type: string
       id:
         type: string
+      indexes:
+        items:
+          $ref: '#/definitions/KnowledgeIndex'
+        type: array
+      items:
+        items:
+          $ref: '#/definitions/KnowledgeItem'
+        type: array
       last_synced_at:
         type: string
       name:
@@ -679,6 +1016,10 @@ definitions:
         type: string
       sync_status:
         $ref: '#/definitions/SyncStatus'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
     type: object
   KnowledgesPage:
     properties:
@@ -703,6 +1044,10 @@ definitions:
         type: string
       provider:
         type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
     type: object
   LLMResponse:
     properties:
@@ -713,6 +1058,10 @@ definitions:
       name:
         type: string
       provider:
+        type: string
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
         type: string
     type: object
   LLMsPage:
@@ -738,6 +1087,80 @@ definitions:
     required:
     - email
     - password
+    type: object
+  Member:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      role:
+        $ref: '#/definitions/MemberRole'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/User'
+      user_id:
+        type: string
+    type: object
+  MemberResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      role:
+        $ref: '#/definitions/MemberRole'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/User'
+      user_id:
+        type: string
+    type: object
+  MemberRole:
+    enum:
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - RoleGuest
+    - RoleUser
+    - RoleAdmin
+  MembersPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Member'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
+    type: object
+  PublicAppDTO:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
     type: object
   RefreshDTO:
     properties:
@@ -820,12 +1243,26 @@ definitions:
         $ref: '#/definitions/Agent'
       agent_id:
         type: string
-      client_id:
+      app:
+        $ref: '#/definitions/App'
+      app_id:
         type: string
+      app_user_to_sessions:
+        items:
+          $ref: '#/definitions/AppUserToSession'
+        type: array
+      executions:
+        items:
+          $ref: '#/definitions/Execution'
+        type: array
       id:
         type: string
       metadata:
         $ref: '#/definitions/JSONMap'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
     type: object
   SessionMessagesPage:
     properties:
@@ -846,12 +1283,26 @@ definitions:
         $ref: '#/definitions/Agent'
       agent_id:
         type: string
-      client_id:
+      app:
+        $ref: '#/definitions/App'
+      app_id:
         type: string
+      app_user_to_sessions:
+        items:
+          $ref: '#/definitions/AppUserToSession'
+        type: array
+      executions:
+        items:
+          $ref: '#/definitions/Execution'
+        type: array
       id:
         type: string
       metadata:
         $ref: '#/definitions/JSONMap'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
     type: object
   SessionsPage:
     properties:
@@ -892,6 +1343,36 @@ definitions:
     - SourceItemKindVideo
     - SourceItemKindStructured
     - SourceItemKindUnknown
+  Status:
+    enum:
+    - pending
+    - running
+    - completed
+    - failed
+    - max_turns
+    - cancelled
+    type: string
+    x-enum-comments:
+      StatusCancelled: the execution was cancelled via context
+      StatusCompleted: the execution is completed
+      StatusFailed: the execution is failed
+      StatusMaxTurns: the execution has reached the maximum number of turns
+      StatusPending: the execution is pending to start
+      StatusRunning: the execution is running
+    x-enum-descriptions:
+    - the execution is pending to start
+    - the execution is running
+    - the execution is completed
+    - the execution is failed
+    - the execution has reached the maximum number of turns
+    - the execution was cancelled via context
+    x-enum-varnames:
+    - StatusPending
+    - StatusRunning
+    - StatusCompleted
+    - StatusFailed
+    - StatusMaxTurns
+    - StatusCancelled
   SyncStatus:
     enum:
     - pending
@@ -904,10 +1385,125 @@ definitions:
     - SyncStatusInProgress
     - SyncStatusFailed
     - SyncStatusSuccess
-  SystemInfoDTO:
+  Tenant:
     properties:
-      version:
+      agents:
+        items:
+          $ref: '#/definitions/Agent'
+        type: array
+      api_keys:
+        items:
+          $ref: '#/definitions/APIKey'
+        type: array
+      clients:
+        items:
+          $ref: '#/definitions/App'
+        type: array
+      created_at:
         type: string
+      icon:
+        type: string
+      id:
+        type: string
+      invitations:
+        items:
+          $ref: '#/definitions/TenantInvitation'
+        type: array
+      knowledges:
+        items:
+          $ref: '#/definitions/Knowledge'
+        type: array
+      llms:
+        items:
+          $ref: '#/definitions/LLM'
+        type: array
+      members:
+        items:
+          $ref: '#/definitions/Member'
+        type: array
+      name:
+        type: string
+      slug:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  TenantInvitation:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      role:
+        $ref: '#/definitions/MemberRole'
+      status:
+        $ref: '#/definitions/InvitationStatus'
+      tenant:
+        $ref: '#/definitions/Tenant'
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  TenantResponse:
+    properties:
+      agents:
+        items:
+          $ref: '#/definitions/Agent'
+        type: array
+      api_keys:
+        items:
+          $ref: '#/definitions/APIKey'
+        type: array
+      clients:
+        items:
+          $ref: '#/definitions/App'
+        type: array
+      created_at:
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      invitations:
+        items:
+          $ref: '#/definitions/TenantInvitation'
+        type: array
+      knowledges:
+        items:
+          $ref: '#/definitions/Knowledge'
+        type: array
+      llms:
+        items:
+          $ref: '#/definitions/LLM'
+        type: array
+      members:
+        items:
+          $ref: '#/definitions/Member'
+        type: array
+      name:
+        type: string
+      slug:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  TenantsPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Tenant'
+        type: array
+      skip:
+        type: integer
+      take:
+        type: integer
+      total:
+        type: integer
     type: object
   TestConnectionDTO:
     properties:
@@ -920,6 +1516,35 @@ definitions:
     - configuration
     - driver
     type: object
+  Token:
+    properties:
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/JSONMap'
+      revoked_at:
+        type: string
+      type:
+        $ref: '#/definitions/TokenType'
+      user:
+        $ref: '#/definitions/User'
+      user_id:
+        type: string
+    type: object
+  TokenType:
+    enum:
+    - refresh
+    - activate_account
+    - reset_password
+    type: string
+    x-enum-varnames:
+    - TokenTypeRefresh
+    - TokenTypeActivateAccount
+    - TokenTypeResetPassword
   UpdateAgentDTO:
     properties:
       description:
@@ -937,10 +1562,16 @@ definitions:
         maxLength: 255
         type: string
     type: object
-  UpdateClientDTO:
+  UpdateAppAuthConfigDTO:
     properties:
-      config:
-        $ref: '#/definitions/ClientConfig'
+      auth_config:
+        $ref: '#/definitions/AppAuthConfig'
+    type: object
+  UpdateAppDTO:
+    properties:
+      description:
+        maxLength: 1000
+        type: string
       name:
         maxLength: 255
         type: string
@@ -975,6 +1606,13 @@ definitions:
         maxLength: 255
         type: string
     type: object
+  UpdateMemberRoleDTO:
+    properties:
+      role:
+        $ref: '#/definitions/MemberRole'
+    required:
+    - role
+    type: object
   UpdateProfilePictureDTO:
     properties:
       picture:
@@ -990,11 +1628,23 @@ definitions:
       metadata:
         $ref: '#/definitions/JSONMap'
     type: object
-  UserResponse:
+  UpdateTenantDTO:
     properties:
-      challenges:
+      icon:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      slug:
+        maxLength: 255
+        type: string
+    type: object
+  User:
+    properties:
+      accounts:
         items:
-          $ref: '#/definitions/Challenge'
+          $ref: '#/definitions/Account'
         type: array
       created_at:
         type: string
@@ -1002,12 +1652,45 @@ definitions:
         type: string
       id:
         type: string
-      is_admin:
-        type: boolean
+      members:
+        items:
+          $ref: '#/definitions/Member'
+        type: array
       name:
         type: string
       picture:
         type: string
+      tokens:
+        items:
+          $ref: '#/definitions/Token'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  UserResponse:
+    properties:
+      accounts:
+        items:
+          $ref: '#/definitions/Account'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      members:
+        items:
+          $ref: '#/definitions/Member'
+        type: array
+      name:
+        type: string
+      picture:
+        type: string
+      tokens:
+        items:
+          $ref: '#/definitions/Token'
+        type: array
       updated_at:
         type: string
     type: object
@@ -1017,127 +1700,6 @@ info:
   title: Snipet API
   version: "1.0"
 paths:
-  /agent:
-    get:
-      description: Lists agents.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/AgentsPage'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: List agents
-      tags:
-      - agent
-    post:
-      consumes:
-      - application/json
-      description: Creates a new agent.
-      parameters:
-      - description: Agent data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/CreateAgentDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/AgentResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Create agent
-      tags:
-      - agent
-  /agent/{id}:
-    delete:
-      description: Deletes an agent by ID.
-      parameters:
-      - description: Agent ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Delete agent
-      tags:
-      - agent
-    get:
-      description: Returns an agent by ID.
-      parameters:
-      - description: Agent ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/AgentResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Get agent
-      tags:
-      - agent
-    put:
-      consumes:
-      - application/json
-      description: Updates an agent by ID.
-      parameters:
-      - description: Agent ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Agent data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/UpdateAgentDTO'
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Update agent
-      tags:
-      - agent
   /agent/{id}/run:
     post:
       consumes:
@@ -1170,204 +1732,6 @@ paths:
       summary: Run agent
       tags:
       - agent
-  /api-key:
-    get:
-      description: Lists API keys, with optional pagination.
-      parameters:
-      - description: Page size
-        in: query
-        name: take
-        type: integer
-      - description: Page offset
-        in: query
-        name: skip
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/APIKeysPage'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: List API keys
-      tags:
-      - api-key
-    post:
-      consumes:
-      - application/json
-      description: Creates a new API key. The plaintext key is only returned once,
-        on creation.
-      parameters:
-      - description: API key data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/CreateAPIKeyDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/APIKeyWithSecret'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Create API key
-      tags:
-      - api-key
-  /api-key/{id}:
-    delete:
-      description: Deletes an API key by ID.
-      parameters:
-      - description: API key ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Delete API key
-      tags:
-      - api-key
-    get:
-      description: Returns an API key by ID.
-      parameters:
-      - description: API key ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/APIKeyResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Get API key
-      tags:
-      - api-key
-  /api-key/{id}/active:
-    put:
-      description: Marks an API key as active.
-      parameters:
-      - description: API key ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Activate API key
-      tags:
-      - api-key
-  /api-key/{id}/disabled:
-    put:
-      description: Marks an API key as disabled.
-      parameters:
-      - description: API key ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Disable API key
-      tags:
-      - api-key
-  /api-key/{id}/expiration:
-    put:
-      consumes:
-      - application/json
-      description: Updates the expiration date of an API key.
-      parameters:
-      - description: API key ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Expiration data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/UpdateExpirationDTO'
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Update API key expiration
-      tags:
-      - api-key
-  /api-key/{id}/roll:
-    post:
-      description: Rotates an API key, invalidating the previous secret. The new plaintext
-        key is only returned once.
-      parameters:
-      - description: API key ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/APIKeyWithSecret'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Roll API key
-      tags:
-      - api-key
   /api-key/me:
     get:
       description: Returns the API key used to authenticate the current request.
@@ -1387,32 +1751,472 @@ paths:
       summary: Get current API key
       tags:
       - api-key
-  /app/config:
+  /apps/{code}:
     get:
-      description: Returns public application configuration.
+      description: Returns an app's name, code, and description. Only exposed when
+        the app is marked public; otherwise 404. Unauthenticated.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/AppConfigDTO'
-      summary: Get app config
+            $ref: '#/definitions/PublicAppDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get public app info
       tags:
       - app
-  /app/system-info:
-    get:
-      description: Returns application system information.
+  /apps/{code}/authenticate/{provider_name}:
+    post:
+      description: Authenticates an app user through the given auth provider (e.g.
+        oidc, webhook).
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Auth provider name
+        in: path
+        name: provider_name
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SystemInfoDTO'
-      summary: Get system info
+            $ref: '#/definitions/AuthenticateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Authenticate with provider
+      tags:
+      - auth
+  /apps/{code}/ping:
+    post:
+      description: Called by a connected app, authenticated with its own key, to confirm
+        it's alive. Promotes a pending app to active on first success.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - AppKeyAuth: []
+      summary: Ping
       tags:
       - app
+  /apps/{code}/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a refresh token for a new access/refresh token pair.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RefreshDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthenticateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Refresh access token
+      tags:
+      - auth
+  /apps/{code}/session:
+    get:
+      description: Lists sessions of an app, with optional pagination and includes.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      - collectionFormat: csv
+        description: Related resources to include
+        in: query
+        items:
+          enum:
+          - agent
+          type: string
+        name: include
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: List sessions
+      tags:
+      - session
+    post:
+      consumes:
+      - application/json
+      description: Creates a new session for an app.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Session data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateSessionDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/SessionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Create session
+      tags:
+      - session
+  /apps/{code}/session/{id}:
+    delete:
+      description: Deletes a session by ID.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Delete session
+      tags:
+      - session
+    get:
+      description: Returns a session by ID.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: Related resources to include
+        in: query
+        items:
+          enum:
+          - agent
+          type: string
+        name: include
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Get session
+      tags:
+      - session
+    put:
+      consumes:
+      - application/json
+      description: Updates a session by ID.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateSessionDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Update session
+      tags:
+      - session
+  /apps/{code}/session/{id}/messages:
+    get:
+      description: Lists the execution messages of a session, with optional ordering/pagination.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Order by timestamp
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionMessagesPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: List session messages
+      tags:
+      - session
+  /apps/{code}/session/{id}/run:
+    post:
+      consumes:
+      - application/json
+      description: Runs an agent within a session, streaming the execution via SSE.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Run input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RunSessionDTO'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Run session
+      tags:
+      - session
+  /apps/{code}/user:
+    get:
+      description: Lists users of an app, with optional ordering/pagination.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Order by name
+        enum:
+        - asc
+        - desc
+        in: query
+        name: name_order
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AppUsersPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - AppKeyAuth: []
+      summary: List users
+      tags:
+      - user
+  /apps/{code}/user/authenticated:
+    post:
+      consumes:
+      - application/json
+      description: Creates an app user via the app's own key (server-to-server).
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: User data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAppUserDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - AppKeyAuth: []
+      summary: Create user
+      tags:
+      - user
+  /apps/{code}/user/me:
+    get:
+      description: Returns the authenticated user for the given app.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AppUserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - user
   /auth/{provider}:
     get:
       description: Returns the authorization URL to start an OAuth login with the
@@ -1684,183 +2488,145 @@ paths:
       summary: Register
       tags:
       - auth
-  /client/{client_code}/authenticate/{provider_name}:
-    post:
-      description: Authenticates a client user through the given auth provider (e.g.
-        google, github).
-      parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: Auth provider name
-        in: path
-        name: provider_name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/AuthenticateResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Authenticate with provider
-      tags:
-      - auth
-  /client/{client_code}/authenticate/anonymous:
-    post:
-      consumes:
-      - application/json
-      description: Creates or authenticates an anonymous client user.
-      parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: Anonymous user data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/AuthenticateAnonymousDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/AuthenticateResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Authenticate anonymously
-      tags:
-      - auth
-  /client/{client_code}/refresh:
-    post:
-      consumes:
-      - application/json
-      description: Exchanges a refresh token for a new access/refresh token pair.
-      parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: Refresh token
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/RefreshDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/AuthenticateResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Refresh access token
-      tags:
-      - auth
-  /client/{client_code}/session:
+  /invitations/{token}:
     get:
-      description: Lists sessions of a client, with optional pagination and includes.
+      description: Looks up an invitation and its tenant by token. Public — no authentication
+        required. Lets a user preview an invitation (including whether it's expired,
+        accepted, or declined) before accepting or declining it.
       parameters:
-      - description: Client code
+      - description: Invitation token
         in: path
-        name: client_code
+        name: token
         required: true
         type: string
-      - description: Page size
-        in: query
-        name: take
-        type: integer
-      - description: Page offset
-        in: query
-        name: skip
-        type: integer
-      - collectionFormat: csv
-        description: Related resources to include
-        in: query
-        items:
-          enum:
-          - agent
-          type: string
-        name: include
-        type: array
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SessionsPage'
-        "400":
-          description: Bad Request
+            $ref: '#/definitions/InvitationInfoResponse'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/Error'
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: List sessions
+      summary: Get invitation by token
       tags:
-      - session
+      - member
+  /invitations/accept:
     post:
       consumes:
       - application/json
-      description: Creates a new session for a client.
+      description: Joins the authenticated user to the invitation's tenant. The invitation
+        must be pending, unexpired, and addressed to the caller's own email.
       parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: Session data
+      - description: Invitation token
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/CreateSessionDTO'
+          $ref: '#/definitions/AcceptInvitationDTO'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/SessionResponse'
-        "400":
-          description: Bad Request
+            $ref: '#/definitions/MemberResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/Error'
       security:
       - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: Create session
+      summary: Accept invitation
       tags:
-      - session
-  /client/{client_code}/session/{id}:
-    delete:
-      description: Deletes a session by ID.
+      - member
+  /invitations/decline:
+    post:
+      consumes:
+      - application/json
+      description: Marks a pending invitation as declined. The token must belong to
+        a pending invitation addressed to the caller's own email.
       parameters:
-      - description: Client code
-        in: path
-        name: client_code
+      - description: Invitation token
+        in: body
+        name: body
         required: true
-        type: string
-      - description: Session ID
+        schema:
+          $ref: '#/definitions/DeclineInvitationDTO'
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Decline invitation
+      tags:
+      - member
+  /system/info:
+    get:
+      description: Returns application system information.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/InfoDTO'
+      summary: Get system info
+      tags:
+      - system
+  /tenants:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tenant. Blocked without a valid Multi-Tenant Use
+        license once a tenant already exists. The creator becomes the tenant's admin.
+      parameters:
+      - description: Tenant data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateTenantDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TenantResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Create tenant
+      tags:
+      - tenant
+  /tenants/{id}:
+    delete:
+      description: Deletes a tenant. Caller must be able to manage it (tenant admin
+        or platform admin).
+      parameters:
+      - description: Tenant ID
         in: path
         name: id
         required: true
@@ -1868,361 +2634,163 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/Error'
       security:
       - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: Delete session
+      summary: Delete tenant
       tags:
-      - session
+      - tenant
     get:
-      description: Returns a session by ID.
+      description: Returns a tenant. Caller must be a member.
       parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: Session ID
+      - description: Tenant ID
         in: path
         name: id
         required: true
         type: string
-      - collectionFormat: csv
-        description: Related resources to include
-        in: query
-        items:
-          enum:
-          - agent
-          type: string
-        name: include
-        type: array
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SessionResponse'
+            $ref: '#/definitions/TenantResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/Error'
       security:
       - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: Get session
+      summary: Get tenant
       tags:
-      - session
+      - tenant
     put:
       consumes:
       - application/json
-      description: Updates a session by ID.
+      description: Updates a tenant. Caller must be able to manage it (tenant admin
+        or platform admin).
       parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: Session ID
+      - description: Tenant ID
         in: path
         name: id
         required: true
         type: string
-      - description: Session data
+      - description: Tenant data
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/UpdateSessionDTO'
+          $ref: '#/definitions/UpdateTenantDTO'
       responses:
         "204":
           description: No Content
-        "400":
-          description: Bad Request
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/Error'
       security:
       - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: Update session
+      summary: Update tenant
       tags:
-      - session
-  /client/{client_code}/session/{id}/messages:
-    get:
-      description: Lists the execution messages of a session, with optional ordering/pagination.
+      - tenant
+  /tenants/{id}/leave:
+    post:
+      description: Removes the caller's own membership. Blocked if the caller is the
+        tenant's last active admin.
       parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: Session ID
+      - description: Tenant ID
         in: path
         name: id
         required: true
         type: string
-      - description: Order by timestamp
-        enum:
-        - asc
-        - desc
-        in: query
-        name: sort
-        type: string
-      - description: Page size
-        in: query
-        name: take
-        type: integer
-      - description: Page offset
-        in: query
-        name: skip
-        type: integer
-      produces:
-      - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/SessionMessagesPage'
-        "400":
-          description: Bad Request
+        "204":
+          description: No Content
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/Error'
       security:
       - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: List session messages
+      summary: Leave tenant
       tags:
-      - session
-  /client/{client_code}/session/{id}/run:
-    post:
-      consumes:
-      - application/json
-      description: Runs an agent within a session, streaming the execution via SSE.
-      parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Run input
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/RunSessionDTO'
-      produces:
-      - text/event-stream
-      responses:
-        "200":
-          description: OK
-          schema: {}
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: Run session
-      tags:
-      - session
-  /client/{client_code}/user:
+      - tenant
+  /tenants/{tenant_id}/agents:
     get:
-      description: Lists users of a client, with optional ordering/pagination.
+      description: Lists agents. Caller must be a member of the tenant.
       parameters:
-      - description: Client code
+      - description: Tenant ID
         in: path
-        name: client_code
+        name: tenant_id
         required: true
         type: string
-      - description: Order by name
-        enum:
-        - asc
-        - desc
-        in: query
-        name: name_order
-        type: string
-      - description: Page size
-        in: query
-        name: take
-        type: integer
-      - description: Page offset
-        in: query
-        name: skip
-        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ClientUsersPage'
+            $ref: '#/definitions/AgentsPage'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
       security:
       - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: List users
+      summary: List agents
       tags:
-      - user
-  /client/{client_code}/user/anonymous:
+      - agent
     post:
       consumes:
       - application/json
-      description: Creates an anonymous user for a client.
+      description: Creates a new agent. Caller must be a member of the tenant.
       parameters:
-      - description: Client code
+      - description: Tenant ID
         in: path
-        name: client_code
+        name: tenant_id
         required: true
         type: string
-      - description: Anonymous user data
+      - description: Agent data
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/CreateAnonymousClientUserDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Create anonymous user
-      tags:
-      - user
-  /client/{client_code}/user/authenticated:
-    post:
-      consumes:
-      - application/json
-      description: Creates a client user via API key (server-to-server).
-      parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      - description: User data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/CreateAuthenticatedClientUserDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Create authenticated user
-      tags:
-      - user
-  /client/{client_code}/user/me:
-    get:
-      description: Returns the authenticated user for the given client.
-      parameters:
-      - description: Client code
-        in: path
-        name: client_code
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/ClientUserResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - BearerAuth: []
-      summary: Get current user
-      tags:
-      - user
-  /clients:
-    get:
-      description: Lists clients, with optional pagination.
-      parameters:
-      - description: Page size
-        in: query
-        name: take
-        type: integer
-      - description: Page offset
-        in: query
-        name: skip
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/ClientsPage'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-      - ApiKeyAuth: []
-      summary: List clients
-      tags:
-      - client
-    post:
-      consumes:
-      - application/json
-      description: Creates a new client.
-      parameters:
-      - description: Client data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/CreateClientDTO'
+          $ref: '#/definitions/CreateAgentDTO'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ClientResponse'
+            $ref: '#/definitions/AgentResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
-      summary: Create client
+      - BearerAuth: []
+      summary: Create agent
       tags:
-      - client
-  /clients/{code}:
+      - agent
+  /tenants/{tenant_id}/agents/{id}:
     delete:
-      description: Deletes a client by code.
+      description: Deletes an agent by ID. Caller must be a member of the tenant.
       parameters:
-      - description: Client code
+      - description: Tenant ID
         in: path
-        name: code
+        name: tenant_id
+        required: true
+        type: string
+      - description: Agent ID
+        in: path
+        name: id
         required: true
         type: string
       responses:
@@ -2233,16 +2801,21 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
-      summary: Delete client
+      - BearerAuth: []
+      summary: Delete agent
       tags:
-      - client
+      - agent
     get:
-      description: Returns a client by code.
+      description: Returns an agent by ID. Caller must be a member of the tenant.
       parameters:
-      - description: Client code
+      - description: Tenant ID
         in: path
-        name: code
+        name: tenant_id
+        required: true
+        type: string
+      - description: Agent ID
+        in: path
+        name: id
         required: true
         type: string
       produces:
@@ -2251,32 +2824,39 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ClientResponse'
+            $ref: '#/definitions/AgentResponse'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
-      summary: Get client
+      - BearerAuth: []
+      summary: Get agent
       tags:
-      - client
+      - agent
     put:
       consumes:
       - application/json
-      description: Updates a client by code.
+      description: Updates an agent by ID. Caller must be a member of the tenant.
       parameters:
-      - description: Client code
+      - description: Tenant ID
         in: path
-        name: code
+        name: tenant_id
         required: true
         type: string
-      - description: Client data
+      - description: Agent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Agent data
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/UpdateClientDTO'
+          $ref: '#/definitions/UpdateAgentDTO'
+      produces:
+      - application/json
       responses:
         "204":
           description: No Content
@@ -2285,17 +2865,18 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
-      summary: Update client
+      - BearerAuth: []
+      summary: Update agent
       tags:
-      - client
-  /clients/{code}/agents:
+      - agent
+  /tenants/{tenant_id}/api-keys:
     get:
-      description: Lists agents linked to a client, with optional pagination.
+      description: Lists API keys, with optional pagination. Caller must be a tenant
+        admin.
       parameters:
-      - description: Client code
+      - description: Tenant ID
         in: path
-        name: code
+        name: tenant_id
         required: true
         type: string
       - description: Page size
@@ -2312,22 +2893,323 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ClientAgentsPage'
+            $ref: '#/definitions/APIKeysPage'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
       security:
       - BearerAuth: []
-      - ApiKeyAuth: []
-      summary: List client agents
+      summary: List API keys
       tags:
-      - client
-  /clients/{code}/public:
-    get:
-      description: Returns public information for a client by code.
+      - api-key
+    post:
+      consumes:
+      - application/json
+      description: Creates a new API key. The plaintext key is only returned once,
+        on creation. Caller must be a tenant admin.
       parameters:
-      - description: Client code
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: API key data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAPIKeyDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/APIKeyWithSecret'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Create API key
+      tags:
+      - api-key
+  /tenants/{tenant_id}/api-keys/{id}:
+    delete:
+      description: Deletes an API key by ID. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Delete API key
+      tags:
+      - api-key
+    get:
+      description: Returns an API key by ID. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/APIKeyResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Get API key
+      tags:
+      - api-key
+  /tenants/{tenant_id}/api-keys/{id}/active:
+    put:
+      description: Marks an API key as active. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Activate API key
+      tags:
+      - api-key
+  /tenants/{tenant_id}/api-keys/{id}/disabled:
+    put:
+      description: Marks an API key as disabled. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Disable API key
+      tags:
+      - api-key
+  /tenants/{tenant_id}/api-keys/{id}/expiration:
+    put:
+      consumes:
+      - application/json
+      description: Updates the expiration date of an API key. Caller must be a tenant
+        admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Expiration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateExpirationDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Update API key expiration
+      tags:
+      - api-key
+  /tenants/{tenant_id}/api-keys/{id}/roll:
+    post:
+      description: Rotates an API key, invalidating the previous secret. The new plaintext
+        key is only returned once. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: API key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/APIKeyWithSecret'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Roll API key
+      tags:
+      - api-key
+  /tenants/{tenant_id}/apps:
+    get:
+      description: Lists apps, with optional pagination. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AppsPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: List apps
+      tags:
+      - app
+    post:
+      consumes:
+      - application/json
+      description: Creates a new app. The plaintext key is only returned once, on
+        creation. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: App data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAppDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/AppWithSecret'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Create app
+      tags:
+      - app
+  /tenants/{tenant_id}/apps/{code}:
+    delete:
+      description: Deletes an app by code. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Delete app
+      tags:
+      - app
+    get:
+      description: Returns an app by code. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: App code
         in: path
         name: code
         required: true
@@ -2338,18 +3220,284 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ClientPublicDTO'
+            $ref: '#/definitions/AppResponse'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/Error'
-      summary: Get public client info
+      security:
+      - BearerAuth: []
+      summary: Get app
       tags:
-      - client
-  /knowledge:
-    get:
-      description: Lists knowledge bases, with optional pagination.
+      - app
+    put:
+      consumes:
+      - application/json
+      description: Updates an app's name/description by code. Caller must be a tenant
+        admin.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: App data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateAppDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Update app
+      tags:
+      - app
+  /tenants/{tenant_id}/apps/{code}/active:
+    put:
+      description: Marks an app as active. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Activate app
+      tags:
+      - app
+  /tenants/{tenant_id}/apps/{code}/auth-config:
+    put:
+      consumes:
+      - application/json
+      description: Replaces how the app federates its end-users' identity (OIDC/webhook).
+        Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Auth config data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateAppAuthConfigDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Update app auth config
+      tags:
+      - app
+  /tenants/{tenant_id}/apps/{code}/disabled:
+    put:
+      description: Marks an app as disabled. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Disable app
+      tags:
+      - app
+  /tenants/{tenant_id}/apps/{code}/roll:
+    post:
+      description: Rotates an app's key, invalidating the previous secret. The new
+        plaintext key is only returned once. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AppWithSecret'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Roll app key
+      tags:
+      - app
+  /tenants/{tenant_id}/invitations:
+    get:
+      description: Lists a tenant's pending and past invitations. Caller must be a
+        tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: Invitation status
+        enum:
+        - pending
+        - accepted
+        - declined
+        - expired
+        in: query
+        name: status
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/InvitationsPage'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: List invitations
+      tags:
+      - member
+    post:
+      consumes:
+      - application/json
+      description: Creates a pending invitation and emails it. Caller must be a tenant
+        admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: Invitation data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/InviteMemberDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/InvitationResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Invite member
+      tags:
+      - member
+  /tenants/{tenant_id}/invitations/{id}:
+    delete:
+      description: Deletes a pending invitation. Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: Invitation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Cancel invitation
+      tags:
+      - member
+  /tenants/{tenant_id}/knowledge:
+    get:
+      description: Lists knowledge bases, with optional pagination. Caller must be
+        a member of the tenant.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Page size
         in: query
         name: take
@@ -2369,14 +3517,21 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: List knowledge bases
       tags:
       - knowledge
     post:
       consumes:
       - application/json
-      description: Creates a new knowledge base.
+      description: Creates a new knowledge base. Caller must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge data
         in: body
         name: body
@@ -2394,13 +3549,21 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: Create knowledge base
       tags:
       - knowledge
-  /knowledge/{id}:
+  /tenants/{tenant_id}/knowledge/{id}:
     delete:
-      description: Deletes a knowledge base by ID.
+      description: Deletes a knowledge base by ID. Caller must be a member of the
+        tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: id
@@ -2413,12 +3576,20 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: Delete knowledge base
       tags:
       - knowledge
     get:
-      description: Returns a knowledge base by ID.
+      description: Returns a knowledge base by ID. Caller must be a member of the
+        tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: id
@@ -2435,14 +3606,22 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: Get knowledge base
       tags:
       - knowledge
     put:
       consumes:
       - application/json
-      description: Updates a knowledge base by ID.
+      description: Updates a knowledge base by ID. Caller must be a member of the
+        tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: id
@@ -2461,13 +3640,21 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: Update knowledge base
       tags:
       - knowledge
-  /knowledge/{id}/items:
+  /tenants/{tenant_id}/knowledge/{id}/items:
     get:
-      description: Lists items of a knowledge base, with optional pagination.
+      description: Lists items of a knowledge base, with optional pagination. Caller
+        must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: id
@@ -2492,13 +3679,21 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: List knowledge items
       tags:
       - knowledge
-  /knowledge/{id}/sync:
+  /tenants/{tenant_id}/knowledge/{id}/sync:
     post:
-      description: Triggers a sync of a knowledge base's items from its source.
+      description: Triggers a sync of a knowledge base's items from its source. Caller
+        must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: id
@@ -2515,13 +3710,21 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: Sync knowledge base
       tags:
       - knowledge
-  /knowledge/{knowledge_id}/index:
+  /tenants/{tenant_id}/knowledge/{knowledge_id}/index:
     get:
-      description: Lists indexes of a knowledge base, with optional pagination.
+      description: Lists indexes of a knowledge base, with optional pagination. Caller
+        must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: knowledge_id
@@ -2547,15 +3750,21 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: List knowledge indexes
       tags:
       - knowledge-index
     post:
       consumes:
       - application/json
-      description: Creates a new index for a knowledge base.
+      description: Creates a new index for a knowledge base. Caller must be a member
+        of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: knowledge_id
@@ -2579,14 +3788,20 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Create knowledge index
       tags:
       - knowledge-index
-  /knowledge/{knowledge_id}/index/{id}:
+  /tenants/{tenant_id}/knowledge/{knowledge_id}/index/{id}:
     delete:
-      description: Deletes a knowledge index by ID.
+      description: Deletes a knowledge index by ID. Caller must be a member of the
+        tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: knowledge_id
@@ -2605,13 +3820,19 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Delete knowledge index
       tags:
       - knowledge-index
     get:
-      description: Returns a knowledge index by ID.
+      description: Returns a knowledge index by ID. Caller must be a member of the
+        tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: knowledge_id
@@ -2634,15 +3855,21 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Get knowledge index
       tags:
       - knowledge-index
     put:
       consumes:
       - application/json
-      description: Updates a knowledge index by ID.
+      description: Updates a knowledge index by ID. Caller must be a member of the
+        tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: knowledge_id
@@ -2667,14 +3894,20 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Update knowledge index
       tags:
       - knowledge-index
-  /knowledge/{knowledge_id}/index/{id}/items:
+  /tenants/{tenant_id}/knowledge/{knowledge_id}/index/{id}/items:
     get:
-      description: Lists items of a knowledge index, with optional pagination.
+      description: Lists items of a knowledge index, with optional pagination. Caller
+        must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Knowledge ID
         in: path
         name: knowledge_id
@@ -2705,30 +3938,20 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: List indexed knowledge items
       tags:
       - knowledge-index
-  /knowledge/drivers:
+  /tenants/{tenant_id}/knowledge/drivers:
     get:
-      description: Lists the available knowledge source drivers.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/DriversDTO'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-      summary: List knowledge source drivers
-      tags:
-      - knowledge
-  /knowledge/index/drivers:
-    get:
-      description: Lists the available knowledge index drivers.
+      description: Lists the available knowledge source drivers. Caller must be a
+        member of the tenant.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -2741,17 +3964,48 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: List knowledge source drivers
+      tags:
+      - knowledge
+  /tenants/{tenant_id}/knowledge/index/drivers:
+    get:
+      description: Lists the available knowledge index drivers. Caller must be a member
+        of the tenant.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/DriversDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: List knowledge index drivers
       tags:
       - knowledge-index
-  /knowledge/test-connection:
+  /tenants/{tenant_id}/knowledge/test-connection:
     post:
       consumes:
       - application/json
       description: Tests a knowledge source driver configuration without persisting
-        it.
+        it. Caller must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Connection data
         in: body
         name: body
@@ -2765,13 +4019,21 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
       summary: Test knowledge connection
       tags:
       - knowledge
-  /llm:
+  /tenants/{tenant_id}/llm:
     get:
-      description: Lists configured LLMs, with optional pagination.
+      description: Lists configured LLMs, with optional pagination. Caller must be
+        a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: Page size
         in: query
         name: take
@@ -2792,15 +4054,21 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: List LLMs
       tags:
       - llm
     post:
       consumes:
       - application/json
-      description: Creates a new LLM configuration.
+      description: Creates a new LLM configuration. Caller must be a member of the
+        tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: LLM data
         in: body
         name: body
@@ -2819,14 +4087,19 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Create LLM
       tags:
       - llm
-  /llm/{id}:
+  /tenants/{tenant_id}/llm/{id}:
     delete:
-      description: Deletes an LLM by ID.
+      description: Deletes an LLM by ID. Caller must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: LLM ID
         in: path
         name: id
@@ -2840,13 +4113,18 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Delete LLM
       tags:
       - llm
     get:
-      description: Returns an LLM by ID.
+      description: Returns an LLM by ID. Caller must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: LLM ID
         in: path
         name: id
@@ -2864,15 +4142,20 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Get LLM
       tags:
       - llm
     put:
       consumes:
       - application/json
-      description: Updates an LLM by ID.
+      description: Updates an LLM by ID. Caller must be a member of the tenant.
       parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       - description: LLM ID
         in: path
         name: id
@@ -2892,13 +4175,20 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Update LLM
       tags:
       - llm
-  /llm/drivers:
+  /tenants/{tenant_id}/llm/drivers:
     get:
-      description: Lists the available LLM provider drivers.
+      description: Lists the available LLM provider drivers. Caller must be a member
+        of the tenant.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -2913,10 +4203,191 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: List LLM drivers
       tags:
       - llm
+  /tenants/{tenant_id}/members:
+    get:
+      description: Lists a tenant's members. Caller must be a member (any role).
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: Page size
+        in: query
+        name: take
+        type: integer
+      - description: Page offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MembersPage'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: List members
+      tags:
+      - member
+    post:
+      consumes:
+      - application/json
+      description: Directly creates a User (with password) and Member in one step.
+        Only available on unlicensed single-tenant instances (no invitation flow).
+        Caller must be a tenant admin.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: Member data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateMemberDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/MemberResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Create member
+      tags:
+      - member
+  /tenants/{tenant_id}/members/{id}:
+    delete:
+      description: Removes a member from the tenant. Caller must be a tenant admin
+        and cannot remove themselves.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: Member ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Remove member
+      tags:
+      - member
+  /tenants/{tenant_id}/members/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Changes a member's role. Caller must be a tenant admin and cannot
+        change their own role.
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: Member ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New role
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateMemberRoleDTO'
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Update member role
+      tags:
+      - member
+  /tenants/me:
+    get:
+      description: Returns the tenants the authenticated user is a member of.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TenantsPage'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: My tenants
+      tags:
+      - tenant
+  /tenants/slug/{slug}:
+    get:
+      description: Returns a tenant by its slug. Caller must be a member.
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TenantResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BearerAuth: []
+      summary: Get tenant by slug
+      tags:
+      - tenant
   /users/me:
     get:
       description: Returns the authenticated tenant-staff user.

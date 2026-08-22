@@ -18,6 +18,7 @@ type App struct {
 	Name           string     `gorm:"type:varchar(255);not null" json:"name"`
 	Description    string     `gorm:"type:text;not null" json:"description"`
 	Status         AppStatus  `gorm:"type:varchar(255);not null" json:"status"`
+	Public         bool       `gorm:"not null;default:false" json:"public"`
 	LastVerifiedAt *time.Time `gorm:"type:timestamp" json:"last_verified_at"`
 
 	KeyID   string `gorm:"type:varchar(255);not null;unique" json:"key_id"`

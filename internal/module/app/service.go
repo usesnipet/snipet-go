@@ -68,6 +68,21 @@ func (s *Service) FindByCodeInTenant(ctx context.Context, tenantID, code string)
 	return s.findByCodeInTenant(ctx, tenantID, code)
 }
 
+// FindPublicByCode is the unauthenticated lookup for an app's public info
+// (e.g. a frontend-only widget looking itself up by code). Only apps marked
+// Public are exposed; a non-public app 404s the same as one that doesn't
+// exist, so callers can't use this to probe for private app codes.
+func (s *Service) FindPublicByCode(ctx context.Context, code string) (*PublicAppDTO, error) {
+	app, err := s.appRepo.FindByCode(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+	if !app.Public {
+		return nil, apperr.NotFound("app not found")
+	}
+	return &PublicAppDTO{Code: app.Code, Name: app.Name, Description: app.Description}, nil
+}
+
 func (s *Service) GenerateCode(ctx context.Context) (string, error) {
 	randomBytes := make([]byte, 8)
 	if _, err := rand.Read(randomBytes); err != nil {

@@ -18,11 +18,16 @@ func NewHandler(service *Service, userMiddleware api.MiddlewareFunc, appMiddlewa
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	// Public/connected-app surface — authenticated with the app's own key
-	// (see guard.RequireAppKey), not tenant-staff bearer auth.
-	r.Route("/apps/{code}/ping", func(r chi.Router) {
-		r.Use(h.appMiddleware)
-		r.Post("/", serve(h.ping))
+	// Public surface — no auth at all. findPublicByCode only ever exposes
+	// apps explicitly marked Public; ping is authenticated with the app's
+	// own key (see guard.RequireAppKey), not tenant-staff bearer auth.
+	r.Route("/apps/{code}", func(r chi.Router) {
+		r.Get("/", serve(h.findPublicByCode))
+
+		r.Route("/ping", func(r chi.Router) {
+			r.Use(h.appMiddleware)
+			r.Post("/", serve(h.ping))
+		})
 	})
 
 	// Admin/CRUD surface — tenant-staff bearer auth + membership, mirroring
@@ -221,6 +226,22 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return api.WriteNoContent(w)
+}
+
+// @Summary		Get public app info
+// @Description	Returns an app's name, code, and description. Only exposed when the app is marked public; otherwise 404. Unauthenticated.
+// @Tags			app
+// @Produce		json
+// @Param			code	path		string	true	"App code"
+// @Success		200		{object}	PublicAppDTO
+// @Failure		404		{object}	api.Error
+// @Router			/apps/{code} [get]
+func (h *Handler) findPublicByCode(w http.ResponseWriter, r *http.Request) error {
+	data, err := h.service.FindPublicByCode(r.Context(), chi.URLParam(r, "code"))
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, data)
 }
 
 // @Summary		Ping

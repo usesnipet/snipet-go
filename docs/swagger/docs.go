@@ -15,199 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/agent": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Lists agents.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "List agents",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/AgentsPage"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Creates a new agent.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "Create agent",
-                "parameters": [
-                    {
-                        "description": "Agent data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/CreateAgentDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/AgentResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/agent/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Returns an agent by ID.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "Get agent",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Agent ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/AgentResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Updates an agent by ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "Update agent",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Agent ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Agent data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/UpdateAgentDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Deletes an agent by ID.",
-                "tags": [
-                    "agent"
-                ],
-                "summary": "Delete agent",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Agent ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
         "/agent/{id}/run": {
             "post": {
                 "security": [
@@ -258,94 +65,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api-key": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Lists API keys, with optional pagination.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "api-key"
-                ],
-                "summary": "List API keys",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "take",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page offset",
-                        "name": "skip",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/APIKeysPage"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Creates a new API key. The plaintext key is only returned once, on creation.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "api-key"
-                ],
-                "summary": "Create API key",
-                "parameters": [
-                    {
-                        "description": "API key data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/CreateAPIKeyDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/APIKeyWithSecret"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
         "/api-key/me": {
             "get": {
                 "security": [
@@ -377,26 +96,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/api-key/{id}": {
+        "/apps/{code}": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Returns an API key by ID.",
+                "description": "Returns an app's name, code, and description. Only exposed when the app is marked public; otherwise 404. Unauthenticated.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "api-key"
+                    "app"
                 ],
-                "summary": "Get API key",
+                "summary": "Get public app info",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API key ID",
-                        "name": "id",
+                        "description": "App code",
+                        "name": "code",
                         "in": "path",
                         "required": true
                     }
@@ -405,7 +119,320 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/APIKeyResponse"
+                            "$ref": "#/definitions/PublicAppDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{code}/authenticate/{provider_name}": {
+            "post": {
+                "description": "Authenticates an app user through the given auth provider (e.g. oidc, webhook).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Authenticate with provider",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Auth provider name",
+                        "name": "provider_name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthenticateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{code}/ping": {
+            "post": {
+                "security": [
+                    {
+                        "AppKeyAuth": []
+                    }
+                ],
+                "description": "Called by a connected app, authenticated with its own key, to confirm it's alive. Promotes a pending app to active on first success.",
+                "tags": [
+                    "app"
+                ],
+                "summary": "Ping",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{code}/refresh": {
+            "post": {
+                "description": "Exchanges a refresh token for a new access/refresh token pair.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh access token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Refresh token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/RefreshDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthenticateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{code}/session": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Lists sessions of an app, with optional pagination and includes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "session"
+                ],
+                "summary": "List sessions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "take",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "skip",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "agent"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Related resources to include",
+                        "name": "include",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SessionsPage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Creates a new session for an app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "session"
+                ],
+                "summary": "Create session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Session data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateSessionDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{code}/session/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns a session by ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "session"
+                ],
+                "summary": "Get session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "agent"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Related resources to include",
+                        "name": "include",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SessionResponse"
                         }
                     },
                     "404": {
@@ -416,137 +443,45 @@ const docTemplate = `{
                     }
                 }
             },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Deletes an API key by ID.",
-                "tags": [
-                    "api-key"
-                ],
-                "summary": "Delete API key",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API key ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/api-key/{id}/active": {
             "put": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Marks an API key as active.",
-                "tags": [
-                    "api-key"
-                ],
-                "summary": "Activate API key",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API key ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
+                        "BearerAuth": []
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/api-key/{id}/disabled": {
-            "put": {
-                "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Marks an API key as disabled.",
-                "tags": [
-                    "api-key"
-                ],
-                "summary": "Disable API key",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API key ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/api-key/{id}/expiration": {
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Updates the expiration date of an API key.",
+                "description": "Updates a session by ID.",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
-                    "api-key"
+                    "session"
                 ],
-                "summary": "Update API key expiration",
+                "summary": "Update session",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API key ID",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Session ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Expiration data",
+                        "description": "Session data",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/UpdateExpirationDTO"
+                            "$ref": "#/definitions/UpdateSessionDTO"
                         }
                     }
                 ],
@@ -561,38 +496,40 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/api-key/{id}/roll": {
-            "post": {
+            },
+            "delete": {
                 "security": [
+                    {
+                        "BearerAuth": []
+                    },
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Rotates an API key, invalidating the previous secret. The new plaintext key is only returned once.",
-                "produces": [
-                    "application/json"
-                ],
+                "description": "Deletes a session by ID.",
                 "tags": [
-                    "api-key"
+                    "session"
                 ],
-                "summary": "Roll API key",
+                "summary": "Delete session",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API key ID",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Session ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/APIKeyWithSecret"
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "404": {
                         "description": "Not Found",
@@ -603,41 +540,284 @@ const docTemplate = `{
                 }
             }
         },
-        "/app/config": {
+        "/apps/{code}/session/{id}/messages": {
             "get": {
-                "description": "Returns public application configuration.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Lists the execution messages of a session, with optional ordering/pagination.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "app"
+                    "session"
                 ],
-                "summary": "Get app config",
+                "summary": "List session messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "description": "Order by timestamp",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "take",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "skip",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/AppConfigDTO"
+                            "$ref": "#/definitions/SessionMessagesPage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
                         }
                     }
                 }
             }
         },
-        "/app/system-info": {
+        "/apps/{code}/session/{id}/run": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Runs an agent within a session, streaming the execution via SSE.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "session"
+                ],
+                "summary": "Run session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Run input",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/RunSessionDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{code}/user": {
             "get": {
-                "description": "Returns application system information.",
+                "security": [
+                    {
+                        "AppKeyAuth": []
+                    }
+                ],
+                "description": "Lists users of an app, with optional ordering/pagination.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "app"
+                    "user"
                 ],
-                "summary": "Get system info",
+                "summary": "List users",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "description": "Order by name",
+                        "name": "name_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "take",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "skip",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/SystemInfoDTO"
+                            "$ref": "#/definitions/AppUsersPage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{code}/user/authenticated": {
+            "post": {
+                "security": [
+                    {
+                        "AppKeyAuth": []
+                    }
+                ],
+                "description": "Creates an app user via the app's own key (server-to-server).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Create user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateAppUserDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{code}/user/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the authenticated user for the given app.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get current user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AppUserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
                         }
                     }
                 }
@@ -1055,219 +1235,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/client/{client_code}/authenticate/anonymous": {
-            "post": {
-                "description": "Creates or authenticates an anonymous client user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Authenticate anonymously",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Anonymous user data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/AuthenticateAnonymousDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/AuthenticateResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/client/{client_code}/authenticate/{provider_name}": {
-            "post": {
-                "description": "Authenticates a client user through the given auth provider (e.g. google, github).",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Authenticate with provider",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Auth provider name",
-                        "name": "provider_name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/AuthenticateResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/client/{client_code}/refresh": {
-            "post": {
-                "description": "Exchanges a refresh token for a new access/refresh token pair.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Refresh access token",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Refresh token",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/RefreshDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/AuthenticateResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/client/{client_code}/session": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Lists sessions of a client, with optional pagination and includes.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "session"
-                ],
-                "summary": "List sessions",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "take",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page offset",
-                        "name": "skip",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "enum": [
-                                "agent"
-                            ],
-                            "type": "string"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "Related resources to include",
-                        "name": "include",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/SessionsPage"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            },
+        "/invitations/accept": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
                     }
                 ],
-                "description": "Creates a new session for a client.",
+                "description": "Joins the authenticated user to the invitation's tenant. The invitation must be pending, unexpired, and addressed to the caller's own email.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1275,24 +1250,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "session"
+                    "member"
                 ],
-                "summary": "Create session",
+                "summary": "Accept invitation",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Session data",
+                        "description": "Invitation token",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateSessionDTO"
+                            "$ref": "#/definitions/AcceptInvitationDTO"
                         }
                     }
                 ],
@@ -1300,11 +1268,17 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/SessionResponse"
+                            "$ref": "#/definitions/MemberResponse"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/Error"
                         }
@@ -1312,155 +1286,76 @@ const docTemplate = `{
                 }
             }
         },
-        "/client/{client_code}/session/{id}": {
-            "get": {
+        "/invitations/decline": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
                     }
                 ],
-                "description": "Returns a session by ID.",
+                "description": "Marks a pending invitation as declined. The token must belong to a pending invitation addressed to the caller's own email.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "member"
+                ],
+                "summary": "Decline invitation",
+                "parameters": [
+                    {
+                        "description": "Invitation token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/DeclineInvitationDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/invitations/{token}": {
+            "get": {
+                "description": "Looks up an invitation and its tenant by token. Public — no authentication required. Lets a user preview an invitation (including whether it's expired, accepted, or declined) before accepting or declining it.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "session"
+                    "member"
                 ],
-                "summary": "Get session",
+                "summary": "Get invitation by token",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
+                        "description": "Invitation token",
+                        "name": "token",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "enum": [
-                                "agent"
-                            ],
-                            "type": "string"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "Related resources to include",
-                        "name": "include",
-                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/SessionResponse"
+                            "$ref": "#/definitions/InvitationInfoResponse"
                         }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Updates a session by ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "session"
-                ],
-                "summary": "Update session",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Session data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/UpdateSessionDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Deletes a session by ID.",
-                "tags": [
-                    "session"
-                ],
-                "summary": "Delete session",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
                     },
                     "404": {
                         "description": "Not Found",
@@ -1471,206 +1366,34 @@ const docTemplate = `{
                 }
             }
         },
-        "/client/{client_code}/session/{id}/messages": {
+        "/system/info": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Lists the execution messages of a session, with optional ordering/pagination.",
+                "description": "Returns application system information.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "session"
+                    "system"
                 ],
-                "summary": "List session messages",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "asc",
-                            "desc"
-                        ],
-                        "type": "string",
-                        "description": "Order by timestamp",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "take",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page offset",
-                        "name": "skip",
-                        "in": "query"
-                    }
-                ],
+                "summary": "Get system info",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/SessionMessagesPage"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/InfoDTO"
                         }
                     }
                 }
             }
         },
-        "/client/{client_code}/session/{id}/run": {
+        "/tenants": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
                     }
                 ],
-                "description": "Runs an agent within a session, streaming the execution via SSE.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "text/event-stream"
-                ],
-                "tags": [
-                    "session"
-                ],
-                "summary": "Run session",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Run input",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/RunSessionDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {}
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/client/{client_code}/user": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Lists users of a client, with optional ordering/pagination.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "List users",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "asc",
-                            "desc"
-                        ],
-                        "type": "string",
-                        "description": "Order by name",
-                        "name": "name_order",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "take",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page offset",
-                        "name": "skip",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/ClientUsersPage"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/client/{client_code}/user/anonymous": {
-            "post": {
-                "description": "Creates an anonymous user for a client.",
+                "description": "Creates a new tenant. Blocked without a valid Multi-Tenant Use license once a tenant already exists. The creator becomes the tenant's admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1678,33 +1401,35 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "tenant"
                 ],
-                "summary": "Create anonymous user",
+                "summary": "Create tenant",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Anonymous user data",
+                        "description": "Tenant data",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateAnonymousClientUserDTO"
+                            "$ref": "#/definitions/CreateTenantDTO"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created"
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/TenantResponse"
+                        }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/Error"
                         }
@@ -1712,84 +1437,26 @@ const docTemplate = `{
                 }
             }
         },
-        "/client/{client_code}/user/authenticated": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Creates a client user via API key (server-to-server).",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "Create authenticated user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "User data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/CreateAuthenticatedClientUserDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/client/{client_code}/user/me": {
+        "/tenants/me": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns the authenticated user for the given client.",
+                "description": "Returns the tenants the authenticated user is a member of.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "tenant"
                 ],
-                "summary": "Get current user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Client code",
-                        "name": "client_code",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "My tenants",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ClientUserResponse"
+                            "$ref": "#/definitions/TenantsPage"
                         }
                     },
                     "401": {
@@ -1801,114 +1468,26 @@ const docTemplate = `{
                 }
             }
         },
-        "/clients": {
+        "/tenants/slug/{slug}": {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Lists clients, with optional pagination.",
+                "description": "Returns a tenant by its slug. Caller must be a member.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "client"
+                    "tenant"
                 ],
-                "summary": "List clients",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "take",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page offset",
-                        "name": "skip",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/ClientsPage"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Creates a new client.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "client"
-                ],
-                "summary": "Create client",
-                "parameters": [
-                    {
-                        "description": "Client data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/CreateClientDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/ClientResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/clients/{code}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Returns a client by code.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "client"
-                ],
-                "summary": "Get client",
+                "summary": "Get tenant by slug",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Client code",
-                        "name": "code",
+                        "description": "Tenant slug",
+                        "name": "slug",
                         "in": "path",
                         "required": true
                     }
@@ -1917,7 +1496,59 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ClientResponse"
+                            "$ref": "#/definitions/TenantResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a tenant. Caller must be a member.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenant"
+                ],
+                "summary": "Get tenant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TenantResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
                         }
                     },
                     "404": {
@@ -1931,32 +1562,289 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Updates a client by code.",
+                "description": "Updates a tenant. Caller must be able to manage it (tenant admin or platform admin).",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
-                    "client"
+                    "tenant"
                 ],
-                "summary": "Update client",
+                "summary": "Update tenant",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Client code",
-                        "name": "code",
+                        "description": "Tenant ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Client data",
+                        "description": "Tenant data",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/UpdateClientDTO"
+                            "$ref": "#/definitions/UpdateTenantDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a tenant. Caller must be able to manage it (tenant admin or platform admin).",
+                "tags": [
+                    "tenant"
+                ],
+                "summary": "Delete tenant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{id}/leave": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes the caller's own membership. Blocked if the caller is the tenant's last active admin.",
+                "tags": [
+                    "tenant"
+                ],
+                "summary": "Leave tenant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/agents": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists agents. Caller must be a member of the tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "agent"
+                ],
+                "summary": "List agents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AgentsPage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new agent. Caller must be a member of the tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "agent"
+                ],
+                "summary": "Create agent",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Agent data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateAgentDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/AgentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/agents/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns an agent by ID. Caller must be a member of the tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "agent"
+                ],
+                "summary": "Get agent",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Agent ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AgentResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an agent by ID. Caller must be a member of the tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "agent"
+                ],
+                "summary": "Update agent",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Agent ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Agent data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateAgentDTO"
                         }
                     }
                 ],
@@ -1975,19 +1863,26 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Deletes a client by code.",
+                "description": "Deletes an agent by ID. Caller must be a member of the tenant.",
                 "tags": [
-                    "client"
+                    "agent"
                 ],
-                "summary": "Delete client",
+                "summary": "Delete agent",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Client code",
-                        "name": "code",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Agent ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -2005,29 +1900,26 @@ const docTemplate = `{
                 }
             }
         },
-        "/clients/{code}/agents": {
+        "/tenants/{tenant_id}/api-keys": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
                     }
                 ],
-                "description": "Lists agents linked to a client, with optional pagination.",
+                "description": "Lists API keys, with optional pagination. Caller must be a tenant admin.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "client"
+                    "api-key"
                 ],
-                "summary": "List client agents",
+                "summary": "List API keys",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Client code",
-                        "name": "code",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
                         "in": "path",
                         "required": true
                     },
@@ -2048,7 +1940,57 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ClientAgentsPage"
+                            "$ref": "#/definitions/APIKeysPage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new API key. The plaintext key is only returned once, on creation. Caller must be a tenant admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "api-key"
+                ],
+                "summary": "Create API key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "API key data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateAPIKeyDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/APIKeyWithSecret"
                         }
                     },
                     "400": {
@@ -2060,21 +2002,33 @@ const docTemplate = `{
                 }
             }
         },
-        "/clients/{code}/public": {
+        "/tenants/{tenant_id}/api-keys/{id}": {
             "get": {
-                "description": "Returns public information for a client by code.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns an API key by ID. Caller must be a tenant admin.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "client"
+                    "api-key"
                 ],
-                "summary": "Get public client info",
+                "summary": "Get API key",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Client code",
-                        "name": "code",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -2083,7 +2037,228 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ClientPublicDTO"
+                            "$ref": "#/definitions/APIKeyResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an API key by ID. Caller must be a tenant admin.",
+                "tags": [
+                    "api-key"
+                ],
+                "summary": "Delete API key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/api-keys/{id}/active": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Marks an API key as active. Caller must be a tenant admin.",
+                "tags": [
+                    "api-key"
+                ],
+                "summary": "Activate API key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/api-keys/{id}/disabled": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Marks an API key as disabled. Caller must be a tenant admin.",
+                "tags": [
+                    "api-key"
+                ],
+                "summary": "Disable API key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/api-keys/{id}/expiration": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the expiration date of an API key. Caller must be a tenant admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "api-key"
+                ],
+                "summary": "Update API key expiration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Expiration data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateExpirationDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/api-keys/{id}/roll": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Rotates an API key, invalidating the previous secret. The new plaintext key is only returned once. Caller must be a tenant admin.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "api-key"
+                ],
+                "summary": "Roll API key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/APIKeyWithSecret"
                         }
                     },
                     "404": {
@@ -2095,9 +2270,596 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge": {
+        "/tenants/{tenant_id}/apps": {
             "get": {
-                "description": "Lists knowledge bases, with optional pagination.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists apps, with optional pagination. Caller must be a tenant admin.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app"
+                ],
+                "summary": "List apps",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "take",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "skip",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AppsPage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new app. The plaintext key is only returned once, on creation. Caller must be a tenant admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app"
+                ],
+                "summary": "Create app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "App data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateAppDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/AppWithSecret"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/apps/{code}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns an app by code. Caller must be a tenant admin.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app"
+                ],
+                "summary": "Get app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AppResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an app's name/description by code. Caller must be a tenant admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app"
+                ],
+                "summary": "Update app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "App data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateAppDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an app by code. Caller must be a tenant admin.",
+                "tags": [
+                    "app"
+                ],
+                "summary": "Delete app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/apps/{code}/active": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Marks an app as active. Caller must be a tenant admin.",
+                "tags": [
+                    "app"
+                ],
+                "summary": "Activate app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/apps/{code}/auth-config": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Replaces how the app federates its end-users' identity (OIDC/webhook). Caller must be a tenant admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app"
+                ],
+                "summary": "Update app auth config",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Auth config data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateAppAuthConfigDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/apps/{code}/disabled": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Marks an app as disabled. Caller must be a tenant admin.",
+                "tags": [
+                    "app"
+                ],
+                "summary": "Disable app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/apps/{code}/roll": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Rotates an app's key, invalidating the previous secret. The new plaintext key is only returned once. Caller must be a tenant admin.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app"
+                ],
+                "summary": "Roll app key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AppWithSecret"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/invitations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists a tenant's pending and past invitations. Caller must be a tenant admin.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "member"
+                ],
+                "summary": "List invitations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "declined",
+                            "expired"
+                        ],
+                        "type": "string",
+                        "description": "Invitation status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "take",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "skip",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/InvitationsPage"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a pending invitation and emails it. Caller must be a tenant admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "member"
+                ],
+                "summary": "Invite member",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Invitation data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/InviteMemberDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/InvitationResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/invitations/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a pending invitation. Caller must be a tenant admin.",
+                "tags": [
+                    "member"
+                ],
+                "summary": "Cancel invitation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Invitation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/knowledge": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists knowledge bases, with optional pagination. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2106,6 +2868,13 @@ const docTemplate = `{
                 ],
                 "summary": "List knowledge bases",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Page size",
@@ -2135,7 +2904,12 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Creates a new knowledge base.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new knowledge base. Caller must be a member of the tenant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2147,6 +2921,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create knowledge base",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Knowledge data",
                         "name": "body",
@@ -2173,9 +2954,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/drivers": {
+        "/tenants/{tenant_id}/knowledge/drivers": {
             "get": {
-                "description": "Lists the available knowledge source drivers.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists the available knowledge source drivers. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2183,6 +2969,15 @@ const docTemplate = `{
                     "knowledge"
                 ],
                 "summary": "List knowledge source drivers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2199,14 +2994,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/index/drivers": {
+        "/tenants/{tenant_id}/knowledge/index/drivers": {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Lists the available knowledge index drivers.",
+                "description": "Lists the available knowledge index drivers. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2214,6 +3009,15 @@ const docTemplate = `{
                     "knowledge-index"
                 ],
                 "summary": "List knowledge index drivers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2230,9 +3034,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/test-connection": {
+        "/tenants/{tenant_id}/knowledge/test-connection": {
             "post": {
-                "description": "Tests a knowledge source driver configuration without persisting it.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tests a knowledge source driver configuration without persisting it. Caller must be a member of the tenant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2241,6 +3050,13 @@ const docTemplate = `{
                 ],
                 "summary": "Test knowledge connection",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Connection data",
                         "name": "body",
@@ -2264,9 +3080,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/{id}": {
+        "/tenants/{tenant_id}/knowledge/{id}": {
             "get": {
-                "description": "Returns a knowledge base by ID.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a knowledge base by ID. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2275,6 +3096,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get knowledge base",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2299,7 +3127,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates a knowledge base by ID.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates a knowledge base by ID. Caller must be a member of the tenant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2308,6 +3141,13 @@ const docTemplate = `{
                 ],
                 "summary": "Update knowledge base",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2338,12 +3178,24 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes a knowledge base by ID.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a knowledge base by ID. Caller must be a member of the tenant.",
                 "tags": [
                     "knowledge"
                 ],
                 "summary": "Delete knowledge base",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2365,9 +3217,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/{id}/items": {
+        "/tenants/{tenant_id}/knowledge/{id}/items": {
             "get": {
-                "description": "Lists items of a knowledge base, with optional pagination.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists items of a knowledge base, with optional pagination. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2376,6 +3233,13 @@ const docTemplate = `{
                 ],
                 "summary": "List knowledge items",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2412,14 +3276,26 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/{id}/sync": {
+        "/tenants/{tenant_id}/knowledge/{id}/sync": {
             "post": {
-                "description": "Triggers a sync of a knowledge base's items from its source.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Triggers a sync of a knowledge base's items from its source. Caller must be a member of the tenant.",
                 "tags": [
                     "knowledge"
                 ],
                 "summary": "Sync knowledge base",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2447,14 +3323,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/{knowledge_id}/index": {
+        "/tenants/{tenant_id}/knowledge/{knowledge_id}/index": {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Lists indexes of a knowledge base, with optional pagination.",
+                "description": "Lists indexes of a knowledge base, with optional pagination. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2463,6 +3339,13 @@ const docTemplate = `{
                 ],
                 "summary": "List knowledge indexes",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2501,10 +3384,10 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new index for a knowledge base.",
+                "description": "Creates a new index for a knowledge base. Caller must be a member of the tenant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2516,6 +3399,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create knowledge index",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2549,14 +3439,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/{knowledge_id}/index/{id}": {
+        "/tenants/{tenant_id}/knowledge/{knowledge_id}/index/{id}": {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Returns a knowledge index by ID.",
+                "description": "Returns a knowledge index by ID. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2565,6 +3455,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get knowledge index",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2598,10 +3495,10 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Updates a knowledge index by ID.",
+                "description": "Updates a knowledge index by ID. Caller must be a member of the tenant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2610,6 +3507,13 @@ const docTemplate = `{
                 ],
                 "summary": "Update knowledge index",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2649,15 +3553,22 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Deletes a knowledge index by ID.",
+                "description": "Deletes a knowledge index by ID. Caller must be a member of the tenant.",
                 "tags": [
                     "knowledge-index"
                 ],
                 "summary": "Delete knowledge index",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2686,14 +3597,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/knowledge/{knowledge_id}/index/{id}/items": {
+        "/tenants/{tenant_id}/knowledge/{knowledge_id}/index/{id}/items": {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Lists items of a knowledge index, with optional pagination.",
+                "description": "Lists items of a knowledge index, with optional pagination. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2702,6 +3613,13 @@ const docTemplate = `{
                 ],
                 "summary": "List indexed knowledge items",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Knowledge ID",
@@ -2745,14 +3663,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/llm": {
+        "/tenants/{tenant_id}/llm": {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Lists configured LLMs, with optional pagination.",
+                "description": "Lists configured LLMs, with optional pagination. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2761,6 +3679,13 @@ const docTemplate = `{
                 ],
                 "summary": "List LLMs",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Page size",
@@ -2792,10 +3717,10 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new LLM configuration.",
+                "description": "Creates a new LLM configuration. Caller must be a member of the tenant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2807,6 +3732,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create LLM",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "LLM data",
                         "name": "body",
@@ -2833,14 +3765,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/llm/drivers": {
+        "/tenants/{tenant_id}/llm/drivers": {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Lists the available LLM provider drivers.",
+                "description": "Lists the available LLM provider drivers. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2848,6 +3780,15 @@ const docTemplate = `{
                     "llm"
                 ],
                 "summary": "List LLM drivers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2867,14 +3808,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/llm/{id}": {
+        "/tenants/{tenant_id}/llm/{id}": {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Returns an LLM by ID.",
+                "description": "Returns an LLM by ID. Caller must be a member of the tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -2883,6 +3824,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get LLM",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "LLM ID",
@@ -2909,10 +3857,10 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Updates an LLM by ID.",
+                "description": "Updates an LLM by ID. Caller must be a member of the tenant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2921,6 +3869,13 @@ const docTemplate = `{
                 ],
                 "summary": "Update LLM",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "LLM ID",
@@ -2953,15 +3908,22 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an LLM by ID.",
+                "description": "Deletes an LLM by ID. Caller must be a member of the tenant.",
                 "tags": [
                     "llm"
                 ],
                 "summary": "Delete LLM",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "LLM ID",
@@ -2976,6 +3938,208 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists a tenant's members. Caller must be a member (any role).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "member"
+                ],
+                "summary": "List members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "take",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "skip",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/MembersPage"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Directly creates a User (with password) and Member in one step. Only available on unlicensed single-tenant instances (no invitation flow). Caller must be a tenant admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "member"
+                ],
+                "summary": "Create member",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Member data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateMemberDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/MemberResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/members/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes a member from the tenant. Caller must be a tenant admin and cannot remove themselves.",
+                "tags": [
+                    "member"
+                ],
+                "summary": "Remove member",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Member ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenant_id}/members/{id}/role": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Changes a member's role. Caller must be a tenant admin and cannot change their own role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "member"
+                ],
+                "summary": "Update member role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Member ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New role",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateMemberRoleDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/Error"
                         }
@@ -3076,6 +4240,12 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
                 "updated_at": {
                     "type": "string"
                 }
@@ -3100,6 +4270,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -3131,6 +4307,12 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
                 "updated_at": {
                     "type": "string"
                 }
@@ -3153,6 +4335,43 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "AcceptInvitationDTO": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "Account": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "external_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/User"
+                },
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -3179,6 +4398,12 @@ const docTemplate = `{
                 "instructions": {
                     "type": "string"
                 },
+                "knowledge": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AgentToKnowledge"
+                    }
+                },
                 "llms": {
                     "type": "array",
                     "items": {
@@ -3186,6 +4411,12 @@ const docTemplate = `{
                     }
                 },
                 "name": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
                     "type": "string"
                 }
             }
@@ -3202,6 +4433,12 @@ const docTemplate = `{
                 "instructions": {
                     "type": "string"
                 },
+                "knowledge": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AgentToKnowledge"
+                    }
+                },
                 "llms": {
                     "type": "array",
                     "items": {
@@ -3209,6 +4446,26 @@ const docTemplate = `{
                     }
                 },
                 "name": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "AgentToKnowledge": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "agent_id": {
+                    "type": "string"
+                },
+                "knowledge_id": {
                     "type": "string"
                 }
             }
@@ -3247,35 +4504,340 @@ const docTemplate = `{
                 }
             }
         },
-        "AppConfigDTO": {
+        "App": {
             "type": "object",
             "properties": {
-                "inherit_client": {
-                    "type": "boolean"
+                "app_to_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAppUser"
+                    }
                 },
-                "inherit_client_code": {
+                "auth_config": {
+                    "$ref": "#/definitions/AppAuthConfig"
+                },
+                "code": {
                     "type": "string"
                 },
-                "inherit_client_name": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "key_id": {
+                    "type": "string"
+                },
+                "last_verified_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public": {
+                    "type": "boolean"
+                },
+                "sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session"
+                    }
+                },
+                "status": {
+                    "$ref": "#/definitions/AppStatus"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
                     "type": "string"
                 }
             }
         },
-        "AuthenticateAnonymousDTO": {
+        "AppAuthConfig": {
             "type": "object",
             "properties": {
+                "oidc": {
+                    "type": "object",
+                    "properties": {
+                        "audience": {
+                            "type": "string"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "issuer": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "webhook": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "AppResponse": {
+            "type": "object",
+            "properties": {
+                "app_to_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAppUser"
+                    }
+                },
+                "auth_config": {
+                    "$ref": "#/definitions/AppAuthConfig"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "key_id": {
+                    "type": "string"
+                },
+                "last_verified_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public": {
+                    "type": "boolean"
+                },
+                "sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session"
+                    }
+                },
+                "status": {
+                    "$ref": "#/definitions/AppStatus"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "active",
+                "deactivated"
+            ],
+            "x-enum-varnames": [
+                "AppStatusPending",
+                "AppStatusActive",
+                "AppStatusDeactivated"
+            ]
+        },
+        "AppToAppUser": {
+            "type": "object",
+            "properties": {
+                "app": {
+                    "$ref": "#/definitions/App"
+                },
+                "app_id": {
+                    "type": "string"
+                },
+                "app_user": {
+                    "$ref": "#/definitions/AppUser"
+                },
+                "app_user_id": {
+                    "type": "string"
+                },
+                "external_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppUser": {
+            "type": "object",
+            "properties": {
+                "app_to_App_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAppUser"
+                    }
+                },
+                "app_user_to_sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppUserToSession"
+                    }
+                },
                 "email": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "string"
                 },
                 "metadata": {
                     "$ref": "#/definitions/JSONMap"
                 },
                 "name": {
-                    "type": "string",
-                    "maxLength": 255
+                    "type": "string"
                 },
                 "picture": {
                     "type": "string"
+                }
+            }
+        },
+        "AppUserResponse": {
+            "type": "object",
+            "properties": {
+                "app_to_App_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAppUser"
+                    }
+                },
+                "app_user_to_sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppUserToSession"
+                    }
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/JSONMap"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "picture": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppUserToSession": {
+            "type": "object",
+            "properties": {
+                "app_user": {
+                    "$ref": "#/definitions/AppUser"
+                },
+                "session": {
+                    "$ref": "#/definitions/Session"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppUsersPage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppUser"
+                    }
+                },
+                "skip": {
+                    "type": "integer"
+                },
+                "take": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "AppWithSecret": {
+            "type": "object",
+            "properties": {
+                "app_to_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAppUser"
+                    }
+                },
+                "auth_config": {
+                    "$ref": "#/definitions/AppAuthConfig"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "key_id": {
+                    "type": "string"
+                },
+                "last_verified_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public": {
+                    "type": "boolean"
+                },
+                "sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session"
+                    }
+                },
+                "status": {
+                    "$ref": "#/definitions/AppStatus"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppsPage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/App"
+                    }
+                },
+                "skip": {
+                    "type": "integer"
+                },
+                "take": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -3311,203 +4873,6 @@ const docTemplate = `{
                 },
                 "tool": {
                     "type": "string"
-                }
-            }
-        },
-        "Challenge": {
-            "type": "string",
-            "enum": [
-                "active_account",
-                "change_password"
-            ],
-            "x-enum-varnames": [
-                "ChallengeActiveAccount",
-                "ChallengeChangePassword"
-            ]
-        },
-        "Client": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "config": {
-                    "$ref": "#/definitions/ClientConfig"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "ClientAgentsPage": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Agent"
-                    }
-                },
-                "skip": {
-                    "type": "integer"
-                },
-                "take": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "ClientConfig": {
-            "type": "object",
-            "properties": {
-                "anonymous": {
-                    "type": "object",
-                    "properties": {
-                        "enabled": {
-                            "type": "boolean"
-                        }
-                    }
-                },
-                "oidc": {
-                    "type": "object",
-                    "properties": {
-                        "audience": {
-                            "type": "string"
-                        },
-                        "enabled": {
-                            "type": "boolean"
-                        },
-                        "issuer": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "webhook": {
-                    "type": "object",
-                    "properties": {
-                        "enabled": {
-                            "type": "boolean"
-                        },
-                        "url": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "ClientPublicDTO": {
-            "type": "object",
-            "properties": {
-                "allow_anonymous": {
-                    "type": "boolean"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "ClientResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "config": {
-                    "$ref": "#/definitions/ClientConfig"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "ClientUser": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "metadata": {
-                    "$ref": "#/definitions/JSONMap"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "picture": {
-                    "type": "string"
-                }
-            }
-        },
-        "ClientUserResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "metadata": {
-                    "$ref": "#/definitions/JSONMap"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "picture": {
-                    "type": "string"
-                }
-            }
-        },
-        "ClientUsersPage": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ClientUser"
-                    }
-                },
-                "skip": {
-                    "type": "integer"
-                },
-                "take": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "ClientsPage": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Client"
-                    }
-                },
-                "skip": {
-                    "type": "integer"
-                },
-                "take": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
                 }
             }
         },
@@ -3554,11 +4919,15 @@ const docTemplate = `{
                 }
             }
         },
-        "CreateAnonymousClientUserDTO": {
+        "CreateAppDTO": {
             "type": "object",
+            "required": [
+                "name"
+            ],
             "properties": {
-                "metadata": {
-                    "$ref": "#/definitions/JSONMap"
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
                 },
                 "name": {
                     "type": "string",
@@ -3566,7 +4935,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CreateAuthenticatedClientUserDTO": {
+        "CreateAppUserDTO": {
             "type": "object",
             "required": [
                 "email",
@@ -3589,22 +4958,6 @@ const docTemplate = `{
                 },
                 "picture": {
                     "type": "string"
-                }
-            }
-        },
-        "CreateClientDTO": {
-            "type": "object",
-            "required": [
-                "config",
-                "name"
-            ],
-            "properties": {
-                "config": {
-                    "$ref": "#/definitions/ClientConfig"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 255
                 }
             }
         },
@@ -3682,6 +5035,32 @@ const docTemplate = `{
                 }
             }
         },
+        "CreateMemberDTO": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password",
+                "role"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "role": {
+                    "$ref": "#/definitions/MemberRole"
+                }
+            }
+        },
         "CreateSessionDTO": {
             "type": "object",
             "required": [
@@ -3693,6 +5072,38 @@ const docTemplate = `{
                 },
                 "metadata": {
                     "$ref": "#/definitions/JSONMap"
+                }
+            }
+        },
+        "CreateTenantDTO": {
+            "type": "object",
+            "required": [
+                "name",
+                "slug"
+            ],
+            "properties": {
+                "icon": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "DeclineInvitationDTO": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
                 }
             }
         },
@@ -3753,11 +5164,64 @@ const docTemplate = `{
                 }
             }
         },
+        "Execution": {
+            "type": "object",
+            "properties": {
+                "agent": {
+                    "$ref": "#/definitions/Agent"
+                },
+                "agent_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "error_message": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ExecutionMessage"
+                    }
+                },
+                "metadata": {
+                    "$ref": "#/definitions/JSONMap"
+                },
+                "session": {
+                    "$ref": "#/definitions/Session"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/Status"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "turns": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "ExecutionMessage": {
             "type": "object",
             "properties": {
                 "content": {
                     "type": "string"
+                },
+                "execution": {
+                    "$ref": "#/definitions/Execution"
                 },
                 "execution_id": {
                     "type": "string"
@@ -3773,6 +5237,12 @@ const docTemplate = `{
                 },
                 "sequence": {
                     "type": "integer"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
                 },
                 "timestamp": {
                     "type": "string"
@@ -3828,11 +5298,17 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "index": {
+                    "$ref": "#/definitions/KnowledgeIndex"
+                },
                 "index_id": {
                     "type": "string"
                 },
                 "indexed_at": {
                     "type": "string"
+                },
+                "knowledge_item": {
+                    "$ref": "#/definitions/KnowledgeItem"
                 },
                 "knowledge_item_id": {
                     "type": "string"
@@ -3848,6 +5324,12 @@ const docTemplate = `{
                 },
                 "status": {
                     "$ref": "#/definitions/IndexStatus"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -3902,6 +5384,110 @@ const docTemplate = `{
                 }
             }
         },
+        "InfoDTO": {
+            "type": "object",
+            "properties": {
+                "multi_tenant_enabled": {
+                    "description": "MultiTenantEnabled mirrors license.Info().Valid — lets the frontend\npick single- vs multi-tenant onboarding/registration copy. The actual\ngate stays server-side (auth.Register, tenant.Create).",
+                    "type": "boolean"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "InvitationInfoResponse": {
+            "type": "object",
+            "properties": {
+                "invite": {
+                    "$ref": "#/definitions/TenantInvitation"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                }
+            }
+        },
+        "InvitationResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/MemberRole"
+                },
+                "status": {
+                    "$ref": "#/definitions/InvitationStatus"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "InvitationStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "accepted",
+                "declined"
+            ],
+            "x-enum-varnames": [
+                "InvitationStatusPending",
+                "InvitationStatusAccepted",
+                "InvitationStatusDeclined"
+            ]
+        },
+        "InvitationsPage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TenantInvitation"
+                    }
+                },
+                "skip": {
+                    "type": "integer"
+                },
+                "take": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "InviteMemberDTO": {
+            "type": "object",
+            "required": [
+                "email",
+                "role"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "role": {
+                    "$ref": "#/definitions/MemberRole"
+                }
+            }
+        },
         "JSONMap": {
             "type": "object",
             "additionalProperties": {}
@@ -3921,6 +5507,18 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "indexes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/KnowledgeIndex"
+                    }
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/KnowledgeItem"
+                    }
+                },
                 "last_synced_at": {
                     "type": "string"
                 },
@@ -3932,6 +5530,12 @@ const docTemplate = `{
                 },
                 "sync_status": {
                     "$ref": "#/definitions/SyncStatus"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -3947,10 +5551,25 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IndexedKnowledgeItem"
+                    }
+                },
+                "knowledge": {
+                    "$ref": "#/definitions/Knowledge"
+                },
                 "knowledge_id": {
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
                     "type": "string"
                 }
             }
@@ -3967,10 +5586,25 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IndexedKnowledgeItem"
+                    }
+                },
+                "knowledge": {
+                    "$ref": "#/definitions/Knowledge"
+                },
                 "knowledge_id": {
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
                     "type": "string"
                 }
             }
@@ -4010,8 +5644,17 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "indexes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IndexedKnowledgeItem"
+                    }
+                },
                 "kind": {
                     "$ref": "#/definitions/SourceItemKind"
+                },
+                "knowledge": {
+                    "$ref": "#/definitions/Knowledge"
                 },
                 "knowledge_id": {
                     "type": "string"
@@ -4023,6 +5666,12 @@ const docTemplate = `{
                     "$ref": "#/definitions/JSONMap"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
                     "type": "string"
                 }
             }
@@ -4062,6 +5711,18 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "indexes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/KnowledgeIndex"
+                    }
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/KnowledgeItem"
+                    }
+                },
                 "last_synced_at": {
                     "type": "string"
                 },
@@ -4073,6 +5734,12 @@ const docTemplate = `{
                 },
                 "sync_status": {
                     "$ref": "#/definitions/SyncStatus"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -4110,6 +5777,12 @@ const docTemplate = `{
                 },
                 "provider": {
                     "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -4126,6 +5799,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "provider": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
                     "type": "string"
                 }
             }
@@ -4162,6 +5841,117 @@ const docTemplate = `{
                     "maxLength": 255
                 },
                 "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "Member": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/MemberRole"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/User"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "MemberResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/MemberRole"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/User"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "MemberRole": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "RoleGuest",
+                "RoleUser",
+                "RoleAdmin"
+            ]
+        },
+        "MembersPage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Member"
+                    }
+                },
+                "skip": {
+                    "type": "integer"
+                },
+                "take": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "PublicAppDTO": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -4284,14 +6074,35 @@ const docTemplate = `{
                 "agent_id": {
                     "type": "string"
                 },
-                "client_id": {
+                "app": {
+                    "$ref": "#/definitions/App"
+                },
+                "app_id": {
                     "type": "string"
+                },
+                "app_user_to_sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppUserToSession"
+                    }
+                },
+                "executions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Execution"
+                    }
                 },
                 "id": {
                     "type": "string"
                 },
                 "metadata": {
                     "$ref": "#/definitions/JSONMap"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -4324,14 +6135,35 @@ const docTemplate = `{
                 "agent_id": {
                     "type": "string"
                 },
-                "client_id": {
+                "app": {
+                    "$ref": "#/definitions/App"
+                },
+                "app_id": {
                     "type": "string"
+                },
+                "app_user_to_sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppUserToSession"
+                    }
+                },
+                "executions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Execution"
+                    }
                 },
                 "id": {
                     "type": "string"
                 },
                 "metadata": {
                     "$ref": "#/definitions/JSONMap"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -4388,6 +6220,41 @@ const docTemplate = `{
                 "SourceItemKindUnknown"
             ]
         },
+        "Status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "running",
+                "completed",
+                "failed",
+                "max_turns",
+                "cancelled"
+            ],
+            "x-enum-comments": {
+                "StatusCancelled": "the execution was cancelled via context",
+                "StatusCompleted": "the execution is completed",
+                "StatusFailed": "the execution is failed",
+                "StatusMaxTurns": "the execution has reached the maximum number of turns",
+                "StatusPending": "the execution is pending to start",
+                "StatusRunning": "the execution is running"
+            },
+            "x-enum-descriptions": [
+                "the execution is pending to start",
+                "the execution is running",
+                "the execution is completed",
+                "the execution is failed",
+                "the execution has reached the maximum number of turns",
+                "the execution was cancelled via context"
+            ],
+            "x-enum-varnames": [
+                "StatusPending",
+                "StatusRunning",
+                "StatusCompleted",
+                "StatusFailed",
+                "StatusMaxTurns",
+                "StatusCancelled"
+            ]
+        },
         "SyncStatus": {
             "type": "string",
             "enum": [
@@ -4403,11 +6270,185 @@ const docTemplate = `{
                 "SyncStatusSuccess"
             ]
         },
-        "SystemInfoDTO": {
+        "Tenant": {
             "type": "object",
             "properties": {
-                "version": {
+                "agents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Agent"
+                    }
+                },
+                "api_keys": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/APIKey"
+                    }
+                },
+                "clients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/App"
+                    }
+                },
+                "created_at": {
                     "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invitations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TenantInvitation"
+                    }
+                },
+                "knowledges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Knowledge"
+                    }
+                },
+                "llms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LLM"
+                    }
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Member"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "TenantInvitation": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/MemberRole"
+                },
+                "status": {
+                    "$ref": "#/definitions/InvitationStatus"
+                },
+                "tenant": {
+                    "$ref": "#/definitions/Tenant"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "TenantResponse": {
+            "type": "object",
+            "properties": {
+                "agents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Agent"
+                    }
+                },
+                "api_keys": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/APIKey"
+                    }
+                },
+                "clients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/App"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invitations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TenantInvitation"
+                    }
+                },
+                "knowledges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Knowledge"
+                    }
+                },
+                "llms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LLM"
+                    }
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Member"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "TenantsPage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Tenant"
+                    }
+                },
+                "skip": {
+                    "type": "integer"
+                },
+                "take": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -4426,6 +6467,48 @@ const docTemplate = `{
                     "maxLength": 255
                 }
             }
+        },
+        "Token": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/JSONMap"
+                },
+                "revoked_at": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/TokenType"
+                },
+                "user": {
+                    "$ref": "#/definitions/User"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "TokenType": {
+            "type": "string",
+            "enum": [
+                "refresh",
+                "activate_account",
+                "reset_password"
+            ],
+            "x-enum-varnames": [
+                "TokenTypeRefresh",
+                "TokenTypeActivateAccount",
+                "TokenTypeResetPassword"
+            ]
         },
         "UpdateAgentDTO": {
             "type": "object",
@@ -4451,11 +6534,20 @@ const docTemplate = `{
                 }
             }
         },
-        "UpdateClientDTO": {
+        "UpdateAppAuthConfigDTO": {
             "type": "object",
             "properties": {
-                "config": {
-                    "$ref": "#/definitions/ClientConfig"
+                "auth_config": {
+                    "$ref": "#/definitions/AppAuthConfig"
+                }
+            }
+        },
+        "UpdateAppDTO": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
                 },
                 "name": {
                     "type": "string",
@@ -4508,6 +6600,17 @@ const docTemplate = `{
                 }
             }
         },
+        "UpdateMemberRoleDTO": {
+            "type": "object",
+            "required": [
+                "role"
+            ],
+            "properties": {
+                "role": {
+                    "$ref": "#/definitions/MemberRole"
+                }
+            }
+        },
         "UpdateProfilePictureDTO": {
             "type": "object",
             "required": [
@@ -4531,13 +6634,30 @@ const docTemplate = `{
                 }
             }
         },
-        "UserResponse": {
+        "UpdateTenantDTO": {
             "type": "object",
             "properties": {
-                "challenges": {
+                "icon": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "User": {
+            "type": "object",
+            "properties": {
+                "accounts": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Challenge"
+                        "$ref": "#/definitions/Account"
                     }
                 },
                 "created_at": {
@@ -4549,14 +6669,64 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "is_admin": {
-                    "type": "boolean"
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Member"
+                    }
                 },
                 "name": {
                     "type": "string"
                 },
                 "picture": {
                     "type": "string"
+                },
+                "tokens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Token"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "UserResponse": {
+            "type": "object",
+            "properties": {
+                "accounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Account"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Member"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "picture": {
+                    "type": "string"
+                },
+                "tokens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Token"
+                    }
                 },
                 "updated_at": {
                     "type": "string"

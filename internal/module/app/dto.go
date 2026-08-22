@@ -35,6 +35,15 @@ type AppWithSecret struct {
 	Key string `json:"key"`
 }
 
+// PublicAppDTO is what an unauthenticated caller (e.g. a frontend-only app's
+// widget) may learn about an app — deliberately excludes anything internal
+// like status, tenant, or key material.
+type PublicAppDTO struct {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 type FindAppsFilterDTO struct {
 	Take *int `form:"take" validate:"omitempty,min=1"`
 	Skip *int `form:"skip" validate:"omitempty,min=0"`

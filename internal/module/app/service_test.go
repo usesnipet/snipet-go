@@ -48,3 +48,32 @@ func TestFindByCodeInTenantRejectsCrossTenant(t *testing.T) {
 	_, err := svc.FindByCodeInTenant(adminCtx(), tenantID, "acme")
 	assertAppError(t, err, http.StatusNotFound)
 }
+
+func TestFindPublicByCodeReturnsPublicFields(t *testing.T) {
+	t.Parallel()
+
+	appRepo := mocks.NewMockIAppRepository(t)
+	appRepo.EXPECT().
+		FindByCode(mock.Anything, "acme").
+		Return(&model.App{Code: "acme", Name: "Acme", Description: "desc", Public: true}, nil)
+
+	svc := appmodule.NewService(appRepo, auth.NewAPIKeyGenerator(), auth.NewKeyHasher(), logger.NewLogger(logger.LevelError))
+
+	data, err := svc.FindPublicByCode(context.Background(), "acme")
+	require.NoError(t, err)
+	require.Equal(t, &appmodule.PublicAppDTO{Code: "acme", Name: "Acme", Description: "desc"}, data)
+}
+
+func TestFindPublicByCodeRejectsNonPublicApp(t *testing.T) {
+	t.Parallel()
+
+	appRepo := mocks.NewMockIAppRepository(t)
+	appRepo.EXPECT().
+		FindByCode(mock.Anything, "acme").
+		Return(&model.App{Code: "acme", Public: false}, nil)
+
+	svc := appmodule.NewService(appRepo, auth.NewAPIKeyGenerator(), auth.NewKeyHasher(), logger.NewLogger(logger.LevelError))
+
+	_, err := svc.FindPublicByCode(context.Background(), "acme")
+	assertAppError(t, err, http.StatusNotFound)
+}
