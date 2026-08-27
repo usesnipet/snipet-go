@@ -44,7 +44,7 @@ export function Page({ title, description, documentTitle, children, actions, lef
                 <p className="text-muted-foreground text-sm">{description}</p>
               </div>
             </div>
-            {headerActions && <div>{headerActions}</div>}
+            {headerActions && <div className="flex items-center gap-2 justify-end">{headerActions}</div>}
           </header>
           <div className="flex min-h-0 flex-1 flex-col pt-2">
             <ErrorBoundary fallbackRender={({ error }) => <ErrorFallback error={error as Error} />}>

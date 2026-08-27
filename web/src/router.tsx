@@ -13,6 +13,8 @@ const HomePage = lazy(() =>
   import("./routes/page").then((m) => ({ default: m.HomePage })));
 const AgentsPage = lazy(() =>
   import("./routes/agents/page").then((m) => ({ default: m.AgentsPage })));
+const AgentPlaygroundPage = lazy(() =>
+  import("./routes/agents/playground/page").then((m) => ({ default: m.AgentPlaygroundPage })));
 const ApiKeysPage = lazy(() =>
   import("./routes/api-keys/page").then((m) => ({ default: m.ApiKeysPage })));
 const AppsPage = lazy(() =>
@@ -75,6 +77,7 @@ export const Router = () => {
               <Route path={toReactRouterPath(ROUTES.tenantHome)} element={<HomePage />} />
               <Route path={toReactRouterPath(ROUTES.apps)} element={<AppsPage />} />
               <Route path={toReactRouterPath(ROUTES.agent)} element={<AgentsPage />} />
+              <Route path={toReactRouterPath(ROUTES.agentPlayground)} element={<AgentPlaygroundPage />} />
               <Route path={toReactRouterPath(ROUTES.knowledge)} element={<KnowledgePage />} />
               <Route path={toReactRouterPath(ROUTES.knowledgeDetail)} element={<KnowledgeDetailPage />}/>
               <Route path={toReactRouterPath(ROUTES.llms)} element={<LLMPage />} />

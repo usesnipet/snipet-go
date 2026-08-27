@@ -6,11 +6,11 @@ import {
   SidebarContent as SidebarContentBase, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem
 } from "@/components/ui/sidebar";
-import { applyPathParams } from "@/lib/http";
+import { usePathBuilder } from "@/hooks/use-path-builder";
 import { resolve } from "@/lib/resolve";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useMemo } from "react";
-import { useLocation, useParams } from "react-router";
+import { useLocation } from "react-router";
 
 import { isNavActive, isNavGroup, isNavGroupActive, isNavItemWithChildren } from "./utils";
 
@@ -94,14 +94,7 @@ function NavMenuItems({ items, pathname }: { items: NavLeafEntry[]; pathname: st
 
 export function SidebarContent({ navItems }: Props) {
   const { pathname } = useLocation();
-  const params = useParams();
-
-  const buildPath = useCallback((path: string) => {
-    const pathParams = Object.fromEntries(
-      Object.entries(params).filter((entry): entry is [string, string] => entry[1] != null),
-    );
-    return applyPathParams(path, pathParams);
-  }, [params])
+  const buildPath = usePathBuilder();
 
   const transformLeaf = useCallback((item: NavLeafEntry): NavLeafEntry => {
     if (isNavItemWithChildren(item)) {

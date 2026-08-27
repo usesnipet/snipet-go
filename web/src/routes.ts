@@ -13,6 +13,7 @@ export const ROUTES = {
   knowledge: "/{tenantSlug}/knowledge",
   knowledgeDetail: "/{tenantSlug}/knowledge/{id}",
   agent: "/{tenantSlug}/agent",
+  agentPlayground: "/{tenantSlug}/agent/playground",
   llms: "/{tenantSlug}/llms",
   apps: "/{tenantSlug}/apps",
 
