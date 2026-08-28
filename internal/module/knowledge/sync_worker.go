@@ -147,7 +147,6 @@ func (s *SyncWorker) Sync(ctx context.Context, knowledgeID string, force bool) (
 		}
 
 		batch = append(batch, model.KnowledgeItem{
-			TenantID:     knowledge.TenantID,
 			KnowledgeID:  knowledgeID,
 			ExternalID:   item.ID,
 			Name:         item.Name,

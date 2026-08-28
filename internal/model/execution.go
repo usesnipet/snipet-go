@@ -10,7 +10,6 @@ import (
 type Execution struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	TenantID     string           `gorm:"type:uuid;not null;index" json:"tenant_id"`
 	SessionID    *string          `gorm:"type:uuid;index" json:"session_id,omitempty"`
 	AgentID      string           `gorm:"type:uuid;not null;index" json:"agent_id"`
 	Status       execution.Status `gorm:"type:varchar(50);not null" json:"status"`
@@ -20,7 +19,6 @@ type Execution struct {
 	CreatedAt    time.Time        `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt    time.Time        `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
 
-	Tenant   *Tenant            `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
 	Session  *Session           `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"session"`
 	Agent    *Agent             `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"agent"`
 	Messages []ExecutionMessage `gorm:"foreignKey:ExecutionID;constraint:OnDelete:CASCADE" json:"messages"`

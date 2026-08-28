@@ -9,18 +9,20 @@ import (
 )
 
 type Handler struct {
-	service           *Service
-	anyAuthMiddleware api.MiddlewareFunc
+	service      *Service
+	appUserGuard api.Gate
+	appKeyGuard  api.Gate
 }
 
-func NewHandler(service *Service, anyAuthMiddleware api.MiddlewareFunc) api.Handler {
-	return &Handler{service: service, anyAuthMiddleware: anyAuthMiddleware}
+func NewHandler(service *Service, appUserGuard api.Gate, appKeyGuard api.Gate) api.Handler {
+	return &Handler{service: service, appUserGuard: appUserGuard, appKeyGuard: appKeyGuard}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/apps/{code}/session", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(h.anyAuthMiddleware)
+
+			r.Use(api.Or(h.appKeyGuard, h.appUserGuard).Handler())
 			r.Get("/", serve(h.filter))
 			r.Post("/", serve(h.create))
 			r.Get("/{id}", serve(h.findByID))

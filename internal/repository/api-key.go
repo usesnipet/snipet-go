@@ -11,17 +11,17 @@ import (
 
 type IApiKeyRepository interface {
 	IRepository[model.APIKey]
-	UpdateExpiration(ctx context.Context, tenantID, id string, expiresAt *time.Time) error
-	ToggleActive(ctx context.Context, tenantID, id string, active bool) error
+	UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error
+	ToggleActive(ctx context.Context, id string, active bool) error
 }
 
 type ApiKeyRepository struct {
 	*Repository[model.APIKey]
 }
 
-func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, tenantID, id string, expiresAt *time.Time) error {
+func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, id string, expiresAt *time.Time) error {
 	affected, err := gorm.G[model.APIKey](r.db(ctx)).
-		Where("id = ? AND tenant_id = ?", id, tenantID).
+		Where("id = ?", id).
 		Update(ctx, "expires_at", expiresAt)
 	if err != nil {
 		return err
@@ -32,9 +32,9 @@ func (r *ApiKeyRepository) UpdateExpiration(ctx context.Context, tenantID, id st
 	return nil
 }
 
-func (r *ApiKeyRepository) ToggleActive(ctx context.Context, tenantID, id string, active bool) error {
+func (r *ApiKeyRepository) ToggleActive(ctx context.Context, id string, active bool) error {
 	affected, err := gorm.G[model.APIKey](r.db(ctx)).
-		Where("id = ? AND tenant_id = ?", id, tenantID).
+		Where("id = ?", id).
 		Update(ctx, "active", active)
 	if err != nil {
 		return err

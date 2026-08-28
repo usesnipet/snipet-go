@@ -15,7 +15,6 @@ type Persistence struct {
 	executionRepo        repository.IExecutionRepository
 
 	executionID string
-	tenantID    string
 }
 
 func NewPersistence(
@@ -23,14 +22,12 @@ func NewPersistence(
 	executionMessageRepo repository.IExecutionMessageRepository,
 	logger *logger.Logger,
 	executionID string,
-	tenantID string,
 ) *Persistence {
 	return &Persistence{
 		logger:               logger,
 		executionRepo:        executionRepo,
 		executionMessageRepo: executionMessageRepo,
 		executionID:          executionID,
-		tenantID:             tenantID,
 	}
 }
 
@@ -60,7 +57,7 @@ func (p *Persistence) handleExecutionMessageAddedEvent(
 	ctx context.Context,
 	event execution.MessageAddedEvent,
 ) error {
-	message := model.ExecutionMessage{Message: event.Message, ExecutionID: p.executionID, TenantID: p.tenantID}
+	message := model.ExecutionMessage{Message: event.Message, ExecutionID: p.executionID}
 	return p.executionMessageRepo.CreateInExecution(ctx, p.executionID, message)
 }
 

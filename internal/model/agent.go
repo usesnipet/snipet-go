@@ -9,12 +9,10 @@ import (
 type Agent struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	TenantID     string `gorm:"type:uuid;not null;index" json:"tenant_id"`
 	Name         string `gorm:"type:varchar(255);not null" json:"name"`
 	Description  string `gorm:"type:text;not null" json:"description"`
 	Instructions string `gorm:"type:text;not null" json:"instructions"`
 
-	Tenant           *Tenant            `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
 	AgentToLLMs      []AgentToLLM       `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"llms"`
 	AgentToKnowledge []AgentToKnowledge `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"knowledge"`
 }
