@@ -22,11 +22,6 @@ import (
 	"github.com/usesnipet/snipet/internal/repository/mocks"
 )
 
-const (
-	tenantID = "11111111-1111-1111-1111-111111111111"
-	adminID  = "22222222-2222-2222-2222-222222222222"
-)
-
 func newTestService(repo repository.IApiKeyRepository) *apikey.Service {
 	return apikey.NewService(
 		logger.NewLogger(logger.LevelError),
@@ -34,16 +29,6 @@ func newTestService(repo repository.IApiKeyRepository) *apikey.Service {
 		auth.NewAPIKeyGenerator(),
 		auth.NewKeyHasher(),
 	)
-}
-
-// adminCtx builds the context guard.RequireUser would have populated for an
-// active tenant admin of tenantID — api-key management is admin-only.
-func adminCtx() context.Context {
-	admin := &model.User{ID: adminID, Name: "Admin", Email: "admin@example.com"}
-	return auth.SetUserIdentity(context.Background(), &auth.UserIdentity{
-		User:        admin,
-		Memberships: []*model.Member{{ID: "m1", UserID: adminID, TenantID: tenantID, Role: model.RoleAdmin, IsActive: true}},
-	})
 }
 
 func assertAppError(t *testing.T, err error, statusCode int, message string) {
@@ -70,7 +55,7 @@ func TestCreateStoresHashedKeyAndReturnsSecret(t *testing.T) {
 	svc := newTestService(repo)
 
 	expiresAt := time.Now().Add(24 * time.Hour)
-	result, err := svc.Create(adminCtx(), tenantID, apikey.CreateAPIKeyDTO{
+	result, err := svc.Create(context.Background(), apikey.CreateAPIKeyDTO{
 		Name:      "Test Key",
 		ExpiresAt: &expiresAt,
 	})
@@ -255,7 +240,7 @@ func TestFilterDelegatesToRepository(t *testing.T) {
 
 	svc := newTestService(repo)
 
-	result, err := svc.Filter(adminCtx(), tenantID, filter.Default[model.APIKey]())
+	result, err := svc.Filter(context.Background(), filter.Default[model.APIKey]())
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -264,7 +249,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	expected := &model.APIKey{ID: id, TenantID: tenantID, Name: "Found"}
+	expected := &model.APIKey{ID: id, Name: "Found"}
 	repo := mocks.NewMockIApiKeyRepository(t)
 	repo.EXPECT().
 		FindByID(mock.Anything, id).
@@ -272,7 +257,7 @@ func TestFindByIDDelegatesToRepository(t *testing.T) {
 
 	svc := newTestService(repo)
 
-	result, err := svc.FindByID(adminCtx(), tenantID, id)
+	result, err := svc.FindByID(context.Background(), id)
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -318,7 +303,7 @@ func TestRollUpdatesKeyAndReturnsNewSecret(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New().String()
-	existing := &model.APIKey{ID: id, TenantID: tenantID, Name: "Rollable", KeyID: "old-key-id", Key: "old-hash"}
+	existing := &model.APIKey{ID: id, Name: "Rollable", KeyID: "old-key-id", Key: "old-hash"}
 	findCalls := 0
 	var updatedKeyID, updatedHash string
 
@@ -329,14 +314,13 @@ func TestRollUpdatesKeyAndReturnsNewSecret(t *testing.T) {
 			assert.Equal(t, id, gotID)
 			findCalls++
 			return &model.APIKey{
-				ID:       id,
-				TenantID: tenantID,
-				Name:     existing.Name,
-				KeyID:    existing.KeyID,
-				Key:      existing.Key,
+				ID:    id,
+				Name:  existing.Name,
+				KeyID: existing.KeyID,
+				Key:   existing.Key,
 			}, nil
 		}).
-		Times(2)
+		Times(1)
 	repo.EXPECT().
 		UpdateByID(mock.Anything, id, mock.Anything).
 		Run(func(_ context.Context, gotID string, updates *model.APIKey) {
@@ -350,7 +334,7 @@ func TestRollUpdatesKeyAndReturnsNewSecret(t *testing.T) {
 
 	svc := newTestService(repo)
 
-	result, err := svc.Roll(adminCtx(), tenantID, id)
+	result, err := svc.Roll(context.Background(), id)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -359,7 +343,7 @@ func TestRollUpdatesKeyAndReturnsNewSecret(t *testing.T) {
 	assert.Equal(t, updatedKeyID, result.KeyID)
 	assert.NotEqual(t, "old-key-id", result.KeyID)
 	assert.NotEqual(t, "old-hash", updatedHash)
-	assert.Equal(t, 2, findCalls)
+	assert.Equal(t, 1, findCalls)
 
 	valid, err := auth.NewKeyHasher().Verify(result.Key, updatedHash)
 	require.NoError(t, err)
@@ -371,12 +355,12 @@ func TestRollReturnsErrorWhenKeyNotFound(t *testing.T) {
 
 	repo := mocks.NewMockIApiKeyRepository(t)
 	repo.EXPECT().
-		FindByID(mock.Anything, mock.Anything).
-		Return(nil, apperr.NotFound("api key not found"))
+		UpdateByID(mock.Anything, mock.Anything, mock.Anything).
+		Return(apperr.NotFound("api key not found"))
 
 	svc := newTestService(repo)
 
-	_, err := svc.Roll(adminCtx(), tenantID, uuid.New().String())
+	_, err := svc.Roll(context.Background(), uuid.New().String())
 	assertAppError(t, err, http.StatusNotFound, "api key not found")
 }
 
@@ -387,12 +371,12 @@ func TestUpdateExpirationDelegatesToRepository(t *testing.T) {
 	expiresAt := time.Now().Add(48 * time.Hour)
 	repo := mocks.NewMockIApiKeyRepository(t)
 	repo.EXPECT().
-		UpdateExpiration(mock.Anything, tenantID, id, &expiresAt).
+		UpdateExpiration(mock.Anything, id, &expiresAt).
 		Return(nil)
 
 	svc := newTestService(repo)
 
-	err := svc.UpdateExpiration(adminCtx(), tenantID, id, apikey.UpdateExpirationDTO{ExpiresAt: &expiresAt})
+	err := svc.UpdateExpiration(context.Background(), id, apikey.UpdateExpirationDTO{ExpiresAt: &expiresAt})
 	require.NoError(t, err)
 }
 
@@ -402,11 +386,11 @@ func TestToggleActiveDelegatesToRepository(t *testing.T) {
 	id := uuid.New().String()
 	repo := mocks.NewMockIApiKeyRepository(t)
 	repo.EXPECT().
-		ToggleActive(mock.Anything, tenantID, id, false).
+		ToggleActive(mock.Anything, id, false).
 		Return(nil)
 
 	svc := newTestService(repo)
 
-	err := svc.ToggleActive(adminCtx(), tenantID, id, false)
+	err := svc.ToggleActive(context.Background(), id, false)
 	require.NoError(t, err)
 }

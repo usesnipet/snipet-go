@@ -1,11 +1,6 @@
 import { Button } from "@/components/ui/button";
 import {
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
@@ -21,7 +16,6 @@ import type { CreateLlm, Llm } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type CreateLlmDialogProps = DialogInstanceProps<{
-  tenantId: string;
   onCreated?: (llm: Llm) => void;
 }>;
 
@@ -31,7 +25,7 @@ const defaultValues: CreateLlm = {
   configuration: {},
 };
 
-export function CreateLlmDialog({ tenantId, onCreated, close }: CreateLlmDialogProps) {
+export function CreateLlmDialog({ onCreated, close }: CreateLlmDialogProps) {
   const form = useForm<CreateLlm>({
     resolver: zodResolver(createLlmSchema),
     defaultValues,
@@ -40,7 +34,7 @@ export function CreateLlmDialog({ tenantId, onCreated, close }: CreateLlmDialogP
   const { mutateAsync, isPending } = useCreateLlm();
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await mutateAsync({ tenantId, data: values });
+    const result = await mutateAsync({ data: values });
     form.reset();
     onCreated?.(result);
     close();

@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useTenantStore } from "@/features/tenant/store";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
-import { logger } from "@/lib/logger";
 import { ROUTES } from "@/routes";
 import { BookOpenIcon, MoreHorizontal, PencilIcon, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 
@@ -18,8 +16,6 @@ import { UpdateKnowledgeDialog } from "./update-knowledge-dialog";
 
 import type { Knowledge } from "../schemas";
 export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
-  const tenant = useTenantStore((state) => state.tenant);
-  const tenantId = tenant?.id ?? "";
   const { openDialog } = useDialog();
   const navigate = useNavigate();
   const { mutate: sync, isPending: isSyncing } = useSyncKnowledge();
@@ -30,23 +26,19 @@ export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
   const openEdit = () => {
     openDialog({
       component: UpdateKnowledgeDialog,
-      props: { tenantId, knowledge },
+      props: { knowledge },
     });
   };
 
   const openDelete = () => {
     openDialog({
       component: DeleteKnowledgeDialog,
-      props: { tenantId, knowledge },
+      props: { knowledge },
     });
   };
 
   const goToDetail = () => {
-    if (!tenant) {
-      logger.error("Tenant not found");
-      return;
-    }
-    navigate(ROUTES.knowledgeDetail, { params: { tenantSlug: tenant.slug, id: knowledge.id } });
+    navigate(ROUTES.knowledgeDetail, { params: { id: knowledge.id } });
   };
 
   return (
@@ -75,14 +67,14 @@ export function KnowledgeCatalogItem({ knowledge }: { knowledge: Knowledge }) {
           <DropdownMenuContent align="end" onClick={(event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation()}>
             <DropdownMenuItem
               disabled={isSyncBusy || isSyncing}
-              onClick={() => sync({ tenantId, id: knowledge.id })}
+              onClick={() => sync({ id: knowledge.id })}
             >
               <RefreshCw />
               Sync
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={isSyncBusy || isSyncing}
-              onClick={() => sync({ tenantId, id: knowledge.id, force: true })}
+              onClick={() => sync({ id: knowledge.id, force: true })}
             >
               <RotateCcw />
               Full resync

@@ -6,7 +6,6 @@ import { DateFormat } from "@/components/ui/date";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog";
 import { CalendarClock, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 
@@ -21,12 +20,10 @@ import type { ApiKey, ApiKeyWithSecret } from "../schemas";
 
 
 function useApiKeyTableQuery(pagination: DataTablePagination) {
-  const tenant = useTenantStore((state) => state.tenant);
-  return useListApiKey(tenant?.id ?? "", { searchParams: pagination })
+  return useListApiKey({ searchParams: pagination })
 }
 
 export function ApiKeyTable() {
-  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const showSecret = (apiKey: ApiKeyWithSecret) => {
@@ -41,26 +38,23 @@ export function ApiKeyTable() {
   };
 
   const openExpiration = (apiKey: ApiKey) => {
-    if (!tenant) return;
     openDialog({
       component: UpdateApiKeyExpirationDialog,
-      props: { tenantId: tenant.id, apiKey },
+      props: { apiKey },
     });
   };
 
   const openRoll = (apiKey: ApiKey) => {
-    if (!tenant) return;
     openDialog({
       component: RollApiKeyDialog,
-      props: { tenantId: tenant.id, apiKey, onRolled: (rolled) => showSecret(rolled) },
+      props: { apiKey, onRolled: (rolled) => showSecret(rolled) },
     });
   };
 
   const openDelete = (apiKey: ApiKey) => {
-    if (!tenant) return;
     openDialog({
       component: DeleteApiKeyDialog,
-      props: { tenantId: tenant.id, apiKey },
+      props: { apiKey },
     });
   };
 

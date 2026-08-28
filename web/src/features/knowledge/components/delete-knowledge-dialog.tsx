@@ -15,15 +15,14 @@ import type { Knowledge } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type DeleteKnowledgeDialogProps = DialogInstanceProps<{
-  tenantId: string;
   knowledge: Knowledge;
 }>;
 
-export function DeleteKnowledgeDialog({ tenantId, knowledge, close }: DeleteKnowledgeDialogProps) {
+export function DeleteKnowledgeDialog({ knowledge, close }: DeleteKnowledgeDialogProps) {
   const { mutateAsync, isPending } = useDeleteKnowledge();
 
   const handleConfirm = async () => {
-    await mutateAsync({ tenantId, id: knowledge.id });
+    await mutateAsync({ id: knowledge.id });
     close();
   };
 

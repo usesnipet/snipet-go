@@ -4,13 +4,14 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/usesnipet/snipet/internal/api"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
 )
 
 // RequireAppUser requires a valid app end-user JWT
 // (Authorization: Bearer) and sets an auth.AppUserIdentity.
-func RequireAppUser(jwtService *auth.JWTService[*auth.AppUserClaims]) Gate {
+func RequireAppUser(jwtService *auth.JWTService[*auth.AppUserClaims]) api.Gate {
 	return func(r *http.Request) (context.Context, error) {
 		claims, err := verifyBearerJWT(r, jwtService)
 		if err != nil {

@@ -93,7 +93,6 @@ func (s *SyncIndexWorker) Sync(ctx context.Context, knowledgeID, indexID string)
 	var indexedToCreate []*model.IndexedKnowledgeItem
 	for _, item := range toCreate {
 		indexedToCreate = append(indexedToCreate, &model.IndexedKnowledgeItem{
-			TenantID:        index.TenantID,
 			IndexID:         indexID,
 			KnowledgeItemID: &item.ID,
 			Hash:            item.Hash,

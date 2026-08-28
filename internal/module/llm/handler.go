@@ -8,20 +8,20 @@ import (
 )
 
 type Handler struct {
-	service        *Service
-	userMiddleware api.MiddlewareFunc
+	service       *Service
+	basicAuthGate api.Gate
 }
 
-func NewHandler(service *Service, userMiddleware api.MiddlewareFunc) api.Handler {
+func NewHandler(service *Service, basicAuthGate api.Gate) api.Handler {
 	return &Handler{
-		service:        service,
-		userMiddleware: userMiddleware,
+		service:       service,
+		basicAuthGate: basicAuthGate,
 	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	r.Route("/tenants/{tenant_id}/llm", func(r chi.Router) {
-		r.Use(h.userMiddleware)
+	r.Route("/llm", func(r chi.Router) {
+		r.Use(h.basicAuthGate.Handler())
 		r.Get("/", serve(h.filter))
 		r.Get("/drivers", serve(h.listDrivers))
 		r.Post("/", serve(h.create))
@@ -35,27 +35,22 @@ func (h *Handler) llmID(r *http.Request) string {
 	return chi.URLParam(r, "id")
 }
 
-func (h *Handler) tenantID(r *http.Request) string {
-	return chi.URLParam(r, "tenant_id")
-}
-
 // @Summary		List LLMs
-// @Description	Lists configured LLMs, with optional pagination. Caller must be a member of the tenant.
+// @Description	Lists configured LLMs, with optional pagination.
 // @Tags			llm
 // @Produce		json
-// @Security		BearerAuth
-// @Param			tenant_id	path		string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			take		query		int		false	"Page size"
 // @Param			skip		query		int		false	"Page offset"
 // @Success		200			{object}	LLMsPage
 // @Failure		400			{object}	api.Error
-// @Router			/tenants/{tenant_id}/llm [get]
+// @Router			/llm [get]
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 	var query FindLLMsFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}
-	data, err := h.service.Filter(r.Context(), h.tenantID(r), query.ToFilter())
+	data, err := h.service.Filter(r.Context(), query.ToFilter())
 	if err != nil {
 		return err
 	}
@@ -63,17 +58,16 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Get LLM
-// @Description	Returns an LLM by ID. Caller must be a member of the tenant.
+// @Description	Returns an LLM by ID.
 // @Tags			llm
 // @Produce		json
-// @Security		BearerAuth
-// @Param			tenant_id	path		string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			id			path		string	true	"LLM ID"
 // @Success		200			{object}	LLMResponse
 // @Failure		404			{object}	api.Error
-// @Router			/tenants/{tenant_id}/llm/{id} [get]
+// @Router			/llm/{id} [get]
 func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FindByID(r.Context(), h.tenantID(r), h.llmID(r))
+	data, err := h.service.FindByID(r.Context(), h.llmID(r))
 	if err != nil {
 		return err
 	}
@@ -81,22 +75,21 @@ func (h *Handler) findByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Create LLM
-// @Description	Creates a new LLM configuration. Caller must be a member of the tenant.
+// @Description	Creates a new LLM configuration.
 // @Tags			llm
 // @Accept			json
 // @Produce		json
-// @Security		BearerAuth
-// @Param			tenant_id	path		string			true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			body		body		CreateLLMDTO	true	"LLM data"
 // @Success		201			{object}	LLMResponse
 // @Failure		400			{object}	api.Error
-// @Router			/tenants/{tenant_id}/llm [post]
+// @Router			/llm [post]
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	var dto CreateLLMDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	data, err := h.service.Create(r.Context(), h.tenantID(r), dto)
+	data, err := h.service.Create(r.Context(), dto)
 	if err != nil {
 		return err
 	}
@@ -104,54 +97,51 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Update LLM
-// @Description	Updates an LLM by ID. Caller must be a member of the tenant.
+// @Description	Updates an LLM by ID.
 // @Tags			llm
 // @Accept			json
-// @Security		BearerAuth
-// @Param			tenant_id	path	string			true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			id			path	string			true	"LLM ID"
 // @Param			body		body	UpdateLLMDTO	true	"LLM data"
 // @Success		204
 // @Failure		400	{object}	api.Error
-// @Router			/tenants/{tenant_id}/llm/{id} [put]
+// @Router			/llm/{id} [put]
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 	var dto UpdateLLMDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	if err := h.service.Update(r.Context(), h.tenantID(r), h.llmID(r), dto); err != nil {
+	if err := h.service.Update(r.Context(), h.llmID(r), dto); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
 }
 
 // @Summary		Delete LLM
-// @Description	Deletes an LLM by ID. Caller must be a member of the tenant.
+// @Description	Deletes an LLM by ID.
 // @Tags			llm
-// @Security		BearerAuth
-// @Param			tenant_id	path	string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			id			path	string	true	"LLM ID"
 // @Success		204
 // @Failure		404	{object}	api.Error
-// @Router			/tenants/{tenant_id}/llm/{id} [delete]
+// @Router			/llm/{id} [delete]
 func (h *Handler) deleteByID(w http.ResponseWriter, r *http.Request) error {
-	if err := h.service.DeleteByID(r.Context(), h.tenantID(r), h.llmID(r)); err != nil {
+	if err := h.service.DeleteByID(r.Context(), h.llmID(r)); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
 }
 
 // @Summary		List LLM drivers
-// @Description	Lists the available LLM provider drivers. Caller must be a member of the tenant.
+// @Description	Lists the available LLM provider drivers.
 // @Tags			llm
 // @Produce		json
-// @Security		BearerAuth
-// @Param			tenant_id	path		string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Success		200			{array}		DriverInfo
 // @Failure		400			{object}	api.Error
-// @Router			/tenants/{tenant_id}/llm/drivers [get]
+// @Router			/llm/drivers [get]
 func (h *Handler) listDrivers(w http.ResponseWriter, r *http.Request) error {
-	drivers, err := h.service.ListDrivers(r.Context(), h.tenantID(r))
+	drivers, err := h.service.ListDrivers(r.Context())
 	if err != nil {
 		return err
 	}

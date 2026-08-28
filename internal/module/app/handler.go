@@ -8,32 +8,31 @@ import (
 )
 
 type Handler struct {
-	service        *Service
-	userMiddleware api.MiddlewareFunc
-	appMiddleware  api.MiddlewareFunc
+	service       *Service
+	basicAuthGate api.Gate
+	appKeyGate    api.Gate
 }
 
-func NewHandler(service *Service, userMiddleware api.MiddlewareFunc, appMiddleware api.MiddlewareFunc) api.Handler {
-	return &Handler{service: service, userMiddleware: userMiddleware, appMiddleware: appMiddleware}
+func NewHandler(service *Service, basicAuthGate api.Gate, appKeyGate api.Gate) api.Handler {
+	return &Handler{service: service, basicAuthGate: basicAuthGate, appKeyGate: appKeyGate}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	// Public surface — no auth at all. findPublicByCode only ever exposes
 	// apps explicitly marked Public; ping is authenticated with the app's
-	// own key (see guard.RequireAppKey), not tenant-staff bearer auth.
+	// own key (see guard.RequireAppKey), not admin basic auth.
 	r.Route("/apps/{code}", func(r chi.Router) {
-		r.Get("/", serve(h.findPublicByCode))
+		r.Get("/public", serve(h.findPublicByCode))
 
 		r.Route("/ping", func(r chi.Router) {
-			r.Use(h.appMiddleware)
+			r.Use(h.appKeyGate.Handler())
 			r.Post("/", serve(h.ping))
 		})
 	})
 
-	// Admin/CRUD surface — tenant-staff bearer auth + membership, mirroring
-	// member/tenant.
-	r.Route("/tenants/{tenant_id}/apps", func(r chi.Router) {
-		r.Use(h.userMiddleware)
+	// Admin/CRUD surface.
+	r.Route("/apps", func(r chi.Router) {
+		r.Use(h.basicAuthGate.Handler())
 		r.Get("/", serve(h.filter))
 		r.Post("/", serve(h.create))
 		r.Get("/{code}", serve(h.findByCode))
@@ -46,28 +45,23 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	})
 }
 
-func (h *Handler) tenantID(r *http.Request) string {
-	return chi.URLParam(r, "tenant_id")
-}
-
 // @Summary		List apps
-// @Description	Lists apps, with optional pagination. Caller must be a tenant admin.
+// @Description	Lists apps, with optional pagination.
 // @Tags			app
 // @Produce		json
-// @Security		BearerAuth
-// @Param			tenant_id	path		string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			take		query		int		false	"Page size"
 // @Param			skip		query		int		false	"Page offset"
 // @Success		200			{object}	AppsPage
 // @Failure		400			{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps [get]
+// @Router			/apps [get]
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 	var query FindAppsFilterDTO
 	if err := api.ParseQuery(r, &query); err != nil {
 		return err
 	}
 
-	apps, err := h.service.Filter(r.Context(), h.tenantID(r), query.ToFilter())
+	apps, err := h.service.Filter(r.Context(), query.ToFilter())
 	if err != nil {
 		return err
 	}
@@ -76,17 +70,16 @@ func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Get app
-// @Description	Returns an app by code. Caller must be a tenant admin.
+// @Description	Returns an app by code.
 // @Tags			app
 // @Produce		json
-// @Security		BearerAuth
-// @Param			tenant_id	path		string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			code		path		string	true	"App code"
 // @Success		200			{object}	AppResponse
 // @Failure		404			{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps/{code} [get]
+// @Router			/apps/{code} [get]
 func (h *Handler) findByCode(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.FindByCodeInTenant(r.Context(), h.tenantID(r), chi.URLParam(r, "code"))
+	data, err := h.service.FindByCode(r.Context(), chi.URLParam(r, "code"))
 	if err != nil {
 		return err
 	}
@@ -94,22 +87,21 @@ func (h *Handler) findByCode(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Create app
-// @Description	Creates a new app. The plaintext key is only returned once, on creation. Caller must be a tenant admin.
+// @Description	Creates a new app. The plaintext key is only returned once, on creation.
 // @Tags			app
 // @Accept			json
 // @Produce		json
-// @Security		BearerAuth
-// @Param			tenant_id	path		string			true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			body		body		CreateAppDTO	true	"App data"
 // @Success		201			{object}	AppWithSecret
 // @Failure		400			{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps [post]
+// @Router			/apps [post]
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	var dto CreateAppDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	data, err := h.service.Create(r.Context(), h.tenantID(r), dto)
+	data, err := h.service.Create(r.Context(), dto)
 	if err != nil {
 		return err
 	}
@@ -117,22 +109,21 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Update app
-// @Description	Updates an app's name/description by code. Caller must be a tenant admin.
+// @Description	Updates an app's name/description by code.
 // @Tags			app
 // @Accept			json
-// @Security		BearerAuth
-// @Param			tenant_id	path	string			true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			code		path	string			true	"App code"
 // @Param			body		body	UpdateAppDTO	true	"App data"
 // @Success		204
 // @Failure		400	{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps/{code} [put]
+// @Router			/apps/{code} [put]
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 	var dto UpdateAppDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	err := h.service.UpdateByCode(r.Context(), h.tenantID(r), chi.URLParam(r, "code"), dto)
+	err := h.service.UpdateByCode(r.Context(), chi.URLParam(r, "code"), dto)
 	if err != nil {
 		return err
 	}
@@ -140,22 +131,21 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Update app auth config
-// @Description	Replaces how the app federates its end-users' identity (OIDC/webhook). Caller must be a tenant admin.
+// @Description	Replaces how the app federates its end-users' identity (OIDC/webhook).
 // @Tags			app
 // @Accept			json
-// @Security		BearerAuth
-// @Param			tenant_id	path	string					true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			code		path	string					true	"App code"
 // @Param			body		body	UpdateAppAuthConfigDTO	true	"Auth config data"
 // @Success		204
 // @Failure		400	{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps/{code}/auth-config [put]
+// @Router			/apps/{code}/auth-config [put]
 func (h *Handler) updateAuthConfig(w http.ResponseWriter, r *http.Request) error {
 	var dto UpdateAppAuthConfigDTO
 	if err := api.ParseBody(r, &dto); err != nil {
 		return err
 	}
-	err := h.service.UpdateAuthConfig(r.Context(), h.tenantID(r), chi.URLParam(r, "code"), dto)
+	err := h.service.UpdateAuthConfig(r.Context(), chi.URLParam(r, "code"), dto)
 	if err != nil {
 		return err
 	}
@@ -163,17 +153,16 @@ func (h *Handler) updateAuthConfig(w http.ResponseWriter, r *http.Request) error
 }
 
 // @Summary		Roll app key
-// @Description	Rotates an app's key, invalidating the previous secret. The new plaintext key is only returned once. Caller must be a tenant admin.
+// @Description	Rotates an app's key, invalidating the previous secret. The new plaintext key is only returned once.
 // @Tags			app
 // @Produce		json
-// @Security		BearerAuth
-// @Param			tenant_id	path		string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			code		path		string	true	"App code"
 // @Success		200			{object}	AppWithSecret
 // @Failure		404			{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps/{code}/roll [post]
+// @Router			/apps/{code}/roll [post]
 func (h *Handler) roll(w http.ResponseWriter, r *http.Request) error {
-	data, err := h.service.Roll(r.Context(), h.tenantID(r), chi.URLParam(r, "code"))
+	data, err := h.service.Roll(r.Context(), chi.URLParam(r, "code"))
 	if err != nil {
 		return err
 	}
@@ -181,48 +170,45 @@ func (h *Handler) roll(w http.ResponseWriter, r *http.Request) error {
 }
 
 // @Summary		Activate app
-// @Description	Marks an app as active. Caller must be a tenant admin.
+// @Description	Marks an app as active.
 // @Tags			app
-// @Security		BearerAuth
-// @Param			tenant_id	path	string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			code		path	string	true	"App code"
 // @Success		204
 // @Failure		404	{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps/{code}/active [put]
+// @Router			/apps/{code}/active [put]
 func (h *Handler) toggleActive(w http.ResponseWriter, r *http.Request) error {
-	if err := h.service.ToggleActive(r.Context(), h.tenantID(r), chi.URLParam(r, "code"), true); err != nil {
+	if err := h.service.ToggleActive(r.Context(), chi.URLParam(r, "code"), true); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
 }
 
 // @Summary		Disable app
-// @Description	Marks an app as disabled. Caller must be a tenant admin.
+// @Description	Marks an app as disabled.
 // @Tags			app
-// @Security		BearerAuth
-// @Param			tenant_id	path	string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			code		path	string	true	"App code"
 // @Success		204
 // @Failure		404	{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps/{code}/disabled [put]
+// @Router			/apps/{code}/disabled [put]
 func (h *Handler) toggleDisabled(w http.ResponseWriter, r *http.Request) error {
-	if err := h.service.ToggleActive(r.Context(), h.tenantID(r), chi.URLParam(r, "code"), false); err != nil {
+	if err := h.service.ToggleActive(r.Context(), chi.URLParam(r, "code"), false); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
 }
 
 // @Summary		Delete app
-// @Description	Deletes an app by code. Caller must be a tenant admin.
+// @Description	Deletes an app by code.
 // @Tags			app
-// @Security		BearerAuth
-// @Param			tenant_id	path	string	true	"Tenant ID"
+// @Security		BasicAuth
 // @Param			code		path	string	true	"App code"
 // @Success		204
 // @Failure		404	{object}	api.Error
-// @Router			/tenants/{tenant_id}/apps/{code} [delete]
+// @Router			/apps/{code} [delete]
 func (h *Handler) delete(w http.ResponseWriter, r *http.Request) error {
-	if err := h.service.DeleteByCode(r.Context(), h.tenantID(r), chi.URLParam(r, "code")); err != nil {
+	if err := h.service.DeleteByCode(r.Context(), chi.URLParam(r, "code")); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)
@@ -235,7 +221,7 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) error {
 // @Param			code	path		string	true	"App code"
 // @Success		200		{object}	PublicAppDTO
 // @Failure		404		{object}	api.Error
-// @Router			/apps/{code} [get]
+// @Router			/apps/{code}/public [get]
 func (h *Handler) findPublicByCode(w http.ResponseWriter, r *http.Request) error {
 	data, err := h.service.FindPublicByCode(r.Context(), chi.URLParam(r, "code"))
 	if err != nil {

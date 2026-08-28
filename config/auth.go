@@ -3,6 +3,9 @@ package config
 import "time"
 
 type AuthConfig struct {
+	BasicAuthUsername string `env:"BASIC_AUTH_USERNAME, default=admin"`
+	BasicAuthPassword string `env:"BASIC_AUTH_PASSWORD, default=change-me-in-production"`
+
 	JWTSecret     string        `env:"JWT_SECRET, default=change-me-in-production"`
 	JWTExpiration time.Duration `env:"JWT_EXPIRATION, default=15m"`
 	JWTIssuer     string        `env:"JWT_ISSUER, default=https://snipet.cloud"`
@@ -11,7 +14,6 @@ type AuthConfig struct {
 	RefreshTokenExpiration         time.Duration `env:"REFRESH_TOKEN_EXPIRATION, default=720h"`
 	ActivateAccountTokenExpiration time.Duration `env:"ACTIVATE_ACCOUNT_TOKEN_EXPIRATION, default=24h"`
 	ResetPasswordTokenExpiration   time.Duration `env:"RESET_PASSWORD_TOKEN_EXPIRATION, default=1h"`
-	TenantInvitationExpiration     time.Duration `env:"TENANT_INVITATION_EXPIRATION, default=168h"`
 	// ResendActivationCooldown blocks ResendActivation from sending another
 	// activation email for the same user before this much time has passed
 	// since the last one, so repeated clicks/requests don't spam the mailbox.

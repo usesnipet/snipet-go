@@ -17,11 +17,10 @@ import type { AppWithSecret, CreateApp } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type CreateAppDialogProps = DialogInstanceProps<{
-  tenantId: string
   onCreated?: (app: AppWithSecret) => void
 }>;
 
-export function CreateAppDialog({ tenantId, onCreated, close }: CreateAppDialogProps) {
+export function CreateAppDialog({ onCreated, close }: CreateAppDialogProps) {
   const form = useForm<CreateApp>({
     resolver: zodResolver(createAppSchema),
     defaultValues: {
@@ -34,7 +33,7 @@ export function CreateAppDialog({ tenantId, onCreated, close }: CreateAppDialogP
   const { mutateAsync, isPending } = useCreateApp();
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await mutateAsync({ tenantId, data: values });
+    const result = await mutateAsync({ data: values });
     form.reset();
     onCreated?.(result);
     close();

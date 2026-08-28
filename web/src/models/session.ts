@@ -4,7 +4,6 @@ import { agentSchema, type Agent } from "@/models/agent";
 import { appSchema, type App } from "@/models/app";
 import { appUserToSessionSchema, type AppUserToSession } from "@/models/app-user";
 import { executionSchema, type Execution } from "@/models/execution";
-import { tenantSchema, type Tenant } from "@/models/tenant";
 
 export const sessionMetadataSchema = z
   .object({ name: z.string().optional() })
@@ -14,11 +13,9 @@ export type SessionMetadata = z.infer<typeof sessionMetadataSchema>;
 
 export interface Session {
   id: string;
-  tenant_id: string;
   app_id: string;
   agent_id: string;
   metadata: SessionMetadata;
-  tenant?: Tenant | null;
   app?: App | null;
   agent?: Agent | null;
   app_user_to_sessions: AppUserToSession[] | null;
@@ -29,7 +26,6 @@ export interface Session {
 export const sessionBaseSchema = z
   .object({
     id: z.uuid(),
-    tenant_id: z.uuid(),
     app_id: z.uuid(),
     agent_id: z.uuid(),
     metadata: sessionMetadataSchema,
@@ -39,7 +35,6 @@ export const sessionBaseSchema = z
 export const sessionSchema: z.ZodType<Session> = z.lazy(() =>
   sessionBaseSchema
     .extend({
-      tenant: tenantSchema.nullable().optional(),
       app: appSchema.nullable().optional(),
       agent: agentSchema.nullable().optional(),
       app_user_to_sessions: z.array(appUserToSessionSchema).nullable(),
@@ -77,18 +72,14 @@ export const messageSchema = z
 export type Message = z.infer<typeof messageSchema>;
 
 export interface ExecutionMessage extends Message {
-  tenant_id: string;
   execution_id: string;
-  tenant?: Tenant | null;
   execution?: Execution | null;
 }
 
 export const executionMessageSchema: z.ZodType<ExecutionMessage> = z.lazy(() =>
   messageSchema
     .extend({
-      tenant_id: z.uuid(),
       execution_id: z.uuid(),
-      tenant: tenantSchema.nullable().optional(),
       execution: executionSchema.nullable().optional(),
     })
     .strict(),

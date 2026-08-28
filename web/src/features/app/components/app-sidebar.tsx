@@ -3,7 +3,6 @@ import { Link } from "@/components/ui/link";
 import { Sidebar, SidebarHeader } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleTheme } from "@/components/ui/toggle-theme";
-import { useTenantStore } from "@/features/tenant/store";
 import { ROUTES } from "@/routes";
 import { Boxes, Home, Settings, Users } from "lucide-react";
 import { useParams } from "react-router";
@@ -39,8 +38,7 @@ const navItems: NavEntry[] = [
 
 export function AppSidebar() {
   const { appCode = "" } = useParams<{ appCode: string }>();
-  const tenant = useTenantStore((state) => state.tenant);
-  const { data: app, isLoading } = useFindByCodeApp(tenant?.id ?? "", appCode);
+  const { data: app, isLoading } = useFindByCodeApp(appCode);
 
   return (
     <Sidebar>

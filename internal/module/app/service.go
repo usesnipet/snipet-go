@@ -11,7 +11,6 @@ import (
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
-	"github.com/usesnipet/snipet/internal/authz"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
@@ -35,37 +34,14 @@ func NewService(
 	return &Service{appRepo: appRepo, generator: generator, hasher: hasher, logger: logger}
 }
 
-func (s *Service) Filter(ctx context.Context, tenantID string, opts *filter.Options[model.App]) (*page.Paginated[model.App], error) {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
-		return nil, err
-	}
-	return s.appRepo.Filter(ctx, filter.Merge(opts, filter.New[model.App](filter.WhereEq("tenant_id", tenantID))))
+func (s *Service) Filter(ctx context.Context, opts *filter.Options[model.App]) (*page.Paginated[model.App], error) {
+	return s.appRepo.Filter(ctx, opts)
 }
 
-// FindByCode is the tenant-agnostic lookup used internally (e.g. Ping) where
-// there's no tenant-staff caller to scope against.
+// FindByCode is the lookup used both internally (e.g. Ping) and by the
+// admin CRUD surface.
 func (s *Service) FindByCode(ctx context.Context, code string) (*model.App, error) {
 	return s.appRepo.FindByCode(ctx, code)
-}
-
-// findByCodeInTenant is the admin-path lookup — verifies the app belongs
-// to tenantID (404, not 403, to avoid confirming the code exists elsewhere).
-func (s *Service) findByCodeInTenant(ctx context.Context, tenantID, code string) (*model.App, error) {
-	found, err := s.appRepo.FindByCode(ctx, code)
-	if err != nil {
-		return nil, err
-	}
-	if found.TenantID != tenantID {
-		return nil, apperr.NotFound("app not found")
-	}
-	return found, nil
-}
-
-func (s *Service) FindByCodeInTenant(ctx context.Context, tenantID, code string) (*model.App, error) {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
-		return nil, err
-	}
-	return s.findByCodeInTenant(ctx, tenantID, code)
 }
 
 // FindPublicByCode is the unauthenticated lookup for an app's public info
@@ -102,10 +78,7 @@ func (s *Service) GenerateCode(ctx context.Context) (string, error) {
 	return s.GenerateCode(ctx)
 }
 
-func (s *Service) Create(ctx context.Context, tenantID string, dto CreateAppDTO) (*AppWithSecret, error) {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
-		return nil, err
-	}
+func (s *Service) Create(ctx context.Context, dto CreateAppDTO) (*AppWithSecret, error) {
 	code, err := s.GenerateCode(ctx)
 	if err != nil {
 		return nil, err
@@ -121,7 +94,6 @@ func (s *Service) Create(ctx context.Context, tenantID string, dto CreateAppDTO)
 	}
 
 	app := &model.App{
-		TenantID:    tenantID,
 		Code:        code,
 		Name:        dto.Name,
 		Description: dto.Description,
@@ -137,14 +109,7 @@ func (s *Service) Create(ctx context.Context, tenantID string, dto CreateAppDTO)
 	return &AppWithSecret{App: app, Key: plainKey}, nil
 }
 
-func (s *Service) Roll(ctx context.Context, tenantID, code string) (*AppWithSecret, error) {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
-		return nil, err
-	}
-	if _, err := s.findByCodeInTenant(ctx, tenantID, code); err != nil {
-		return nil, err
-	}
-
+func (s *Service) Roll(ctx context.Context, code string) (*AppWithSecret, error) {
 	plainKey, keyID, err := s.generator.Generate()
 	if err != nil {
 		return nil, err
@@ -167,14 +132,7 @@ func (s *Service) Roll(ctx context.Context, tenantID, code string) (*AppWithSecr
 	return &AppWithSecret{App: app, Key: plainKey}, nil
 }
 
-func (s *Service) UpdateByCode(ctx context.Context, tenantID, code string, dto UpdateAppDTO) error {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
-		return err
-	}
-	if _, err := s.findByCodeInTenant(ctx, tenantID, code); err != nil {
-		return err
-	}
-
+func (s *Service) UpdateByCode(ctx context.Context, code string, dto UpdateAppDTO) error {
 	updates := &model.App{}
 	if dto.Name != nil {
 		updates.Name = *dto.Name
@@ -192,24 +150,15 @@ func (s *Service) UpdateByCode(ctx context.Context, tenantID, code string, dto U
 	return nil
 }
 
-func (s *Service) UpdateAuthConfig(ctx context.Context, tenantID, code string, dto UpdateAppAuthConfigDTO) error {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
-		return err
-	}
-	if _, err := s.findByCodeInTenant(ctx, tenantID, code); err != nil {
-		return err
-	}
+func (s *Service) UpdateAuthConfig(ctx context.Context, code string, dto UpdateAppAuthConfigDTO) error {
 	return s.appRepo.UpdateAuthConfigByCode(ctx, code, dto.ToModel())
 }
 
 // ToggleActive flips an app between active and deactivated. A deactivated
 // app fails key verification (see VerifyKey) so it can no longer ping in or
 // authenticate.
-func (s *Service) ToggleActive(ctx context.Context, tenantID, code string, active bool) error {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
-		return err
-	}
-	app, err := s.findByCodeInTenant(ctx, tenantID, code)
+func (s *Service) ToggleActive(ctx context.Context, code string, active bool) error {
+	app, err := s.appRepo.FindByCode(ctx, code)
 	if err != nil {
 		return err
 	}
@@ -223,13 +172,7 @@ func (s *Service) ToggleActive(ctx context.Context, tenantID, code string, activ
 	return s.appRepo.UpdateByCode(ctx, code, &model.App{Status: status})
 }
 
-func (s *Service) DeleteByCode(ctx context.Context, tenantID, code string) error {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleAdmin); err != nil {
-		return err
-	}
-	if _, err := s.findByCodeInTenant(ctx, tenantID, code); err != nil {
-		return err
-	}
+func (s *Service) DeleteByCode(ctx context.Context, code string) error {
 	return s.appRepo.DeleteByCode(ctx, code)
 }
 

@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { tenantSchema, type Tenant } from "@/models/tenant";
-
 export const apiKeyKeySchema = z.string().length(46).startsWith("sn_");
 export type ApiKeyKey = z.infer<typeof apiKeyKeySchema>;
 
@@ -12,21 +10,18 @@ const optionalDateSchema = z
 
 export interface ApiKey {
   id: string;
-  tenant_id: string;
   name: string;
   key_id: string;
   active: boolean;
   expires_at?: Date;
   created_at: Date;
   updated_at: Date;
-  tenant?: Tenant | null;
 }
 
 /** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
 export const apiKeyBaseSchema = z
   .object({
     id: z.string(),
-    tenant_id: z.string(),
     name: z.string().min(1).max(255),
     key_id: z.string(),
     active: z.boolean(),
@@ -36,10 +31,4 @@ export const apiKeyBaseSchema = z
   })
   .strict();
 
-export const apiKeySchema: z.ZodType<ApiKey> = z.lazy(() =>
-  apiKeyBaseSchema
-    .extend({
-      tenant: tenantSchema.nullable().optional(),
-    })
-    .strict(),
-);
+export const apiKeySchema: z.ZodType<ApiKey> = apiKeyBaseSchema;

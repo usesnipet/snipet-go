@@ -10,16 +10,15 @@ import type { App, AppWithSecret } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type RollAppDialogProps = DialogInstanceProps<{
-  tenantId: string
   app: App
   onRolled: (app: AppWithSecret) => void
 }>;
 
-export function RollAppDialog({ tenantId, app, onRolled, close }: RollAppDialogProps) {
+export function RollAppDialog({ app, onRolled, close }: RollAppDialogProps) {
   const { mutateAsync, isPending } = useRollApp();
 
   const handleConfirm = async () => {
-    const result = await mutateAsync({ tenantId, code: app.code });
+    const result = await mutateAsync({ code: app.code });
     close();
     onRolled(result);
   };

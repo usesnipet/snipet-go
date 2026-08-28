@@ -4,8 +4,6 @@ import (
 	"context"
 
 	apperr "github.com/usesnipet/snipet/internal/app-err"
-	"github.com/usesnipet/snipet/internal/auth"
-	"github.com/usesnipet/snipet/internal/authz"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/model"
@@ -48,42 +46,20 @@ func NewService(
 	}
 }
 
-func (s *Service) Filter(ctx context.Context, tenantID string) (*page.Paginated[model.Agent], error) {
-	if _, err := authz.RequireMember(ctx, tenantID); err != nil {
-		return nil, err
-	}
-	return s.agentRepo.Filter(ctx, filter.New[model.Agent](filter.WhereEq("tenant_id", tenantID)))
+func (s *Service) Filter(ctx context.Context, filter *filter.Options[model.Agent]) (*page.Paginated[model.Agent], error) {
+	return s.agentRepo.Filter(ctx, filter)
 }
 
-// findInTenant fetches by id then verifies the row belongs to tenantID.
-func (s *Service) findInTenant(ctx context.Context, tenantID, id string) (*model.Agent, error) {
-	found, err := s.agentRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if found.TenantID != tenantID {
-		return nil, apperr.NotFound("agent not found")
-	}
-	return found, nil
+func (s *Service) FindByID(ctx context.Context, id string) (*model.Agent, error) {
+	return s.agentRepo.FindByID(ctx, id)
 }
 
-func (s *Service) FindByID(ctx context.Context, tenantID, id string) (*model.Agent, error) {
-	if _, err := authz.RequireMember(ctx, tenantID); err != nil {
-		return nil, err
-	}
-	return s.findInTenant(ctx, tenantID, id)
-}
-
-func (s *Service) Create(ctx context.Context, tenantID string, dto CreateAgentDTO) (*model.Agent, error) {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleUser); err != nil {
-		return nil, err
-	}
-	if err := s.validateLLMIDs(ctx, tenantID, dto.LLMIDs); err != nil {
+func (s *Service) Create(ctx context.Context, dto CreateAgentDTO) (*model.Agent, error) {
+	if err := s.validateLLMIDs(ctx, dto.LLMIDs); err != nil {
 		return nil, err
 	}
 
 	agent := &model.Agent{
-		TenantID:     tenantID,
 		Name:         dto.Name,
 		Description:  dto.Description,
 		Instructions: dto.Instructions,
@@ -102,15 +78,9 @@ func (s *Service) Create(ctx context.Context, tenantID string, dto CreateAgentDT
 	return s.agentRepo.FindByID(ctx, agent.ID)
 }
 
-func (s *Service) Update(ctx context.Context, tenantID, id string, dto UpdateAgentDTO) error {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleUser); err != nil {
-		return err
-	}
-	if _, err := s.findInTenant(ctx, tenantID, id); err != nil {
-		return err
-	}
+func (s *Service) Update(ctx context.Context, id string, dto UpdateAgentDTO) error {
 	if dto.LLMIDs != nil {
-		if err := s.validateLLMIDs(ctx, tenantID, dto.LLMIDs); err != nil {
+		if err := s.validateLLMIDs(ctx, dto.LLMIDs); err != nil {
 			return err
 		}
 	}
@@ -144,36 +114,17 @@ func (s *Service) Update(ctx context.Context, tenantID, id string, dto UpdateAge
 	})
 }
 
-func (s *Service) DeleteByID(ctx context.Context, tenantID, id string) error {
-	if _, err := authz.RequireTenantRole(ctx, tenantID, model.RoleUser); err != nil {
-		return err
-	}
-	if _, err := s.findInTenant(ctx, tenantID, id); err != nil {
-		return err
-	}
+func (s *Service) DeleteByID(ctx context.Context, id string) error {
 	return s.agentRepo.DeleteByID(ctx, id)
 }
 
 // Run stays reachable both directly (POST /agent/{id}/run, API-key
 // authenticated) and internally via session.Service.Run (client-widget
-// end-user JWT, or an API key on the session's anyAuthMiddleware). Unlike
-// the CRUD methods above it takes no tenantID param — there's no
-// tenant-staff caller here, no /tenants/{tenant_id}/... URL. When the
-// caller authenticated with an API key, its TenantID must match the
-// target agent's (404 on mismatch, not 403, to avoid confirming the id
-// exists in another tenant). When called through a client-widget identity
-// instead, no additional check is needed here — the session/client
-// ownership chain that got the caller this far already scoped it.
+// end-user JWT, or an API key on the session's anyAuthMiddleware).
 func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...execution.Subscriber) error {
 	agent, err := s.agentRepo.FindByID(ctx, input.AgentID)
 	if err != nil {
 		return err
-	}
-
-	if identity, err := auth.CurrentApiKey(ctx); err == nil {
-		if agent.TenantID != identity.TenantID {
-			return apperr.NotFound("agent not found")
-		}
 	}
 
 	initialMessages := make([]msg.Message, 0)
@@ -199,7 +150,6 @@ func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...execut
 	initialMessages = append(initialMessages, userMessage)
 
 	executionModel := &model.Execution{
-		TenantID:     agent.TenantID,
 		SessionID:    input.SessionID,
 		AgentID:      agent.ID,
 		Status:       execution.StatusRunning,
@@ -217,20 +167,20 @@ func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...execut
 	if err := s.executionRepo.Create(ctx, executionModel); err != nil {
 		return err
 	}
-	err = s.executionMessageRepo.CreateInExecution(ctx, executionModel.ID, model.ExecutionMessage{Message: userMessage, TenantID: agent.TenantID})
+	err = s.executionMessageRepo.CreateInExecution(ctx, executionModel.ID, model.ExecutionMessage{Message: userMessage})
 	if err != nil {
 		return err
 	}
 
 	executionRuntime.Subscribe(
-		subscriber.NewPersistence(s.executionRepo, s.executionMessageRepo, s.logger, executionModel.ID, agent.TenantID),
+		subscriber.NewPersistence(s.executionRepo, s.executionMessageRepo, s.logger, executionModel.ID),
 	)
 	executionRuntime.Subscribe(subscribers...)
 
 	return s.engine.Start(ctx, executionRuntime)
 }
 
-func (s *Service) validateLLMIDs(ctx context.Context, tenantID string, llmIDs []string) error {
+func (s *Service) validateLLMIDs(ctx context.Context, llmIDs []string) error {
 	seen := make(map[string]struct{}, len(llmIDs))
 	for _, id := range llmIDs {
 		if _, ok := seen[id]; ok {
@@ -245,7 +195,6 @@ func (s *Service) validateLLMIDs(ctx context.Context, tenantID string, llmIDs []
 	}
 	found, err := s.llmRepo.Filter(ctx, filter.New[model.LLM](
 		filter.WhereIn("id", ids...),
-		filter.WhereEq("tenant_id", tenantID),
 		filter.Take(len(llmIDs)),
 	))
 	if err != nil {

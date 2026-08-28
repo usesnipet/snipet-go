@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { llmSchema } from "@/models/llm";
-import { tenantSchema, type Tenant } from "@/models/tenant";
 
 export const agentToLLMSchema = z
   .object({
@@ -25,20 +24,17 @@ export type AgentToKnowledge = z.infer<typeof agentToKnowledgeSchema>;
 
 export interface Agent {
   id: string;
-  tenant_id: string;
   name: string;
   description: string;
   instructions: string;
   llms: AgentToLLM[] | null;
   knowledge: AgentToKnowledge[] | null;
-  tenant?: Tenant | null;
 }
 
 /** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
 export const agentBaseSchema = z
   .object({
     id: z.uuid(),
-    tenant_id: z.uuid(),
     name: z.string().min(1).max(255),
     description: z.string().max(1000),
     instructions: z.string().max(1000),
@@ -50,7 +46,6 @@ export const agentSchema: z.ZodType<Agent> = z.lazy(() =>
     .extend({
       llms: z.array(agentToLLMSchema).nullable(),
       knowledge: z.array(agentToKnowledgeSchema).nullable(),
-      tenant: tenantSchema.nullable().optional(),
     })
     .strict(),
 );

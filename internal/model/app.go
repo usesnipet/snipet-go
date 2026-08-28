@@ -13,7 +13,6 @@ const (
 type App struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	TenantID       string     `gorm:"type:uuid;not null;index" json:"tenant_id"`
 	Code           string     `gorm:"type:varchar(10);not null;unique" json:"code"`
 	Name           string     `gorm:"type:varchar(255);not null" json:"name"`
 	Description    string     `gorm:"type:text;not null" json:"description"`
@@ -26,7 +25,6 @@ type App struct {
 
 	AuthConfig AppAuthConfig `gorm:"type:jsonb;not null;serializer:json" json:"auth_config"`
 
-	Tenant     *Tenant        `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
 	Sessions   []Session      `gorm:"foreignKey:AppID;references:ID;constraint:OnDelete:CASCADE" json:"sessions"`
 	AppToUsers []AppToAppUser `gorm:"foreignKey:AppID;references:ID;constraint:OnDelete:CASCADE" json:"app_to_users"`
 }

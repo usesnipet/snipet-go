@@ -1,4 +1,3 @@
-import { useAuthStore } from "@/features/auth/store";
 import { z, ZodType } from "zod";
 
 import { logger } from "../logger";
@@ -97,17 +96,9 @@ export async function httpSse<TBody = unknown>(
     signal,
     onEvent,
   } = options;
-  const { params, searchParams } = options;
-  let { body, headers } = options;
+  const { params, searchParams, headers } = options;
+  let { body } = options;
   const pathUrl = params ? applyPathParams(url, params) : url;
-  const accessToken = useAuthStore.getState().accessToken;
-
-  if (accessToken) {
-    headers = {
-      ...(headers as Record<string, string | null | undefined> | undefined),
-      Authorization: accessToken,
-    };
-  }
 
   try {
     if (schemas?.body) body = schemas.body.parse(body);

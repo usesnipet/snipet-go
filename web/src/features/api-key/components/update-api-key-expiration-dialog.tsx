@@ -28,11 +28,10 @@ function toDatetimeLocalValue(date?: Date | null) {
 }
 
 type UpdateApiKeyExpirationDialogProps = DialogInstanceProps<{
-  tenantId: string
   apiKey: ApiKey
 }>;
 
-export function UpdateApiKeyExpirationDialog({ tenantId, apiKey, close }: UpdateApiKeyExpirationDialogProps) {
+export function UpdateApiKeyExpirationDialog({ apiKey, close }: UpdateApiKeyExpirationDialogProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { expires_at: toDatetimeLocalValue(apiKey.expires_at) },
@@ -44,7 +43,6 @@ export function UpdateApiKeyExpirationDialog({ tenantId, apiKey, close }: Update
     const expiresAt = resolveDurationExpiresAt(values.expires_at);
 
     await mutateAsync({
-      tenantId,
       id: apiKey.id,
       data: {
         expires_at: expiresAt ? new Date(expiresAt) : undefined,

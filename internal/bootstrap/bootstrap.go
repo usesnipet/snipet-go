@@ -21,7 +21,6 @@ import (
 	"github.com/usesnipet/snipet/internal/guard"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	"github.com/usesnipet/snipet/internal/infra/database"
-	"github.com/usesnipet/snipet/internal/license"
 	"github.com/usesnipet/snipet/internal/logger"
 	"github.com/usesnipet/snipet/internal/module/agent"
 	apikey "github.com/usesnipet/snipet/internal/module/api-key"
@@ -29,16 +28,11 @@ import (
 	"github.com/usesnipet/snipet/internal/module/appauth"
 	appauth_provider "github.com/usesnipet/snipet/internal/module/appauth/auth-provider"
 	"github.com/usesnipet/snipet/internal/module/appuser"
-	auth_module "github.com/usesnipet/snipet/internal/module/auth"
-	"github.com/usesnipet/snipet/internal/module/email"
 	"github.com/usesnipet/snipet/internal/module/knowledge"
 	knowledgeindex "github.com/usesnipet/snipet/internal/module/knowledge-index"
 	llmmodule "github.com/usesnipet/snipet/internal/module/llm"
-	"github.com/usesnipet/snipet/internal/module/member"
 	"github.com/usesnipet/snipet/internal/module/session"
 	systemmodule "github.com/usesnipet/snipet/internal/module/system"
-	"github.com/usesnipet/snipet/internal/module/tenant"
-	"github.com/usesnipet/snipet/internal/module/user"
 	"github.com/usesnipet/snipet/internal/queue"
 	"github.com/usesnipet/snipet/internal/repository"
 	"github.com/usesnipet/snipet/internal/runtime"
@@ -80,12 +74,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	refreshTokenRepo := repository.NewAppUserRefreshTokenRepository(db)
 	executionRepo := repository.NewExecutionRepository(db)
 	messageRepo := repository.NewExecutionMessageRepository(db)
-	userRepo := repository.NewUserRepository(db)
-	accountRepo := repository.NewAccountRepository(db)
-	tokenRepo := repository.NewTokenRepository(db)
-	tenantRepo := repository.NewTenantRepository(db)
-	memberRepo := repository.NewMemberRepository(db)
-	tenantInvitationRepo := repository.NewTenantInvitationRepository(db)
 
 	// runtime
 	sourceRegistry := source.Registry(logger)
@@ -145,25 +133,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		cfg.Auth,
 	)
 
-	platformUserJWTService := auth.NewJWTService(cfg.Auth, func() *auth.PlatformUserClaims { return &auth.PlatformUserClaims{} })
-	userProviderRegistry := auth_module.NewProviderRegistry(
-		auth_module.NewGoogleProvider(cfg.Auth),
-		auth_module.NewGithubProvider(cfg.Auth),
-	)
-	emailService := email.NewService(cfg.SMTP, logger)
-	licenseService := license.NewService(cfg.License)
-	authService := auth_module.NewService(
-		cfg.Auth,
-		userRepo,
-		accountRepo,
-		tokenRepo,
-		platformUserJWTService,
-		refreshTokenService,
-		emailService,
-		userProviderRegistry,
-		licenseService,
-	)
-
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 
 	appService := appmodule.NewService(appRepo, apiKeyGenerator, apiKeyHasher, logger)
@@ -192,21 +161,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	sessionService := session.NewService(sessionRepo, messageRepo, appService, agentService)
 
 	appUserService := appuser.NewService(appUserRepo, appRepo)
-	userService := user.NewService(userRepo, cfg.User)
-	systemService := systemmodule.NewService(licenseService)
-
-	tenantService := tenant.NewService(tenantRepo, memberRepo, userRepo, txManager, cfg.Tenant, licenseService, logger)
-	memberService := member.NewService(cfg.Auth, memberRepo, tenantInvitationRepo, tenantRepo, userRepo, txManager, refreshTokenService, emailService, licenseService)
-
-	if err := userService.Init(context.Background()); err != nil {
-		logger.Errorf("failed to init user service: %v", err)
-		return err
-	}
-	_, err = tenantService.Init(context.Background(), cfg.User.AdminEmail)
-	if err != nil {
-		logger.Errorf("failed to init tenant service: %v", err)
-		return err
-	}
+	systemService := systemmodule.NewService()
 
 	// cache
 	apiKeyCache := cache.NewMemoryCache(1000, 1*time.Hour)
@@ -216,37 +171,25 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 	requireAPIKey := guard.RequireApiKey(apiKeyService, apiKeyCache)
 	requireAppKey := guard.RequireAppKey(appService, appKeyCache)
 	requireAppUser := guard.RequireAppUser(appUserJWTService)
-	requireUser := guard.RequireUser(platformUserJWTService, userRepo, memberRepo)
-	appAuth := guard.Or(requireAppUser, requireAppKey)
-
-	apiKeyMiddleware := requireAPIKey.Handler()
-	appKeyMiddleware := requireAppKey.Handler()
-	appJWTMiddleware := requireAppUser.Handler()
-	userMiddleware := requireUser.Handler()
-	appAuthMiddleware := appAuth.Handler()
+	requireBasicAuth := guard.RequireBasicAuth(cfg.Auth.BasicAuthUsername, cfg.Auth.BasicAuthPassword)
 
 	// handlers
 	appAuthHandler := appauth.NewHandler(appauthService)
-	platformAuthHandler := auth_module.NewHandler(authService, userMiddleware)
 	systemHandler := systemmodule.NewHandler(systemService)
-	apiKeyHandler := apikey.NewHandler(apiKeyService, userMiddleware, apiKeyMiddleware)
-	agentHandler := agent.NewHandler(agentService, userMiddleware, apiKeyMiddleware)
-	llmHandler := llmmodule.NewHandler(llmService, userMiddleware)
-	appHandler := appmodule.NewHandler(appService, userMiddleware, appKeyMiddleware)
-	sessionHandler := session.NewHandler(sessionService, appAuthMiddleware)
-	knowledgeHandler := knowledge.NewHandler(knowledgeService, userMiddleware)
-	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, userMiddleware)
-	appUserHandler := appuser.NewHandler(appUserService, appKeyMiddleware, appJWTMiddleware)
-	userHandler := user.NewHandler(userService, userMiddleware)
-	tenantHandler := tenant.NewHandler(tenantService, userMiddleware)
-	memberHandler := member.NewHandler(memberService, userMiddleware)
+	apiKeyHandler := apikey.NewHandler(apiKeyService, requireBasicAuth, requireAPIKey)
+	agentHandler := agent.NewHandler(agentService, requireBasicAuth, requireAPIKey)
+	llmHandler := llmmodule.NewHandler(llmService, requireBasicAuth)
+	appHandler := appmodule.NewHandler(appService, requireBasicAuth, requireAppKey)
+	sessionHandler := session.NewHandler(sessionService, requireAppUser, requireAppKey)
+	knowledgeHandler := knowledge.NewHandler(knowledgeService, requireBasicAuth)
+	knowledgeIndexHandler := knowledgeindex.NewHandler(knowledgeIndexService, requireBasicAuth)
+	appUserHandler := appuser.NewHandler(appUserService, requireAppKey, requireAppUser)
 
 	// register routes
 	api := api.New()
 	api.Router.Handle("/*", web.Handler())
 	api.Router.Route(config.APIPrefix, func(r chi.Router) {
 		appAuthHandler.RegisterRoutes(r, api.Serve)
-		platformAuthHandler.RegisterRoutes(r, api.Serve)
 		systemHandler.RegisterRoutes(r, api.Serve)
 		apiKeyHandler.RegisterRoutes(r, api.Serve)
 		agentHandler.RegisterRoutes(r, api.Serve)
@@ -256,9 +199,6 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 		knowledgeHandler.RegisterRoutes(r, api.Serve)
 		knowledgeIndexHandler.RegisterRoutes(r, api.Serve)
 		appUserHandler.RegisterRoutes(r, api.Serve)
-		userHandler.RegisterRoutes(r, api.Serve)
-		tenantHandler.RegisterRoutes(r, api.Serve)
-		memberHandler.RegisterRoutes(r, api.Serve)
 	})
 
 	logger.Infof("sync worker pool started with %d workers", cfg.Sync.Workers)

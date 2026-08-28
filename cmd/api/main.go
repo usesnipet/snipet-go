@@ -20,6 +20,7 @@ import (
 // @securityDefinitions.jwt	BearerAuth
 // @in							header
 // @name						Authorization
+// @securityDefinitions.basic	BasicAuth
 func main() {
 	cfg, err := config.Load()
 	if err != nil {

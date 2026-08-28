@@ -1,7 +1,6 @@
 import { formatUpdatedAt } from "@/components/catalog/format-updated-at";
 import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { useFindBySlugTenant } from "@/features/tenant/hooks";
 import { useParams } from "react-router";
 
 import { useListKnowledgeItems } from "../hooks";
@@ -11,9 +10,8 @@ import { KnowledgeItemsTableNameField } from "./knowledge-items-table-name-field
 import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { KnowledgeItem } from "../schemas";
 function useKnowledgeItemsTableQuery(pagination: DataTablePagination) {
-  const { id = "", tenantSlug = "" } = useParams<{ id: string; tenantSlug: string }>();
-  const { data: tenant } = useFindBySlugTenant(tenantSlug);
-  return useListKnowledgeItems(tenant?.id ?? "", id, { searchParams: pagination });
+  const { id = "" } = useParams<{ id: string }>();
+  return useListKnowledgeItems(id, { searchParams: pagination });
 }
 
 

@@ -1,14 +1,12 @@
 import { CatalogList } from "@/components/catalog";
 import { Loading } from "@/components/ui/loading";
-import { useTenantStore } from "@/features/tenant/store";
 
 import { useListKnowledge } from "../hooks";
 
 import { KnowledgeCatalogItem } from "./knowledge-catalog-item";
 
 export function KnowledgeList() {
-  const tenant = useTenantStore((state) => state.tenant);
-  const { data, isLoading } = useListKnowledge(tenant?.id ?? "");
+  const { data, isLoading } = useListKnowledge();
 
   if (isLoading) {
     return (

@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { knowledgeIndexSchema, knowledgeItemSchema, type KnowledgeIndex, type KnowledgeItem } from "@/models/knowledge";
-import { tenantSchema, type Tenant } from "@/models/tenant";
 
 export const indexStatusSchema = z.enum(["pending", "syncing", "indexed", "skipped", "error"]);
 export type IndexStatus = z.infer<typeof indexStatusSchema>;
@@ -14,10 +13,8 @@ export interface IndexedKnowledgeItem {
   status: IndexStatus;
   reason?: string;
   last_error?: string;
-  tenant_id: string;
   index_id: string;
   knowledge_item_id?: string;
-  tenant?: Tenant | null;
   index?: KnowledgeIndex | null;
   knowledge_item?: KnowledgeItem | null;
 }
@@ -32,10 +29,8 @@ export const indexedKnowledgeItemSchema: z.ZodType<IndexedKnowledgeItem> = z.laz
       status: indexStatusSchema,
       reason: z.string().optional(),
       last_error: z.string().optional(),
-      tenant_id: z.uuid(),
       index_id: z.uuid(),
       knowledge_item_id: z.uuid().optional(),
-      tenant: tenantSchema.nullable().optional(),
       index: knowledgeIndexSchema.nullable().optional(),
       knowledge_item: knowledgeItemSchema.nullable().optional(),
     })

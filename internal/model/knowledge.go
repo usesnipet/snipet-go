@@ -18,7 +18,6 @@ const (
 type Knowledge struct {
 	ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-	TenantID      string        `gorm:"type:uuid;not null;index" json:"tenant_id"`
 	Name          string        `gorm:"type:varchar(255);not null" json:"name"`
 	Description   string        `gorm:"type:text" json:"description"`
 	Driver        string        `gorm:"type:varchar(100);not null" json:"driver"`
@@ -27,7 +26,6 @@ type Knowledge struct {
 	SyncStatus    SyncStatus    `gorm:"type:varchar(20);default:null" json:"sync_status"`
 	SyncError     *string       `gorm:"type:text;default:null" json:"sync_error"`
 
-	Tenant  *Tenant          `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"tenant"`
 	Items   []KnowledgeItem  `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"items"`
 	Indexes []KnowledgeIndex `gorm:"foreignKey:KnowledgeID;constraint:OnDelete:CASCADE" json:"indexes"`
 }

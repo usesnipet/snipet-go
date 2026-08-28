@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/usesnipet/snipet/internal/api"
 	"github.com/usesnipet/snipet/internal/auth"
 	"github.com/usesnipet/snipet/internal/infra/cache"
 	"github.com/usesnipet/snipet/internal/module/app"
@@ -19,7 +20,7 @@ type cachedAppKey struct {
 
 // RequireAppKey requires a valid X-App-Key header and sets an
 // auth.AppKeyIdentity.
-func RequireAppKey(appService *app.Service, appKeyCache cache.ICache) Gate {
+func RequireAppKey(appService *app.Service, appKeyCache cache.ICache) api.Gate {
 	return func(r *http.Request) (context.Context, error) {
 		key := r.Header.Get("X-App-Key")
 		if key == "" {

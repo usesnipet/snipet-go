@@ -1,4 +1,3 @@
-import { useAuthStore } from "@/features/auth/store";
 import { z, ZodType } from "zod";
 
 import { logger } from "../logger";
@@ -65,65 +64,12 @@ export function applySearchParams(
   return `${url}${separator}${query}`;
 }
 
-async function refreshAccessToken(): Promise<string | null> {
-  const { refreshToken, setTokens, clear } = useAuthStore.getState();
-  if (!refreshToken) return null;
-
-  try {
-    const response = await fetch("/api/auth/refresh", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-
-    if (!response.ok) {
-      clear();
-      return null;
-    }
-
-    const json = await response.json();
-    setTokens(json);
-    return json.access_token as string;
-  } catch (error) {
-    logger.error(error);
-    clear();
-    return null;
-  }
-}
-
-let refreshPromise: Promise<string | null> | null = null;
-
-function refreshAccessTokenOnce(): Promise<string | null> {
-  if (!refreshPromise) {
-    refreshPromise = refreshAccessToken().finally(() => {
-      refreshPromise = null;
-    });
-  }
-  return refreshPromise;
-}
-
-export function httpx<TResponse = unknown, TBody = unknown, TSearchParams = SearchParamsRecord, TPathParams = PathParamsRecord, THeaders = Record<string, string>>(
+export async function httpx<TResponse = unknown, TBody = unknown, TSearchParams = SearchParamsRecord, TPathParams = PathParamsRecord, THeaders = Record<string, string>>(
   options: ApiRequestOptions<TBody, TResponse, TSearchParams, TPathParams, THeaders>,
-): Promise<TResponse> {
-  return httpxInternal(options, false);
-}
-
-async function httpxInternal<TResponse = unknown, TBody = unknown, TSearchParams = SearchParamsRecord, TPathParams = PathParamsRecord, THeaders = Record<string, string>>(
-  options: ApiRequestOptions<TBody, TResponse, TSearchParams, TPathParams, THeaders>,
-  isRetry: boolean,
 ): Promise<TResponse> {
   const { url, method, schemas } = options;
   let { body, headers, params, searchParams } = options;
   const pathUrl = params ? applyPathParams(url, params as PathParamsRecord) : url;
-
-  const accessToken = useAuthStore.getState().accessToken;
-
-  if (accessToken) {
-    headers = {
-      ...(headers as Record<string, string | null | undefined> | undefined),
-      Authorization: accessToken,
-    } as THeaders;
-  }
 
   try {
     if (schemas?.pathParams && params) params = schemas.pathParams.parse(params);
@@ -148,18 +94,6 @@ async function httpxInternal<TResponse = unknown, TBody = unknown, TSearchParams
       ...headers,
     },
   });
-
-  if (
-    response.status === 401 &&
-    accessToken &&
-    !isRetry &&
-    !pathUrl.endsWith("/auth/refresh")
-  ) {
-    const newAccessToken = await refreshAccessTokenOnce();
-    if (newAccessToken) {
-      return httpxInternal(options, true);
-    }
-  }
 
   if (!response.ok) {
     await handleApiError(response);

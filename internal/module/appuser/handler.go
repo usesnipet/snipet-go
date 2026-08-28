@@ -8,34 +8,33 @@ import (
 )
 
 type Handler struct {
-	service           *Service
-	appKeyMiddleware  api.MiddlewareFunc
-	anyAuthMiddleware api.MiddlewareFunc
-	jwtMiddleware     api.MiddlewareFunc
+	service     *Service
+	appKeyGate  api.Gate
+	appUserGate api.Gate
 }
 
 func NewHandler(
 	service *Service,
-	appKeyMiddleware api.MiddlewareFunc,
-	jwtMiddleware api.MiddlewareFunc,
+	appKeyGate api.Gate,
+	appUserGate api.Gate,
 ) api.Handler {
 	return &Handler{
-		service:          service,
-		appKeyMiddleware: appKeyMiddleware,
-		jwtMiddleware:    jwtMiddleware,
+		service:     service,
+		appKeyGate:  appKeyGate,
+		appUserGate: appUserGate,
 	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/apps/{code}/user", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(h.appKeyMiddleware)
+			r.Use(h.appKeyGate.Handler())
 			r.Get("/", serve(h.filterBy))
 			r.Post("/", serve(h.create))
 		})
 
 		r.Group(func(r chi.Router) {
-			r.Use(h.jwtMiddleware)
+			r.Use(h.appUserGate.Handler())
 			r.Get("/me", serve(h.me))
 		})
 	})

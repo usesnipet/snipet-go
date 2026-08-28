@@ -136,7 +136,6 @@ func (s *Service) Create(ctx context.Context, appCode string, dto CreateSessionD
 	appID := resolvedApp.ID
 
 	session := &model.Session{
-		TenantID: resolvedApp.TenantID,
 		AgentID:  dto.AgentID,
 		Metadata: dto.Metadata,
 		AppID:    appID,
