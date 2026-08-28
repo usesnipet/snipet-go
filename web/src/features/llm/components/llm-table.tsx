@@ -1,7 +1,6 @@
 import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog";
 import { PencilIcon, TrashIcon } from "lucide-react";
 
@@ -13,27 +12,23 @@ import { UpdateLlmDialog } from "./update-llm-dialog";
 import type { DataTableColumn, DataTablePagination } from "@/components/data-table";
 import type { Llm } from "../schemas";
 function useLlmTableQuery(pagination: DataTablePagination) {
-  const tenant = useTenantStore((state) => state.tenant);
-  return useListLlm(tenant?.id ?? "", { searchParams: pagination })
+  return useListLlm({ searchParams: pagination })
 }
 
 export function LlmTable() {
-  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const openEdit = (llm: Llm) => {
-    if (!tenant) return;
     openDialog({
       component: UpdateLlmDialog,
-      props: { tenantId: tenant.id, llm },
+      props: { llm },
     });
   };
 
   const openDelete = (llm: Llm) => {
-    if (!tenant) return;
     openDialog({
       component: DeleteLlmDialog,
-      props: { tenantId: tenant.id, llm },
+      props: { llm },
     });
   };
 

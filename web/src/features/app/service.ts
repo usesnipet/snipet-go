@@ -12,14 +12,13 @@ import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 
-const appsUrl = (tenantId: string) => `/api/tenants/${tenantId}/apps`;
+const appsUrl = () => "/api/apps";
 
 const list = async (
-  tenantId: string,
   opts?: ServiceGetOptions<PaginatedApp>,
 ): Promise<PaginatedApp> => {
   return http.get({
-    url: appsUrl(tenantId),
+    url: appsUrl(),
     schemas: {
       response: paginatedAppSchema,
     },
@@ -28,12 +27,11 @@ const list = async (
 }
 
 const create = async (
-  tenantId: string,
   body: CreateApp,
   opts?: ServicePostOptions<CreateApp, AppWithSecret>,
 ): Promise<AppWithSecret> => {
   return http.post({
-    url: appsUrl(tenantId),
+    url: appsUrl(),
     body,
     schemas: {
       body: createAppSchema,
@@ -44,12 +42,11 @@ const create = async (
 }
 
 const findByCode = async (
-  tenantId: string,
   code: string,
   opts?: ServiceGetOptions<App>,
 ): Promise<App> => {
   return http.get({
-    url: `${appsUrl(tenantId)}/{code}`,
+    url: `${appsUrl()}/{code}`,
     params: { code },
     schemas: { response: appSchema },
     ...opts,
@@ -57,13 +54,12 @@ const findByCode = async (
 }
 
 const update = async (
-  tenantId: string,
   code: string,
   body: UpdateApp,
   opts: ServicePutOptions<UpdateApp, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${appsUrl(tenantId)}/{code}`,
+    url: `${appsUrl()}/{code}`,
     params: { code },
     body,
     schemas: {
@@ -74,13 +70,12 @@ const update = async (
 }
 
 const updateAuthConfig = async (
-  tenantId: string,
   code: string,
   body: UpdateAppAuthConfig,
   opts: ServicePutOptions<UpdateAppAuthConfig, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${appsUrl(tenantId)}/{code}/auth-config`,
+    url: `${appsUrl()}/{code}/auth-config`,
     params: { code },
     body,
     schemas: {
@@ -91,12 +86,11 @@ const updateAuthConfig = async (
 }
 
 const roll = async (
-  tenantId: string,
   code: string,
   opts?: ServicePostOptions<undefined, AppWithSecret>,
 ): Promise<AppWithSecret> => {
   return http.post({
-    url: `${appsUrl(tenantId)}/{code}/roll`,
+    url: `${appsUrl()}/{code}/roll`,
     params: { code },
     schemas: {
       response: appWithSecretSchema,
@@ -106,25 +100,23 @@ const roll = async (
 }
 
 const setActive = async (
-  tenantId: string,
   code: string,
   active: boolean,
   opts: ServicePutOptions<void, void> = {},
 ): Promise<void> => {
   return http.put({
-    url: `${appsUrl(tenantId)}/{code}/${active ? "active" : "disabled"}`,
+    url: `${appsUrl()}/{code}/${active ? "active" : "disabled"}`,
     params: { code },
     ...opts,
   })
 }
 
 const remove = async (
-  tenantId: string,
   code: string,
   opts: ServiceDeleteOptions<void>,
 ): Promise<void> => {
   return http.delete({
-    url: `${appsUrl(tenantId)}/{code}`,
+    url: `${appsUrl()}/{code}`,
     params: { code },
     ...opts,
   })

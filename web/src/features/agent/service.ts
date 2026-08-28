@@ -9,14 +9,13 @@ import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
 } from "@/lib/services";
 
-const agentUrl = (tenantId: string) => `/api/tenants/${tenantId}/agents`;
+const agentUrl = () => "/api/agents";
 
 const list = async (
-  tenantId: string,
   opts?: ServiceGetOptions<PaginatedAgent>,
 ): Promise<PaginatedAgent> => {
   return http.get({
-    url: agentUrl(tenantId),
+    url: agentUrl(),
     schemas: {
       response: paginatedAgentSchema,
     },
@@ -25,12 +24,11 @@ const list = async (
 };
 
 const findById = async (
-  tenantId: string,
   id: string,
   opts?: ServiceGetOptions<Agent>,
 ): Promise<Agent> => {
   return http.get({
-    url: `${agentUrl(tenantId)}/{id}`,
+    url: `${agentUrl()}/{id}`,
     params: { id },
     schemas: { response: agentSchema },
     ...opts,
@@ -38,12 +36,11 @@ const findById = async (
 };
 
 const create = async (
-  tenantId: string,
   body: CreateAgent,
   opts?: ServicePostOptions<CreateAgent, Agent>,
 ): Promise<Agent> => {
   return http.post({
-    url: agentUrl(tenantId),
+    url: agentUrl(),
     body,
     schemas: {
       body: createAgentSchema,
@@ -54,13 +51,12 @@ const create = async (
 };
 
 const update = async (
-  tenantId: string,
   id: string,
   body: UpdateAgent,
   opts?: ServicePutOptions<UpdateAgent, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${agentUrl(tenantId)}/{id}`,
+    url: `${agentUrl()}/{id}`,
     params: { id },
     body,
     schemas: {
@@ -71,12 +67,11 @@ const update = async (
 };
 
 const remove = async (
-  tenantId: string,
   id: string,
   opts?: ServiceDeleteOptions<void>,
 ): Promise<void> => {
   return http.delete({
-    url: `${agentUrl(tenantId)}/{id}`,
+    url: `${agentUrl()}/{id}`,
     params: { id },
     ...opts,
   });

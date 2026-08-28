@@ -3,8 +3,6 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Link } from "@/components/ui/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useListLlm } from "@/features/llm/hooks";
-import { useTenantStore } from "@/features/tenant/store";
-import { applyPathParams } from "@/lib/http";
 import { ROUTES } from "@/routes";
 import { ArrowDownIcon, ArrowUpIcon, XIcon } from "lucide-react";
 import { useState } from "react";
@@ -30,12 +28,11 @@ export function AgentLlmList({
   label = "LLMs",
 }: AgentLlmListProps) {
   const form = useFormContext();
-  const tenant = useTenantStore((state) => state.tenant);
-  const { data, isLoading } = useListLlm(tenant?.id ?? "");
+  const { data, isLoading } = useListLlm();
   const llms = data?.data ?? [];
   const llmById = new Map(llms.map((llm) => [llm.id, llm]));
   const [selectKey, setSelectKey] = useState(0);
-  const llmsHref = applyPathParams(ROUTES.llms, { tenantSlug: tenant?.slug ?? "" });
+  const llmsHref = ROUTES.llms;
 
   return (
     <FormField

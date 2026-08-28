@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog";
 import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
 
@@ -11,22 +10,19 @@ import { UpdateAgentDialog } from "./update-agent-dialog";
 import type { Agent } from "../schemas";
 
 export function AgentCatalogItem({ agent }: { agent: Agent }) {
-  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const openEdit = () => {
-    if (!tenant) return;
     openDialog({
       component: UpdateAgentDialog,
-      props: { tenantId: tenant.id, agent },
+      props: { agent },
     });
   };
 
   const openDelete = () => {
-    if (!tenant) return;
     openDialog({
       component: DeleteAgentDialog,
-      props: { tenantId: tenant.id, agent },
+      props: { agent },
     });
   };
 

@@ -1,12 +1,8 @@
 import { http } from "@/lib/http";
 
 import {
-  createLlmSchema,
-  listDriversSchema,
-  listLlmSearchParamsSchema,
-  llmSchema,
-  paginatedLlmSchema,
-  updateLlmSchema,
+  createLlmSchema, listDriversSchema, listLlmSearchParamsSchema, llmSchema, paginatedLlmSchema,
+  updateLlmSchema
 } from "./schemas";
 
 import type {
@@ -19,14 +15,13 @@ import type {
   ServicePutOptions,
 } from "@/lib/services";
 
-const llmUrl = (tenantId: string) => `/api/tenants/${tenantId}/llm`;
+const llmUrl = () => `/api/llm`;
 
 const list = async (
-  tenantId: string,
   opts?: ServiceGetOptions<PaginatedLlm, ListLlmSearchParams>,
 ): Promise<PaginatedLlm> => {
   return http.get({
-    url: llmUrl(tenantId),
+    url: llmUrl(),
     schemas: {
       response: paginatedLlmSchema,
       searchParams: listLlmSearchParamsSchema,
@@ -36,12 +31,11 @@ const list = async (
 };
 
 const create = async (
-  tenantId: string,
   body: CreateLlm,
   opts?: ServicePostOptions<CreateLlm, Llm>,
 ): Promise<Llm> => {
   return http.post({
-    url: llmUrl(tenantId),
+    url: llmUrl(),
     body,
     schemas: {
       body: createLlmSchema,
@@ -52,13 +46,12 @@ const create = async (
 };
 
 const update = async (
-  tenantId: string,
   id: string,
   body: UpdateLlm,
   opts?: ServicePutOptions<UpdateLlm, void>,
 ): Promise<void> => {
   return http.put({
-    url: `${llmUrl(tenantId)}/{id}`,
+    url: `${llmUrl()}/{id}`,
     params: { id },
     body,
     schemas: {
@@ -69,23 +62,21 @@ const update = async (
 };
 
 const remove = async (
-  tenantId: string,
   id: string,
   opts?: ServiceDeleteOptions<void>,
 ): Promise<void> => {
   return http.delete({
-    url: `${llmUrl(tenantId)}/{id}`,
+    url: `${llmUrl()}/{id}`,
     params: { id },
     ...opts,
   });
 };
 
 const listDrivers = async (
-  tenantId: string,
   opts?: ServiceGetOptions<ListDrivers>,
 ): Promise<ListDrivers> => {
   return http.get({
-    url: `${llmUrl(tenantId)}/drivers`,
+    url: `${llmUrl()}/drivers`,
     schemas: { response: listDriversSchema },
     ...opts,
   });

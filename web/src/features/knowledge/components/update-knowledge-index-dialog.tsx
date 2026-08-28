@@ -21,13 +21,11 @@ import type { KnowledgeIndex, UpdateKnowledgeIndex } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type UpdateKnowledgeIndexDialogProps = DialogInstanceProps<{
-  tenantId: string;
   knowledgeID: string;
   index: KnowledgeIndex;
 }>;
 
 export function UpdateKnowledgeIndexDialog({
-  tenantId,
   knowledgeID,
   index,
   close,
@@ -42,7 +40,7 @@ export function UpdateKnowledgeIndexDialog({
   const { mutateAsync, isPending } = useUpdateKnowledgeIndex();
 
   const onSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync({ tenantId, knowledgeID, id: index.id, data });
+    await mutateAsync({ knowledgeID, id: index.id, data });
     close();
   });
 

@@ -10,15 +10,14 @@ import type { App } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type DeleteAppDialogProps = DialogInstanceProps<{
-  tenantId: string
   app: App
 }>;
 
-export function DeleteAppDialog({ tenantId, app, close }: DeleteAppDialogProps) {
+export function DeleteAppDialog({ app, close }: DeleteAppDialogProps) {
   const { mutateAsync, isPending } = useDeleteApp();
 
   const handleConfirm = async () => {
-    await mutateAsync({ tenantId, code: app.code });
+    await mutateAsync({ code: app.code });
     close();
   };
 

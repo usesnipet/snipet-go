@@ -3,13 +3,11 @@ import { SecretKeyDialog } from "@/components/secret-key-dialog";
 import { Button } from "@/components/ui/button";
 import { ApiKeyTable } from "@/features/api-key/components/api-key-table";
 import { CreateApiKeyDialog } from "@/features/api-key/components/create-api-key-dialog";
-import { useTenantStore } from "@/features/tenant/store";
 import { useDialog } from "@/lib/dialog/use-dialog";
 import { Plus } from "lucide-react";
 
 import type { ApiKeyWithSecret } from "@/features/api-key/schemas";
 export function ApiKeysPage() {
-  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
 
   const showSecret = (apiKey: ApiKeyWithSecret) => {
@@ -24,11 +22,9 @@ export function ApiKeysPage() {
   };
 
   const openCreate = () => {
-    if (!tenant) return;
     openDialog({
       component: CreateApiKeyDialog,
       props: {
-        tenantId: tenant.id,
         onCreated: (apiKey) => showSecret(apiKey),
       },
     });

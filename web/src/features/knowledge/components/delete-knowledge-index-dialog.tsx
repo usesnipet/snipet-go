@@ -15,13 +15,11 @@ import type { KnowledgeIndex } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type DeleteKnowledgeIndexDialogProps = DialogInstanceProps<{
-  tenantId: string;
   knowledgeID: string;
   index: KnowledgeIndex;
 }>;
 
 export function DeleteKnowledgeIndexDialog({
-  tenantId,
   knowledgeID,
   index,
   close,
@@ -29,7 +27,7 @@ export function DeleteKnowledgeIndexDialog({
   const { mutateAsync, isPending } = useDeleteKnowledgeIndex();
 
   const handleConfirm = async () => {
-    await mutateAsync({ tenantId, knowledgeID, id: index.id });
+    await mutateAsync({ knowledgeID, id: index.id });
     close();
   };
 

@@ -21,11 +21,10 @@ import type { CreateLlm, Llm } from "../schemas";
 import type { DialogInstanceProps } from "@/lib/dialog";
 
 type UpdateLlmDialogProps = DialogInstanceProps<{
-  tenantId: string;
   llm: Llm;
 }>;
 
-export function UpdateLlmDialog({ tenantId, llm, close }: UpdateLlmDialogProps) {
+export function UpdateLlmDialog({ llm, close }: UpdateLlmDialogProps) {
   const form = useForm<CreateLlm>({
     resolver: zodResolver(createLlmSchema),
     defaultValues: {

@@ -21,11 +21,10 @@ const formSchema = updateAppSchema.and(updateAppAuthConfigSchema);
 type FormValues = z.infer<typeof formSchema>;
 
 type UpdateAppDialogProps = DialogInstanceProps<{
-  tenantId: string
   app: App
 }>;
 
-export function UpdateAppDialog({ tenantId, app, close }: UpdateAppDialogProps) {
+export function UpdateAppDialog({ app, close }: UpdateAppDialogProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,8 +41,8 @@ export function UpdateAppDialog({ tenantId, app, close }: UpdateAppDialogProps) 
 
   const onSubmit = form.handleSubmit(async ({ auth_config: app_config, ...data }) => {
     await Promise.all([
-      updateApp({ tenantId, code: app.code, data }),
-      updateAuthConfig({ tenantId, code: app.code, data: { auth_config: app_config } }),
+      updateApp({ code: app.code, data }),
+      updateAuthConfig({ code: app.code, data: { auth_config: app_config } }),
     ]);
     close();
   });

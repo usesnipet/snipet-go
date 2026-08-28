@@ -6,7 +6,6 @@ import { DateFormat } from "@/components/ui/date";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useTenantStore } from "@/features/tenant/store";
 import { useNavigate } from "@/hooks/use-navigate";
 import { useDialog } from "@/lib/dialog";
 import { ROUTES } from "@/routes";
@@ -24,7 +23,6 @@ import { UpdateAppDialog } from "./update-app-dialog";
 import type { App, AppWithSecret } from "../schemas";
 
 export function AppCatalogItem({ app }: { app: App }) {
-  const tenant = useTenantStore((state) => state.tenant);
   const { openDialog } = useDialog();
   const navigate = useNavigate();
   const { mutate: setActive } = useSetActiveApp();
@@ -41,31 +39,27 @@ export function AppCatalogItem({ app }: { app: App }) {
   };
 
   const openRoll = () => {
-    if (!tenant) return;
     openDialog({
       component: RollAppDialog,
-      props: { tenantId: tenant.id, app, onRolled: (rolled) => showSecret(rolled) },
+      props: { app, onRolled: (rolled) => showSecret(rolled) },
     });
   };
 
   const toggleActive = () => {
-    if (!tenant) return;
-    setActive({ tenantId: tenant.id, code: app.code, active: app.status !== "active" });
+    setActive({ code: app.code, active: app.status !== "active" });
   };
 
   const openEdit = () => {
-    if (!tenant) return;
     openDialog({
       component: UpdateAppDialog,
-      props: { tenantId: tenant.id, app },
+      props: { app },
     });
   };
 
   const openDelete = () => {
-    if (!tenant) return;
     openDialog({
       component: DeleteAppDialog,
-      props: { tenantId: tenant.id, app },
+      props: { app },
     });
   };
 

@@ -1,13 +1,11 @@
 import { DriverSelect } from "@/components/form/driver-select";
 import { FormInput } from "@/components/form/input";
 import { FieldGroup } from "@/components/ui/field";
-import { useTenantStore } from "@/features/tenant/store";
 
 import { useListLlmDrivers } from "../hooks";
 
 export function LlmFormFields() {
-  const tenant = useTenantStore((state) => state.tenant);
-  const { data: drivers } = useListLlmDrivers(tenant?.id ?? "");
+  const { data: drivers } = useListLlmDrivers();
 
   return (
     <FieldGroup>

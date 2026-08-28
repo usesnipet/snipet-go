@@ -29,15 +29,13 @@ import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 
 const BASE_QUERY_KEY = "knowledge";
 
-export const listKnowledgeQueryKey = (tenantId: string) => [BASE_QUERY_KEY, "list", tenantId] as const;
+export const listKnowledgeQueryKey = () => [BASE_QUERY_KEY, "list"] as const;
 export const useListKnowledge = (
-  tenantId: string,
   opts?: ServiceGetOptions<PaginatedKnowledge>,
 ): UseQueryResult<PaginatedKnowledge, Error> => {
   return useQuery({
-    queryKey: listKnowledgeQueryKey(tenantId),
-    queryFn: () => knowledgeService.list(tenantId, opts),
-    enabled: !!tenantId,
+    queryKey: listKnowledgeQueryKey(),
+    queryFn: () => knowledgeService.list(opts),
     refetchInterval: (query) => {
       const knowledgeList = query.state.data?.data ?? [];
       const isPending = knowledgeList.some(k => k.sync_status === "pending");
@@ -48,17 +46,16 @@ export const useListKnowledge = (
   });
 };
 
-export const knowledgeQueryKey = (tenantId: string, id: string) =>
-  [BASE_QUERY_KEY, tenantId, id] as const;
+export const knowledgeQueryKey = (id: string) =>
+  [BASE_QUERY_KEY, id] as const;
 export const useKnowledge = (
-  tenantId: string,
   id: string,
   opts?: ServiceGetOptions<Knowledge>,
 ): UseQueryResult<Knowledge, Error> => {
   return useQuery({
-    queryKey: knowledgeQueryKey(tenantId, id),
-    queryFn: () => knowledgeService.findByID(tenantId, id, opts),
-    enabled: Boolean(tenantId) && Boolean(id),
+    queryKey: knowledgeQueryKey(id),
+    queryFn: () => knowledgeService.findByID(id, opts),
+    enabled: Boolean(id),
     refetchInterval: (query) => {
       const knowledge = query.state.data;
       if (!knowledge) return false;
@@ -70,35 +67,34 @@ export const useKnowledge = (
   });
 };
 
-export const listKnowledgeItemsQueryKey = (tenantId: string, id: string) =>
-  [BASE_QUERY_KEY, tenantId, id, "items"] as const;
+export const listKnowledgeItemsQueryKey = (id: string) =>
+  [BASE_QUERY_KEY, id, "items"] as const;
 export const useListKnowledgeItems = (
-  tenantId: string,
   id: string,
   opts?: ServiceGetOptions<PaginatedKnowledgeItem>,
 ): UseQueryResult<PaginatedKnowledgeItem, Error> => {
   return useQuery({
-    queryKey: [...listKnowledgeItemsQueryKey(tenantId, id), opts?.searchParams],
-    queryFn: () => knowledgeService.listItems(tenantId, id, opts),
-    enabled: Boolean(tenantId) && Boolean(id),
+    queryKey: [...listKnowledgeItemsQueryKey(id), opts?.searchParams],
+    queryFn: () => knowledgeService.listItems(id, opts),
+    enabled: Boolean(id),
   });
 };
 
 export const createKnowledgeQueryKey = () => [BASE_QUERY_KEY, "create"] as const;
 export const useCreateKnowledge = (
   opts?: ServicePostOptions<CreateKnowledge, CreateKnowledgeResponse>,
-): UseMutationResult<CreateKnowledgeResponse, Error, { tenantId: string; data: CreateKnowledge }> => {
+): UseMutationResult<CreateKnowledgeResponse, Error, { data: CreateKnowledge }> => {
   return useMutation({
     mutationKey: createKnowledgeQueryKey(),
-    mutationFn: ({ tenantId, data }: { tenantId: string; data: CreateKnowledge }) =>
-      knowledgeService.create(tenantId, data, opts),
-    onSuccess: ({ knowledge }, { tenantId }) => {
+    mutationFn: ({ data }: { data: CreateKnowledge }) =>
+      knowledgeService.create(data, opts),
+    onSuccess: ({ knowledge }) => {
       toast({
         title: "Knowledge created successfully",
         description: "The knowledge source has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(tenantId, knowledge.id) });
-      queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey(tenantId) });
+      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(knowledge.id) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey() });
     },
     onError: () => {
       toast({
@@ -113,18 +109,18 @@ export const useCreateKnowledge = (
 export const updateKnowledgeQueryKey = () => [BASE_QUERY_KEY, "update"] as const;
 export const useUpdateKnowledge = (
   opts?: ServicePutOptions<UpdateKnowledge, void>,
-): UseMutationResult<void, Error, { tenantId: string; id: string; data: UpdateKnowledge }> => {
+): UseMutationResult<void, Error, { id: string; data: UpdateKnowledge }> => {
   return useMutation({
     mutationKey: updateKnowledgeQueryKey(),
-    mutationFn: ({ tenantId, id, data }: { tenantId: string; id: string; data: UpdateKnowledge }) =>
-      knowledgeService.update(tenantId, id, data, opts),
-    onSuccess: (_data, { tenantId, id }) => {
+    mutationFn: ({ id, data }: { id: string; data: UpdateKnowledge }) =>
+      knowledgeService.update(id, data, opts),
+    onSuccess: (_data, { id }) => {
       toast({
         title: "Knowledge updated successfully",
         description: "The knowledge source has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(tenantId, id) });
-      queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey(tenantId) });
+      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey() });
     },
     onError: () => {
       toast({
@@ -136,37 +132,35 @@ export const useUpdateKnowledge = (
   });
 };
 
-export const listKnowledgeDriversQueryKey = (tenantId: string) =>
-  [BASE_QUERY_KEY, "drivers", tenantId] as const;
+export const listKnowledgeDriversQueryKey = () =>
+  [BASE_QUERY_KEY, "drivers"] as const;
 export const useListKnowledgeDrivers = (
-  tenantId: string,
   opts?: ServiceGetOptions<ListKnowledgeDrivers>,
 ): UseQueryResult<DriverInfo[], Error> => {
   return useQuery({
-    queryKey: listKnowledgeDriversQueryKey(tenantId),
-    queryFn: () => knowledgeService.listDrivers(tenantId, opts),
-    enabled: !!tenantId,
+    queryKey: listKnowledgeDriversQueryKey(),
+    queryFn: () => knowledgeService.listDrivers(opts),
   });
 };
 
 export const syncKnowledgeQueryKey = () => [BASE_QUERY_KEY, "sync"] as const;
 export const useSyncKnowledge = (
   opts?: ServicePostOptions<undefined, void>,
-): UseMutationResult<void, Error, { tenantId: string; id: string; force?: boolean }> => {
+): UseMutationResult<void, Error, { id: string; force?: boolean }> => {
   return useMutation({
     mutationKey: syncKnowledgeQueryKey(),
-    mutationFn: ({ tenantId, id, force = false }) =>
-      knowledgeService.sync(tenantId, id, force, opts),
-    onSuccess: (_data, { tenantId, id, force }) => {
+    mutationFn: ({ id, force = false }) =>
+      knowledgeService.sync(id, force, opts),
+    onSuccess: (_data, { id, force }) => {
       toast({
         title: force ? "Full resync started" : "Sync started",
         description: force
           ? "A full resync of the knowledge source has been queued"
           : "A sync of the knowledge source has been queued",
       });
-      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(tenantId, id) });
-      queryClient.invalidateQueries({ queryKey: listKnowledgeItemsQueryKey(tenantId, id) });
-      queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey(tenantId) });
+      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeItemsQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey() });
     },
     onError: (_error, { force }) => {
       toast({
@@ -181,18 +175,18 @@ export const useSyncKnowledge = (
 export const deleteKnowledgeQueryKey = () => [BASE_QUERY_KEY, "delete"] as const;
 export const useDeleteKnowledge = (
   opts?: ServiceDeleteOptions<void>,
-): UseMutationResult<void, Error, { tenantId: string; id: string }> => {
+): UseMutationResult<void, Error, { id: string }> => {
   return useMutation({
     mutationKey: deleteKnowledgeQueryKey(),
-    mutationFn: ({ tenantId, id }: { tenantId: string; id: string }) =>
-      knowledgeService.delete(tenantId, id, opts),
-    onSuccess: (_data, { tenantId, id }) => {
+    mutationFn: ({ id }: { id: string }) =>
+      knowledgeService.delete(id, opts),
+    onSuccess: (_data, { id }) => {
       toast({
         title: "Knowledge deleted successfully",
         description: "The knowledge source has been deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(tenantId, id) });
-      queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey(tenantId) });
+      queryClient.invalidateQueries({ queryKey: knowledgeQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeQueryKey() });
     },
     onError: () => {
       toast({
@@ -206,34 +200,32 @@ export const useDeleteKnowledge = (
 
 const INDEX_QUERY_KEY = "knowledge-index";
 
-export const listKnowledgeIndexesQueryKey = (tenantId: string, knowledgeID: string) =>
-  [INDEX_QUERY_KEY, tenantId, knowledgeID] as const;
+export const listKnowledgeIndexesQueryKey = (knowledgeID: string) =>
+  [INDEX_QUERY_KEY, knowledgeID] as const;
 export const useListKnowledgeIndexes = (
-  tenantId: string,
   knowledgeID: string,
   opts?: ServiceGetOptions<PaginatedKnowledgeIndex>,
 ): UseQueryResult<PaginatedKnowledgeIndex, Error> => {
   return useQuery({
-    queryKey: listKnowledgeIndexesQueryKey(tenantId, knowledgeID),
+    queryKey: listKnowledgeIndexesQueryKey(knowledgeID),
     queryFn: () =>
-      knowledgeIndexService.list(tenantId, knowledgeID, opts),
-    enabled: Boolean(tenantId) && Boolean(knowledgeID),
+      knowledgeIndexService.list(knowledgeID, opts),
+    enabled: Boolean(knowledgeID),
   });
 };
 
-export const knowledgeIndexQueryKey = (tenantId: string, knowledgeID: string, id: string) =>
-  [INDEX_QUERY_KEY, tenantId, knowledgeID, id] as const;
+export const knowledgeIndexQueryKey = (knowledgeID: string, id: string) =>
+  [INDEX_QUERY_KEY, knowledgeID, id] as const;
 export const useKnowledgeIndex = (
-  tenantId: string,
   knowledgeID: string,
   id: string,
   opts?: ServiceGetOptions<KnowledgeIndex>,
 ): UseQueryResult<KnowledgeIndex, Error> => {
   return useQuery({
-    queryKey: knowledgeIndexQueryKey(tenantId, knowledgeID, id),
+    queryKey: knowledgeIndexQueryKey(knowledgeID, id),
     queryFn: () =>
-      knowledgeIndexService.findByID(tenantId, knowledgeID, id, opts),
-    enabled: Boolean(tenantId) && Boolean(knowledgeID) && Boolean(id),
+      knowledgeIndexService.findByID(knowledgeID, id, opts),
+    enabled: Boolean(knowledgeID) && Boolean(id),
   });
 };
 
@@ -243,18 +235,18 @@ export const useCreateKnowledgeIndex = (
 ): UseMutationResult<
   KnowledgeIndex,
   Error,
-  { tenantId: string; knowledgeID: string; data: CreateKnowledgeIndex }
+  { knowledgeID: string; data: CreateKnowledgeIndex }
 > => {
   return useMutation({
     mutationKey: createKnowledgeIndexQueryKey(),
-    mutationFn: ({ tenantId, knowledgeID, data }) =>
-      knowledgeIndexService.create(tenantId, knowledgeID, data, opts),
-    onSuccess: (_data, { tenantId, knowledgeID }) => {
+    mutationFn: ({ knowledgeID, data }) =>
+      knowledgeIndexService.create(knowledgeID, data, opts),
+    onSuccess: (_data, { knowledgeID }) => {
       toast({
         title: "Index created successfully",
         description: "The knowledge index has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(tenantId, knowledgeID) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(knowledgeID) });
     },
     onError: () => {
       toast({
@@ -272,19 +264,19 @@ export const useUpdateKnowledgeIndex = (
 ): UseMutationResult<
   void,
   Error,
-  { tenantId: string; knowledgeID: string; id: string; data: UpdateKnowledgeIndex }
+  { knowledgeID: string; id: string; data: UpdateKnowledgeIndex }
 > => {
   return useMutation({
     mutationKey: updateKnowledgeIndexQueryKey(),
-    mutationFn: ({ tenantId, knowledgeID, id, data }) =>
-      knowledgeIndexService.update(tenantId, knowledgeID, id, data, opts),
-    onSuccess: (_data, { tenantId, knowledgeID, id }) => {
+    mutationFn: ({ knowledgeID, id, data }) =>
+      knowledgeIndexService.update(knowledgeID, id, data, opts),
+    onSuccess: (_data, { knowledgeID, id }) => {
       toast({
         title: "Index updated successfully",
         description: "The knowledge index has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: knowledgeIndexQueryKey(tenantId, knowledgeID, id) });
-      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(tenantId, knowledgeID) });
+      queryClient.invalidateQueries({ queryKey: knowledgeIndexQueryKey(knowledgeID, id) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(knowledgeID) });
     },
     onError: () => {
       toast({
@@ -299,17 +291,17 @@ export const useUpdateKnowledgeIndex = (
 export const deleteKnowledgeIndexQueryKey = () => [INDEX_QUERY_KEY, "delete"] as const;
 export const useDeleteKnowledgeIndex = (
   opts?: ServiceDeleteOptions<void>,
-): UseMutationResult<void, Error, { tenantId: string; knowledgeID: string; id: string }> => {
+): UseMutationResult<void, Error, { knowledgeID: string; id: string }> => {
   return useMutation({
     mutationKey: deleteKnowledgeIndexQueryKey(),
-    mutationFn: ({ tenantId, knowledgeID, id }) =>
-      knowledgeIndexService.delete(tenantId, knowledgeID, id, opts),
-    onSuccess: (_data, { tenantId, knowledgeID }) => {
+    mutationFn: ({ knowledgeID, id }) =>
+      knowledgeIndexService.delete(knowledgeID, id, opts),
+    onSuccess: (_data, { knowledgeID }) => {
       toast({
         title: "Index deleted successfully",
         description: "The knowledge index has been deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(tenantId, knowledgeID) });
+      queryClient.invalidateQueries({ queryKey: listKnowledgeIndexesQueryKey(knowledgeID) });
     },
     onError: () => {
       toast({
@@ -321,15 +313,13 @@ export const useDeleteKnowledgeIndex = (
   });
 };
 
-export const listKnowledgeIndexDriversQueryKey = (tenantId: string) =>
-  [INDEX_QUERY_KEY, "drivers", tenantId] as const;
+export const listKnowledgeIndexDriversQueryKey = () =>
+  [INDEX_QUERY_KEY, "drivers"] as const;
 export const useListKnowledgeIndexDrivers = (
-  tenantId: string,
   opts?: ServiceGetOptions<ListKnowledgeIndexDrivers>,
 ): UseQueryResult<DriverInfo[], Error> => {
   return useQuery({
-    queryKey: listKnowledgeIndexDriversQueryKey(tenantId),
-    queryFn: () => knowledgeIndexService.listDrivers(tenantId, opts),
-    enabled: !!tenantId,
+    queryKey: listKnowledgeIndexDriversQueryKey(),
+    queryFn: () => knowledgeIndexService.listDrivers(opts),
   });
 };

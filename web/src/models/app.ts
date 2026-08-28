@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { appToAppUserSchema, type AppToAppUser } from "@/models/app-user";
 import { sessionSchema, type Session } from "@/models/session";
-import { tenantSchema, type Tenant } from "@/models/tenant";
 
 /** Accepts "" from form inputs and coerces to undefined; input/output stay `string | undefined`. */
 const urlSchema = z.union([
@@ -36,7 +35,6 @@ export type AppStatus = z.infer<typeof appStatusSchema>;
 
 export interface App {
   id: string;
-  tenant_id: string;
   code: string;
   name: string;
   description: string;
@@ -45,7 +43,6 @@ export interface App {
   last_verified_at: Date | null;
   key_id: string;
   auth_config: AppAuthConfig;
-  tenant?: Tenant | null;
   sessions: Session[] | null;
   app_to_users: AppToAppUser[] | null;
 }
@@ -54,7 +51,6 @@ export interface App {
 export const appBaseSchema = z
   .object({
     id: z.string(),
-    tenant_id: z.string(),
     code: z.string(),
     name: z.string().min(1).max(255),
     description: z.string().max(1000),
@@ -69,7 +65,6 @@ export const appBaseSchema = z
 export const appSchema: z.ZodType<App> = z.lazy(() =>
   appBaseSchema
     .extend({
-      tenant: tenantSchema.nullable().optional(),
       sessions: z.array(sessionSchema).nullable(),
       app_to_users: z.array(appToAppUserSchema).nullable(),
     })
