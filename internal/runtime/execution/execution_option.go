@@ -28,6 +28,12 @@ func WithAgent(agent *Agent) ExecutionOption {
 	}
 }
 
+func WithStreamMessages(streamMessages bool) ExecutionOption {
+	return func(execution *Execution) {
+		execution.StreamMessages = streamMessages
+	}
+}
+
 // region Messages
 func WithInitialMessages(messages ...msg.Message) ExecutionOption {
 	return func(execution *Execution) {

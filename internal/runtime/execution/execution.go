@@ -17,9 +17,10 @@ type Config struct {
 }
 
 type Execution struct {
-	Agent     *Agent
-	publisher IPublisher
-	Config    Config
+	Agent          *Agent
+	publisher      IPublisher
+	Config         Config
+	StreamMessages bool
 
 	ErrorMessage string        `json:"error_message,omitempty" validate:"omitempty,max=255"`
 	Status       Status        `json:"status" validate:"required,oneof=pending running completed failed max_turns cancelled"`

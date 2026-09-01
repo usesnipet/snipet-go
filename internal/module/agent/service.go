@@ -150,12 +150,13 @@ func (s *Service) Run(ctx context.Context, input RunInput, subscribers ...execut
 	initialMessages = append(initialMessages, userMessage)
 
 	executionModel := &model.Execution{
-		SessionID:    input.SessionID,
-		AgentID:      agent.ID,
-		Status:       execution.StatusRunning,
-		ErrorMessage: "",
-		Turns:        0,
-		Metadata:     jsonx.JSONMap{},
+		SessionID:      input.SessionID,
+		StreamMessages: input.StreamMessages,
+		AgentID:        agent.ID,
+		Status:         execution.StatusRunning,
+		ErrorMessage:   "",
+		Turns:          0,
+		Metadata:       jsonx.JSONMap{},
 	}
 	executionRuntime, err := executionModel.ToRuntimeExecution(
 		execution.WithAgent(agent.ToRuntimeAgent()),

@@ -79,8 +79,11 @@ func stream(
 		switch ev := it.Event().(type) {
 		case llm.TextDeltaEvent:
 			content.WriteString(ev.Text)
-			if err := exe.Publish(ctx, execution.MessageDeltaEvent{MessageID: messageID, Content: ev.Text}); err != nil {
-				return msg.Message{}, err
+			if exe.StreamMessages {
+				err := exe.Publish(ctx, execution.MessageDeltaEvent{MessageID: messageID, Content: ev.Text})
+				if err != nil {
+					return msg.Message{}, err
+				}
 			}
 
 		case llm.ToolCallEvent:
