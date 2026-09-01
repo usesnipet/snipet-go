@@ -1,4 +1,5 @@
-h1:RVXM55CMJWfE5PuO/6PpywBOUl/LCGFsg5dneWELWJI=
+h1:XjqfHb0XIo5+4jEtTGHZtpoLtkMd2yJE27qDNhHIW8Y=
 20260817191039_tenant_scoped_initial.up.sql h1:eFjEgk/2hihqhVvsHIswJx6RxecL9pYGkDGJsfLnCXk=
 20260820194020_clients_to_apps.up.sql h1:zBF6r8Zq8mQvDkX/fFeFCce6C5ksWoScyrJbsKQ5290=
 20260822093329_app_public_field.up.sql h1:71jELdFm33YTo3wnI8zfmyqW4tBggqoXUFIwlS6DIXs=
+20260831141056_convert_to_single_tenant.up.sql h1:2s5Q2R5BmCcwjYtXdFrCCI6Xb24gxcONywNTobq+gR0=

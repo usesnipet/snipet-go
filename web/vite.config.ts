@@ -7,6 +7,16 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 	const backendUrl = env.BACKEND_URL ?? 'http://localhost:8852';
 
+  const basicAuthUser = env.BASIC_AUTH_USERNAME ?? 'admin';
+  const basicAuthPass = env.BASIC_AUTH_PASSWORD;
+  const proxyHeaders = basicAuthPass
+    ? {
+        Authorization:
+          'Basic ' +
+          Buffer.from(`${basicAuthUser}:${basicAuthPass}`).toString('base64'),
+      }
+    : undefined;
+
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -15,7 +25,13 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      proxy: { '^/api/': { target: backendUrl, changeOrigin: true } }
+      proxy: {
+        '^/api/': {
+          target: backendUrl,
+          changeOrigin: true,
+          headers: proxyHeaders,
+        },
+      },
     },
   }
 })
