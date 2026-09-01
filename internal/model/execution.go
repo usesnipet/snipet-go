@@ -13,7 +13,6 @@ type Execution struct {
 	SessionID      *string          `gorm:"type:uuid;index" json:"session_id,omitempty"`
 	AgentID        string           `gorm:"type:uuid;not null;index" json:"agent_id"`
 	Status         execution.Status `gorm:"type:varchar(50);not null" json:"status"`
-	StateSnapshot  jsonx.JSONMap    `gorm:"type:jsonb" json:"state_snapshot,omitempty"`
 	StreamMessages bool             `gorm:"type:boolean;not null;default:true" json:"stream_messages"`
 	ErrorMessage   string           `gorm:"type:text;not null" json:"error_message,omitempty"`
 	Turns          int              `gorm:"type:integer;not null;default:0" json:"turns"`
