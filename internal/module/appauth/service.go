@@ -3,9 +3,11 @@ package appauth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/usesnipet/snipet/config"
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/auth"
@@ -104,6 +106,39 @@ func (s *Service) Authenticate(ctx context.Context, appCode string, providerName
 		return nil, err
 	}
 	return s.issueTokens(ctx, app.Code, user, refreshMetadata)
+}
+
+func (s *Service) generateAnonymousName() string {
+	return fmt.Sprintf("Anonymous %s", uuid.New().String()[:8])
+}
+
+func (s *Service) AuthenticateAnonymous(ctx context.Context, appCode string, dto AuthenticateAnonymousDTO, refreshMetadata jsonx.JSONMap) (*AuthenticateResponse, error) {
+	app, err := s.appRepo.FindByCode(ctx, appCode)
+	if err != nil {
+		return nil, err
+	}
+	if !app.AuthConfig.Anonymous.Enabled {
+		return nil, apperr.Unauthorized("anonymous authentication is not enabled for this app")
+	}
+
+	name := s.generateAnonymousName()
+	if dto.Name != nil {
+		name = *dto.Name
+	}
+	metadata := dto.Metadata
+	if metadata == nil {
+		metadata = jsonx.JSONMap{}
+	}
+	user := &model.AppUser{
+		Name:     name,
+		Picture:  dto.Picture,
+		Email:    dto.Email,
+		Metadata: metadata,
+	}
+	if err := s.userRepo.CreateInApp(ctx, appCode, user, nil); err != nil {
+		return nil, err
+	}
+	return s.issueTokens(ctx, appCode, user, refreshMetadata)
 }
 
 func (s *Service) Refresh(ctx context.Context, appCode string, dto RefreshDTO, refreshMetadata jsonx.JSONMap) (*AuthenticateResponse, error) {

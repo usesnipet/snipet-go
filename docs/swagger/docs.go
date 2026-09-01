@@ -887,6 +887,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/apps/{code}/auth/anonymous": {
+            "post": {
+                "description": "Creates or authenticates an anonymous app user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Authenticate anonymously",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Anonymous user data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AuthenticateAnonymousDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthenticateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
         "/apps/{code}/authenticate/{provider_name}": {
             "post": {
                 "description": "Authenticates an app user through the given auth provider (e.g. oidc, webhook).",
@@ -2897,6 +2944,14 @@ const docTemplate = `{
         "AppAuthConfig": {
             "type": "object",
             "properties": {
+                "anonymous": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        }
+                    }
+                },
                 "oidc": {
                     "type": "object",
                     "properties": {
@@ -3166,6 +3221,24 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "AuthenticateAnonymousDTO": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/JSONMap"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "picture": {
+                    "type": "string"
                 }
             }
         },

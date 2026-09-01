@@ -54,7 +54,7 @@ func (s *Service) FindPublicByCode(ctx context.Context, code string) (*PublicApp
 		return nil, err
 	}
 	if !app.Public {
-		return nil, apperr.NotFound("app not found")
+		return nil, apperr.NotFound("app is not public")
 	}
 	return &PublicAppDTO{Code: app.Code, Name: app.Name, Description: app.Description}, nil
 }

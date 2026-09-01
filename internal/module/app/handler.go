@@ -18,30 +18,35 @@ func NewHandler(service *Service, basicAuthGate api.Gate, appKeyGate api.Gate) a
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-	// Public surface — no auth at all. findPublicByCode only ever exposes
-	// apps explicitly marked Public; ping is authenticated with the app's
-	// own key (see guard.RequireAppKey), not admin basic auth.
-	r.Route("/apps/{code}", func(r chi.Router) {
-		r.Get("/public", serve(h.findPublicByCode))
-
-		r.Route("/ping", func(r chi.Router) {
-			r.Use(h.appKeyGate.Handler())
-			r.Post("/", serve(h.ping))
-		})
-	})
-
-	// Admin/CRUD surface.
+	// A single mount for the whole surface. Splitting this into sibling
+	// r.Route("/apps/{code}", ...) and r.Route("/apps", ...) blocks makes chi
+	// mount two subrouters at overlapping paths, and the more specific
+	// "/apps/{code}" mount then shadows every "/apps/{code}/*" admin route.
 	r.Route("/apps", func(r chi.Router) {
-		r.Use(h.basicAuthGate.Handler())
-		r.Get("/", serve(h.filter))
-		r.Post("/", serve(h.create))
-		r.Get("/{code}", serve(h.findByCode))
-		r.Put("/{code}", serve(h.update))
-		r.Put("/{code}/auth-config", serve(h.updateAuthConfig))
-		r.Post("/{code}/roll", serve(h.roll))
-		r.Put("/{code}/active", serve(h.toggleActive))
-		r.Put("/{code}/disabled", serve(h.toggleDisabled))
-		r.Delete("/{code}", serve(h.delete))
+		// Public surface — no auth at all. findPublicByCode only ever exposes
+		// apps explicitly marked Public.
+		r.Get("/{code}/public", serve(h.findPublicByCode))
+
+		// ping is authenticated with the app's own key (see
+		// guard.RequireAppKey), not admin basic auth.
+		r.Group(func(r chi.Router) {
+			r.Use(h.appKeyGate.Handler())
+			r.Post("/{code}/ping", serve(h.ping))
+		})
+
+		// Admin/CRUD surface.
+		r.Group(func(r chi.Router) {
+			r.Use(h.basicAuthGate.Handler())
+			r.Get("/", serve(h.filter))
+			r.Post("/", serve(h.create))
+			r.Get("/{code}", serve(h.findByCode))
+			r.Put("/{code}", serve(h.update))
+			r.Put("/{code}/auth-config", serve(h.updateAuthConfig))
+			r.Post("/{code}/roll", serve(h.roll))
+			r.Put("/{code}/active", serve(h.toggleActive))
+			r.Put("/{code}/disabled", serve(h.toggleDisabled))
+			r.Delete("/{code}", serve(h.delete))
+		})
 	})
 }
 

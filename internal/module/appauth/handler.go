@@ -21,6 +21,7 @@ func NewHandler(service *Service) api.Handler {
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 	r.Route("/apps/{code}/auth", func(r chi.Router) {
+		r.Post("/anonymous", serve(h.authenticateAnonymous))
 		r.Post("/{provider_name}", serve(h.authenticate))
 		r.Post("/refresh", serve(h.refresh))
 	})
@@ -65,6 +66,28 @@ func clientIP(r *http.Request) string {
 func (h *Handler) authenticate(w http.ResponseWriter, r *http.Request) error {
 	providerName := auth_provider.ProviderName(chi.URLParam(r, "provider_name"))
 	res, err := h.service.Authenticate(r.Context(), h.appCode(r), providerName, r, requestMetadata(r))
+	if err != nil {
+		return err
+	}
+	return api.WriteJSON(w, http.StatusOK, res)
+}
+
+// @Summary		Authenticate anonymously
+// @Description	Creates or authenticates an anonymous app user.
+// @Tags			auth
+// @Accept			json
+// @Produce		json
+// @Param			code	path		string						true	"App code"
+// @Param			body	body		AuthenticateAnonymousDTO	true	"Anonymous user data"
+// @Success		200		{object}	AuthenticateResponse
+// @Failure		400		{object}	api.Error
+// @Router			/apps/{code}/auth/anonymous [post]
+func (h *Handler) authenticateAnonymous(w http.ResponseWriter, r *http.Request) error {
+	var dto AuthenticateAnonymousDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+	res, err := h.service.AuthenticateAnonymous(r.Context(), h.appCode(r), dto, requestMetadata(r))
 	if err != nil {
 		return err
 	}

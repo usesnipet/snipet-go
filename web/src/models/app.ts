@@ -25,6 +25,11 @@ export const appAuthConfigSchema = z
         enabled: z.boolean(),
       })
       .strict(),
+    anonymous: z
+      .object({
+        enabled: z.boolean(),
+      })
+      .strict(),
   })
   .strict();
 

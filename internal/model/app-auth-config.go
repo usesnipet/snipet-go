@@ -13,4 +13,7 @@ type AppAuthConfig struct {
 		URL     string `json:"url" validate:"omitempty,url"`
 		Enabled bool   `json:"enabled"`
 	} `json:"webhook"`
+	Anonymous struct {
+		Enabled bool `json:"enabled"`
+	} `json:"anonymous"`
 }

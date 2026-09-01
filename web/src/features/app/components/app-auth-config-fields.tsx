@@ -47,6 +47,12 @@ export function AppAuthConfigFields() {
           placeholder="https://example.com/webhook"
         />
       )}
+
+      <FormSwitch
+        name="auth_config.anonymous.enabled"
+        label="Anonymous"
+        fieldclassname="justify-between"
+      />
     </FieldSet>
   );
 }
