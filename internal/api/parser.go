@@ -23,7 +23,7 @@ var (
 
 func init() {
 	// alphanum_dash: lowercase letters, digits, and dashes only — used for
-	// slug-like fields (e.g. tenant.Slug).
+	// slug-like fields (e.g. app.Code).
 	_ = validate.RegisterValidation("alphanum_dash", func(fl validator.FieldLevel) bool {
 		return alphanumDashPattern.MatchString(fl.Field().String())
 	})

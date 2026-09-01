@@ -14,11 +14,7 @@ type Config struct {
 	Database DatabaseConfig `env:", prefix=DB_"`
 	Log      LogConfig      `env:", prefix=LOG_"`
 	Auth     AuthConfig     `env:", prefix=AUTH_"`
-	SMTP     SMTPConfig     `env:", prefix=SMTP_"`
 	Sync     SyncConfig     `env:", prefix=SYNC_"`
-	User     UserConfig     `env:""`
-	Tenant   TenantConfig   `env:""`
-	License  LicenseConfig  `env:""`
 	Env      string         `env:"ENV, default=development"`
 	DevProxy string         `env:"DEV_PROXY, default=http://localhost:5173"`
 }

@@ -44,8 +44,8 @@ filter.Merge(baseFilter, userSuppliedFilter)  // later filters win on conflictin
 ```
 
 Use this when a service needs to combine a caller-supplied filter with one
-it enforces itself (e.g. scoping a query to a tenant) rather than
-hand-merging two `Options[T]` structs.
+it enforces itself (e.g. scoping a query to a single `app_code`) rather
+than hand-merging two `Options[T]` structs.
 
 ## Turning it into a GORM query: `ToGorm`
 

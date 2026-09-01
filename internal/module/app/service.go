@@ -177,8 +177,8 @@ func (s *Service) DeleteByCode(ctx context.Context, code string) error {
 }
 
 // VerifyKey is the auth entrypoint itself — looked up by the key's own
-// key_id before any tenant is known, called by guard.RequireAppKey. A
-// deactivated app is rejected here so it can't authenticate at all.
+// key_id, called by guard.RequireAppKey. A deactivated app is rejected
+// here so it can't authenticate at all.
 func (s *Service) VerifyKey(ctx context.Context, key string) (*model.App, error) {
 	keyID := s.generator.GetKeyID(key)
 	paginated, err := s.appRepo.Filter(ctx, filter.New[model.App](filter.WhereEq("key_id", keyID)))

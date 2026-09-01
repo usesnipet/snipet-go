@@ -37,7 +37,7 @@ export function UpdateLlmDialog({ llm, close }: UpdateLlmDialogProps) {
   const { mutateAsync, isPending } = useUpdateLlm();
 
   const onSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync({ tenantId, id: llm.id, data });
+    await mutateAsync({ id: llm.id, data });
     close();
   });
 

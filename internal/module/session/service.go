@@ -35,8 +35,8 @@ func NewService(
 	}
 }
 
-// resolveApp returns the full App row (not just its ID) — Create needs
-// app.TenantID to stamp the new Session's denormalized tenant_id.
+// resolveApp returns the full App row for appCode and authorizes the
+// caller (app key or app user) against it.
 func (s *Service) resolveApp(ctx context.Context, appCode string) (*model.App, error) {
 	app, err := s.appService.FindByCode(ctx, appCode)
 	if err != nil {

@@ -1,11 +1,9 @@
 import { Page, PageActions } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/components/ui/link";
 import { AgentList } from "@/features/agent/components/agent-list";
 import { CreateAgentDialog } from "@/features/agent/components/create-agent-dialog";
 import { useDialog } from "@/lib/dialog/use-dialog";
-import { ROUTES } from "@/routes";
-import { Play, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export function AgentsPage() {
   const { openDialog } = useDialog();
@@ -24,12 +22,6 @@ export function AgentsPage() {
       documentTitle="Agents"
     >
       <PageActions>
-        <Button variant="outline" asChild>
-          <Link href={ROUTES.agentPlayground}>
-            <Play />
-            Playground
-          </Link>
-        </Button>
         <Button onClick={openCreate}>
           <Plus />
           Create Agent

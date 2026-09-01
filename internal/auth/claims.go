@@ -7,8 +7,3 @@ type AppUserClaims struct {
 
 	AppCode string `json:"app_code"`
 }
-
-// PlatformUserClaims are JWT claims issued for a tenant-staff user.
-type PlatformUserClaims struct {
-	BaseClaims
-}

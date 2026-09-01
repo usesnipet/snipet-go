@@ -1,13 +1,13 @@
 # Snipet
 
-Go backend for orchestrating AI agents with multi-client support, conversation sessions, knowledge bases, and a configurable runtime.
+Go backend for orchestrating AI agents with conversation sessions, knowledge bases, and a configurable runtime.
 
 Snipet exposes a REST API that lets external applications (websites, mobile apps, Discord, WhatsApp, etc.) integrate with agents featuring personas, language models, tools, and knowledge sources.
 
 ## Features
 
-- **Multi-tenant by client** — each client has its own users, sessions, and configuration
-- **Flexible authentication** — JWT, webhook, and anonymous users via configurable providers
+- **Single-tenant** — one admin operator, authenticated with HTTP Basic Auth
+- **Per-App end-user auth** — JWT, webhook, and anonymous users via configurable providers
 - **Configurable agents** — persona, LLM models, tools, and knowledge base bindings
 - **Knowledge** — management of static or semi-static data sources (documents, RAG, vector stores, etc.)
 - **Sessions** — conversation history and dynamic state
@@ -23,7 +23,7 @@ Snipet exposes a REST API that lets external applications (websites, mobile apps
 | ORM | GORM |
 | Database | PostgreSQL 17 |
 | Migrations | golang-migrate + Atlas |
-| Auth | JWT, OIDC, webhooks |
+| Auth | HTTP Basic Auth (admin), JWT / OIDC / webhooks (App end-users) |
 | LLM | Google GenAI (provider) |
 
 ## Project structure
@@ -31,7 +31,6 @@ Snipet exposes a REST API that lets external applications (websites, mobile apps
 ```
 snipet/
 ├── cmd/api/              # API entrypoint
-├── cmd/license/          # Offline license-key issuer (gen-keys, issue)
 ├── config/               # Environment-based configuration
 ├── docs/                 # Architecture documentation
 ├── internal/

@@ -13,12 +13,9 @@ database without going through a service that owns that decision.
 type LLM struct {
     ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-    TenantID      string        `gorm:"type:uuid;not null;index" json:"tenant_id"`
     Name          string        `gorm:"type:varchar(255);not null" json:"name"`
     Provider      string        `gorm:"type:varchar(255);not null" json:"provider"`
     Configuration jsonx.JSONMap `gorm:"type:jsonb;not null" json:"configuration"`
-
-    Tenant Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 func (LLM) TableName() string {
@@ -42,16 +39,10 @@ func (LLM) TableName() string {
   [`pkg/jsonx`](../../pkg/jsonx)) or, for a strongly-typed slice/struct,
   tagged `serializer:json` (see `Message.ToolCalls` on
   `internal/model` types built on `pkg/msg`).
-- **`TenantID`** on every entity a tenant owns — `type:uuid;not null;index`
-  plus a `Tenant Tenant` relation tagged `constraint:OnDelete:CASCADE`
-  (`LLM` above; same shape on `Agent`, `APIKey`, `Client`, `Knowledge`).
-  Always **denormalized directly onto the row**, even when it's technically
-  derivable through another FK (an `Execution`'s tenant could be read off
-  its `Agent`) — the generic `Repository[T].Filter` (see
-  [repository.md](./repository.md)) only ever queries a single table, so
-  every model a service lists/filters by tenant needs its own column, not a
-  join. A model reached only through an already-tenant-scoped parent (a
-  pure join table like `AgentToLLM`) doesn't need one.
+- The app is **single-tenant** — models carry no owner/tenant column.
+  Anything App-scoped (`Session`, `AppUser`, ...) links to its `App` by the
+  ordinary FK scalar + association pair below, and services scope those
+  queries by `app_code`.
 
 ## Relationships
 
@@ -59,28 +50,22 @@ func (LLM) TableName() string {
 type Execution struct {
     ID string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 
-    TenantID  string  `gorm:"type:uuid;not null;index" json:"tenant_id"`
     SessionID *string `gorm:"type:uuid;index" json:"session_id,omitempty"`
     AgentID   string  `gorm:"type:uuid;not null;index" json:"agent_id"`
 
-    Tenant   Tenant             `gorm:"foreignKey:TenantID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-    Session  *Session           `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-    Agent    *Agent             `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
-    Messages []ExecutionMessage `gorm:"foreignKey:ExecutionID;constraint:OnDelete:CASCADE" json:"-"`
+    Session  *Session           `gorm:"foreignKey:SessionID;references:ID;constraint:OnDelete:CASCADE" json:"session"`
+    Agent    *Agent             `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"agent"`
+    Messages []ExecutionMessage `gorm:"foreignKey:ExecutionID;constraint:OnDelete:CASCADE" json:"messages"`
 }
 ```
 
-`Execution.TenantID` here is set from `Agent.TenantID` at creation time
-(app-level, not a GORM default) — a "derived" tenant-owned entity copies its
-tenant from whichever parent it's created under, rather than requiring its
-own caller-supplied value.
-
 - The foreign-key **scalar column** (`AgentID`) is what's normally selected
   and filtered on; it has its own `gorm:"index"` tag.
-- The **association field** (`Agent *Agent`) is `json:"-"` — it's only
-  populated when explicitly requested via `filter.Include("Agent")` (see
-  [filter-page.md](./filter-page.md)), so it never accidentally serializes
-  a partially-loaded/nil struct into a response.
+- The **association field** (`Agent *Agent`) is only populated when
+  explicitly requested via `filter.Include("Agent")` (see
+  [filter-page.md](./filter-page.md)). Tag it `json:"-"` when a response
+  must never carry it (most models do); a model that's only ever returned
+  with its associations already loaded can name the field instead.
 - `constraint:OnDelete:CASCADE` documents the FK's delete behavior — it
   must match what the migration actually declares.
 

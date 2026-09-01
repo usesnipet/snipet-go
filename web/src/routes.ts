@@ -5,7 +5,6 @@ export const ROUTES = {
   knowledge: "/knowledge",
   knowledgeDetail: "/knowledge/{id}",
   agent: "/agent",
-  agentPlayground: "/agent/playground",
   llms: "/llms",
   apps: "/apps",
 

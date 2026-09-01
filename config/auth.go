@@ -11,21 +11,5 @@ type AuthConfig struct {
 	JWTIssuer     string        `env:"JWT_ISSUER, default=https://snipet.cloud"`
 	JWTAudience   string        `env:"JWT_AUDIENCE, default=https://snipet.cloud"`
 
-	RefreshTokenExpiration         time.Duration `env:"REFRESH_TOKEN_EXPIRATION, default=720h"`
-	ActivateAccountTokenExpiration time.Duration `env:"ACTIVATE_ACCOUNT_TOKEN_EXPIRATION, default=24h"`
-	ResetPasswordTokenExpiration   time.Duration `env:"RESET_PASSWORD_TOKEN_EXPIRATION, default=1h"`
-	// ResendActivationCooldown blocks ResendActivation from sending another
-	// activation email for the same user before this much time has passed
-	// since the last one, so repeated clicks/requests don't spam the mailbox.
-	ResendActivationCooldown time.Duration `env:"RESEND_ACTIVATION_COOLDOWN, default=1m"`
-
-	AppURL string `env:"APP_URL, default=http://localhost:5173"`
-
-	GoogleClientID     string `env:"GOOGLE_CLIENT_ID"`
-	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET"`
-	GoogleRedirectURL  string `env:"GOOGLE_REDIRECT_URL"`
-
-	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
-	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
-	GithubRedirectURL  string `env:"GITHUB_REDIRECT_URL"`
+	RefreshTokenExpiration time.Duration `env:"REFRESH_TOKEN_EXPIRATION, default=720h"`
 }

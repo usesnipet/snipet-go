@@ -5,23 +5,27 @@ holds business logic — it's strictly composition.
 
 ## `config/`
 
-One struct per concern (`AppConfig`, `ServerConfig`, `DatabaseConfig`,
-`LogConfig`, `AuthConfig`, `SyncConfig`), composed into one `Config`, loaded
-from environment variables (via `go-envconfig`, with `.env` support for
-local dev — `config.Load()` walks up from the working directory looking for
-a `.env` file):
+One struct per concern (`ServerConfig`, `DatabaseConfig`, `LogConfig`,
+`AuthConfig`, `SyncConfig`), composed into one `Config`, loaded from
+environment variables (via `go-envconfig`, with `.env` support for local
+dev — `config.Load()` walks up from the working directory looking for a
+`.env` file):
 
 ```go
 type Config struct {
-    App      AppConfig      `env:", prefix=APP_"`
     Server   ServerConfig   `env:", prefix=SERVER_"`
     Database DatabaseConfig `env:", prefix=DB_"`
     Log      LogConfig      `env:", prefix=LOG_"`
     Auth     AuthConfig     `env:", prefix=AUTH_"`
     Sync     SyncConfig     `env:", prefix=SYNC_"`
     Env      string         `env:"ENV, default=development"`
+    DevProxy string         `env:"DEV_PROXY, default=http://localhost:5173"`
 }
 ```
+
+`AuthConfig` is where admin basic auth lives (`AUTH_BASIC_AUTH_USERNAME` /
+`AUTH_BASIC_AUTH_PASSWORD`), alongside the JWT/refresh-token settings for
+App end-user tokens.
 
 A new cross-cutting setting gets a field (with `env:"..., default=..."`)
 on the relevant sub-struct, not a bespoke `os.Getenv` call somewhere deep
@@ -68,22 +72,17 @@ one function:
    and the knowledge sync workers that use it (see
    [infra.md](./infra.md)).
 6. **Auth primitives** — `auth.NewAPIKeyGenerator`, `auth.NewKeyHasher`,
-   `auth.NewJWTService(cfg.Auth)`, `auth.NewRefreshTokenService(cfg.Auth)`
+   `auth.NewJWTService(cfg.Auth, ...)` for App end-user claims
    (see [auth-middleware.md](./auth-middleware.md)).
 7. **Services** — one `<module>.NewService(repo, ..., logger)` per module,
    each depending only on repository interfaces, managers, and other
-   services it genuinely needs (see [modules.md](./modules.md)). Some call
-   an optional `Init(ctx, ...)` afterward for startup-time setup
-   (`userService.Init`, `tenantService.Init`, `clientService.Init`) — order
-   matters here: `tenantService.Init` must run after `userService.Init`
-   (it attaches the bootstrap admin as a `Member`) and before
-   `clientService.Init` (the inherit-client flow needs the bootstrap
-   tenant's ID to stamp onto the created `Client`).
+   services it genuinely needs (see [modules.md](./modules.md)).
 8. **Cache** — `cache.NewMemoryCache(...)` for anything a guard needs
    (see [infra.md](./infra.md)).
-9. **Guards** — `guard.RequireUser` / `guard.RequireApiKey` /
-   `guard.RequireClientUser` (and `guard.Or(...)` compositions), built from
-   the services/cache above; pass `.Handler()` into modules (see
+9. **Guards** — `guard.RequireBasicAuth` / `guard.RequireApiKey` /
+   `guard.RequireAppKey` / `guard.RequireAppUser` (composed at the route
+   level with `api.Or(...)`), built from the config/services/cache above
+   and passed as raw `api.Gate`s into modules (see
    [auth-middleware.md](./auth-middleware.md)).
 10. **Handlers** — one `<module>.NewHandler(service, middleware...)` per
     module.

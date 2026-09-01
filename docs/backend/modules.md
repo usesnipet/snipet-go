@@ -80,19 +80,18 @@ real work only where the domain needs it (e.g. `LLM.Create` validates
 `Configuration` against the provider's JSON Schema via `llmManager` before
 persisting, see [drivers.md](./drivers.md)).
 
-For a module scoped under `/tenants/{tenant_id}/...`, every method also
-takes `tenantID string` as its first parameter and starts with an
-`authz.RequireMember`/`RequireAdmin` check (see
-[auth-middleware.md](./auth-middleware.md)):
+The app is single-tenant, so admin service methods take no ownership
+argument — the `guard.RequireBasicAuth` gate on the route is the whole
+check (see [auth-middleware.md](./auth-middleware.md)). App-scoped modules
+(`app`, `appuser`, `session`) still pass an `appCode` through and confirm
+the calling credential matches it.
 
 **The pointer-fields-mean-partial-update pattern**, from `LLM.Update`:
 
 ```go
-func (s *Service) Update(ctx context.Context, tenantID, id string, dto UpdateLLMDTO) error {
-    if _, err := authz.RequireMember(ctx, tenantID); err != nil {
-        return err
-    }
-    if _, err := s.findInTenant(ctx, tenantID, id); err != nil { // fetch-then-compare, see below
+func (s *Service) Update(ctx context.Context, id string, dto UpdateLLMDTO) error {
+    existing, err := s.repo.FindByID(ctx, id)
+    if err != nil {
         return err
     }
 
@@ -128,13 +127,13 @@ The only layer that knows about HTTP. Constructs an `api.Handler` (see
 [api.md](./api.md)):
 
 ```go
-func NewHandler(service *Service, userMiddleware api.MiddlewareFunc) api.Handler {
-    return &Handler{service: service, userMiddleware: userMiddleware}
+func NewHandler(service *Service, basicAuthGate api.Gate) api.Handler {
+    return &Handler{service: service, basicAuthGate: basicAuthGate}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
-    r.Route("/tenants/{tenant_id}/llm", func(r chi.Router) {
-        r.Use(h.userMiddleware)
+    r.Route("/llm", func(r chi.Router) {
+        r.Use(h.basicAuthGate.Handler())
         r.Get("/", serve(h.filter))
         r.Post("/", serve(h.create))
         r.Get("/{id}", serve(h.findByID))
@@ -144,23 +143,20 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 }
 
 func (h *Handler) filter(w http.ResponseWriter, r *http.Request) error {
-    data, err := h.service.Filter(r.Context(), chi.URLParam(r, "tenant_id"), query.ToFilter())
+    data, err := h.service.Filter(r.Context(), query.ToFilter())
     ...
 }
 ```
 
 - Route group + `r.Use(...)` is where a module wires its auth requirement
-  (see [auth-middleware.md](./auth-middleware.md)). Most modules' admin/CRUD
-  surface lives under `/tenants/{tenant_id}/...`, gated by
-  `guard.RequireUser` — every handler method reads `tenant_id` via
-  `chi.URLParam` and passes it as the first argument into the matching
-  service call, which checks it with `authz.RequireMember`/`RequireAdmin`
-  (see [auth-middleware.md](./auth-middleware.md#internal-authz--tenant-membership-on-top-of-guardrequireuser)).
-  A module can still mix gates across route groups when some routes need
-  different auth than others — `agent`'s CRUD lives under
-  `/tenants/{tenant_id}/agents` (`requireUser`) while `POST /agent/{id}/run`
-  stays on `requireApiKey` at its own unprefixed path; `client`/`session`
-  use `Or(...)` compositions for their client-widget-facing routes.
+  (see [auth-middleware.md](./auth-middleware.md)). A module's `handler.go`
+  is handed the raw `api.Gate`(s) it needs and calls `.Handler()` on them
+  per route group. Most modules' admin/CRUD surface sits at its own
+  unprefixed path (`/llm`, `/agent`, ...) gated by `guard.RequireBasicAuth`.
+  A module can mix gates across route groups when some routes need
+  different auth — `agent`'s CRUD is on `requireBasicAuth` while
+  `POST /agent/{id}/run` is on `requireApiKey`; `session` uses
+  `api.Or(requireAppKey, requireAppUser)` for its App-facing routes.
 - Every handler method has the shape `func(w, r) error` — parse with
   `api.ParseBody`/`api.ParseQuery`, call the service, write with
   `api.WriteJSON`/`api.WriteNoContent`, and just `return err` on failure.
