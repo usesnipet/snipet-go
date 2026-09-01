@@ -78,32 +78,48 @@ func (e *Execution) CompleteTurn(ctx context.Context) error {
 	return e.Publish(ctx, TurnCompletedEvent{Turn: e.Turns})
 }
 
+// transition sets the execution's status and error message and publishes the
+// StatusChangedEvent that every status change goes through. Callers that
+// represent a terminal outcome publish their specific lifecycle event
+// afterwards (see Finish, SetError, SetMaxTurnsReachedError, Cancel).
+func (e *Execution) transition(ctx context.Context, status Status, errorMessage string) error {
+	e.Status = status
+	e.ErrorMessage = errorMessage
+	return e.Publish(ctx, StatusChangedEvent{Status: status, ErrorMessage: errorMessage})
+}
+
+// SetStatus performs a non-terminal status change (e.g. to StatusRunning). It
+// clears any error message; use SetError for failures.
+func (e *Execution) SetStatus(ctx context.Context, status Status) error {
+	return e.transition(ctx, status, "")
+}
+
 func (e *Execution) Finish(ctx context.Context) error {
-	e.Status = StatusCompleted
+	if err := e.transition(ctx, StatusCompleted, ""); err != nil {
+		return err
+	}
 	return e.Publish(ctx, FinishedEvent{})
 }
 
-func (e *Execution) SetStatus(ctx context.Context, status Status) error {
-	e.Status = status
-	return e.Publish(ctx, StatusChangedEvent{
-		Status: status,
-	})
-}
-
 func (e *Execution) SetError(ctx context.Context, errorMessage string) error {
-	e.ErrorMessage = errorMessage
-	e.Status = StatusFailed
-	return e.Publish(ctx, StatusChangedEvent{Status: e.Status, ErrorMessage: e.ErrorMessage})
+	if err := e.transition(ctx, StatusFailed, errorMessage); err != nil {
+		return err
+	}
+	return e.Publish(ctx, FailedEvent{Error: errorMessage})
 }
 
 func (e *Execution) SetMaxTurnsReachedError(ctx context.Context) error {
-	e.ErrorMessage = "Maximum number of turns reached"
-	e.Status = StatusMaxTurns
-	return e.Publish(ctx, StatusChangedEvent{Status: e.Status, ErrorMessage: e.ErrorMessage})
+	if err := e.transition(ctx, StatusMaxTurns, "Maximum number of turns reached"); err != nil {
+		return err
+	}
+	return e.Publish(ctx, MaxTurnsReachedEvent{MaxTurns: e.Config.MaxTurns})
 }
 
 func (e *Execution) Cancel(ctx context.Context) error {
-	return e.SetStatus(ctx, StatusCancelled)
+	if err := e.transition(ctx, StatusCancelled, ""); err != nil {
+		return err
+	}
+	return e.Publish(ctx, CancelledEvent{})
 }
 
 func (e *Execution) Publish(ctx context.Context, event IEvent) error {

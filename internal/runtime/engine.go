@@ -17,20 +17,22 @@ type Engine struct {
 	tools  *manager.Toolbox
 	logger *logger.Logger
 
+	generator    *generator.Generator
 	toolExecutor *toolexecutor.ToolExecutor
 }
 
 func NewEngine(
 	llms *manager.DriverManager[llm.Driver],
 	tools *manager.Toolbox,
-	logger *logger.Logger,
+	log *logger.Logger,
 ) *Engine {
 	return &Engine{
 		llms:   llms,
 		tools:  tools,
-		logger: logger,
+		logger: log,
 
-		toolExecutor: toolexecutor.NewToolExecutor(tools, logger),
+		generator:    generator.NewGenerator(llms, log.Child(logger.WithPrefix("generator: "))),
+		toolExecutor: toolexecutor.NewToolExecutor(tools, log.Child(logger.WithPrefix("tool_executor: "))),
 	}
 }
 
@@ -100,6 +102,9 @@ func (e *Engine) loop(ctx context.Context, exe *execution.Execution) error {
 		case StepMaxTurnsReached:
 			e.logger.Warnf("max turns reached (%d/%d)", exe.Turns, exe.Config.MaxTurns)
 			return exe.SetMaxTurnsReachedError(ctx)
+		default:
+			e.logger.Errorf("unexpected step result %q turn=%d", result, exe.Turns)
+			return exe.SetError(ctx, "engine: unexpected step result")
 		}
 	}
 }
@@ -115,7 +120,7 @@ func (e *Engine) step(ctx context.Context, exe *execution.Execution) (StepResult
 	}
 
 	if err := exe.StartTurn(ctx); err != nil {
-		return StepCancel, err
+		return StepResultInvalid, err
 	}
 
 	toolset, err := e.tools.Toolset()
@@ -127,22 +132,16 @@ func (e *Engine) step(ctx context.Context, exe *execution.Execution) (StepResult
 		e.logger.Debugf("resolved toolset with %d tool(s)", len(toolset.Tools))
 	}
 
-	message, err := generator.Generate(
-		ctx,
-		exe,
-		e.llms,
-		toolset,
-		e.logger.Child(logger.WithPrefix("generator: ")),
-	)
+	message, err := e.generator.Generate(ctx, exe, toolset)
 	if err != nil {
 		if ctx.Err() != nil {
 			return StepCancel, nil
 		}
-		return StepContinue, err
+		return StepResultInvalid, err
 	}
 
 	if err = exe.AddMessage(ctx, message); err != nil {
-		return StepContinue, err
+		return StepResultInvalid, err
 	}
 	e.logger.Debugf("assistant message added id=%s content_len=%d tool_calls=%d final=%v",
 		message.ID, len(message.Content), len(message.ToolCalls), message.IsFinal(),
@@ -151,7 +150,7 @@ func (e *Engine) step(ctx context.Context, exe *execution.Execution) (StepResult
 	if len(message.ToolCalls) > 0 {
 		e.logger.Debugf("dispatching %d tool call(s)", len(message.ToolCalls))
 		if err := e.toolExecutor.Run(ctx, exe, message.ToolCalls); err != nil {
-			return StepContinue, err
+			return StepResultInvalid, err
 		}
 		return StepContinue, nil
 	}

@@ -1,8 +1,11 @@
 package execution
 
-import "github.com/usesnipet/snipet/internal/runtime/manager"
+import "github.com/usesnipet/snipet/pkg/jsonx"
 
-type LLMConfig manager.Configuration
+type LLMConfig struct {
+	Key    string        `json:"key"`
+	Config jsonx.JSONMap `json:"config"`
+}
 
 type Agent struct {
 	Name         string

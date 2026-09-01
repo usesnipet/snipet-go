@@ -21,15 +21,40 @@ type StartedEvent struct {
 	event
 }
 
-// StatusChangedEvent is emitted whenever execution status (and related fields) change.
+// StatusChangedEvent is emitted whenever execution status (and related
+// fields) change. Every terminal transition below (FinishedEvent,
+// FailedEvent, MaxTurnsReachedEvent, CancelledEvent) is always preceded by a
+// matching StatusChangedEvent, so a subscriber that only cares about status
+// can ignore the specific events.
 type StatusChangedEvent struct {
 	event
 	Status       Status `json:"status"`
 	ErrorMessage string `json:"error_message,omitempty"`
 }
 
-// FinishedEvent is emitted when an execution is finished.
+// FinishedEvent is emitted when an execution completes successfully
+// (StatusCompleted).
 type FinishedEvent struct {
+	event
+}
+
+// FailedEvent is emitted when an execution terminates with an error
+// (StatusFailed), carrying the failure message.
+type FailedEvent struct {
+	event
+	Error string `json:"error"`
+}
+
+// MaxTurnsReachedEvent is emitted when an execution stops because its turn
+// budget was exhausted (StatusMaxTurns).
+type MaxTurnsReachedEvent struct {
+	event
+	MaxTurns int `json:"max_turns"`
+}
+
+// CancelledEvent is emitted when an execution stops because its context was
+// cancelled (StatusCancelled).
+type CancelledEvent struct {
 	event
 }
 

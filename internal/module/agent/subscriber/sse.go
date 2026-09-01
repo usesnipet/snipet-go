@@ -12,9 +12,12 @@ type SSEEvent string
 
 const (
 	// Execution Events
-	SSEEventExecutionStarted       SSEEvent = "execution.started"
-	SSEEventExecutionStatusChanged SSEEvent = "execution.status_changed"
-	SSEEventExecutionFinished      SSEEvent = "execution.finished"
+	SSEEventExecutionStarted         SSEEvent = "execution.started"
+	SSEEventExecutionStatusChanged   SSEEvent = "execution.status_changed"
+	SSEEventExecutionFinished        SSEEvent = "execution.finished"
+	SSEEventExecutionFailed          SSEEvent = "execution.failed"
+	SSEEventExecutionMaxTurnsReached SSEEvent = "execution.max_turns_reached"
+	SSEEventExecutionCancelled       SSEEvent = "execution.cancelled"
 
 	// Turn Events
 	SSEEventTurnStarted   SSEEvent = "turn.started"
@@ -51,6 +54,12 @@ func (s *SSE) Handle(ctx context.Context, event execution.IEvent) error {
 		return s.sse.Write(string(SSEEventExecutionStatusChanged), event)
 	case execution.FinishedEvent:
 		return s.sse.Write(string(SSEEventExecutionFinished), map[string]string{"status": "done"})
+	case execution.FailedEvent:
+		return s.sse.Write(string(SSEEventExecutionFailed), event)
+	case execution.MaxTurnsReachedEvent:
+		return s.sse.Write(string(SSEEventExecutionMaxTurnsReached), event)
+	case execution.CancelledEvent:
+		return s.sse.Write(string(SSEEventExecutionCancelled), event)
 
 	case execution.TurnStartedEvent:
 		return s.sse.Write(string(SSEEventTurnStarted), event)

@@ -37,10 +37,19 @@ exe, err := execution.NewExecution(
 `Execution` owns the conversation (`Messages`) and turn count for one run,
 and is the only thing both `Engine` and any caller-supplied subscriber talk
 to. Its mutating methods (`AddMessage`, `CompleteTurn`, `Finish`,
-`SetStatus`, `SetError`, `Cancel`) all end by publishing a matching event —
-state changes and notifications happen atomically from the caller's point
-of view, so a subscriber can never observe a state change without the
-event that describes it (or vice versa).
+`SetStatus`, `SetError`, `SetMaxTurnsReachedError`, `Cancel`) all end by
+publishing a matching event — state changes and notifications happen
+atomically from the caller's point of view, so a subscriber can never
+observe a state change without the event that describes it (or vice versa).
+
+Every status change goes through one private `transition` helper that sets
+`Status` + `ErrorMessage` and publishes `StatusChangedEvent`. The terminal
+outcomes then publish a **second, specific** event on top of it:
+`Finish` → `FinishedEvent`, `SetError` → `FailedEvent{Error}`,
+`SetMaxTurnsReachedError` → `MaxTurnsReachedEvent{MaxTurns}`,
+`Cancel` → `CancelledEvent`. So a subscriber that only tracks status
+switches on `StatusChangedEvent` alone; one that wants to react to *how* a
+run ended switches on the specific events.
 
 ## Events and subscribers
 
@@ -52,10 +61,11 @@ type Subscriber interface {
 
 Events are a closed set (sealed via an embedded `event{}` marker, same
 pattern as `pkg/driver/llm.StreamEvent` — a subscriber type-switches on the
-concrete type): `StatusChangedEvent`, `MessageAddedEvent`,
-`TurnCompletedEvent`, `FinishedEvent`, `MessageDeltaEvent` (incremental text
-while the LLM streams), `AttemptFailedEvent`, `ToolCallStartedEvent`,
-`ToolResultEvent`.
+concrete type): `StartedEvent`, `StatusChangedEvent`, `FinishedEvent`,
+`FailedEvent`, `MaxTurnsReachedEvent`, `CancelledEvent`, `MessageAddedEvent`,
+`TurnStartedEvent`, `TurnCompletedEvent`, `MessageDeltaEvent` (incremental
+text while the LLM streams), `MessageAttemptFailedEvent`,
+`ToolCallStartedEvent`, `ToolCallResultEvent`.
 
 Two subscribers ship today, both in `internal/module/agent/subscriber/`,
 both attached by `agent.Service.Run`:
@@ -89,10 +99,15 @@ engine := runtime.NewEngine(llmManager, toolManager, logger)
 err := engine.Start(ctx, exe)
 ```
 
+`NewEngine` builds two collaborators once and holds them for the engine's
+lifetime: a `generator.Generator` (LLM driver manager + a prefixed logger)
+and a `tool_executor.ToolExecutor`.
+
 `Start` validates the agent (an LLM key + config it can resolve and
 validate via `manager.DriverManager[llm.Driver]`, see [drivers.md](./drivers.md)),
 sets `StatusRunning`, then loops calling `step` until it returns a terminal
-`StepResult`:
+`StepResult` (a string enum; the zero value `StepResultInvalid` is only ever
+paired with a non-nil error, meaning "read the error, ignore the result"):
 
 ```go
 StepContinue        // assistant responded with tool calls, or a non-final message — loop again
@@ -103,36 +118,41 @@ StepMaxTurnsReached    // exe.Turns >= exe.Config.MaxTurns — exe.SetMaxTurnsRe
 
 One `step`:
 
-1. Resolve the current `Toolset` from `manager.Toolbox` (empty toolset if it
+1. `exe.StartTurn()` — increments `Turns` and publishes `TurnStartedEvent`
+   (only after the context and max-turns checks pass, so the max-turns turn
+   never emits a spurious start).
+2. Resolve the current `Toolset` from `manager.Toolbox` (empty toolset if it
    can't resolve, rather than aborting the whole execution).
-2. `generator.Generate` — one streamed LLM call producing one assistant
-   `msg.Message` (see below); its `MessageDeltaEvent`/`AttemptFailedEvent`
+3. `generator.Generate` — one streamed LLM call producing one assistant
+   `msg.Message` (see below); its `MessageDeltaEvent`/`MessageAttemptFailedEvent`
    are published *during* generation, before the message is even complete.
-3. `exe.AddMessage` — appends it and publishes `MessageAddedEvent`.
-4. If the message has tool calls, `toolExecutor.Run` executes them and
+4. `exe.AddMessage` — appends it and publishes `MessageAddedEvent`.
+5. If the message has tool calls, `toolExecutor.Run` executes them and
    appends a `RoleTool` message per result (see below) — the loop then
    continues, feeding the tool results back to the LLM on the next turn.
-5. Otherwise, `message.IsFinal()` decides `StepFinish` vs `StepContinue`.
+6. Otherwise, `message.IsFinal()` decides `StepFinish` vs `StepContinue`.
 
-## `generator.Generate` — one LLM call
+## `generator.Generator` — one LLM call
 
-Resolves the agent's configured `llm.Driver`, checks the resolved `Model`
-supports `ModelCapabilitiesToolCall` (returns `ErrModelNotSupportToolCall`
-otherwise — the engine currently requires tool-call-capable models, it
-doesn't degrade to a non-tool-call mode), then calls `Driver.Stream` and
-drains it: `TextDeltaEvent`s become `MessageDeltaEvent` publishes and
-accumulate into the final message's `Content`; `ToolCallEvent`s accumulate
-into `ToolCalls`. A stream error after partial content was already
-published emits `AttemptFailedEvent` — the caller (the engine, via `step`'s
-returned error) is expected to treat that attempt's content as discarded,
-never as part of the conversation history.
+`NewGenerator(llms, logger)` is built once by `NewEngine`; `Generate(ctx,
+exe, toolset)` is called per turn. It resolves the agent's configured
+`llm.Driver`, checks the resolved `Model` supports
+`ModelCapabilitiesToolCall` (returns `ErrModelNotSupportToolCall` otherwise
+— the engine currently requires tool-call-capable models, it doesn't
+degrade to a non-tool-call mode), then calls `Driver.Stream` and drains it:
+`TextDeltaEvent`s become `MessageDeltaEvent` publishes and accumulate into
+the final message's `Content`; `ToolCallEvent`s accumulate into `ToolCalls`.
+A stream error after partial content was already published emits
+`MessageAttemptFailedEvent` — the caller (the engine, via `step`'s returned
+error) is expected to treat that attempt's content as discarded, never as
+part of the conversation history.
 
 ## `tool_executor.ToolExecutor` — running tool calls
 
 For each `tool.Call` on the assistant's message: publishes
 `ToolCallStartedEvent`, calls `manager.Toolbox.Call` (routes to the owning
 driver by namespace prefix, see [drivers.md](./drivers.md)), publishes
-`ToolResultEvent` (with `Error` set instead of `Result` on failure — a tool
+`ToolCallResultEvent` (with `Error` set instead of `Result` on failure — a tool
 failure does **not** abort the execution, it's surfaced to the LLM as an
 error string so it can react), and appends a `RoleTool` message so the next
 turn's prompt includes the result.

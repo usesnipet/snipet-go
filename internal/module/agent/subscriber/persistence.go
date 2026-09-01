@@ -39,8 +39,6 @@ func (p *Persistence) Handle(ctx context.Context, event execution.IEvent) error 
 		return p.handleExecutionTurnCompletedEvent(ctx, event)
 	case execution.StatusChangedEvent:
 		return p.handleExecutionStatusChangedEvent(ctx, event)
-	case execution.FinishedEvent:
-		return p.handleExecutionFinishedEvent(ctx)
 	}
 
 	return nil
@@ -68,11 +66,5 @@ func (p *Persistence) handleExecutionStatusChangedEvent(
 	return p.executionRepo.UpdateByID(ctx, p.executionID, &model.Execution{
 		Status:       event.Status,
 		ErrorMessage: event.ErrorMessage,
-	})
-}
-
-func (p *Persistence) handleExecutionFinishedEvent(ctx context.Context) error {
-	return p.executionRepo.UpdateByID(ctx, p.executionID, &model.Execution{
-		Status: execution.StatusCompleted,
 	})
 }
