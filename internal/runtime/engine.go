@@ -61,6 +61,9 @@ func (e *Engine) Start(ctx context.Context, execution *execution.Execution) erro
 		return err
 	}
 	e.logger.Debugf("engine: starting execution agent=%q max_turns=%d", execution.Agent.Name, execution.Config.MaxTurns)
+	if err := execution.Start(ctx); err != nil {
+		return err
+	}
 	return e.loop(ctx, execution)
 }
 
@@ -75,6 +78,9 @@ func (e *Engine) loop(ctx context.Context, exe *execution.Execution) error {
 			"starting turn %d/%d -------------------------------------------",
 			exe.Turns, exe.Config.MaxTurns,
 		)
+		if err := exe.StartTurn(ctx); err != nil {
+			return err
+		}
 		result, err := e.step(ctx, exe)
 		if err != nil {
 			e.logger.Errorf("step failed turn=%d: %v", exe.Turns, err)

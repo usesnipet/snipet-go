@@ -11,17 +11,6 @@ import (
 
 var validate = validator.New()
 
-type Status string
-
-const (
-	StatusPending   Status = "pending"   // the execution is pending to start
-	StatusRunning   Status = "running"   // the execution is running
-	StatusCompleted Status = "completed" // the execution is completed
-	StatusFailed    Status = "failed"    // the execution is failed
-	StatusMaxTurns  Status = "max_turns" // the execution has reached the maximum number of turns
-	StatusCancelled Status = "cancelled" // the execution was cancelled via context
-)
-
 type Config struct {
 	MaxTurns int           `json:"max_turns" validate:"omitempty"`
 	Metadata jsonx.JSONMap `json:"metadata" validate:"omitempty"`
@@ -66,6 +55,10 @@ func NewExecution(options ...ExecutionOption) (*Execution, error) {
 	return execution, nil
 }
 
+func (e *Execution) Start(ctx context.Context) error {
+	return e.Publish(ctx, StartedEvent{})
+}
+
 func (e *Execution) AddMessage(ctx context.Context, msg msg.Message) error {
 	if msg.ID == "" {
 		msg.ID = uuid.NewString()
@@ -73,6 +66,10 @@ func (e *Execution) AddMessage(ctx context.Context, msg msg.Message) error {
 	msg.Sequence = len(e.Messages)
 	e.Messages = append(e.Messages, msg)
 	return e.Publish(ctx, MessageAddedEvent{Message: msg})
+}
+
+func (e *Execution) StartTurn(ctx context.Context) error {
+	return e.Publish(ctx, TurnStartedEvent{Turn: e.Turns})
 }
 
 func (e *Execution) CompleteTurn(ctx context.Context) error {

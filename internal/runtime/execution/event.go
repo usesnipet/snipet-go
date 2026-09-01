@@ -16,6 +16,13 @@ type event struct{}
 
 func (event) isEvent() {}
 
+// #region ExecutionEvents
+
+// StartedEvent is emitted when an execution is started.
+type StartedEvent struct {
+	event
+}
+
 // StatusChangedEvent is emitted whenever execution status (and related fields) change.
 type StatusChangedEvent struct {
 	event
@@ -23,10 +30,19 @@ type StatusChangedEvent struct {
 	ErrorMessage string `json:"error_message,omitempty"`
 }
 
-// MessageAddedEvent is emitted when one or more messages are appended.
-type MessageAddedEvent struct {
+// FinishedEvent is emitted when an execution is finished.
+type FinishedEvent struct {
 	event
-	Message msg.Message `json:"message"`
+}
+
+// #endregion
+
+// #region TurnEvents
+
+// TurnStartedEvent is emitted when a turn is started.
+type TurnStartedEvent struct {
+	event
+	Turn int `json:"turn"`
 }
 
 // TurnCompletedEvent is emitted when a turn is completed.
@@ -35,9 +51,14 @@ type TurnCompletedEvent struct {
 	Turn int `json:"turn"`
 }
 
-// FinishedEvent is emitted when an execution is finished.
-type FinishedEvent struct {
+// #endregion
+
+// #region MessageEvents
+
+// MessageAddedEvent is emitted when one or more messages are appended.
+type MessageAddedEvent struct {
 	event
+	Message msg.Message `json:"message"`
 }
 
 // MessageDeltaEvent is emitted for each chunk of assistant text
@@ -49,18 +70,22 @@ type MessageDeltaEvent struct {
 	Content   string `json:"content"`
 }
 
-// AttemptFailedEvent is emitted when an LLM generation attempt
+// MessageAttemptFailedEvent is emitted when an LLM generation attempt
 // fails after part of its response was already streamed to subscribers
 // (text deltas and/or tool call events). It signals that everything
 // published under MessageID for this attempt must be discarded — the engine
 // will either retry with a different LLM configuration or fail the
 // execution, but this attempt's partial content never becomes part of the
 // conversation history.
-type AttemptFailedEvent struct {
+type MessageAttemptFailedEvent struct {
 	event
 	MessageID string `json:"message_id"`
 	Error     string `json:"error"`
 }
+
+// #endregion
+
+// #region ToolEvents
 
 // ToolCallBeginEvent is emitted when the LLM start to request a tool call.
 type ToolCallBeginEvent struct {
@@ -76,12 +101,14 @@ type ToolCallStartedEvent struct {
 	Arguments  map[string]any `json:"arguments"`
 }
 
-// ToolResultEvent is emitted after a tool call has been executed,
+// ToolCallResultEvent is emitted after a tool call has been executed,
 // carrying its result or the error that occurred.
-type ToolResultEvent struct {
+type ToolCallResultEvent struct {
 	event
 	ToolCallID string `json:"tool_call_id"`
 	Tool       string `json:"tool"`
 	Result     string `json:"result,omitempty"`
 	Error      string `json:"error,omitempty"`
 }
+
+// #endregion

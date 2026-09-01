@@ -97,7 +97,7 @@ func stream(
 			return msg.Message{}, err
 		}
 		logger.Warnf("message_id=%s stream error: %s", messageID, err)
-		pubErr := exe.Publish(ctx, execution.AttemptFailedEvent{MessageID: messageID, Error: err.Error()})
+		pubErr := exe.Publish(ctx, execution.MessageAttemptFailedEvent{MessageID: messageID, Error: err.Error()})
 		if pubErr != nil {
 			return msg.Message{}, pubErr
 		}

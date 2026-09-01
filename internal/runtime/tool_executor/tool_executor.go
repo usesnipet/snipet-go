@@ -52,7 +52,7 @@ func (e *ToolExecutor) Run(ctx context.Context, exe *execution.Execution, calls 
 			e.logger.Debugf("tool_executor: [%d/%d] tool=%q id=%s succeeded result_len=%d", i+1, len(calls), call.Tool, call.ID, len(result.Result))
 		}
 
-		if err := exe.Publish(ctx, execution.ToolResultEvent{
+		if err := exe.Publish(ctx, execution.ToolCallResultEvent{
 			ToolCallID: call.ID,
 			Tool:       call.Tool,
 			Result:     result.Result,

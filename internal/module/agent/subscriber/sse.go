@@ -11,13 +11,24 @@ import (
 type SSEEvent string
 
 const (
-	SSEEventExecutionTurnCompleted   SSEEvent = "execution_turn_completed"
-	SSEEventExecutionMessageAdded    SSEEvent = "execution_message_added"
-	SSEEventExecutionStatusChanged   SSEEvent = "execution_status_changed"
-	SSEEventExecutionFinished        SSEEvent = "execution_finished"
-	SSEEventExecutionMessageDelta    SSEEvent = "execution_message_delta"
-	SSEEventExecutionToolCallStarted SSEEvent = "execution_tool_call_started"
-	SSEEventExecutionToolResult      SSEEvent = "execution_tool_result"
+	// Execution Events
+	SSEEventExecutionStarted       SSEEvent = "execution.started"
+	SSEEventExecutionStatusChanged SSEEvent = "execution.status_changed"
+	SSEEventExecutionFinished      SSEEvent = "execution.finished"
+
+	// Turn Events
+	SSEEventTurnStarted   SSEEvent = "turn.started"
+	SSEEventTurnCompleted SSEEvent = "turn.completed"
+
+	// Message Events
+	SSEEventMessageAdded         SSEEvent = "message.added"
+	SSEEventMessageDelta         SSEEvent = "message.delta"
+	SSEEventMessageAttemptFailed SSEEvent = "message.attempt_failed"
+
+	// Tool Events
+	SSEEventToolCallBegin   SSEEvent = "tool_call.begin"
+	SSEEventToolCallStarted SSEEvent = "tool_call.started"
+	SSEEventToolCallResult  SSEEvent = "tool_call.result"
 )
 
 type SSE struct {
@@ -35,20 +46,31 @@ func (s *SSE) Handle(ctx context.Context, event execution.IEvent) error {
 	}
 
 	switch event := event.(type) {
-	case execution.MessageAddedEvent:
-		return s.sse.Write(string(SSEEventExecutionMessageAdded), event)
-	case execution.TurnCompletedEvent:
-		return s.sse.Write(string(SSEEventExecutionTurnCompleted), event)
+	case execution.StartedEvent:
+		return s.sse.Write(string(SSEEventExecutionStarted), event)
 	case execution.StatusChangedEvent:
 		return s.sse.Write(string(SSEEventExecutionStatusChanged), event)
 	case execution.FinishedEvent:
 		return s.sse.Write(string(SSEEventExecutionFinished), map[string]string{"status": "done"})
+
+	case execution.TurnStartedEvent:
+		return s.sse.Write(string(SSEEventTurnStarted), event)
+	case execution.TurnCompletedEvent:
+		return s.sse.Write(string(SSEEventTurnCompleted), event)
+
+	case execution.MessageAddedEvent:
+		return s.sse.Write(string(SSEEventMessageAdded), event)
 	case execution.MessageDeltaEvent:
-		return s.sse.Write(string(SSEEventExecutionMessageDelta), event)
+		return s.sse.Write(string(SSEEventMessageDelta), event)
+	case execution.MessageAttemptFailedEvent:
+		return s.sse.Write(string(SSEEventMessageAttemptFailed), event)
+
+	case execution.ToolCallBeginEvent:
+		return s.sse.Write(string(SSEEventToolCallBegin), event)
 	case execution.ToolCallStartedEvent:
-		return s.sse.Write(string(SSEEventExecutionToolCallStarted), event)
-	case execution.ToolResultEvent:
-		return s.sse.Write(string(SSEEventExecutionToolResult), event)
+		return s.sse.Write(string(SSEEventToolCallStarted), event)
+	case execution.ToolCallResultEvent:
+		return s.sse.Write(string(SSEEventToolCallResult), event)
 	}
 	return nil
 }
