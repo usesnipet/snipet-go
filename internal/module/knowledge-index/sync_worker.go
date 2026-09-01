@@ -21,8 +21,8 @@ type SyncIndexResult struct {
 }
 
 type SyncIndexWorker struct {
-	sourceManager            *manager.Driver[kdriver.ISourceDriver]
-	indexManager             *manager.Driver[kdriver.IIndexDriver]
+	sourceManager            *manager.DriverManager[kdriver.ISourceDriver]
+	indexManager             *manager.DriverManager[kdriver.IIndexDriver]
 	knowledgeRepo            repository.IKnowledgeRepository
 	knowledgeItemRepo        repository.IKnowledgeItemRepository
 	indexRepo                repository.IKnowledgeIndexRepository
@@ -31,8 +31,8 @@ type SyncIndexWorker struct {
 }
 
 func NewSyncIndexWorker(
-	indexManager *manager.Driver[kdriver.IIndexDriver],
-	sourceManager *manager.Driver[kdriver.ISourceDriver],
+	indexManager *manager.DriverManager[kdriver.IIndexDriver],
+	sourceManager *manager.DriverManager[kdriver.ISourceDriver],
 	knowledgeRepo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
 	indexRepo repository.IKnowledgeIndexRepository,
@@ -61,12 +61,12 @@ func (s *SyncIndexWorker) Sync(ctx context.Context, knowledgeID, indexID string)
 		return err
 	}
 
-	indexDriver, err := s.indexManager.Prepare(ctx, index.Driver, index.Configuration)
+	indexDriver, err := s.indexManager.Connect(ctx, index.Driver, index.Configuration)
 	if err != nil {
 		return err
 	}
 
-	sourceDriver, err := s.sourceManager.Prepare(ctx, knowledge.Driver, knowledge.Configuration)
+	sourceDriver, err := s.sourceManager.Connect(ctx, knowledge.Driver, knowledge.Configuration)
 	if err != nil {
 		return err
 	}

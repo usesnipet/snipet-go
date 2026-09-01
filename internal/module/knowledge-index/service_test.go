@@ -102,10 +102,10 @@ func newTestService(
 	for _, d := range drivers {
 		reg.MustRegister(d, nil)
 	}
-	indexManager := manager.NewDriver(reg)
+	indexManager := manager.NewDriverManager(reg)
 	syncWorker := knowledgeindex.NewSyncIndexWorker(
 		indexManager,
-		manager.NewDriver(driver.NewRegistry[knowledge.ISourceDriver](logger.NewLogger(logger.LevelError))),
+		manager.NewDriverManager(driver.NewRegistry[knowledge.ISourceDriver](logger.NewLogger(logger.LevelError))),
 		mocks.NewMockIKnowledgeRepository(t),
 		mocks.NewMockIKnowledgeItemRepository(t),
 		repo,

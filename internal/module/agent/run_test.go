@@ -46,8 +46,8 @@ func (it *fakeStreamIterator) Close() error           { return nil }
 
 func newTestEngine(llmReg *driver.Registry[llm.Driver]) *runtime.Engine {
 	return runtime.NewEngine(
-		manager.NewDriver(llmReg),
-		manager.NewTool(manager.NewDriver(driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError)))),
+		manager.NewDriverManager(llmReg),
+		manager.NewToolbox(manager.NewDriverManager(driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError)))),
 		logger.NewLogger(logger.LevelError),
 	)
 }

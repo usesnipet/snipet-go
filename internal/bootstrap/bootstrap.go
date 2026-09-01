@@ -77,16 +77,16 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	// runtime
 	sourceRegistry := source.Registry(logger)
-	sourceManager := manager.NewDriver(sourceRegistry)
+	sourceManager := manager.NewDriverManager(sourceRegistry)
 
 	indexRegistry := index.Registry(logger)
-	indexManager := manager.NewDriver(indexRegistry)
+	indexManager := manager.NewDriverManager(indexRegistry)
 
 	llmRegistry := llm.Registry(logger)
-	llmManager := manager.NewDriver(llmRegistry)
+	llmManager := manager.NewDriverManager(llmRegistry)
 
 	toolRegistry := tool.Registry(logger)
-	toolManager := manager.NewTool(manager.NewDriver(toolRegistry))
+	toolManager := manager.NewToolbox(manager.NewDriverManager(toolRegistry))
 
 	engine := runtime.NewEngine(llmManager, toolManager, logger)
 

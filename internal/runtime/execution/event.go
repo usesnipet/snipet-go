@@ -4,8 +4,6 @@ import (
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
-type EventListener func(event IEvent) error
-
 type IEvent interface {
 	isEvent()
 }
@@ -63,7 +61,7 @@ type MessageAddedEvent struct {
 
 // MessageDeltaEvent is emitted for each chunk of assistant text
 // streamed from the LLM, before the full message is added via
-// ExecutionMessageAddedEvent.
+// MessageAddedEvent.
 type MessageDeltaEvent struct {
 	event
 	MessageID string `json:"message_id"`
@@ -73,10 +71,9 @@ type MessageDeltaEvent struct {
 // MessageAttemptFailedEvent is emitted when an LLM generation attempt
 // fails after part of its response was already streamed to subscribers
 // (text deltas and/or tool call events). It signals that everything
-// published under MessageID for this attempt must be discarded — the engine
-// will either retry with a different LLM configuration or fail the
-// execution, but this attempt's partial content never becomes part of the
-// conversation history.
+// published under MessageID for this attempt must be discarded: the
+// execution then fails, and this attempt's partial content never becomes
+// part of the conversation history.
 type MessageAttemptFailedEvent struct {
 	event
 	MessageID string `json:"message_id"`
@@ -86,11 +83,6 @@ type MessageAttemptFailedEvent struct {
 // #endregion
 
 // #region ToolEvents
-
-// ToolCallBeginEvent is emitted when the LLM start to request a tool call.
-type ToolCallBeginEvent struct {
-	event
-}
 
 // ToolCallStartedEvent is emitted right before a requested tool
 // call is invoked.

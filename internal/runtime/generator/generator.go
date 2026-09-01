@@ -14,19 +14,19 @@ import (
 	"github.com/usesnipet/snipet/pkg/msg"
 )
 
-// Generate produces the next assistant message for the execution, trying
-// every LLM configured on its agent in order until one succeeds.
+// Generate produces the next assistant message for the execution using the
+// single LLM configured on its agent.
 func Generate(
 	ctx context.Context,
 	exe *execution.Execution,
-	llmDriverManager *manager.Driver[llm.Driver],
+	llms *manager.DriverManager[llm.Driver],
 	toolset tool.Toolset,
 	logger *logger.Logger,
 ) (message msg.Message, err error) {
 	agent := exe.Agent
 	logger.Debugf("starting generation agent=%q", agent.Name)
 
-	llmInstance, err := llmDriverManager.GetDriver(agent.LLM.Key)
+	llmInstance, err := llms.GetDriver(agent.LLM.Key)
 	if err != nil {
 		return message, err
 	}

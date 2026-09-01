@@ -14,11 +14,11 @@ import (
 // ToolExecutor executes tool calls requested by an assistant message on
 // behalf of an execution.
 type ToolExecutor struct {
-	tools  *manager.Tool
+	tools  *manager.Toolbox
 	logger *logger.Logger
 }
 
-func NewToolExecutor(tools *manager.Tool, logger *logger.Logger) *ToolExecutor {
+func NewToolExecutor(tools *manager.Toolbox, logger *logger.Logger) *ToolExecutor {
 	return &ToolExecutor{tools: tools, logger: logger}
 }
 

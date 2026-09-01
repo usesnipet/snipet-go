@@ -20,7 +20,7 @@ type Service struct {
 	txManager         repository.ITxManager
 	repo              repository.IKnowledgeRepository
 	knowledgeItemRepo repository.IKnowledgeItemRepository
-	sourceManager     *manager.Driver[kdriver.ISourceDriver]
+	sourceManager     *manager.DriverManager[kdriver.ISourceDriver]
 	pool              queue.IPool
 	syncWorker        *SyncWorker
 }
@@ -29,7 +29,7 @@ func NewService(
 	txManager repository.ITxManager,
 	repo repository.IKnowledgeRepository,
 	knowledgeItemRepo repository.IKnowledgeItemRepository,
-	sourceManager *manager.Driver[kdriver.ISourceDriver],
+	sourceManager *manager.DriverManager[kdriver.ISourceDriver],
 	pool queue.IPool,
 	syncWorker *SyncWorker,
 ) *Service {
@@ -112,7 +112,7 @@ func (s *Service) ListDrivers(ctx context.Context) (*DriversDTO, error) {
 }
 
 func (s *Service) TestConnection(ctx context.Context, key string, config jsonx.JSONMap) error {
-	_, err := s.sourceManager.Prepare(ctx, key, config)
+	_, err := s.sourceManager.Connect(ctx, key, config)
 	if err != nil {
 		if errors.Is(err, driver.ErrDriverNotFound) {
 			return apperr.NotFound(err.Error())

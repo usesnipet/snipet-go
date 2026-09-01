@@ -108,29 +108,29 @@ Just a concurrency-safe named lookup, generic over any driver interface —
 ## `internal/runtime/manager` — generic operations
 
 ```go
-type Driver[T driver.IDriver] struct { registry *registry.R[T] }
+type DriverManager[T driver.IDriver] struct { registry *registry.R[T] }
 
-func (m *Driver[T]) GetDriver(key string) (T, error)
-func (m *Driver[T]) ValidateConfigurationByKey(key string, config jsonx.JSONMap) error
-func (m *Driver[T]) Prepare(ctx context.Context, driverKey string, config jsonx.JSONMap) (T, error)  // validate + TestConnection
-func (m *Driver[T]) ListDrivers(ctx context.Context) ([]driver.Info, error)
+func (m *DriverManager[T]) GetDriver(key string) (T, error)
+func (m *DriverManager[T]) ValidateConfigurationByKey(key string, config jsonx.JSONMap) error
+func (m *DriverManager[T]) Connect(ctx context.Context, driverKey string, config jsonx.JSONMap) (T, error)  // validate + TestConnection
+func (m *DriverManager[T]) ListDrivers(ctx context.Context) ([]driver.Info, error)
 ```
 
-`manager.Driver[T]` wraps a `registry.R[T]` with the operations every
+`manager.DriverManager[T]` wraps a `registry.R[T]` with the operations every
 consumer actually needs — validating a config against the driver's JSON
 Schema (used by `LLM.Create`/`Update`, see [modules.md](./modules.md)),
 listing available drivers for a "choose a provider" UI
 (`LLM.ListDrivers` → `GET /llm/drivers`), or resolving + connection-testing
-one before use.
+one before use (`Connect`).
 
-**`manager.Tool`** is a special case built *on top of* `manager.Driver[tool.Driver]`,
+**`manager.Toolbox`** is a special case built *on top of* `manager.DriverManager[tool.Driver]`,
 because unlike LLM/source/index, every registered tool driver's tools are
 meant to be available to the agent simultaneously, not selected one at a
 time:
 
 ```go
-func (m *Tool) Toolset() (tool.Toolset, error)  // every tool from every registered driver, namespaced "<driverKey>__<toolName>"
-func (m *Tool) Call(ctx context.Context, call tool.Call) (tool.Result, error)  // routes by the namespace prefix back to the owning driver
+func (m *Toolbox) Toolset() (tool.Toolset, error)  // every tool from every registered driver, namespaced "<driverKey>__<toolName>"
+func (m *Toolbox) Call(ctx context.Context, call tool.Call) (tool.Result, error)  // routes by the namespace prefix back to the owning driver
 ```
 
 This is what `runtime.Engine` asks for the current toolset and dispatches
@@ -138,7 +138,7 @@ calls through (see [runtime.md](./runtime.md)).
 
 ## Where managers get built
 
-Every `manager.Driver[T]`/`manager.Tool` is built once in
+Every `manager.DriverManager[T]`/`manager.Toolbox` is built once in
 `bootstrap.Bootstrap` from that kind's `Registry()` and handed to whichever
 service/engine needs it (`llmModule.NewService(llmRepo, llmManager)`,
 `runtime.NewEngine(llmManager, toolManager, logger)`) — see

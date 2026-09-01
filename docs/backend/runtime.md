@@ -90,7 +90,7 @@ err := engine.Start(ctx, exe)
 ```
 
 `Start` validates the agent (an LLM key + config it can resolve and
-validate via `manager.Driver[llm.Driver]`, see [drivers.md](./drivers.md)),
+validate via `manager.DriverManager[llm.Driver]`, see [drivers.md](./drivers.md)),
 sets `StatusRunning`, then loops calling `step` until it returns a terminal
 `StepResult`:
 
@@ -103,7 +103,7 @@ StepMaxTurnsReached    // exe.Turns >= exe.Config.MaxTurns — exe.SetMaxTurnsRe
 
 One `step`:
 
-1. Resolve the current `Toolset` from `manager.Tool` (empty toolset if it
+1. Resolve the current `Toolset` from `manager.Toolbox` (empty toolset if it
    can't resolve, rather than aborting the whole execution).
 2. `generator.Generate` — one streamed LLM call producing one assistant
    `msg.Message` (see below); its `MessageDeltaEvent`/`AttemptFailedEvent`
@@ -130,7 +130,7 @@ never as part of the conversation history.
 ## `tool_executor.ToolExecutor` — running tool calls
 
 For each `tool.Call` on the assistant's message: publishes
-`ToolCallStartedEvent`, calls `manager.Tool.Call` (routes to the owning
+`ToolCallStartedEvent`, calls `manager.Toolbox.Call` (routes to the owning
 driver by namespace prefix, see [drivers.md](./drivers.md)), publishes
 `ToolResultEvent` (with `Error` set instead of `Result` on failure — a tool
 failure does **not** abort the execution, it's surfaced to the LLM as an

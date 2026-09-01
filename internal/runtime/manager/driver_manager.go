@@ -9,15 +9,19 @@ import (
 	"github.com/usesnipet/snipet/pkg/jsonx"
 )
 
-type Driver[T driver.IDriver] struct {
+// DriverManager is a thin facade over a driver.Registry that adds the
+// runtime-facing concerns the bare registry doesn't handle: validating a
+// config map against a driver's schema, and dialing a driver to confirm the
+// config actually connects (see Connect).
+type DriverManager[T driver.IDriver] struct {
 	registry *driver.Registry[T]
 }
 
-func NewDriver[T driver.IDriver](registry *driver.Registry[T]) *Driver[T] {
-	return &Driver[T]{registry: registry}
+func NewDriverManager[T driver.IDriver](registry *driver.Registry[T]) *DriverManager[T] {
+	return &DriverManager[T]{registry: registry}
 }
 
-func (m *Driver[T]) GetDriver(key string) (T, error) {
+func (m *DriverManager[T]) GetDriver(key string) (T, error) {
 	driverInstance, ok := m.registry.Get(key)
 	if !ok {
 		return driverInstance, driver.ErrDriverNotFound
@@ -26,55 +30,33 @@ func (m *Driver[T]) GetDriver(key string) (T, error) {
 }
 
 // Names returns the sorted keys of every registered driver.
-func (m *Driver[T]) Names() []string {
+func (m *DriverManager[T]) Names() []string {
 	return m.registry.Names()
 }
 
-func (m *Driver[T]) ValidateConfiguration(schema jsonx.JSONMap, config jsonx.JSONMap) error {
+// ValidateConfiguration checks config against a driver's JSON Schema.
+func (m *DriverManager[T]) ValidateConfiguration(schema jsonx.JSONMap, config jsonx.JSONMap) error {
 	return jsonschema.Validate(schema, config)
 }
 
-func (m *Driver[T]) ValidateConfigurations(schema jsonx.JSONMap, configs ...jsonx.JSONMap) error {
-	for _, config := range configs {
-		if err := jsonschema.Validate(schema, config); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *Driver[T]) ValidateConfigurationByKey(key string, config jsonx.JSONMap) error {
-	driver, err := m.GetDriver(key)
+// ValidateConfigurationByKey looks up the driver by key and validates config
+// against its schema.
+func (m *DriverManager[T]) ValidateConfigurationByKey(key string, config jsonx.JSONMap) error {
+	driverInstance, err := m.GetDriver(key)
 	if err != nil {
 		return err
 	}
-	return m.ValidateConfiguration(driver.Info().ConfigurationSchema, config)
+	return m.ValidateConfiguration(driverInstance.Info().ConfigurationSchema, config)
 }
 
-func (m *Driver[T]) ValidateConfigurationsByKey(key string, configs ...jsonx.JSONMap) error {
-	driver, err := m.GetDriver(key)
-	if err != nil {
-		return err
-	}
-	return m.ValidateConfigurations(driver.Info().ConfigurationSchema, configs...)
-}
-
-func (m *Driver[T]) ValidateMultipleConfigurationsByKey(configs ...Configuration) error {
-	for _, c := range configs {
-		if err := m.ValidateConfigurationByKey(c.Key, c.Config); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *Driver[T]) Prepare(ctx context.Context, driverKey string, config jsonx.JSONMap) (T, error) {
+// Connect resolves the driver by key, validates config against its schema and
+// runs its connectivity check, returning the ready-to-use driver instance.
+func (m *DriverManager[T]) Connect(ctx context.Context, driverKey string, config jsonx.JSONMap) (T, error) {
 	driverInstance, err := m.GetDriver(driverKey)
 	if err != nil {
 		return driverInstance, err
 	}
-	schema := driverInstance.Info().ConfigurationSchema
-	if err := m.ValidateConfiguration(schema, config); err != nil {
+	if err := m.ValidateConfiguration(driverInstance.Info().ConfigurationSchema, config); err != nil {
 		return driverInstance, err
 	}
 	if err := driverInstance.TestConnection(ctx, config); err != nil {
@@ -83,16 +65,17 @@ func (m *Driver[T]) Prepare(ctx context.Context, driverKey string, config jsonx.
 	return driverInstance, nil
 }
 
-func (m *Driver[T]) ListDrivers(ctx context.Context) ([]driver.Info, error) {
+// ListDrivers returns the Info of every registered driver, sorted by key.
+func (m *DriverManager[T]) ListDrivers(ctx context.Context) ([]driver.Info, error) {
 	names := m.registry.Names()
 	drivers := make([]driver.Info, 0, len(names))
 
 	for _, name := range names {
-		driver, err := m.GetDriver(name)
+		driverInstance, err := m.GetDriver(name)
 		if err != nil {
 			return nil, err
 		}
-		drivers = append(drivers, driver.Info())
+		drivers = append(drivers, driverInstance.Info())
 	}
 
 	return drivers, nil

@@ -213,8 +213,8 @@ func TestRunDelegatesToAgentWithSessionID(t *testing.T) {
 		mocks.NewMockILLMRepository(t),
 		mocks.NewMockITxManager(t),
 		runtime.NewEngine(
-			manager.NewDriver(llmReg),
-			manager.NewTool(manager.NewDriver(driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError)))),
+			manager.NewDriverManager(llmReg),
+			manager.NewToolbox(manager.NewDriverManager(driver.NewRegistry[tool.Driver](logger.NewLogger(logger.LevelError)))),
 			logger.NewLogger(logger.LevelError),
 		),
 		executionRepo,

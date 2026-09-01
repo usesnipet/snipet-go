@@ -13,21 +13,21 @@ import (
 )
 
 type Engine struct {
-	LLMs   *manager.Driver[llm.Driver]
-	Tools  *manager.Tool
+	llms   *manager.DriverManager[llm.Driver]
+	tools  *manager.Toolbox
 	logger *logger.Logger
 
 	toolExecutor *toolexecutor.ToolExecutor
 }
 
 func NewEngine(
-	llms *manager.Driver[llm.Driver],
-	tools *manager.Tool,
+	llms *manager.DriverManager[llm.Driver],
+	tools *manager.Toolbox,
 	logger *logger.Logger,
 ) *Engine {
 	return &Engine{
-		LLMs:   llms,
-		Tools:  tools,
+		llms:   llms,
+		tools:  tools,
 		logger: logger,
 
 		toolExecutor: toolexecutor.NewToolExecutor(tools, logger),
@@ -41,14 +41,13 @@ func (e *Engine) validateAgent(agent *execution.Agent) error {
 	if agent.LLM.Key == "" || agent.LLM.Config == nil {
 		return ErrNoLLMConfigured
 	}
-	return e.LLMs.ValidateConfigurationByKey(agent.LLM.Key, agent.LLM.Config)
+	return e.llms.ValidateConfigurationByKey(agent.LLM.Key, agent.LLM.Config)
 }
 
-func (e *Engine) Validate(execution *execution.Execution) error {
-	if err := e.validateAgent(execution.Agent); err != nil {
-		return err
-	}
-	return nil
+// Validate reports whether exe is runnable by this engine (currently: its
+// agent and the agent's LLM config are well formed).
+func (e *Engine) Validate(exe *execution.Execution) error {
+	return e.validateAgent(exe.Agent)
 }
 
 func (e *Engine) Start(ctx context.Context, execution *execution.Execution) error {
@@ -78,9 +77,6 @@ func (e *Engine) loop(ctx context.Context, exe *execution.Execution) error {
 			"starting turn %d/%d -------------------------------------------",
 			exe.Turns, exe.Config.MaxTurns,
 		)
-		if err := exe.StartTurn(ctx); err != nil {
-			return err
-		}
 		result, err := e.step(ctx, exe)
 		if err != nil {
 			e.logger.Errorf("step failed turn=%d: %v", exe.Turns, err)
@@ -115,11 +111,14 @@ func (e *Engine) step(ctx context.Context, exe *execution.Execution) (StepResult
 	}
 
 	if exe.Config.MaxTurns > 0 && exe.Turns >= exe.Config.MaxTurns {
-		e.logger.Debugf("max turns reached (%d/%d)", exe.Turns, exe.Config.MaxTurns)
 		return StepMaxTurnsReached, nil
 	}
 
-	toolset, err := e.Tools.Toolset()
+	if err := exe.StartTurn(ctx); err != nil {
+		return StepCancel, err
+	}
+
+	toolset, err := e.tools.Toolset()
 	if err != nil {
 		e.logger.DebugErrorf("failed to resolve toolset, continuing with no tools: %v", err)
 		// if the toolset cannot be resolved, we use an empty toolset to continue the execution with no tools
@@ -131,7 +130,7 @@ func (e *Engine) step(ctx context.Context, exe *execution.Execution) (StepResult
 	message, err := generator.Generate(
 		ctx,
 		exe,
-		e.LLMs,
+		e.llms,
 		toolset,
 		e.logger.Child(logger.WithPrefix("generator: ")),
 	)

@@ -66,10 +66,10 @@ Owns business logic; depends on repository **interfaces** (never a concrete
 ```go
 type Service struct {
     repo       repository.ILLMRepository
-    llmManager *manager.Driver[llm.Driver]
+    llmManager *manager.DriverManager[llm.Driver]
 }
 
-func NewService(repo repository.ILLMRepository, llmManager *manager.Driver[llm.Driver]) *Service {
+func NewService(repo repository.ILLMRepository, llmManager *manager.DriverManager[llm.Driver]) *Service {
     return &Service{repo: repo, llmManager: llmManager}
 }
 ```

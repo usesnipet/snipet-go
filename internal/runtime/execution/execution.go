@@ -70,11 +70,11 @@ func (e *Execution) AddMessage(ctx context.Context, msg msg.Message) error {
 }
 
 func (e *Execution) StartTurn(ctx context.Context) error {
+	e.Turns++
 	return e.Publish(ctx, TurnStartedEvent{Turn: e.Turns})
 }
 
 func (e *Execution) CompleteTurn(ctx context.Context) error {
-	e.Turns++
 	return e.Publish(ctx, TurnCompletedEvent{Turn: e.Turns})
 }
 

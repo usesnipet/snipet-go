@@ -63,8 +63,8 @@ one function:
    (`sessionRepo` takes `clientRepo`) — construct in the order that
    satisfies those dependencies.
 3. **Driver registries + managers** — `<kind>.Registry()` +
-   `manager.NewDriver(registry)` for llm/tool/source/index, plus
-   `manager.NewTool(...)` for the tool aggregator (see
+   `manager.NewDriverManager(registry)` for llm/tool/source/index, plus
+   `manager.NewToolbox(...)` for the tool aggregator (see
    [drivers.md](./drivers.md)).
 4. **Runtime engine** — `runtime.NewEngine(llmManager, toolManager, logger)`
    (see [runtime.md](./runtime.md)).

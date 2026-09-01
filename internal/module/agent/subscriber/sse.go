@@ -26,7 +26,6 @@ const (
 	SSEEventMessageAttemptFailed SSEEvent = "message.attempt_failed"
 
 	// Tool Events
-	SSEEventToolCallBegin   SSEEvent = "tool_call.begin"
 	SSEEventToolCallStarted SSEEvent = "tool_call.started"
 	SSEEventToolCallResult  SSEEvent = "tool_call.result"
 )
@@ -65,8 +64,6 @@ func (s *SSE) Handle(ctx context.Context, event execution.IEvent) error {
 	case execution.MessageAttemptFailedEvent:
 		return s.sse.Write(string(SSEEventMessageAttemptFailed), event)
 
-	case execution.ToolCallBeginEvent:
-		return s.sse.Write(string(SSEEventToolCallBegin), event)
 	case execution.ToolCallStartedEvent:
 		return s.sse.Write(string(SSEEventToolCallStarted), event)
 	case execution.ToolCallResultEvent:

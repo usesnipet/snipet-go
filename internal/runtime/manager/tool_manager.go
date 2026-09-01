@@ -14,19 +14,19 @@ import (
 // ([a-zA-Z0-9_-]), so "." is not an option.
 const toolNameSeparator = "__"
 
-// Tool aggregates every registered tool driver into a single toolset
+// Toolbox aggregates every registered tool driver into a single toolset
 // the LLM can be given, and dispatches calls back to the owning driver.
-type Tool struct {
-	dm *Driver[tool.Driver]
+type Toolbox struct {
+	dm *DriverManager[tool.Driver]
 }
 
-func NewTool(dm *Driver[tool.Driver]) *Tool {
-	return &Tool{dm: dm}
+func NewToolbox(dm *DriverManager[tool.Driver]) *Toolbox {
+	return &Toolbox{dm: dm}
 }
 
 // Toolset returns every tool from every registered driver, by default all
 // tools installed are made available to the LLM.
-func (m *Tool) Toolset() (tool.Toolset, error) {
+func (m *Toolbox) Toolset() (tool.Toolset, error) {
 	var tools []tool.Tool
 	for _, key := range m.dm.Names() {
 		driverInstance, err := m.dm.GetDriver(key)
@@ -41,7 +41,7 @@ func (m *Tool) Toolset() (tool.Toolset, error) {
 }
 
 // Call dispatches a namespaced tool call to the driver that owns it.
-func (m *Tool) Call(ctx context.Context, call tool.Call) (tool.Result, error) {
+func (m *Toolbox) Call(ctx context.Context, call tool.Call) (tool.Result, error) {
 	driverKey, toolName, ok := strings.Cut(call.Tool, toolNameSeparator)
 	if !ok {
 		return tool.Result{}, fmt.Errorf("%w: %q", ErrToolNotFound, call.Tool)

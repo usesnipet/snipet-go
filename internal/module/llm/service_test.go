@@ -28,7 +28,7 @@ func newTestService(t *testing.T, repo *mocks.MockILLMRepository) *llmmodule.Ser
 	fake.EXPECT().Info().Return(driver.Info{Key: "openai", ConfigurationSchema: permissiveSchema}).Maybe()
 	fake.EXPECT().Validate().Return(nil).Maybe()
 	reg.MustRegister(fake, nil)
-	llmManager := manager.NewDriver(reg)
+	llmManager := manager.NewDriverManager(reg)
 
 	return llmmodule.NewService(repo, llmManager)
 }

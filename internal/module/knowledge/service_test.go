@@ -72,7 +72,7 @@ func newTestService(
 	for _, d := range drivers {
 		reg.MustRegister(d, nil)
 	}
-	sourceManager := manager.NewDriver(reg)
+	sourceManager := manager.NewDriverManager(reg)
 	syncWorker := knowledge.NewSyncWorker(
 		sourceManager,
 		repo,
