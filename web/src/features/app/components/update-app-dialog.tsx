@@ -24,6 +24,10 @@ type UpdateAppDialogProps = DialogInstanceProps<{
   app: App
 }>;
 
+function agentIdsFromApp(app: App): string[] {
+  return (app.app_to_agents ?? []).map((rel) => rel.agent_id);
+}
+
 export function UpdateAppDialog({ app, close }: UpdateAppDialogProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -31,6 +35,7 @@ export function UpdateAppDialog({ app, close }: UpdateAppDialogProps) {
       name: app.name,
       description: app.description,
       public: app.public,
+      agent_ids: agentIdsFromApp(app),
       auth_config: app.auth_config,
     },
   });

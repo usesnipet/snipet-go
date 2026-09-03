@@ -41,6 +41,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, serve api.ServeFunc) {
 			r.Post("/", serve(h.create))
 			r.Get("/{code}", serve(h.findByCode))
 			r.Put("/{code}", serve(h.update))
+			r.Put("/{code}/agents", serve(h.linkAgents))
 			r.Put("/{code}/auth-config", serve(h.updateAuthConfig))
 			r.Post("/{code}/roll", serve(h.roll))
 			r.Put("/{code}/active", serve(h.toggleActive))
@@ -130,6 +131,28 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) error {
 	}
 	err := h.service.UpdateByCode(r.Context(), chi.URLParam(r, "code"), dto)
 	if err != nil {
+		return err
+	}
+	return api.WriteNoContent(w)
+}
+
+// @Summary		Link agents to app
+// @Description	Replaces the whole set of agents linked to an app.
+// @Tags			app
+// @Accept			json
+// @Security		BasicAuth
+// @Param			code		path	string				true	"App code"
+// @Param			body		body	LinkAppAgentsDTO	true	"Agent ids"
+// @Success		204
+// @Failure		400	{object}	api.Error
+// @Failure		404	{object}	api.Error
+// @Router			/apps/{code}/agents [put]
+func (h *Handler) linkAgents(w http.ResponseWriter, r *http.Request) error {
+	var dto LinkAppAgentsDTO
+	if err := api.ParseBody(r, &dto); err != nil {
+		return err
+	}
+	if err := h.service.LinkAgents(r.Context(), chi.URLParam(r, "code"), dto.AgentIDs); err != nil {
 		return err
 	}
 	return api.WriteNoContent(w)

@@ -135,7 +135,7 @@ func Bootstrap(cfg *config.Config, logger *logger.Logger) error {
 
 	apiKeyService := apikey.NewService(logger, apiKeyRepo, apiKeyGenerator, apiKeyHasher)
 
-	appService := appmodule.NewService(appRepo, apiKeyGenerator, apiKeyHasher, logger)
+	appService := appmodule.NewService(appRepo, agentRepo, txManager, apiKeyGenerator, apiKeyHasher, logger)
 
 	agentService := agent.NewService(agentRepo, llmRepo, txManager, engine, executionRepo, messageRepo, logger)
 	llmService := llmmodule.NewService(llmRepo, llmManager)

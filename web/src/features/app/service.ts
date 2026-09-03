@@ -1,12 +1,12 @@
 import { http } from "@/lib/http";
 
 import {
-  appSchema, appWithSecretSchema, createAppSchema, paginatedAppSchema, updateAppAuthConfigSchema,
-  updateAppSchema
+  appSchema, appWithSecretSchema, createAppSchema, linkAppAgentsSchema, paginatedAppSchema,
+  updateAppAuthConfigSchema, updateAppSchema
 } from "./schemas";
 
 import type {
-  App, AppWithSecret, CreateApp, PaginatedApp, UpdateApp, UpdateAppAuthConfig
+  App, AppWithSecret, CreateApp, LinkAppAgents, PaginatedApp, UpdateApp, UpdateAppAuthConfig
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
@@ -85,6 +85,22 @@ const updateAuthConfig = async (
   })
 }
 
+const linkAgents = async (
+  code: string,
+  body: LinkAppAgents,
+  opts: ServicePutOptions<LinkAppAgents, void> = {},
+): Promise<void> => {
+  return http.put({
+    url: `${appsUrl()}/{code}/agents`,
+    params: { code },
+    body,
+    schemas: {
+      body: linkAppAgentsSchema,
+    },
+    ...opts,
+  })
+}
+
 const roll = async (
   code: string,
   opts?: ServicePostOptions<undefined, AppWithSecret>,
@@ -128,6 +144,7 @@ export const appService = {
   findByCode,
   update,
   updateAuthConfig,
+  linkAgents,
   roll,
   setActive,
   delete: remove,

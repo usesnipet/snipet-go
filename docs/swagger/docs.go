@@ -841,6 +841,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/apps/{code}/agents": {
+            "put": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Replaces the whole set of agents linked to an app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app"
+                ],
+                "summary": "Link agents to app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Agent ids",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/LinkAppAgentsDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
         "/apps/{code}/auth-config": {
             "put": {
                 "security": [
@@ -2900,6 +2952,12 @@ const docTemplate = `{
         "App": {
             "type": "object",
             "properties": {
+                "app_to_agents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAgent"
+                    }
+                },
                 "app_to_users": {
                     "type": "array",
                     "items": {
@@ -2982,6 +3040,12 @@ const docTemplate = `{
         "AppResponse": {
             "type": "object",
             "properties": {
+                "app_to_agents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAgent"
+                    }
+                },
                 "app_to_users": {
                     "type": "array",
                     "items": {
@@ -3035,6 +3099,23 @@ const docTemplate = `{
                 "AppStatusActive",
                 "AppStatusDeactivated"
             ]
+        },
+        "AppToAgent": {
+            "type": "object",
+            "properties": {
+                "agent": {
+                    "$ref": "#/definitions/Agent"
+                },
+                "agent_id": {
+                    "type": "string"
+                },
+                "app": {
+                    "$ref": "#/definitions/App"
+                },
+                "app_id": {
+                    "type": "string"
+                }
+            }
         },
         "AppToAppUser": {
             "type": "object",
@@ -3160,6 +3241,12 @@ const docTemplate = `{
         "AppWithSecret": {
             "type": "object",
             "properties": {
+                "app_to_agents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAgent"
+                    }
+                },
                 "app_to_users": {
                     "type": "array",
                     "items": {
@@ -3326,6 +3413,12 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
+                "agent_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "description": {
                     "type": "string",
                     "maxLength": 1000
@@ -3545,6 +3638,9 @@ const docTemplate = `{
                 },
                 "status": {
                     "$ref": "#/definitions/Status"
+                },
+                "stream_messages": {
+                    "type": "boolean"
                 },
                 "turns": {
                     "type": "integer"
@@ -4007,9 +4103,26 @@ const docTemplate = `{
                 }
             }
         },
+        "LinkAppAgentsDTO": {
+            "type": "object",
+            "properties": {
+                "agent_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "PublicAppDTO": {
             "type": "object",
             "properties": {
+                "app_to_agents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppToAgent"
+                    }
+                },
                 "code": {
                     "type": "string"
                 },
@@ -4304,6 +4417,13 @@ const docTemplate = `{
         "UpdateAppDTO": {
             "type": "object",
             "properties": {
+                "agent_ids": {
+                    "description": "AgentIDs nil leaves the app's linked agents untouched; a non-nil slice\n(including an empty one) replaces the whole set.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "description": {
                     "type": "string",
                     "maxLength": 1000

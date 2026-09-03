@@ -20,6 +20,8 @@ import (
 
 type Service struct {
 	appRepo   repository.IAppRepository
+	agentRepo repository.IAgentRepository
+	txManager repository.ITxManager
 	generator *auth.APIKeyGenerator
 	hasher    *auth.KeyHasher
 	logger    *logger.Logger
@@ -27,11 +29,20 @@ type Service struct {
 
 func NewService(
 	appRepo repository.IAppRepository,
+	agentRepo repository.IAgentRepository,
+	txManager repository.ITxManager,
 	generator *auth.APIKeyGenerator,
 	hasher *auth.KeyHasher,
 	logger *logger.Logger,
 ) *Service {
-	return &Service{appRepo: appRepo, generator: generator, hasher: hasher, logger: logger}
+	return &Service{
+		appRepo:   appRepo,
+		agentRepo: agentRepo,
+		txManager: txManager,
+		generator: generator,
+		hasher:    hasher,
+		logger:    logger,
+	}
 }
 
 func (s *Service) Filter(ctx context.Context, opts *filter.Options[model.App]) (*page.Paginated[model.App], error) {
@@ -56,7 +67,12 @@ func (s *Service) FindPublicByCode(ctx context.Context, code string) (*PublicApp
 	if !app.Public {
 		return nil, apperr.NotFound("app is not public")
 	}
-	return &PublicAppDTO{Code: app.Code, Name: app.Name, Description: app.Description}, nil
+	return &PublicAppDTO{
+		Code:        app.Code,
+		Name:        app.Name,
+		Description: app.Description,
+		AppToAgents: app.AppToAgents,
+	}, nil
 }
 
 func (s *Service) GenerateCode(ctx context.Context) (string, error) {
@@ -93,6 +109,10 @@ func (s *Service) Create(ctx context.Context, dto CreateAppDTO) (*AppWithSecret,
 		return nil, err
 	}
 
+	if err := s.validateAgentIDs(ctx, dto.AgentIDs); err != nil {
+		return nil, err
+	}
+
 	app := &model.App{
 		Code:        code,
 		Name:        dto.Name,
@@ -102,8 +122,25 @@ func (s *Service) Create(ctx context.Context, dto CreateAppDTO) (*AppWithSecret,
 		KeyID:       keyID,
 		KeyHash:     keyHash,
 	}
-	if err := s.appRepo.Create(ctx, app); err != nil {
+	err = s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		if err := s.appRepo.Create(ctx, app); err != nil {
+			return err
+		}
+		if len(dto.AgentIDs) > 0 {
+			return s.appRepo.ReplaceAgents(ctx, app.ID, dto.AgentIDs)
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
+	}
+
+	if len(dto.AgentIDs) > 0 {
+		created, err := s.appRepo.FindByCode(ctx, code)
+		if err != nil {
+			return nil, err
+		}
+		app = created
 	}
 
 	return &AppWithSecret{App: app, Key: plainKey}, nil
@@ -133,19 +170,80 @@ func (s *Service) Roll(ctx context.Context, code string) (*AppWithSecret, error)
 }
 
 func (s *Service) UpdateByCode(ctx context.Context, code string, dto UpdateAppDTO) error {
-	updates := &model.App{}
-	if dto.Name != nil {
-		updates.Name = *dto.Name
-	}
-	if dto.Description != nil {
-		updates.Description = *dto.Description
-	}
-	if err := s.appRepo.UpdateByCode(ctx, code, updates); err != nil {
+	if err := s.validateAgentIDs(ctx, dto.AgentIDs); err != nil {
 		return err
 	}
 
-	if dto.Public != nil {
-		return s.appRepo.UpdatePublicByCode(ctx, code, *dto.Public)
+	return s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		updates := &model.App{}
+		if dto.Name != nil {
+			updates.Name = *dto.Name
+		}
+		if dto.Description != nil {
+			updates.Description = *dto.Description
+		}
+		if err := s.appRepo.UpdateByCode(ctx, code, updates); err != nil {
+			return err
+		}
+
+		if dto.Public != nil {
+			if err := s.appRepo.UpdatePublicByCode(ctx, code, *dto.Public); err != nil {
+				return err
+			}
+		}
+
+		if dto.AgentIDs != nil {
+			return s.linkAgents(ctx, code, dto.AgentIDs)
+		}
+		return nil
+	})
+}
+
+// LinkAgents replaces the whole set of agents linked to the app identified by
+// code. It backs PUT /apps/{code}/agents.
+func (s *Service) LinkAgents(ctx context.Context, code string, agentIDs []string) error {
+	if err := s.validateAgentIDs(ctx, agentIDs); err != nil {
+		return err
+	}
+	return s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		return s.linkAgents(ctx, code, agentIDs)
+	})
+}
+
+// linkAgents resolves the app by code and swaps its agent links. Callers are
+// responsible for validating agentIDs and opening a transaction.
+func (s *Service) linkAgents(ctx context.Context, code string, agentIDs []string) error {
+	app, err := s.appRepo.FindByCode(ctx, code)
+	if err != nil {
+		return err
+	}
+	return s.appRepo.ReplaceAgents(ctx, app.ID, agentIDs)
+}
+
+// validateAgentIDs rejects duplicates and any id that doesn't resolve to an
+// existing agent, so a bad link fails with 400 rather than an FK error. A nil
+// or empty slice is valid (it clears the links).
+func (s *Service) validateAgentIDs(ctx context.Context, agentIDs []string) error {
+	if len(agentIDs) == 0 {
+		return nil
+	}
+
+	seen := make(map[string]struct{}, len(agentIDs))
+	ids := make([]any, 0, len(agentIDs))
+	for _, id := range agentIDs {
+		if _, dup := seen[id]; dup {
+			return apperr.BadRequest("duplicate agent id: " + id)
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+
+	found, err := s.agentRepo.Filter(ctx, filter.New[model.Agent](filter.WhereIn("id", ids...)))
+	if err != nil {
+		return err
+	}
+	if found.Count() != len(agentIDs) {
+		return apperr.BadRequest("one or more agent ids do not exist")
 	}
 	return nil
 }

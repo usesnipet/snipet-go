@@ -416,6 +416,69 @@ func (_c *MockIAppRepository_FindByID_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
+// ReplaceAgents provides a mock function for the type MockIAppRepository
+func (_mock *MockIAppRepository) ReplaceAgents(ctx context.Context, appID string, agentIDs []string) error {
+	ret := _mock.Called(ctx, appID, agentIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReplaceAgents")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) error); ok {
+		r0 = returnFunc(ctx, appID, agentIDs)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIAppRepository_ReplaceAgents_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReplaceAgents'
+type MockIAppRepository_ReplaceAgents_Call struct {
+	*mock.Call
+}
+
+// ReplaceAgents is a helper method to define mock.On call
+//   - ctx context.Context
+//   - appID string
+//   - agentIDs []string
+func (_e *MockIAppRepository_Expecter) ReplaceAgents(ctx any, appID any, agentIDs any) *MockIAppRepository_ReplaceAgents_Call {
+	return &MockIAppRepository_ReplaceAgents_Call{Call: _e.mock.On("ReplaceAgents", ctx, appID, agentIDs)}
+}
+
+func (_c *MockIAppRepository_ReplaceAgents_Call) Run(run func(ctx context.Context, appID string, agentIDs []string)) *MockIAppRepository_ReplaceAgents_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIAppRepository_ReplaceAgents_Call) Return(err error) *MockIAppRepository_ReplaceAgents_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIAppRepository_ReplaceAgents_Call) RunAndReturn(run func(ctx context.Context, appID string, agentIDs []string) error) *MockIAppRepository_ReplaceAgents_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateAuthConfigByCode provides a mock function for the type MockIAppRepository
 func (_mock *MockIAppRepository) UpdateAuthConfigByCode(ctx context.Context, code string, authConfig model.AppAuthConfig) error {
 	ret := _mock.Called(ctx, code, authConfig)

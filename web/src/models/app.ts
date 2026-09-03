@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { agentSchema, type Agent } from "@/models/agent";
 import { appToAppUserSchema, type AppToAppUser } from "@/models/app-user";
 import { sessionSchema, type Session } from "@/models/session";
 
@@ -50,7 +51,26 @@ export interface App {
   auth_config: AppAuthConfig;
   sessions: Session[] | null;
   app_to_users: AppToAppUser[] | null;
+  app_to_agents: AppToAgent[] | null;
 }
+
+export interface AppToAgent {
+  app_id: string;
+  agent_id: string;
+  agent?: Agent | null;
+  app?: App | null;
+}
+
+export const appToAgentSchema: z.ZodType<AppToAgent> = z.lazy(() =>
+  z
+    .object({
+      app_id: z.uuid(),
+      agent_id: z.uuid(),
+      agent: agentSchema.nullable().optional(),
+      app: appSchema.nullable().optional(),
+    })
+    .strict(),
+);
 
 /** Own fields only, no relations — pick/extend/partial from this in feature schemas (create/update DTOs). */
 export const appBaseSchema = z
@@ -72,6 +92,7 @@ export const appSchema: z.ZodType<App> = z.lazy(() =>
     .extend({
       sessions: z.array(sessionSchema).nullable(),
       app_to_users: z.array(appToAppUserSchema).nullable(),
+      app_to_agents: z.array(appToAgentSchema).nullable(),
     })
     .strict(),
 );

@@ -25,6 +25,15 @@ type App struct {
 
 	AuthConfig AppAuthConfig `gorm:"type:jsonb;not null;serializer:json" json:"auth_config"`
 
-	Sessions   []Session      `gorm:"foreignKey:AppID;references:ID;constraint:OnDelete:CASCADE" json:"sessions"`
-	AppToUsers []AppToAppUser `gorm:"foreignKey:AppID;references:ID;constraint:OnDelete:CASCADE" json:"app_to_users"`
+	Sessions    []Session      `gorm:"foreignKey:AppID;references:ID;constraint:OnDelete:CASCADE" json:"sessions"`
+	AppToUsers  []AppToAppUser `gorm:"foreignKey:AppID;references:ID;constraint:OnDelete:CASCADE" json:"app_to_users"`
+	AppToAgents []AppToAgent   `gorm:"foreignKey:AppID;references:ID;constraint:OnDelete:CASCADE" json:"app_to_agents"`
+}
+
+type AppToAgent struct {
+	AppID   string `gorm:"type:uuid;primaryKey" json:"app_id"`
+	AgentID string `gorm:"type:uuid;primaryKey" json:"agent_id"`
+
+	Agent *Agent `gorm:"foreignKey:AgentID;references:ID;constraint:OnDelete:CASCADE" json:"agent"`
+	App   *App   `gorm:"foreignKey:AppID;references:ID;constraint:OnDelete:CASCADE" json:"app"`
 }

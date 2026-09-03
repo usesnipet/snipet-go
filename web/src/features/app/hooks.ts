@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { appService } from "./service";
 
 import type {
-  App, AppWithSecret, CreateApp, PaginatedApp, UpdateApp, UpdateAppAuthConfig
+  App, AppWithSecret, CreateApp, LinkAppAgents, PaginatedApp, UpdateApp, UpdateAppAuthConfig
 } from "./schemas";
 import type {
   ServiceDeleteOptions, ServiceGetOptions, ServicePostOptions, ServicePutOptions
@@ -109,6 +109,32 @@ export const useUpdateAppAuthConfig = (
       toast({
         title: "Failed to update app",
         description: "The app has not been updated successfully",
+        variant: "destructive",
+      });
+    }
+  })
+}
+
+export const linkAppAgentsQueryKey = () => [BASE_QUERY_KEY, "link-agents"];
+export const useLinkAppAgents = (
+  opts: ServicePutOptions<LinkAppAgents, void> = {}
+): UseMutationResult<void, Error, { code: string; data: LinkAppAgents }> => {
+  return useMutation({
+    mutationKey: linkAppAgentsQueryKey(),
+    mutationFn: ({ code, data }: { code: string; data: LinkAppAgents }) =>
+      appService.linkAgents(code, data, opts),
+    onSuccess: (_data, { code }) => {
+      toast({
+        title: "App agents updated successfully",
+        description: "The app's linked agents have been updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: listAppQueryKey() });
+      queryClient.invalidateQueries({ queryKey: findByCodeAppQueryKey(code) });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to update app agents",
+        description: "The app's linked agents have not been updated successfully",
         variant: "destructive",
       });
     }

@@ -137,6 +137,10 @@ definitions:
     type: object
   App:
     properties:
+      app_to_agents:
+        items:
+          $ref: '#/definitions/AppToAgent'
+        type: array
       app_to_users:
         items:
           $ref: '#/definitions/AppToAppUser'
@@ -190,6 +194,10 @@ definitions:
     type: object
   AppResponse:
     properties:
+      app_to_agents:
+        items:
+          $ref: '#/definitions/AppToAgent'
+        type: array
       app_to_users:
         items:
           $ref: '#/definitions/AppToAppUser'
@@ -227,6 +235,17 @@ definitions:
     - AppStatusPending
     - AppStatusActive
     - AppStatusDeactivated
+  AppToAgent:
+    properties:
+      agent:
+        $ref: '#/definitions/Agent'
+      agent_id:
+        type: string
+      app:
+        $ref: '#/definitions/App'
+      app_id:
+        type: string
+    type: object
   AppToAppUser:
     properties:
       app:
@@ -308,6 +327,10 @@ definitions:
     type: object
   AppWithSecret:
     properties:
+      app_to_agents:
+        items:
+          $ref: '#/definitions/AppToAgent'
+        type: array
       app_to_users:
         items:
           $ref: '#/definitions/AppToAppUser'
@@ -417,6 +440,10 @@ definitions:
     type: object
   CreateAppDTO:
     properties:
+      agent_ids:
+        items:
+          type: string
+        type: array
       description:
         maxLength: 1000
         type: string
@@ -569,6 +596,8 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/Status'
+      stream_messages:
+        type: boolean
       turns:
         type: integer
       updated_at:
@@ -876,8 +905,19 @@ definitions:
       total:
         type: integer
     type: object
+  LinkAppAgentsDTO:
+    properties:
+      agent_ids:
+        items:
+          type: string
+        type: array
+    type: object
   PublicAppDTO:
     properties:
+      app_to_agents:
+        items:
+          $ref: '#/definitions/AppToAgent'
+        type: array
       code:
         type: string
       description:
@@ -1087,6 +1127,13 @@ definitions:
     type: object
   UpdateAppDTO:
     properties:
+      agent_ids:
+        description: |-
+          AgentIDs nil leaves the app's linked agents untouched; a non-nil slice
+          (including an empty one) replaces the whole set.
+        items:
+          type: string
+        type: array
       description:
         maxLength: 1000
         type: string
@@ -1678,6 +1725,39 @@ paths:
       security:
       - BasicAuth: []
       summary: Activate app
+      tags:
+      - app
+  /apps/{code}/agents:
+    put:
+      consumes:
+      - application/json
+      description: Replaces the whole set of agents linked to an app.
+      parameters:
+      - description: App code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Agent ids
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/LinkAppAgentsDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+      - BasicAuth: []
+      summary: Link agents to app
       tags:
       - app
   /apps/{code}/auth-config:

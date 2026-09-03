@@ -13,15 +13,24 @@ type AppResponse = model.App
 type AppsPage = page.Paginated[model.App]
 
 type CreateAppDTO struct {
-	Name        string `json:"name" validate:"required,max=255"`
-	Description string `json:"description" validate:"max=1000"`
-	Public      bool   `json:"public"`
+	Name        string   `json:"name" validate:"required,max=255"`
+	Description string   `json:"description" validate:"max=1000"`
+	Public      bool     `json:"public"`
+	AgentIDs    []string `json:"agent_ids" validate:"omitempty,dive,uuid"`
 }
 
 type UpdateAppDTO struct {
 	Name        *string `json:"name" validate:"omitempty,max=255"`
 	Description *string `json:"description" validate:"omitempty,max=1000"`
 	Public      *bool   `json:"public"`
+	// AgentIDs nil leaves the app's linked agents untouched; a non-nil slice
+	// (including an empty one) replaces the whole set.
+	AgentIDs []string `json:"agent_ids" validate:"omitempty,dive,uuid"`
+}
+
+// LinkAppAgentsDTO is the body of PUT /apps/{code}/agents.
+type LinkAppAgentsDTO struct {
+	AgentIDs []string `json:"agent_ids" validate:"dive,uuid"`
 }
 
 type UpdateAppAuthConfigDTO struct {
@@ -39,11 +48,13 @@ type AppWithSecret struct {
 
 // PublicAppDTO is what an unauthenticated caller (e.g. a frontend-only app's
 // widget) may learn about an app — deliberately excludes anything internal
-// like status or key material.
+// like status or key material, but does expose the app's linked agents so a
+// widget can render/pick them.
 type PublicAppDTO struct {
-	Code        string `json:"code"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Code        string             `json:"code"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	AppToAgents []model.AppToAgent `json:"app_to_agents"`
 }
 
 type FindAppsFilterDTO struct {

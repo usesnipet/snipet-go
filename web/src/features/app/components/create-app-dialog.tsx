@@ -27,6 +27,7 @@ export function CreateAppDialog({ onCreated, close }: CreateAppDialogProps) {
       name: "",
       description: "",
       public: false,
+      agent_ids: [],
     },
   });
 

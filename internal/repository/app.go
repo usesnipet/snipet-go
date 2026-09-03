@@ -6,6 +6,7 @@ import (
 	apperr "github.com/usesnipet/snipet/internal/app-err"
 	"github.com/usesnipet/snipet/internal/filter"
 	"github.com/usesnipet/snipet/internal/model"
+	"github.com/usesnipet/snipet/internal/page"
 	"gorm.io/gorm"
 )
 
@@ -17,6 +18,10 @@ type IAppRepository interface {
 	UpdateAuthConfigByCode(ctx context.Context, code string, authConfig model.AppAuthConfig) error
 	UpdatePublicByCode(ctx context.Context, code string, public bool) error
 	DeleteByCode(ctx context.Context, code string) error
+
+	// ReplaceAgents swaps the app's whole set of linked agents for the given
+	// ones, mirroring AgentRepository.ReplaceLLMs.
+	ReplaceAgents(ctx context.Context, appID string, agentIDs []string) error
 }
 
 type AppRepository struct {
@@ -29,6 +34,15 @@ func NewAppRepository(db *gorm.DB) IAppRepository {
 	}
 }
 
+// Filter always eager-loads the app's linked agents (and each agent) so the
+// admin list, the admin lookup, and the public lookup all carry them.
+func (r *AppRepository) Filter(ctx context.Context, opts *filter.Options[model.App]) (*page.Paginated[model.App], error) {
+	opts = filter.Merge(opts, filter.New[model.App](
+		filter.Include("AppToAgents", "AppToAgents.Agent"),
+	))
+	return r.Repository.Filter(ctx, opts)
+}
+
 func (r *AppRepository) FindByCode(ctx context.Context, code string) (*model.App, error) {
 	paginated, err := r.Filter(ctx, filter.New[model.App](filter.WhereEq("code", code)))
 	if err != nil {
@@ -38,6 +52,24 @@ func (r *AppRepository) FindByCode(ctx context.Context, code string) (*model.App
 		return nil, apperr.NotFound("app not found")
 	}
 	return paginated.First(), nil
+}
+
+// ReplaceAgents deletes the app's current agent links and inserts one row per
+// agentID. An empty slice just clears them.
+func (r *AppRepository) ReplaceAgents(ctx context.Context, appID string, agentIDs []string) error {
+	db := r.db(ctx)
+	if err := db.Where("app_id = ?", appID).Delete(&model.AppToAgent{}).Error; err != nil {
+		return err
+	}
+	if len(agentIDs) == 0 {
+		return nil
+	}
+
+	rels := make([]model.AppToAgent, len(agentIDs))
+	for i, agentID := range agentIDs {
+		rels[i] = model.AppToAgent{AppID: appID, AgentID: agentID}
+	}
+	return db.Create(&rels).Error
 }
 
 func (r *AppRepository) UpdateByCode(ctx context.Context, code string, updates *model.App) error {

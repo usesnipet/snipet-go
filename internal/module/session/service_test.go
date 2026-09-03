@@ -69,7 +69,7 @@ func newSessionService(
 	return session.NewService(
 		sessionRepo,
 		messageRepo,
-		appmodule.NewService(appRepo, auth.NewAPIKeyGenerator(), auth.NewKeyHasher(), logger.NewLogger(logger.LevelError)),
+		appmodule.NewService(appRepo, mocks.NewMockIAgentRepository(t), mocks.NewMockITxManager(t), auth.NewAPIKeyGenerator(), auth.NewKeyHasher(), logger.NewLogger(logger.LevelError)),
 		agentSvc,
 	)
 }
